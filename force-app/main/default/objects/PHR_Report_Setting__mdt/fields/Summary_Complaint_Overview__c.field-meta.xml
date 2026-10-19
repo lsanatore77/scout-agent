@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Summary_Complaint_Overview__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>When on, the draft investigation summary includes the Complaint Overview section.</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>When on, the draft investigation summary includes the Complaint Overview section.</inlineHelpText>
+    <label>Summary: Complaint Overview</label>
+    <type>Checkbox</type>
+</CustomField>

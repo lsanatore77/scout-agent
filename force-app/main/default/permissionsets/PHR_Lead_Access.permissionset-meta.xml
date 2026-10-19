@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>PHR Lead Access</label>
+    <description>Read, create, edit and delete PHR Leads.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <classAccesses><apexClass>PhrLeadAddAction</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrLeadAddSelectedAction</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrMissingDataAction</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrLeadReportAction</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrLeadReportController</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrLeadListController</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrLeadPackageAction</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrLeadSelectController</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrTemplateReportAction</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrReportData</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrReportRenderer</apexClass><enabled>true</enabled></classAccesses>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Colour__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Reason__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Number__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Status__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Title__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Type__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Related_By__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Relevance__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Added__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Added_On__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Lead_Key__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>false</editable><field>PHR_Lead__c.Record_Link__c</field><readable>true</readable></fieldPermissions>
+    <objectPermissions>
+        <allowCreate>false</allowCreate>
+        <allowDelete>false</allowDelete>
+        <allowEdit>false</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>compliancequest__SQX_Product_History_Review__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <objectPermissions>
+        <allowCreate>true</allowCreate>
+        <allowDelete>true</allowDelete>
+        <allowEdit>true</allowEdit>
+        <allowRead>true</allowRead>
+        <modifyAllRecords>false</modifyAllRecords>
+        <object>PHR_Lead__c</object>
+        <viewAllRecords>false</viewAllRecords>
+    </objectPermissions>
+    <pageAccesses><apexPage>PhrLeadReportPDF</apexPage><enabled>true</enabled></pageAccesses>
+</PermissionSet>

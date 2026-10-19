@@ -1,0 +1,5 @@
+{
+  "title": "PHR Checklist Type",
+  "description": "PhrChecklistResult returned by a PHR agent action",
+  "lightning:type": "@apexClassType/c__PhrChecklistResult"
+}

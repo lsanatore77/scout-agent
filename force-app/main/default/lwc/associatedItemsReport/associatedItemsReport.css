@@ -1,0 +1,180 @@
+/* Keep the card inside the Agentforce panel width */
+:host {
+    display: block;
+    max-width: 100%;
+}
+ 
+.report-body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+ 
+.generated-at {
+    margin-top: 2px;
+}
+ 
+/* Lot + date range badges wrap onto separate lines instead of overflowing */
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+ 
+lightning-badge.lot-badge {
+    --slds-c-badge-color-background: #0070d2;
+    --slds-c-badge-text-color: #ffffff;
+    font-weight: bold;
+}
+ 
+/* Expand all / Collapse all links, right-aligned above the sections */
+.section-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    padding-bottom: 0.25rem;
+}
+
+/* Wrap values between words, never mid-word ("Automobi le") */
+.field-value {
+    word-break: normal;
+    overflow-wrap: break-word;
+    hyphens: none;
+}
+.condensed-table .slds-table th, 
+.condensed-table .slds-table td {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+    height: auto !important;
+}
+/* Nonconformance / CAPA count charts under Primary Part */
+.count-charts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+}
+
+.count-card {
+    border: 1px solid #dddbda;
+    border-radius: 0.25rem;
+    padding: 0.75rem;
+    background: #fafaf9;
+}
+
+.count-title {
+    font-weight: bold;
+    font-size: 0.8125rem;
+    margin-bottom: 0.5rem;
+}
+
+.count-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.625rem;
+}
+
+.count-number {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.count-green { color: #2e844a; }
+.count-yellow { color: #8c4b02; }
+.count-red { color: #ba0517; }
+
+.count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.badge-green { background: #def9e1; color: #2e844a; }
+.badge-yellow { background: #fef0cd; color: #8c4b02; }
+.badge-red { background: #feded8; color: #ba0517; }
+
+.count-track {
+    position: relative;
+    display: flex;
+    height: 0.75rem;
+    border-radius: 0.125rem;
+}
+
+.band {
+    display: block;
+    height: 100%;
+    width: 33.33%;
+}
+
+.band-green { background: #2e844a; border-radius: 0.125rem 0 0 0.125rem; }
+.band-yellow { background: #fe9339; }
+.band-red { background: #ea001e; border-radius: 0 0.125rem 0.125rem 0; }
+
+.count-pin {
+    position: absolute;
+    top: -0.1875rem;
+    width: 3px;
+    height: 1.125rem;
+    background: #080707;
+    border-radius: 1px;
+}
+
+.count-scale {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.6875rem;
+    color: #706e6b;
+    margin-top: 0.25rem;
+}
+
+/* Pager under each table (shown only when a table has more than 5 rows) */
+.pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: #706e6b;
+}
+
+.pager-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.pager-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.125rem;
+    color: #0176d3;
+    text-decoration: none;
+}
+
+.pager-icon {
+    --slds-c-icon-color-foreground-default: currentColor;
+}
+
+.pager-link:hover,
+.pager-link:focus {
+    text-decoration: underline;
+}
+
+.pager-link-off,
+.pager-link-off:hover {
+    color: #c9c7c5;
+    text-decoration: none;
+    pointer-events: none;
+    cursor: default;
+}
+
+.pager-page {
+    min-width: 5rem;
+    text-align: center;
+}

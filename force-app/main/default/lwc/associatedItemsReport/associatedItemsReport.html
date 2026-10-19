@@ -1,0 +1,358 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="standard:report">
+        <p slot="title" class="slds-text-body_large slds-text-color_weak generated-at" if:true={generatedAt}>
+            Generated {generatedAt}
+        </p>
+
+        <div class="report-body">
+
+            <!-- Applied filters -->
+            <template if:true={hasFilters}>
+                <div class="filters slds-p-horizontal_medium slds-p-bottom_small">
+                    <template if:true={hasDateRange}>
+                        <lightning-badge label={dateRangeBadge}></lightning-badge>
+                    </template>
+                    <template if:true={hasLotNumber}>
+                        <lightning-badge class="lot-badge" label={lotLabel}></lightning-badge>
+                    </template>
+                </div>
+            </template>
+
+            <div class="slds-p-horizontal_medium slds-p-bottom_medium">
+
+                <!-- Expand / collapse every section -->
+                <div class="section-controls">
+                    <lightning-button variant="base" label="Expand all" onclick={handleExpandAll}></lightning-button>
+                    <lightning-button variant="base" label="Collapse all" onclick={handleCollapseAll}></lightning-button>
+                </div>
+
+                <!-- Primary Part -->
+                <div class={ui.part.className}>
+                    <h3 class="slds-section__title">
+                        <button class="slds-button slds-section__title-action" aria-expanded={ui.part.expanded}
+                            aria-controls="section-part" data-section="part" onclick={handleToggle}>
+                            <lightning-icon icon-name="utility:switch" size="x-small" alternative-text=""
+                                class="slds-section__title-action-icon slds-button__icon_left"></lightning-icon>
+                            <span class="slds-truncate">Primary Part</span>
+                        </button>
+                    </h3>
+                    <div class="slds-section__content slds-p-top_small" id="section-part">
+                        <template if:true={ui.part.isOpen}>
+                            <template if:true={hasPrimaryPart}>
+                                <div class="slds-grid slds-wrap slds-gutters_x-small">
+                                    <div class="slds-col slds-size_1-of-2 slds-p-bottom_x-small">
+                                        <p class="slds-text-title slds-text-color_weak">Name</p>
+                                        <p class="field-value">{primaryPart.name}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-p-bottom_x-small">
+                                        <p class="slds-text-title slds-text-color_weak">Part Number</p>
+                                        <p class="field-value">{primaryPart.partNumber}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-p-bottom_x-small">
+                                        <p class="slds-text-title slds-text-color_weak">Part Type</p>
+                                        <p class="field-value">{primaryPart.partType}</p>
+                                    </div>
+                                    <div class="slds-col slds-size_1-of-2 slds-p-bottom_x-small">
+                                        <p class="slds-text-title slds-text-color_weak">Part Family</p>
+                                        <p class="field-value">{primaryPart.partFamily}</p>
+                                    </div>
+                                </div>
+                            </template>
+                            <template if:false={hasPrimaryPart}>
+                                <p class="slds-text-color_weak slds-text-body_small">No primary part provided.</p>
+                            </template>
+
+                            <!-- Nonconformance / CAPA count charts -->
+                            <div class="count-charts">
+                                <template for:each={countCharts} for:item="chart">
+                                    <div key={chart.key} class="count-card">
+                                        <p class="count-title">{chart.title}</p>
+                                        <div class="count-row">
+                                            <span class={chart.numberClass}>{chart.count}</span>
+                                            <span class={chart.badgeClass}>
+                                                <lightning-icon icon-name={chart.iconName} variant={chart.iconVariant}
+                                                    size="x-small" alternative-text={chart.statusText}
+                                                    class="count-icon"></lightning-icon>
+                                                <span>{chart.statusText}</span>
+                                            </span>
+                                        </div>
+                                        <div class="count-track" role="img" aria-label={chart.ariaLabel}>
+                                            <span class="band band-green"></span>
+                                            <span class="band band-yellow"></span>
+                                            <span class="band band-red"></span>
+                                            <span class="count-pin" style={chart.pinStyle}></span>
+                                        </div>
+                                        <div class="count-scale">
+                                            <span>0</span><span>5</span><span>10</span><span>15+</span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Assembly -->
+                <div class={ui.assembly.className}>
+                    <h3 class="slds-section__title">
+                        <button class="slds-button slds-section__title-action" aria-expanded={ui.assembly.expanded}
+                            aria-controls="section-assembly" data-section="assembly" onclick={handleToggle}>
+                            <lightning-icon icon-name="utility:switch" size="x-small" alternative-text=""
+                                class="slds-section__title-action-icon slds-button__icon_left"></lightning-icon>
+                            <span class="slds-truncate">Assembly</span>
+                        </button>
+                    </h3>
+                    <div class="slds-section__content slds-p-top_small" id="section-assembly">
+                        <template if:true={ui.assembly.isOpen}>
+                            <template if:true={hasAssemblies}>
+                                <ul class="slds-list_dotted">
+                                    <template for:each={assemblies} for:item="asm">
+                                        <li key={asm.id} class="field-value">{asm.name}</li>
+                                    </template>
+                                </ul>
+                            </template>
+                            <template if:false={hasAssemblies}>
+                                <p class="slds-text-color_weak slds-text-body_small">No related Assembly found.</p>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Assembly Line Items -->
+                <div class={ui.lineItems.className}>
+                    <h3 class="slds-section__title">
+                        <button class="slds-button slds-section__title-action" aria-expanded={ui.lineItems.expanded}
+                            aria-controls="section-line-items" data-section="lineItems" onclick={handleToggle}>
+                            <lightning-icon icon-name="utility:switch" size="x-small" alternative-text=""
+                                class="slds-section__title-action-icon slds-button__icon_left"></lightning-icon>
+                            <span class="slds-truncate">Assembly Line Items ({assemblyLineItemsCount})</span>
+                        </button>
+                    </h3>
+                    <div class="slds-section__content slds-p-top_small" id="section-line-items">
+                        <template if:true={ui.lineItems.isOpen}>
+                            <template if:true={hasAssemblyLineItems}>
+                                <lightning-datatable
+                                    key-field="id"
+                                    data={lineItemsPage.rows}
+                                    columns={lineItemColumns}
+                                    column-widths-mode="auto"
+                                    wrap-text-max-lines="2"
+                                    hide-checkbox-column>
+                                </lightning-datatable>
+                                <template if:true={lineItemsPage.showPager}>
+                                    <div class="pager">
+                                        <span class="pager-range">{lineItemsPage.rangeLabel}</span>
+                                        <div class="pager-controls">
+                                            <a href="#" class={lineItemsPage.prevClass} data-section="lineItems" data-dir="-1" aria-disabled={lineItemsPage.prevDisabled} tabindex={lineItemsPage.prevTab} onclick={handlePage}><lightning-icon icon-name="utility:chevronleft" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon>Previous</a>
+                                            <span class="pager-page">{lineItemsPage.pageLabel}</span>
+                                            <a href="#" class={lineItemsPage.nextClass} data-section="lineItems" data-dir="1" aria-disabled={lineItemsPage.nextDisabled} tabindex={lineItemsPage.nextTab} onclick={handlePage}>Next<lightning-icon icon-name="utility:chevronright" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon></a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasAssemblyLineItems}>
+                                <p class="slds-text-color_weak slds-text-body_small">No related Assembly Line Items found.</p>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Nonconformances -->
+                <div class={ui.nonconformances.className}>
+                    <h3 class="slds-section__title">
+                        <button class="slds-button slds-section__title-action" aria-expanded={ui.nonconformances.expanded}
+                            aria-controls="section-nonconformances" data-section="nonconformances" onclick={handleToggle}>
+                            <lightning-icon icon-name="utility:switch" size="x-small" alternative-text=""
+                                class="slds-section__title-action-icon slds-button__icon_left"></lightning-icon>
+                            <span class="slds-truncate">Nonconformances ({nonconformancesCount})</span>
+                        </button>
+                    </h3>
+                    <div class="slds-section__content slds-p-top_small" id="section-nonconformances">
+                        <template if:true={ui.nonconformances.isOpen}>
+                            <template if:true={hasNonconformances}>
+                                <lightning-datatable
+                                    key-field="id"
+                                    data={nonconformancesPage.rows}
+                                    columns={recordColumns}
+                                    column-widths-mode="auto"
+                                    wrap-text-max-lines="2"
+                                    hide-checkbox-column>
+                                </lightning-datatable>
+                                <template if:true={nonconformancesPage.showPager}>
+                                    <div class="pager">
+                                        <span class="pager-range">{nonconformancesPage.rangeLabel}</span>
+                                        <div class="pager-controls">
+                                            <a href="#" class={nonconformancesPage.prevClass} data-section="nonconformances" data-dir="-1" aria-disabled={nonconformancesPage.prevDisabled} tabindex={nonconformancesPage.prevTab} onclick={handlePage}><lightning-icon icon-name="utility:chevronleft" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon>Previous</a>
+                                            <span class="pager-page">{nonconformancesPage.pageLabel}</span>
+                                            <a href="#" class={nonconformancesPage.nextClass} data-section="nonconformances" data-dir="1" aria-disabled={nonconformancesPage.nextDisabled} tabindex={nonconformancesPage.nextTab} onclick={handlePage}>Next<lightning-icon icon-name="utility:chevronright" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon></a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasNonconformances}>
+                                <p class="slds-text-color_weak slds-text-body_small">No related Nonconformances found.</p>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- CAPAs -->
+                <div class={ui.capas.className}>
+                    <h3 class="slds-section__title">
+                        <button class="slds-button slds-section__title-action" aria-expanded={ui.capas.expanded}
+                            aria-controls="section-capas" data-section="capas" onclick={handleToggle}>
+                            <lightning-icon icon-name="utility:switch" size="x-small" alternative-text=""
+                                class="slds-section__title-action-icon slds-button__icon_left"></lightning-icon>
+                            <span class="slds-truncate">CAPAs ({capasCount})</span>
+                        </button>
+                    </h3>
+                    <div class="slds-section__content slds-p-top_small" id="section-capas">
+                        <template if:true={ui.capas.isOpen}>
+                            <template if:true={hasCapas}>
+                                <lightning-datatable
+                                    key-field="id"
+                                    data={capasPage.rows}
+                                    columns={recordColumns}
+                                    column-widths-mode="auto"
+                                    wrap-text-max-lines="2"
+                                    hide-checkbox-column>
+                                </lightning-datatable>
+                                <template if:true={capasPage.showPager}>
+                                    <div class="pager">
+                                        <span class="pager-range">{capasPage.rangeLabel}</span>
+                                        <div class="pager-controls">
+                                            <a href="#" class={capasPage.prevClass} data-section="capas" data-dir="-1" aria-disabled={capasPage.prevDisabled} tabindex={capasPage.prevTab} onclick={handlePage}><lightning-icon icon-name="utility:chevronleft" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon>Previous</a>
+                                            <span class="pager-page">{capasPage.pageLabel}</span>
+                                            <a href="#" class={capasPage.nextClass} data-section="capas" data-dir="1" aria-disabled={capasPage.nextDisabled} tabindex={capasPage.nextTab} onclick={handlePage}>Next<lightning-icon icon-name="utility:chevronright" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon></a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasCapas}>
+                                <p class="slds-text-color_weak slds-text-body_small">No related CAPAs found.</p>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Change Orders -->
+                <div class={ui.changeOrders.className}>
+                    <h3 class="slds-section__title">
+                        <button class="slds-button slds-section__title-action" aria-expanded={ui.changeOrders.expanded}
+                            aria-controls="section-change-orders" data-section="changeOrders" onclick={handleToggle}>
+                            <lightning-icon icon-name="utility:switch" size="x-small" alternative-text=""
+                                class="slds-section__title-action-icon slds-button__icon_left"></lightning-icon>
+                            <span class="slds-truncate">Change Orders ({changeOrdersCount})</span>
+                        </button>
+                    </h3>
+                    <div class="slds-section__content slds-p-top_small" id="section-change-orders">
+                        <template if:true={ui.changeOrders.isOpen}>
+                            <template if:true={hasChangeOrders}>
+                                <lightning-datatable
+                                    key-field="id"
+                                    data={changeOrdersPage.rows}
+                                    columns={recordColumns}
+                                    column-widths-mode="auto"
+                                    wrap-text-max-lines="2"
+                                    hide-checkbox-column>
+                                </lightning-datatable>
+                                <template if:true={changeOrdersPage.showPager}>
+                                    <div class="pager">
+                                        <span class="pager-range">{changeOrdersPage.rangeLabel}</span>
+                                        <div class="pager-controls">
+                                            <a href="#" class={changeOrdersPage.prevClass} data-section="changeOrders" data-dir="-1" aria-disabled={changeOrdersPage.prevDisabled} tabindex={changeOrdersPage.prevTab} onclick={handlePage}><lightning-icon icon-name="utility:chevronleft" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon>Previous</a>
+                                            <span class="pager-page">{changeOrdersPage.pageLabel}</span>
+                                            <a href="#" class={changeOrdersPage.nextClass} data-section="changeOrders" data-dir="1" aria-disabled={changeOrdersPage.nextDisabled} tabindex={changeOrdersPage.nextTab} onclick={handlePage}>Next<lightning-icon icon-name="utility:chevronright" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon></a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasChangeOrders}>
+                                <p class="slds-text-color_weak slds-text-body_small">No related Change Orders found.</p>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Inspections -->
+                <div class={ui.inspections.className}>
+                    <h3 class="slds-section__title">
+                        <button class="slds-button slds-section__title-action" aria-expanded={ui.inspections.expanded}
+                            aria-controls="section-inspections" data-section="inspections" onclick={handleToggle}>
+                            <lightning-icon icon-name="utility:switch" size="x-small" alternative-text=""
+                                class="slds-section__title-action-icon slds-button__icon_left"></lightning-icon>
+                            <span class="slds-truncate">Inspections ({inspectionsCount})</span>
+                        </button>
+                    </h3>
+                    <div class="slds-section__content slds-p-top_small" id="section-inspections">
+                        <template if:true={ui.inspections.isOpen}>
+                            <template if:true={hasInspections}>
+                                <lightning-datatable
+                                    key-field="id"
+                                    data={inspectionsPage.rows}
+                                    columns={recordColumns}
+                                    column-widths-mode="auto"
+                                    wrap-text-max-lines="2"
+                                    hide-checkbox-column>
+                                </lightning-datatable>
+                                <template if:true={inspectionsPage.showPager}>
+                                    <div class="pager">
+                                        <span class="pager-range">{inspectionsPage.rangeLabel}</span>
+                                        <div class="pager-controls">
+                                            <a href="#" class={inspectionsPage.prevClass} data-section="inspections" data-dir="-1" aria-disabled={inspectionsPage.prevDisabled} tabindex={inspectionsPage.prevTab} onclick={handlePage}><lightning-icon icon-name="utility:chevronleft" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon>Previous</a>
+                                            <span class="pager-page">{inspectionsPage.pageLabel}</span>
+                                            <a href="#" class={inspectionsPage.nextClass} data-section="inspections" data-dir="1" aria-disabled={inspectionsPage.nextDisabled} tabindex={inspectionsPage.nextTab} onclick={handlePage}>Next<lightning-icon icon-name="utility:chevronright" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon></a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasInspections}>
+                                <p class="slds-text-color_weak slds-text-body_small">No related Inspections found.</p>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Related Investigations -->
+                <div class={ui.investigations.className}>
+                    <h3 class="slds-section__title">
+                        <button class="slds-button slds-section__title-action" aria-expanded={ui.investigations.expanded}
+                            aria-controls="section-investigations" data-section="investigations" onclick={handleToggle}>
+                            <lightning-icon icon-name="utility:switch" size="x-small" alternative-text=""
+                                class="slds-section__title-action-icon slds-button__icon_left"></lightning-icon>
+                            <span class="slds-truncate">Related Investigations ({investigationsCount})</span>
+                        </button>
+                    </h3>
+                    <div class="slds-section__content slds-p-top_small" id="section-investigations">
+                        <template if:true={ui.investigations.isOpen}>
+                            <template if:true={hasInvestigations}>
+                                <lightning-datatable
+                                    key-field="id"
+                                    data={investigationsPage.rows}
+                                    columns={investigationColumns}
+                                    column-widths-mode="auto"
+                                    wrap-text-max-lines="2"
+                                    hide-checkbox-column>
+                                </lightning-datatable>
+                                <template if:true={investigationsPage.showPager}>
+                                    <div class="pager">
+                                        <span class="pager-range">{investigationsPage.rangeLabel}</span>
+                                        <div class="pager-controls">
+                                            <a href="#" class={investigationsPage.prevClass} data-section="investigations" data-dir="-1" aria-disabled={investigationsPage.prevDisabled} tabindex={investigationsPage.prevTab} onclick={handlePage}><lightning-icon icon-name="utility:chevronleft" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon>Previous</a>
+                                            <span class="pager-page">{investigationsPage.pageLabel}</span>
+                                            <a href="#" class={investigationsPage.nextClass} data-section="investigations" data-dir="1" aria-disabled={investigationsPage.nextDisabled} tabindex={investigationsPage.nextTab} onclick={handlePage}>Next<lightning-icon icon-name="utility:chevronright" size="xx-small" alternative-text="" class="pager-icon"></lightning-icon></a>
+                                        </div>
+                                    </div>
+                                </template>
+                            </template>
+                            <template if:false={hasInvestigations}>
+                                <p class="slds-text-color_weak slds-text-body_small">No related Investigations found.</p>
+                            </template>
+                        </template>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </lightning-card>
+</template>

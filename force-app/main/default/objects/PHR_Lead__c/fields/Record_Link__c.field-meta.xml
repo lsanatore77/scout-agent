@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Record_Link__c</fullName>
+    <label>Record</label>
+    <description>Opens the record this lead points to.</description>
+    <type>Text</type>
+    <formula>HYPERLINK("/" &amp; Record_Id__c, Record_Number__c, "_self")</formula>
+    <formulaTreatBlanksAs>BlankAsBlank</formulaTreatBlanksAs>
+</CustomField>

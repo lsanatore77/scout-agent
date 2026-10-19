@@ -1,0 +1,13 @@
+:host { display: block; max-width: 100%; }
+.body { display: flex; flex-direction: column; gap: 0.75rem; max-width: 100%; }
+.intro { font-size: 0.8125rem; line-height: 1.4; }
+.count { color: #706e6b; font-size: 0.75rem; }
+.error { color: #ba0517; font-size: 0.8125rem; }
+.empty { color: #706e6b; font-size: 0.8125rem; }
+.card { background: #fff; border: 1px solid #dddbda; border-radius: 0.5rem; overflow: hidden; }
+.row { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.5rem 0.75rem; border-bottom: 1px solid #eee; }
+.row:last-child { border-bottom: 0; }
+.row-icon { flex: 0 0 auto; margin-top: 0.125rem; }
+.row-text { min-width: 0; }
+.row-label { font-weight: 700; font-size: 0.8125rem; overflow-wrap: anywhere; }
+.row-detail { color: #706e6b; font-size: 0.75rem; overflow-wrap: anywhere; }

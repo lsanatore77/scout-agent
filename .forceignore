@@ -1,0 +1,11 @@
+# List files or directories below to ignore them when running force:source:push, force:source:pull, and force:source:status
+package.xml
+**/jsconfig.json
+**/.eslintrc.json
+**/__tests__/**
+**/*.ts
+.sfdx/
+.sf/
+node_modules/
+optional/
+reference/

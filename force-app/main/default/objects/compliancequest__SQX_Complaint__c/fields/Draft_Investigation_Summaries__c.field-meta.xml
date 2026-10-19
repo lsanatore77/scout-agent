@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Draft_Investigation_Summaries__c</fullName>
+    <label>Draft Investigation Summaries</label>
+    <type>Html</type>
+    <length>32768</length>
+    <visibleLines>25</visibleLines>
+    <description>Formatted (rich text) draft investigation summary saved by the Save Draft Investigation Summary agent action.</description>
+    <required>false</required>
+</CustomField>

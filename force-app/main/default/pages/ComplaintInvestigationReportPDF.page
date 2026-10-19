@@ -1,0 +1,353 @@
+<apex:page controller="ComplaintReportPDFController" renderAs="{!renderAs}" applyBodyTag="false" showHeader="false" sidebar="false" standardStylesheets="false">
+    <head>
+        <style>
+            @page {
+                size: letter;
+                margin: 0.55in 0.6in 0.75in 0.6in;
+                @bottom-left { content: "Complaint Investigation Report"; font-family: Arial, Helvetica, sans-serif; font-size: 9px; color: #5a6778; }
+                @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Arial, Helvetica, sans-serif; font-size: 9px; color: #5a6778; }
+            }
+            body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #1a202c; }
+            .accent { border-top: 6px solid #1f4e79; margin-bottom: 18px; }
+            .eyebrow { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #5a6778; margin-bottom: 6px; }
+            h1 { font-size: 24px; margin: 0; color: #1a202c; }
+            .sub { font-size: 13px; margin-top: 6px; color: #2d3748; }
+            .meta { font-size: 10px; color: #5a6778; line-height: 1.6; text-align: right; }
+            table { width: 100%; border-collapse: collapse; }
+            .facts { margin-top: 18px; border: 1px solid #e2e8f0; }
+            .facts td { padding: 8px 12px; border-right: 1px solid #e2e8f0; width: 25%; }
+            .facts .label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #5a6778; }
+            .facts .value { font-size: 12px; margin-top: 3px; }
+            .chips { margin-top: 12px; font-size: 10px; color: #2d3748; }
+            .chip { background: #edf2f7; padding: 3px 9px; margin-right: 6px; }
+            h2 { font-size: 14px; color: #1f4e79; margin: 0; }
+            .section { margin-top: 24px; border-bottom: 1px solid #cbd5e0; padding-bottom: 5px; }
+            .tag { background: #fff4de; color: #7a4300; font-size: 9px; padding: 3px 8px; }
+            h3 { font-size: 11.5px; margin: 16px 0 6px 0; color: #1a202c; }
+            p.body { font-size: 11.5px; line-height: 1.6; margin: 0 0 11px 0; }
+            .empty { color: #5a6778; font-style: italic; }
+            .error { border: 1px solid #c53030; background: #fff5f5; color: #742a2a; padding: 8px 10px; margin-top: 14px; }
+            .grid th { background-color: #2d3748; color: #ffffff; text-align: left; padding: 5px 7px; font-size: 10px; }
+            .grid td { border: 1px solid #e2e8f0; padding: 5px 7px; font-size: 10px; }
+            .grid tr:nth-child(even) td { background-color: #f7fafc; }
+            .muted { color: #5a6778; }
+            .relevant { margin-top: 18px; border: 1px solid #cbd5e0; padding: 10px 12px; }
+            .relevant .title { font-size: 12px; font-weight: bold; color: #1f4e79; margin-bottom: 6px; }
+            .bar td { height: 10px; }
+            .bar-done { background-color: #38a169; }
+            .bar-rest { background-color: #2b6cb0; }
+            .bar-none { background-color: #e2e8f0; }
+            .progress { margin-top: 12px; border: 1px solid #cbd5e0; background-color: #f7fafc; }
+            .progress td { padding: 9px 12px; vertical-align: middle; }
+            .big { font-size: 15px; font-weight: bold; color: #1a202c; }
+            .big-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #5a6778; }
+            .badge-overdue { background-color: #fde8e8; color: #8a1c1c; font-size: 10px; font-weight: bold; padding: 3px 8px; }
+            .pill { padding: 2px 7px; font-size: 9.5px; margin-right: 4px; }
+            .st-draft { background-color: #edf2f7; color: #2d3748; }
+            .st-open { background-color: #bee3f8; color: #1a365d; }
+            .st-ready { background-color: #feebc8; color: #744210; }
+            .st-sub { background-color: #e9d8fd; color: #44337a; }
+            .st-done { background-color: #c6f6d5; color: #22543d; }
+            .late { color: #8a1c1c; font-weight: bold; }
+            .late-note { color: #8a1c1c; font-size: 9px; }
+            .lot-hit { font-weight: bold; color: #1f4e79; }
+            .pagebreak { page-break-before: always; }
+        </style>
+    </head>
+    <body>
+        <div class="accent"></div>
+
+        <apex:outputPanel layout="block" styleClass="error" rendered="{!hasError}">
+            <apex:outputText value="{!errorMessage}"/>
+        </apex:outputPanel>
+
+        <apex:outputPanel rendered="{!hasComplaint}">
+
+            <table>
+                <tr>
+                    <td style="vertical-align: top;">
+                        <div class="eyebrow">Quality &#183; Complaint handling</div>
+                        <h1>Complaint Investigation Report</h1>
+                        <div class="sub"><strong><apex:outputText value="{!complaintName}"/></strong><apex:outputText value=" &#183; {!partName}" rendered="{!hasPrimaryPart}"/><apex:outputText value=" ({!partNumber})" rendered="{!hasPrimaryPart}"/></div>
+                    </td>
+                    <td class="meta" style="vertical-align: top; width: 200px;">
+                        Generated <apex:outputText value="{!generatedAt}"/><br/>
+                        Summary source: Draft Investigation Summary
+                    </td>
+                </tr>
+            </table>
+
+            <table class="facts">
+                <tr>
+                    <td><div class="label">Complaint</div><div class="value"><strong><apex:outputText value="{!complaintName}"/></strong></div></td>
+                    <td><div class="label">Primary part</div><div class="value"><apex:outputText value="{!partName} &#183; {!partNumber}" rendered="{!hasPrimaryPart}"/><apex:outputText value="None" rendered="{!NOT(hasPrimaryPart)}"/></div></td>
+                    <td><div class="label">Lot number</div><div class="value"><apex:outputText value="{!lotNumber}" rendered="{!hasLot}"/><apex:outputText value="None" rendered="{!NOT(hasLot)}"/></div></td>
+                    <td style="border-right: none;"><div class="label">Complaint created</div><div class="value"><apex:outputText value="{!complaintCreated}"/></div></td>
+                </tr>
+            </table>
+
+            <apex:outputPanel layout="block" styleClass="chips" rendered="{!OR(hasDateRange, hasLot)}">
+                <apex:outputText styleClass="chip" value="Related records created: {!dateRangeLabel}" rendered="{!hasDateRange}"/>
+                <apex:outputText styleClass="chip" value="Lot match: {!lotNumber}" rendered="{!hasLot}"/>
+            </apex:outputPanel>
+
+            <apex:outputPanel layout="block" rendered="{!hasTasks}">
+                <table class="progress">
+                    <tr>
+                        <td style="width: 150px;">
+                            <div class="big-label">CQ Task progress</div>
+                            <div class="big"><apex:outputText value="{!taskSummary.progressLabel}"/></div>
+                        </td>
+                        <td>
+                            <table class="bar">
+                                <tr>
+                                    <apex:outputPanel layout="none" rendered="{!taskSummary.completePct > 0}"><td class="bar-done" style="width: {!taskSummary.completePct}%;"></td></apex:outputPanel>
+                                    <apex:outputPanel layout="none" rendered="{!taskSummary.remainingPct > 0}"><td class="bar-rest" style="width: {!taskSummary.remainingPct}%;"></td></apex:outputPanel>
+                                </tr>
+                            </table>
+                        </td>
+                        <td style="width: 110px; text-align: right;">
+                            <apex:outputText styleClass="badge-overdue" value="{!taskSummary.overdueLabel}" rendered="{!hasOverdueTasks}"/>
+                        </td>
+                    </tr>
+                </table>
+            </apex:outputPanel>
+
+            <div class="section">
+                <table>
+                    <tr>
+                        <td><h2>Investigation summary</h2></td>
+                        <td style="text-align: right;"><span class="tag">From saved Draft Investigation Summary</span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="margin-top: 12px;">
+                <apex:repeat value="{!summaryParagraphs}" var="para">
+                    <p class="body"><apex:outputText value="{!para}" escape="false"/></p>
+                </apex:repeat>
+                <apex:outputPanel rendered="{!NOT(hasSummary)}">
+                    <p class="empty">No Draft Investigation Summary is saved on this complaint. Generate and save one with the Complaint Investigation Summary agent, then run this report again.</p>
+                </apex:outputPanel>
+            </div>
+
+            <apex:outputPanel layout="block" styleClass="relevant" rendered="{!hasRelevantNcs}">
+                <div class="title">Most relevant nonconformances</div>
+                <table class="grid">
+                    <tr><th>Nonconformance</th><th>Title</th><th>Why it stands out</th></tr>
+                    <apex:repeat value="{!relevantNcs}" var="rn">
+                        <tr>
+                            <td><strong><apex:outputText value="{!rn.name}"/></strong></td>
+                            <td><apex:outputText value="{!rn.title}"/></td>
+                            <td><apex:outputText value="{!rn.why}"/></td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </apex:outputPanel>
+
+            <!-- ================= Associated items ================= -->
+            <div class="pagebreak"></div>
+
+            <div class="section" style="margin-top: 0;">
+                <table>
+                    <tr>
+                        <td><h2>Associated items</h2></td>
+                        <td class="meta"><strong><apex:outputText value="{!complaintName}"/></strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <apex:outputPanel layout="block" styleClass="chips" rendered="{!OR(hasDateRange, hasLot)}">
+                <apex:outputText styleClass="chip" value="Created: {!dateRangeLabel}" rendered="{!hasDateRange}"/>
+                <apex:outputText styleClass="chip" value="Lot: {!lotNumber}" rendered="{!hasLot}"/>
+            </apex:outputPanel>
+
+            <h3>Primary part and assembly</h3>
+            <apex:outputPanel rendered="{!hasPrimaryPart}">
+                <table class="grid">
+                    <tr><th>Name</th><th>Part number</th><th>Part type</th><th>Part family</th><th>Assembly</th></tr>
+                    <tr>
+                        <td><apex:outputText value="{!partName}"/></td>
+                        <td><apex:outputText value="{!partNumber}"/></td>
+                        <td><apex:outputText value="{!partType}"/></td>
+                        <td><apex:outputText value="{!partFamily}"/></td>
+                        <td><apex:outputText value="{!assemblyNames}"/></td>
+                    </tr>
+                </table>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!NOT(hasPrimaryPart)}">
+                <p class="empty">No primary part is set on this complaint.</p>
+            </apex:outputPanel>
+
+            <h3>Assembly line items (<apex:outputText value="{!lineRows.size}"/>)</h3>
+            <apex:outputPanel rendered="{!lineRows.size > 0}">
+                <table class="grid">
+                    <tr><th>Assembly</th><th>Part</th><th>Part number</th><apex:outputPanel rendered="{!hasLotMatchColumn}" layout="none"><th>Lot match</th></apex:outputPanel></tr>
+                    <apex:repeat value="{!lineRows}" var="li">
+                        <tr>
+                            <td><apex:outputText value="{!li.assemblyName}"/></td>
+                            <td><apex:outputText value="{!li.partName}"/></td>
+                            <td><apex:outputText value="{!li.partNumber}"/></td>
+                            <apex:outputPanel rendered="{!hasLotMatchColumn}" layout="none"><td><apex:outputText value="{!li.lotMatch}" styleClass="{!IF(li.lotHit, 'lot-hit', 'muted')}"/></td></apex:outputPanel>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!lineRows.size == 0}">
+                <p class="empty">No related assembly line items found.</p>
+            </apex:outputPanel>
+
+            <h3>Nonconformances (<apex:outputText value="{!ncRows.size}"/>)</h3>
+            <apex:outputPanel rendered="{!ncRows.size > 0}">
+                <table class="grid">
+                    <tr><th>Name</th><th>Status</th><th>Part</th><th>Lot number</th><th>Matched by</th><th>Created</th></tr>
+                    <apex:repeat value="{!ncRows}" var="nc">
+                        <tr>
+                            <td><strong><apex:outputText value="{!nc.name}"/></strong></td>
+                            <td><apex:outputText value="{!nc.status}"/></td>
+                            <td><apex:outputText value="{!nc.partName}"/></td>
+                            <td><apex:outputText value="{!IF(ISBLANK(nc.lotNumber), 'None', nc.lotNumber)}"/></td>
+                            <td><apex:outputText value="{!nc.matchedBy}"/></td>
+                            <td><apex:outputText value="{!nc.createdDate}"/></td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!ncRows.size == 0}">
+                <p class="empty">No related nonconformances found.</p>
+            </apex:outputPanel>
+
+            <table style="margin-top: 16px;">
+                <tr>
+                    <td style="vertical-align: top; width: 50%; padding-right: 10px;">
+                        <h3 style="margin-top: 0;">CAPAs (<apex:outputText value="{!capaRows.size}"/>)</h3>
+                        <apex:outputPanel rendered="{!capaRows.size > 0}">
+                            <table class="grid">
+                                <tr><th>Name</th><th>Created</th></tr>
+                                <apex:repeat value="{!capaRows}" var="cp">
+                                    <tr><td><strong><apex:outputText value="{!cp.name}"/></strong></td><td><apex:outputText value="{!cp.createdDate}"/></td></tr>
+                                </apex:repeat>
+                            </table>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!capaRows.size == 0}"><p class="empty">No related CAPAs found.</p></apex:outputPanel>
+                    </td>
+                    <td style="vertical-align: top; width: 50%; padding-left: 10px;">
+                        <h3 style="margin-top: 0;">Change orders (<apex:outputText value="{!changeOrderRows.size}"/>)</h3>
+                        <apex:outputPanel rendered="{!changeOrderRows.size > 0}">
+                            <table class="grid">
+                                <tr><th>Name</th><th>Created</th></tr>
+                                <apex:repeat value="{!changeOrderRows}" var="co">
+                                    <tr><td><strong><apex:outputText value="{!co.name}"/></strong></td><td><apex:outputText value="{!co.createdDate}"/></td></tr>
+                                </apex:repeat>
+                            </table>
+                        </apex:outputPanel>
+                        <apex:outputPanel rendered="{!changeOrderRows.size == 0}"><p class="empty">No related change orders found.</p></apex:outputPanel>
+                    </td>
+                </tr>
+            </table>
+
+            <h3>Inspections (<apex:outputText value="{!inspectionRows.size}"/>)</h3>
+            <apex:outputPanel rendered="{!inspectionRows.size > 0}">
+                <table class="grid">
+                    <tr><th>Name</th><th>Part</th><th>Lot number</th><th>Matched by</th><th>Created</th></tr>
+                    <apex:repeat value="{!inspectionRows}" var="ins">
+                        <tr>
+                            <td><strong><apex:outputText value="{!ins.name}"/></strong></td>
+                            <td><apex:outputText value="{!ins.partName}"/></td>
+                            <td><apex:outputText value="{!IF(ISBLANK(ins.lotNumber), 'None', ins.lotNumber)}"/></td>
+                            <td><apex:outputText value="{!ins.matchedBy}"/></td>
+                            <td><apex:outputText value="{!ins.createdDate}"/></td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!inspectionRows.size == 0}">
+                <p class="empty">No related inspections found.</p>
+            </apex:outputPanel>
+
+            <!-- ================= CQ Tasks and related investigations ================= -->
+            <div class="pagebreak"></div>
+
+            <div class="section" style="margin-top: 0;">
+                <table>
+                    <tr>
+                        <td><h2>CQ Tasks and related investigations</h2></td>
+                        <td class="meta"><strong><apex:outputText value="{!complaintName}"/></strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>CQ Task progress</h3>
+            <apex:outputPanel rendered="{!hasTasks}">
+                <table class="progress">
+                    <tr>
+                        <td style="width: 150px;">
+                            <div style="font-size: 22px; font-weight: bold;"><apex:outputText value="{!taskSummary.completeCount} of {!taskSummary.total}"/></div>
+                            <div class="big-label">tasks complete</div>
+                        </td>
+                        <td>
+                            <table class="bar">
+                                <tr>
+                                    <apex:outputPanel layout="none" rendered="{!taskSummary.completePct > 0}"><td class="bar-done" style="width: {!taskSummary.completePct}%;"></td></apex:outputPanel>
+                                    <apex:outputPanel layout="none" rendered="{!taskSummary.remainingPct > 0}"><td class="bar-rest" style="width: {!taskSummary.remainingPct}%;"></td></apex:outputPanel>
+                                </tr>
+                            </table>
+                            <div style="margin-top: 7px;">
+                                <apex:repeat value="{!taskSummary.counts}" var="cnt">
+                                    <apex:outputText styleClass="pill {!cnt.statusClass}" value="{!cnt.status} {!cnt.total}"/>
+                                </apex:repeat>
+                            </div>
+                        </td>
+                        <td style="width: 110px; text-align: right;">
+                            <apex:outputText styleClass="badge-overdue" value="{!taskSummary.overdueLabel}" rendered="{!hasOverdueTasks}"/>
+                        </td>
+                    </tr>
+                </table>
+
+                <h3>Tasks on this complaint (<apex:outputText value="{!taskSummary.total}"/>)</h3>
+                <table class="grid">
+                    <tr><th>Step</th><th>Task</th><th>Linked record</th><th>Assignee</th><th>Status</th><th>Started</th><th>Due</th><th>Completed</th></tr>
+                    <apex:repeat value="{!taskSummary.rows}" var="tk">
+                        <tr>
+                            <td><apex:outputText value="{!tk.step}"/></td>
+                            <td><strong><apex:outputText value="{!tk.taskName}"/></strong></td>
+                            <td><apex:outputText value="{!tk.linkedRecord}"/></td>
+                            <td><apex:outputText value="{!tk.assignee}"/></td>
+                            <td><apex:outputText styleClass="pill {!tk.statusClass}" value="{!tk.status}"/></td>
+                            <td><apex:outputText value="{!tk.startDate}"/></td>
+                            <td>
+                                <apex:outputText styleClass="{!IF(tk.overdue, 'late', '')}" value="{!tk.dueDate}"/>
+                                <apex:outputPanel layout="block" styleClass="late-note" rendered="{!tk.overdue}"><apex:outputText value="{!tk.overdueLabel}"/></apex:outputPanel>
+                            </td>
+                            <td><apex:outputText value="{!IF(ISBLANK(tk.completionDate), 'Not completed', tk.completionDate)}"/></td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!NOT(hasTasks)}">
+                <p class="empty">No CQ Tasks are recorded on this complaint.</p>
+            </apex:outputPanel>
+
+            <h3 style="margin-top: 22px;">Related investigations (<apex:outputText value="{!investigationRows.size}"/>)</h3>
+            <apex:outputPanel rendered="{!hasInvestigations}">
+                <table class="grid">
+                    <tr><th>Investigation</th><th>Source</th><th>Status</th><th>Why related</th><th>Created</th></tr>
+                    <apex:repeat value="{!investigationRows}" var="iv">
+                        <tr>
+                            <td><strong><apex:outputText value="{!iv.name}"/></strong></td>
+                            <td><apex:outputText value="{!iv.sourceName}"/></td>
+                            <td><apex:outputText value="{!iv.status}"/></td>
+                            <td><apex:outputText value="{!iv.matchedBy}"/></td>
+                            <td><apex:outputText value="{!iv.createdDate}"/></td>
+                        </tr>
+                    </apex:repeat>
+                </table>
+            </apex:outputPanel>
+            <apex:outputPanel rendered="{!NOT(hasInvestigations)}">
+                <p class="empty">No related investigations found.</p>
+            </apex:outputPanel>
+            <p class="muted" style="font-size: 10px; margin-top: 8px;">Related investigations are matched on the complaint's part (including component parts) and lot number. Investigations started from this complaint are excluded.</p>
+
+        </apex:outputPanel>
+    </body>
+</apex:page>

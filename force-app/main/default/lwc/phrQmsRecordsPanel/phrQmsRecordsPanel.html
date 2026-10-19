@@ -1,0 +1,133 @@
+<template>
+    <lightning-card title="Related QMS Records" icon-name="standard:record">
+        <div class="slds-var-p-horizontal_medium slds-var-p-bottom_medium">
+
+            <template lwc:if={loading}>
+                <div class="spinner-wrap"><lightning-spinner alternative-text="Loading" size="small"></lightning-spinner></div>
+            </template>
+
+            <template lwc:if={errorMessage}>
+                <div class="slds-text-color_error slds-var-p-vertical_small">{errorMessage}</div>
+            </template>
+
+            <template lwc:if={hasData}>
+                <div class="part-chip">
+                    <span class="slds-truncate">{partLabel}</span>
+                    <span class="slds-text-color_weak">Complaint part</span>
+                </div>
+
+                <div class="search-row">
+                    <lightning-input
+                        class="lot-input"
+                        label="Lot/Serial Number"
+                        variant="label-hidden"
+                        placeholder="Start typing to find Lot/Serial Number"
+                        value={lotInput}
+                        onchange={handleLotChange}
+                        onkeyup={handleLotKey}
+                    ></lightning-input>
+                    <lightning-button variant="brand" label="Search" onclick={handleSearch}></lightning-button>
+                </div>
+
+                <div class="note">{componentNote} Records tied to the complaint part, its assembly components and the lot are listed. Highlighted rows are the most relevant: a Part + Lot match ranks first, then Lot, then Part, with newer records first within each group. Ticked NCs and CAPAs are added to the Product History Review as lookups; Change Orders and Inspections are added as a Reference Type plus the record number in Other Reference Number. Investigations are shown for reference only.</div>
+
+
+                <template for:each={sections} for:item="sec">
+                    <div key={sec.key} class="section">
+                        <div class="section-head">
+                            <div class="section-title">{sec.countLabel}</div>
+                            <span class="section-note">{sec.note}</span>
+                        </div>
+
+                        <template lwc:if={sec.isEmpty}>
+                            <div class="slds-text-color_weak slds-var-p-vertical_x-small">No matching records.</div>
+                        </template>
+                        <template lwc:else>
+                            <div class="table-wrap">
+                                <table class="slds-table slds-table_bordered slds-table_fixed-layout">
+                                    <thead>
+                                        <tr class="slds-line-height_reset">
+                                            <th class="col-include" scope="col">
+                                                <template lwc:if={sec.selectable}>
+                                                <lightning-input
+                                                    type="checkbox"
+                                                    variant="label-hidden"
+                                                    label="Select all new"
+                                                    data-section={sec.key}
+                                                    checked={sec.allSelected}
+                                                    disabled={sec.noneSelectable}
+                                                    onchange={handleToggleAll}
+                                                ></lightning-input>
+                                                </template>
+                                            </th>
+                                            <th scope="col"><div class="slds-truncate">{sec.numLabel}</div></th>
+                                            <th scope="col"><div class="slds-truncate">Part Number</div></th>
+                                            <th scope="col"><div class="slds-truncate">Status</div></th>
+                                            <th scope="col"><div class="slds-truncate">Created</div></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={sec.rows} for:item="row">
+                                            <tr key={row.id} class={row.rowClass}>
+                                                <td class="col-include">
+                                                    <template lwc:if={sec.selectable}>
+                                                    <lightning-input
+                                                        type="checkbox"
+                                                        variant="label-hidden"
+                                                        label="Include"
+                                                        data-section={sec.key}
+                                                        data-id={row.id}
+                                                        checked={row.checked}
+                                                        disabled={row.alreadyAdded}
+                                                        onchange={handleToggle}
+                                                    ></lightning-input>
+                                                    </template>
+                                                </td>
+                                                <td>
+                                                    <div class="slds-truncate">
+                                                        <a href={row.url} target="_blank">{row.name}</a>
+                                                        <template lwc:if={row.matchLabel}>
+                                                            <span class="match-badge">{row.matchLabel}</span>
+                                                        </template>
+                                                        <template lwc:if={row.isNew}>
+                                                            <span class="new-badge">New</span>
+                                                        </template>
+                                                        <template lwc:if={row.alreadyAdded}>
+                                                            <span class="added-badge">Added</span>
+                                                        </template>
+                                                    </div>
+                                                </td>
+                                                <td><div class="slds-truncate">{row.partText}</div></td>
+                                                <td><div class="slds-truncate">{row.statusText}</div></td>
+                                                <td><div class="slds-truncate">{row.createdText}</div></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <template lwc:if={sec.showPager}>
+                                <div class="pager">
+                                    <span class="pager-range">{sec.rangeLabel}</span>
+                                    <a href="#" class={sec.prevClass} data-section={sec.key} data-dir="prev" onclick={handlePage}>
+                                        <lightning-icon icon-name="utility:chevronleft" size="xx-small" class="pager-icon"></lightning-icon>Previous
+                                    </a>
+                                    <a href="#" class={sec.nextClass} data-section={sec.key} data-dir="next" onclick={handlePage}>
+                                        Next<lightning-icon icon-name="utility:chevronright" size="xx-small" class="pager-icon"></lightning-icon>
+                                    </a>
+                                </div>
+                            </template>
+                        </template>
+                    </div>
+                </template>
+
+                <template lwc:if={noPhr}>
+                    <div class="slds-text-color_error slds-var-p-top_small">This Complaint has no Product History Review yet, so records cannot be added.</div>
+                </template>
+                <div class="footer">
+                    <span class="footer-count">{selectedCount} selected</span>
+                    <lightning-button variant="brand" label={createLabel} disabled={createDisabled} onclick={handleCreate}></lightning-button>
+                </div>
+            </template>
+        </div>
+    </lightning-card>
+</template>

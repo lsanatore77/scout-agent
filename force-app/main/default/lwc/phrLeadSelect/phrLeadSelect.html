@@ -1,0 +1,48 @@
+<template>
+    <div class="wrap">
+        <template if:true={loading}>
+            <div class="muted">Loading records...</div>
+        </template>
+        <template if:true={needsId}>
+            <div class="muted">I could not tell which complaint is open. Paste the Complaint Id (15 or 18 characters) to load its records.</div>
+            <input class="idbox" type="text" placeholder="Complaint Id" onchange={handleIdChange} onkeyup={handleIdChange} />
+        </template>
+        <template if:true={error}>
+            <div class="error">{error}</div>
+        </template>
+        <template if:true={hasRows}>
+            <div class="top">
+                <span class="title">Choose what to add to the Product History Review</span>
+                <span class="muted">{counts}</span>
+            </div>
+            <template for:each={groups} for:item="g">
+                <div key={g.key} class="group">
+                    <div class="group-head">
+                        <span class="group-title">{g.label}</span>
+                        <template if:true={g.canToggle}>
+                            <button class="link" type="button" data-tier={g.key} onclick={handleToggleGroup}>{g.toggleLabel}</button>
+                        </template>
+                    </div>
+                    <template for:each={g.items} for:item="r">
+                        <div key={r.key} class="row">
+                            <input class="box" type="checkbox" data-id={r.id} checked={r.checked}
+                                   disabled={r.locked} onchange={handleTick} aria-label={r.recordNumber} />
+                            <span class="dot" style={r.dotStyle}></span>
+                            <div class="main">
+                                <div class="line1">
+                                    <a class="num" href={r.link} target="_blank">{r.recordNumber}</a>
+                                    <span class="type">{r.recordType}</span>
+                                    <span class="status">{r.status}</span>
+                                    <span class="match">{r.matchLabel}</span>
+                                </div>
+                                <div class="line2" if:true={r.title}>{r.title}</div>
+                                <div class="line2 note" if:true={r.note}>{r.note}</div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+            <div class="muted">Everything worth reviewing starts ticked. Untick what you do not want, then submit. Unticked records are still stored on the PHR as Not added.</div>
+        </template>
+    </div>
+</template>

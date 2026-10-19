@@ -1,0 +1,32 @@
+<template>
+    <lightning-card title="Missing data check" icon-name="standard:task">
+        <p slot="actions" class="count">{countLabel}</p>
+        <div class="body slds-p-horizontal_medium slds-p-bottom_medium">
+            <template if:true={hasError}>
+                <p class="error">{errorText}</p>
+            </template>
+            <template if:true={intro}>
+                <p class="intro">{intro}</p>
+            </template>
+            <template if:true={hasChecks}>
+                <div class="card">
+                    <template for:each={checks} for:item="chk">
+                        <div key={chk.key} class="row">
+                            <lightning-icon icon-name={chk.iconName} variant={chk.iconVariant} size="x-small"
+                                alternative-text={chk.altText} class="row-icon"></lightning-icon>
+                            <div class="row-text">
+                                <div class="row-label">{chk.label}</div>
+                                <template if:true={chk.detail}>
+                                    <div class="row-detail">{chk.detail}</div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+            <template if:false={hasChecks}>
+                <p class="empty">No checks were returned.</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>

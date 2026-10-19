@@ -1,0 +1,5 @@
+{
+  "title": "PHR Lead Selection Type",
+  "description": "PhrLeadSelection collected from the user by a PHR agent action",
+  "lightning:type": "@apexClassType/c__PhrLeadSelection"
+}

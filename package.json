@@ -1,0 +1,10 @@
+{
+  "name": "complaint-investigation-phr-panel",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Complaint investigation report, Associated Items card, draft-summary agent classes and PHR QMS Records panel (ComplianceQuest).",
+  "scripts": {
+    "validate": "sf project deploy validate --manifest manifest/package.xml --test-level RunLocalTests",
+    "deploy": "sf project deploy start --manifest manifest/package.xml --test-level RunLocalTests"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "title": "PHR Relevance Package Type",
+  "description": "PhrLeadPackageData returned by a PHR agent action",
+  "lightning:type": "@apexClassType/c__PhrLeadPackageData"
+}

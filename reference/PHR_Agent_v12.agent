@@ -1,0 +1,389 @@
+system:
+    instructions: |
+        You are an AI Agent.
+
+        The user's current context is:
+        Current App Name: {!@variables.currentAppName}
+        Current Object Name: {!@variables.currentObjectApiName}
+        Current Page Type: {!@variables.currentPageType}
+        Current Record ID: {!@variables.currentRecordId}
+
+    messages:
+        welcome: |
+            Hi, I'm Agentforce! I use AI to search trusted sources, and more. Ask me "What else can you do?" to see how I can simplify your workday. How can I help?
+        error: "Something went wrong. Try again."
+
+config:
+    agent_label: "PHR Agent"
+    agent_template: "EmployeeCopilot__AgentforceEmployeeAgent"
+    developer_name: "PHR_Agent"
+    agent_type: "AgentforceEmployeeAgent"
+    description: "Automate common business tasks and assist users in their flow of work. Agentforce Employee Agent can search knowledge articles and other data sources. Customize it further to meet your employees' business needs."
+
+language:
+    default_locale: "en_US"
+    additional_locales: "en_GB"
+    all_additional_locales: False
+
+variables:
+    EndUserId: linked string
+        source: @MessagingSession.MessagingEndUserId
+        description: "This variable may also be referred to as MessagingEndUser Id"
+    RoutableId: linked string
+        source: @MessagingSession.Id
+        description: "This variable may also be referred to as MessagingSession Id"
+    ContactId: linked string
+        source: @MessagingEndUser.ContactId
+        description: "This variable may also be referred to as MessagingEndUser ContactId"
+    EndUserLanguage: linked string
+        source: @MessagingSession.EndUserLanguage
+        description: "This variable may also be referred to as MessagingSession EndUserLanguage"
+    ChannelType: linked string
+        source: @MessagingSession.ChannelType
+        description: "This variable may also be referred to as MessagingSession ChannelType"
+    currentAppName: mutable string
+        description: "Salesforce Application Name"
+        visibility: "External"
+    currentObjectApiName: mutable string
+        description: "The API name of the current Salesforce object"
+        visibility: "External"
+    currentPageType: mutable string
+        description: "Page type (record, list, home)"
+        visibility: "External"
+    currentRecordId: mutable string
+        description: "The Salesforce ID of the current record"
+        visibility: "External"
+    VerifiedCustomerId: mutable string
+        description: "This variable may also be referred to as VerifiedCustomerId"
+        visibility: "Internal"
+
+knowledge:
+    rag_feature_config_id: ""
+    citations_url: ""
+    citations_enabled: False
+
+start_agent agent_router:
+    label: "Agent Router"
+    description: "Welcome the user and determine the appropriate subagent based on user input"
+    model_config:
+        model: "model://sfdc_ai__DefaultEinsteinHyperClassifier"
+    reasoning:
+        instructions: ->
+            | Select the best tool to call based on conversation history and user's intent.
+        actions:
+            go_to_Related_Records: @utils.transition to @subagent.Related_Records
+
+subagent Related_Records:
+    label: "Related Records"
+    description: |
+
+        This subagent will run the associateditem apex class to retrieve records and display them in a custom table.
+    reasoning:
+        instructions: ->
+            |When the user asks "Get Related Records", run {!@actions.Get_Related_Assembly_Records} and then {!@actions.AssociatedItems}. Dates are optional; use them only if the user gives a date range.
+
+             Steps, in this order:
+             1. Show the associatedItemsReport component once. This is the only time the results are displayed.
+             2. Run {!@actions.PhrQmsAdd} with Mode = Preview and the current record Id. Tell the user which records are the most relevant (up to 3 of each type, from the action's summary) and ask exactly: "Do you want to create the most relevant records?"
+             3. If the user answers yes, run {!@actions.PhrQmsAdd} with Mode = Apply and the same record Id. Tell the user, by record name (never by record Id), what was created and that the remaining related records are available in the PHR QMS Records panel. Do not display the report or any table again.
+                If the user answers no, do not run the action again. Tell the user, in positive language, that all related records are available in the PHR QMS Records panel.
+             4. After the user has decided on creating records (yes or no), ask exactly: "Do you want to create the summary report and attach it to the complaint?" This is a text prompt the user answers with yes or no.
+             5. If the user answers yes, run ONLY {!@actions.GenerateReportPdf} with the current record Id as Target Record Id (pass the dates only if the user gave a range). Do not run any investigation summary or draft summary action for this step. Then tell the user the report was created and attached to the complaint's Files. If the user answers no, do nothing further.
+
+             Rules:
+             Never run {!@actions.PhrQmsAdd} with Mode = Apply unless the user has answered yes in this conversation.
+             Never generate or rewrite the investigation summary unless the user explicitly asks for it.
+             Always ask the summary report question (step 4) after the records decision, as its own text prompt, never combined with the first question.
+             Do not restate the results as a table; the associatedItemsReport component displays them. Do not display a table at any other point.
+             Always use the lightning type associatedItemsReportType when running the associatedItemsReport.
+             Refer to records by name or number, never by Id.
+             Always use positive language when describing the response.
+             Never reveal information about data being in the system or not.
+             Never display a negative message to the user, except: if an action fails, tell the user the search failed.
+             Always tell the user that you successfully found records related to this record and its BOM.
+        actions:
+            AssociatedItems: @actions.AssociatedItems
+                with capaIds = ...
+                with changeOrderIds = ...
+                with inspectionIds = ...
+                with nonconformanceIds = ...
+                with primaryPartId = ...
+                with reportTitle = ...
+                with targetRecordId = ...
+            PhrQmsAdd: @actions.PhrQmsAdd
+                with recordId = ...
+                with mode = ...
+            GenerateReportPdf: @actions.GenerateReportPdf
+                with targetRecordId = ...
+                with reportTitle = ...
+                with startDate = ...
+                with endDate = ...
+            Get_Related_Assembly_Records: @actions.Get_Related_Assembly_Records
+                with assemblyList = ...
+                with countNC = ...
+                with counter = ...
+                with counterSingle = ...
+                with getPartList = ...
+                with idList = ...
+                with ncCounter = ...
+                with ncIDList = ...
+                with ncSingleTest = ...
+                with partList = ...
+                with primaryIDList = ...
+                with recordId = ...
+    actions:
+        AssociatedItems:
+            label: "AssociatedItems"
+            description: "Items"
+            target: "apex://AssociatedItemsReportAction"
+            inputs:
+                capaIds: list[id]
+                    label: "CAPA Ids"
+                    is_required: False
+                    description: "list"
+                changeOrderIds: list[id]
+                    label: "Change Order Ids"
+                    is_required: False
+                    description: "list"
+                inspectionIds: list[id]
+                    label: "Inspection Ids"
+                    is_required: False
+                    description: "list"
+                nonconformanceIds: list[id]
+                    label: "Nonconformance Ids"
+                    is_required: False
+                    description: "list"
+                primaryPartId: id
+                    label: "Primary Part Id"
+                    description: "The Complaint/record's primary Part. Used to look up the Part's own details plus its Assembly and Assembly Line Items. Leave blank and set Target Record Id instead to have this resolved automatically."
+                    is_required: False
+                reportTitle: string
+                    label: "Report Title"
+                    is_required: False
+                    description: "title"
+                targetRecordId: id
+                    label: "Target Record Id"
+                    description: "The Complaint record currently open in the conversation (e.g. the current record Id). When this is set and Primary Part Id is not, the Primary Part and its Nonconformances are looked up automatically from this Complaint."
+                    is_required: True
+            outputs:
+                report: object
+                    label: "Report"
+                    complex_data_type_name: "c__associatedItemsReportType"
+                    is_displayable: True
+                    filter_from_agent: False
+                    description: "report"
+            include_in_progress_indicator: True
+            progress_indicator_message: "Scouting..."
+
+        PhrQmsAdd:
+            label: "Add Related QMS Records to PHR"
+            description: "Lists the most relevant Nonconformances, CAPAs, Change Orders, Inspections and Investigations (top 3 of each type) for the Complaint, and adds them to the Product History Review and the Complaint's Linked Investigations when Mode is Apply. Use Apply only after the user answers yes."
+            target: "apex://PhrQmsRelatedRecordsAction"
+            inputs:
+                recordId: id
+                    label: "Complaint or PHR Id"
+                    description: "The Complaint (or Product History Review) currently open in the conversation."
+                    is_required: True
+                mode: string
+                    label: "Mode"
+                    description: "Preview (default) lists the top 3 per type and changes nothing. Apply creates them, only after the user answers yes."
+                    is_required: False
+            outputs:
+                summary: string
+                    label: "Summary"
+                    description: "Plain-text result to relay to the user."
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Checking the most relevant records..."
+
+        GenerateReportPdf:
+            label: "Generate Report PDF"
+            description: "Builds the Complaint Investigation Report PDF (the saved Draft Investigation Summary plus the associated items) and attaches it to the Complaint's Files. Does not generate or change the investigation summary."
+            target: "apex://GenerateAssociatedItemsReportAction"
+            inputs:
+                targetRecordId: id
+                    label: "Target Record Id"
+                    description: "The Complaint currently open in the conversation. The PDF is attached to this record."
+                    is_required: True
+                reportTitle: string
+                    label: "Report Title"
+                    description: "Optional file title. Leave blank for the default."
+                    is_required: False
+                startDate: date
+                    label: "Start Date"
+                    description: "Optional. Only if the user gave a date range."
+                    is_required: False
+                endDate: date
+                    label: "End Date"
+                    description: "Optional. Only if the user gave a date range."
+                    is_required: False
+            outputs:
+                success: boolean
+                    label: "Success"
+                    description: "Whether the PDF was created and attached."
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Creating the report..."
+
+        Get_Related_Assembly_Records:
+            label: "Get Related Assembly Records"
+            description: "Get Related Assembly Records"
+            target: "flow://Associated_Items_Competition"
+            inputs:
+                assemblyList: list[object]
+                    label: "assemblyList"
+                    description: "list"
+                    is_required: False
+                    complex_data_type_name: "lightning__recordInfoType"
+                countNC: number
+                    label: "countNC"
+                    description: "counter"
+                    is_required: False
+                counter: list[object]
+                    label: "counter"
+                    description: "counter"
+                    is_required: False
+                    complex_data_type_name: "lightning__recordInfoType"
+                counterSingle: number
+                    label: "counterSingle"
+                    description: "counter"
+                    is_required: False
+                getPartList: object
+                    label: "getPartList"
+                    description: "list"
+                    is_required: False
+                    complex_data_type_name: "lightning__recordInfoType"
+                idList: list[string]
+                    label: "idList"
+                    description: "list"
+                    is_required: False
+                ncCounter: number
+                    label: "ncCounter"
+                    description: "counter"
+                    is_required: False
+                ncIDList: list[string]
+                    label: "ncIDList"
+                    description: "list"
+                    is_required: False
+                ncSingleTest: string
+                    label: "ncSingleTest"
+                    description: "list"
+                    is_required: False
+                partList: list[object]
+                    label: "partList"
+                    description: "list"
+                    is_required: False
+                    complex_data_type_name: "lightning__recordInfoType"
+                primaryIDList: list[string]
+                    label: "primaryIDList"
+                    description: "list"
+                    is_required: False
+                recordId: string
+                    label: "recordId"
+                    description: "list"
+                    is_required: False
+            outputs:
+                assemblyList: list[object]
+                    label: "assemblyList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                assignmentNCList: list[object]
+                    label: "assignmentNCList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                assignmentNCListSingle: object
+                    label: "assignmentNCListSingle"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                capaList: list[object]
+                    label: "capaList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                changeOrderList: list[object]
+                    label: "changeOrderList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                countNC: number
+                    label: "countNC"
+                    description: "counter"
+                    is_displayable: False
+                    filter_from_agent: False
+                counter: list[object]
+                    label: "counter"
+                    description: "counter"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                counterSingle: number
+                    label: "counterSingle"
+                    description: "counter"
+                    is_displayable: False
+                    filter_from_agent: False
+                getPartList: object
+                    label: "getPartList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                idList: list[string]
+                    label: "idList"
+                    description: "list"
+                    is_displayable: False
+                    filter_from_agent: False
+                inspectionList: list[object]
+                    label: "inspectionList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                ncCounter: number
+                    label: "ncCounter"
+                    description: "counter"
+                    is_displayable: False
+                    filter_from_agent: False
+                ncIDList: list[string]
+                    label: "ncIDList"
+                    description: "list"
+                    is_displayable: False
+                    filter_from_agent: False
+                ncList: list[object]
+                    label: "ncList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                ncSingleTest: string
+                    label: "ncSingleTest"
+                    description: "list"
+                    is_displayable: False
+                    filter_from_agent: False
+                partList: list[object]
+                    label: "partList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                primaryIDList: list[string]
+                    label: "primaryIDList"
+                    description: "list"
+                    is_displayable: False
+                    filter_from_agent: False
+                recordId: string
+                    label: "recordId"
+                    description: "id"
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Thinking..."

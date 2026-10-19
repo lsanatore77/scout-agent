@@ -1,0 +1,5 @@
+{
+  "title": "PHR Missing Data Type",
+  "description": "PhrMissingDataResult returned by a PHR agent action",
+  "lightning:type": "@apexClassType/c__PhrMissingDataResult"
+}

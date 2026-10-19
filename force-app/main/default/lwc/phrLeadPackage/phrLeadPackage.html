@@ -1,0 +1,79 @@
+<template>
+    <lightning-card title="Worth reviewing" icon-name="standard:record">
+        <div class="body slds-p-horizontal_medium slds-p-bottom_medium">
+
+            <template if:true={hasError}>
+                <p class="error">{errorText}</p>
+            </template>
+
+            <template if:true={intro}>
+                <p class="intro">{intro}</p>
+            </template>
+
+            <template if:true={hasRating}>
+                <p class="rating-line">Overall: <span class={ratingClass}>{ratingText}</span></p>
+            </template>
+
+            <template for:each={sections} for:item="sec">
+                <div key={sec.key} class="card">
+                    <div class="card-head">
+                        <span class="card-title">{sec.heading}</span>
+                        <span class="card-note">{sec.headerNote}</span>
+                    </div>
+                    <template for:each={sec.rows} for:item="row">
+                        <div key={row.key} class="rec">
+                            <div class="rec-main">
+                                <span class="rec-name">{row.name}</span>
+                                <span class="rec-status">{row.status}</span>
+                            </div>
+                            <div class="rec-title">{row.title}</div>
+                            <template if:true={row.note}>
+                                <div class="rec-note">{row.note}</div>
+                            </template>
+                            <span class={row.chipClass} title={row.chipLabel}>
+                                <span class="slds-assistive-text">{row.chipLabel}</span>
+                            </span>
+                        </div>
+                    </template>
+                    <template if:true={sec.canToggle}>
+                        <button class="more" data-index={sec.index} onclick={handleToggleSection}>{sec.toggleLabel}</button>
+                    </template>
+                </div>
+            </template>
+
+            <template if:false={hasSections}>
+                <p class="empty">No records are worth reviewing for this complaint yet.</p>
+            </template>
+
+
+            <template if:true={hasSetAside}>
+                <button class="more aside-toggle" onclick={handleToggleAside}>{setAsideToggleLabel}</button>
+                <template if:true={showAside}>
+                    <div class="card">
+                        <div class="card-head">
+                            <span class="card-title">Set aside ({setAsideCount})</span>
+                            <span class="card-note">not added unless you ask</span>
+                        </div>
+                        <template for:each={setAsideRows} for:item="row">
+                            <div key={row.key} class="rec">
+                                <div class="rec-main">
+                                    <span class="rec-name">{row.name}</span>
+                                    <span class="rec-status">{row.status}</span>
+                                </div>
+                                <div class="rec-title">{row.title}</div>
+                                <div class="rec-note">Why set aside: {row.reason}</div>
+                                <span class={row.chipClass} title={row.chipLabel}>
+                                    <span class="slds-assistive-text">{row.chipLabel}</span>
+                                </span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </template>
+
+            <template if:true={hasSections}>
+                <p class="prompt">Would you like to add these to the Product History Review? Say "yes" to choose which records to add, or "no" to leave it for now.</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>

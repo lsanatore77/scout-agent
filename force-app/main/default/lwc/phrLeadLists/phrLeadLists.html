@@ -1,0 +1,81 @@
+<template>
+    <div class="wrap">
+        <div class="top">
+            <span class="top-title">Records worth reviewing</span>
+            <lightning-button-icon icon-name="utility:refresh" variant="border-filled" size="small"
+                alternative-text="Refresh" onclick={handleRefresh}></lightning-button-icon>
+        </div>
+
+        <template if:true={loading}>
+            <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+        </template>
+
+        <template if:true={hasError}>
+            <p class="error">{error}</p>
+        </template>
+
+        <template if:false={hasAny}>
+            <template if:false={loading}>
+                <p class="empty">No records have been added to this Product History Review yet.</p>
+            </template>
+        </template>
+
+        <template if:true={hasAny}>
+            <template for:each={tiers} for:item="tier">
+                <lightning-card key={tier.key} title={tier.heading} icon-name="standard:record">
+                    <div class="table slds-p-horizontal_small slds-p-bottom_small">
+                        <template if:true={tier.hasRows}>
+                            <table class="grid">
+                                <thead>
+                                    <tr>
+                                        <template for:each={tier.headers} for:item="hd">
+                                            <th key={hd.key} scope="col">{hd.label}</th>
+                                        </template>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template for:each={tier.rows} for:item="row">
+                                        <tr key={row.id}>
+                                            <td><a href={row.link} target="_blank" rel="noopener">{row.recordNumber}</a></td>
+                                            <td>{row.recordType}</td>
+                                            <template if:true={row.asideTier}>
+                                                <td class="wrap-cell">{row.title}</td>
+                                            </template>
+                                            <td>{row.status}</td>
+                                            <td class="dot-cell">
+                                                <template if:true={row.hasDot}>
+                                                    <span class={row.dotClass} title={row.dotLabel}>
+                                                        <span class="slds-assistive-text">{row.dotLabel}</span>
+                                                    </span>
+                                                </template>
+                                            </td>
+                                            <template if:false={row.asideTier}>
+                                                <td class="wrap-cell">{row.relatedBy}</td>
+                                            </template>
+                                            <template if:true={row.asideTier}>
+                                                <td class="wrap-cell">{row.reason}</td>
+                                            </template>
+                                            <template if:true={row.showAdded}>
+                                                <td>{row.addedLabel}</td>
+                                            </template>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </template>
+                        <template if:false={tier.hasRows}>
+                            <p class="empty">{tier.empty}</p>
+                        </template>
+                    </div>
+                </lightning-card>
+            </template>
+            <template if:true={hasNotAdded}>
+                <div class="notadded">
+                    <p class="empty">{notAddedNote}</p>
+                    <lightning-input type="toggle" label="Show not added" checked={showNotAdded}
+                        message-toggle-active="" message-toggle-inactive="" onchange={handleShowNotAdded}></lightning-input>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>

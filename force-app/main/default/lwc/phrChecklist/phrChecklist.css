@@ -1,0 +1,14 @@
+:host { display: block; max-width: 100%; }
+.body { display: flex; flex-direction: column; gap: 0.75rem; max-width: 100%; }
+.intro { font-size: 0.8125rem; line-height: 1.4; }
+.error { color: #ba0517; font-size: 0.8125rem; }
+.empty { color: #706e6b; font-size: 0.8125rem; }
+.card { background: #fff; border: 1px solid #dddbda; border-radius: 0.5rem; overflow: hidden; }
+.row { padding: 0.5rem 0.75rem; border-bottom: 1px solid #eee; }
+.row:last-child { border-bottom: 0; }
+.question { font-size: 0.8125rem; overflow-wrap: anywhere; }
+.num { font-weight: 700; margin-right: 0.25rem; }
+.answer { margin-top: 0.25rem; padding: 0.25rem 0.5rem; border: 1px solid #c9c9c9; border-radius: 0.25rem;
+    background: #fafaf9; font-size: 0.75rem; overflow-wrap: anywhere; }
+.answer-none { color: #706e6b; }
+.basis { margin-top: 0.125rem; color: #706e6b; font-size: 0.6875rem; }

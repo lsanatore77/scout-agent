@@ -1,0 +1,28 @@
+<template>
+    <lightning-card title={cardTitle} icon-name="standard:checklist">
+        <div class="body slds-p-horizontal_medium slds-p-bottom_medium">
+            <template if:true={hasError}>
+                <p class="error">{errorText}</p>
+            </template>
+            <template if:true={intro}>
+                <p class="intro">{intro}</p>
+            </template>
+            <template if:true={hasItems}>
+                <div class="card">
+                    <template for:each={items} for:item="q">
+                        <div key={q.key} class="row">
+                            <div class="question"><span class="num">{q.number}</span> {q.question}</div>
+                            <div class={q.answerClass}>Suggested: {q.answer}</div>
+                            <template if:true={q.basis}>
+                                <div class="basis">Based on {q.basis}</div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+            <template if:false={hasItems}>
+                <p class="empty">No checklist questions were returned.</p>
+            </template>
+        </div>
+    </lightning-card>
+</template>

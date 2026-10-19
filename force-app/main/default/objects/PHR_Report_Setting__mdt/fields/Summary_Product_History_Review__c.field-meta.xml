@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Summary_Product_History_Review__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>When on, the draft investigation summary includes the Associated Items section (this checkbox controls that section).</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>When on, the draft investigation summary includes the Associated Items section (this checkbox controls that section).</inlineHelpText>
+    <label>Summary: Product History Review</label>
+    <type>Checkbox</type>
+</CustomField>

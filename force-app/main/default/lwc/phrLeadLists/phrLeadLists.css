@@ -1,0 +1,17 @@
+:host { display: block; max-width: 100%; }
+.wrap { display: flex; flex-direction: column; gap: 0.75rem; position: relative; }
+.top { display: flex; justify-content: space-between; align-items: center; }
+.top-title { font-weight: 700; font-size: 0.9375rem; }
+.error { color: #ba0517; font-size: 0.8125rem; }
+.empty { color: #706e6b; font-size: 0.8125rem; }
+.table { max-width: 100%; overflow-x: auto; }
+.notadded { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.grid { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
+.grid th { text-align: left; font-weight: 700; color: #706e6b; padding: 0.5rem 0.625rem; border-bottom: 1px solid #c9c9c9; white-space: nowrap; }
+.grid td { padding: 0.5rem 0.625rem; border-bottom: 1px solid #e5e5e5; vertical-align: top; }
+.wrap-cell { white-space: normal; word-break: break-word; }
+.dot-cell { text-align: center; }
+.dot { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; vertical-align: middle; }
+.dot-red { background: #e8403f; }
+.dot-yellow { background: #f5c518; }
+.dot-grey { background: #b9b9b9; }

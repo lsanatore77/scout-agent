@@ -1,0 +1,7 @@
+{
+  "renderer": {
+    "componentOverrides": {
+      "$": { "definition": "c/phrChecklist" }
+    }
+  }
+}

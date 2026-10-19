@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Use_Manufacture_Date_Window__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>When on, only records created between (manufactured date minus Days Before) and (manufactured date plus Days After) are considered. The manufactured date comes from the complaint's Lot Info record. If there is no Lot Info or no manufactured date, the window is skipped.</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>When on, only records created from (manufactured date minus Days Before) to (manufactured date plus Days After) are considered. Uses the Lot Info manufactured date; skipped if there is none.</inlineHelpText>
+    <label>Use Manufacture Date Window</label>
+    <type>Checkbox</type>
+</CustomField>
