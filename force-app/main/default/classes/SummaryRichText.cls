@@ -122,7 +122,7 @@ public with sharing class SummaryRichText {
                 flushPara(out, para);
                 closeLists(out, stack, 0);
                 Integer level = Math.min(hm.group(1).length() + 1, 6);
-                out.add('<h' + level + '>' + inline(hm.group(2)) + '</h' + level + '>');
+                out.add('<h' + level + '><strong>' + inline(hm.group(2)) + '</strong></h' + level + '>');
                 continue;
             }
             if (ruleP.matcher(trimmed).matches()) {

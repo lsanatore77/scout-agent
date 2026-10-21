@@ -22,7 +22,7 @@ private class SummaryRichTextTest {
     @IsTest
     static void markdownHeadingsRulesAndLinks() {
         String html = SummaryRichText.fromAgent('# Title\n---\nSee [site](https://example.com) and [bad](javascript:alert(1))');
-        Assert.isTrue(html.startsWith('<h2>Title</h2><hr/>'), html);
+        Assert.isTrue(html.startsWith('<h2><strong>Title</strong></h2><hr/>'), html);
         Assert.isTrue(html.contains('<a href="https://example.com">site</a>'), html);
         Assert.isFalse(html.contains('<a href="javascript'), html);
     }
@@ -75,9 +75,9 @@ private class SummaryRichTextTest {
             + 'Product History Review PHR-000002 is in *Draft* status. '
             + 'Trends, gaps and next steps  - Trend: many open NCs.  - Gap: answers missing. This is an AI-generated draft that requires review.';
         String html = SummaryRichText.fromAgent(flat);
-        Assert.isTrue(html.startsWith('<h3>Associated Items</h3>'), html);
-        Assert.isTrue(html.contains('<h3>Product History Review</h3>'), html);
-        Assert.isTrue(html.contains('<h3>Trends, gaps and next steps</h3>'), html);
+        Assert.isTrue(html.startsWith('<h3><strong>Associated Items</strong></h3>'), html);
+        Assert.isTrue(html.contains('<h3><strong>Product History Review</strong></h3>'), html);
+        Assert.isTrue(html.contains('<h3><strong>Trends, gaps and next steps</strong></h3>'), html);
         Assert.isTrue(html.contains('<ul><li>NC-000055 | Open | Automobile</li><li>CAPA-000029 | Open | Automobile.</li></ul>'), html);
         Assert.isTrue(html.contains('<ul><li>Trend: many open NCs.</li><li>Gap: answers missing.</li></ul>'), html);
         Assert.isTrue(html.endsWith('<p>This is an AI-generated draft that requires review.</p>'), html);
@@ -96,9 +96,9 @@ private class SummaryRichTextTest {
             + 'Trends, gaps and next steps\n\n* Trend: Spark Plug has multiple NCs. - Trend: Engine Block shows open items. - Gaps: several answers missing.\n\n'
             + 'Product History Review\nPHR-000000 Status: Draft. - Recommended next steps: execute INS-0000000000.\nThis is an AI-generated draft that requires investigator review.';
         String html = SummaryRichText.fromAgent(text);
-        Assert.isTrue(html.startsWith('<h3>Complaint Overview</h3><p>The primary complaint'), html);
-        Assert.isTrue(html.contains('<h3>Trends, gaps and next steps</h3>'), html);
-        Assert.isTrue(html.contains('<h3>Product History Review</h3><p>PHR-000000 Status: Draft.</p>'), html);
+        Assert.isTrue(html.startsWith('<h3><strong>Complaint Overview</strong></h3><p>The primary complaint'), html);
+        Assert.isTrue(html.contains('<h3><strong>Trends, gaps and next steps</strong></h3>'), html);
+        Assert.isTrue(html.contains('<h3><strong>Product History Review</strong></h3><p>PHR-000000 Status: Draft.</p>'), html);
         Assert.isTrue(html.contains('<li>NC-000041 | Draft | Spark Plug.</li>'), html);
         Assert.isTrue(html.contains('<li>Trend: Spark Plug has multiple NCs.</li><li>Trend: Engine Block shows open items.</li><li>Gaps: several answers missing.</li>'), html);
         Assert.isTrue(html.contains('<li>Recommended next steps: execute INS-0000000000.</li>'), html);
