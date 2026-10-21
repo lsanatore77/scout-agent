@@ -217,6 +217,25 @@ public with sharing class SummaryRichText {
         return s;
     }
 
+    /**
+     * Bolds every record number (NC, CAPA, CHG, INS, INV, PHR, PHA, COM) that is plain text.
+     * Numbers already inside <strong>, <b> or <a> are left alone, and tags are never touched.
+     */
+    public static String boldRecordIds(String html) {
+        if (String.isBlank(html)) { return html; }
+        Matcher m = Pattern.compile(
+            '(?is)<(strong|b|a)\\b[^>]*>.*?</\\1>|<[^>]+>|(?<![\\w-])((?:NC|CAPA|CHG|INS|INV|PHR|PHA|COM)-\\d+)(?![\\w-])'
+        ).matcher(html);
+        String out = '';
+        Integer last = 0;
+        while (m.find()) {
+            out += html.substring(last, m.start());
+            out += m.group(2) != null ? '<strong>' + m.group(2) + '</strong>' : m.group(0);
+            last = m.end();
+        }
+        return out + html.substring(last);
+    }
+
     // ---------- Sanitizer ----------
 
     @TestVisible

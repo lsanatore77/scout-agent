@@ -17,7 +17,7 @@
  */
 public with sharing class SummaryHtmlRepair {
 
-    static final String ID = '(?:NC|CAPA|CHG|INS|INV|PHR|COM)-\\d+';
+    static final String ID = '(?:NC|CAPA|CHG|INS|INV|PHR|PHA|COM)-\\d+';
 
     static final List<String> TITLES = new List<String>{
         'Complaint Overview', 'Associated Items', 'Product History Review', 'Analysis and Next Steps',

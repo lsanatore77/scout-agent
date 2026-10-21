@@ -112,4 +112,16 @@ private class SummaryRichTextTest {
         Assert.isTrue(html.contains('<a href="/a0Chm000002XyZaEAL">CAPA-000016</a>'), html);
         Assert.isFalse(html.contains('evil.com"'), html);
     }
+
+    @IsTest
+    static void recordNumbersAreBoldedOnceAndLinksAreUntouched() {
+        String html = SummaryRichText.boldRecordIds('<h3><strong>Review of COM-0000000001</strong></h3><ul><li>PHA-000030. Answer: No.</li>'
+            + '<li><strong>NC-000104</strong> | Draft</li><li><a href="/a0B">CAPA-000016</a> and INS-0000000000.</li></ul><p>XNC-1 and NC-2x</p>');
+        Assert.isTrue(html.contains('<h3><strong>Review of COM-0000000001</strong></h3>'), html);
+        Assert.isTrue(html.contains('<li><strong>PHA-000030</strong>. Answer: No.</li>'), html);
+        Assert.isTrue(html.contains('<li><strong>NC-000104</strong> | Draft</li>'), html);
+        Assert.isFalse(html.contains('<strong><strong>'), html);
+        Assert.isTrue(html.contains('<a href="/a0B">CAPA-000016</a> and <strong>INS-0000000000</strong>.'), html);
+        Assert.isTrue(html.contains('<p>XNC-1 and NC-2x</p>'), html);
+    }
 }
