@@ -217,6 +217,12 @@ public with sharing class SummaryRichText {
         return s;
     }
 
+    /** Wraps the text of every heading in <strong> unless it already is, so headings show bold in the field. */
+    public static String boldHeadings(String html) {
+        if (String.isBlank(html)) { return html; }
+        return html.replaceAll('(?is)<(h[1-6])>(?!\\s*<(?:strong|b)>)(.*?)</\\1>', '<$1><strong>$2</strong></$1>');
+    }
+
     /**
      * Bolds every record number (NC, CAPA, CHG, INS, INV, PHR, PHA, COM) that is plain text.
      * Numbers already inside <strong>, <b> or <a> are left alone, and tags are never touched.

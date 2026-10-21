@@ -124,4 +124,13 @@ private class SummaryRichTextTest {
         Assert.isTrue(html.contains('<a href="/a0B">CAPA-000016</a> and <strong>INS-0000000000</strong>.'), html);
         Assert.isTrue(html.contains('<p>XNC-1 and NC-2x</p>'), html);
     }
+
+    @IsTest
+    static void headingsAreBoldedOnceWhetherHtmlOrMarkdown() {
+        String html = SummaryRichText.boldHeadings('<h3>Complaint Overview</h3>\n<p>Text</p><h3><strong>Done</strong></h3><h2>A <em>b</em></h2>');
+        Assert.isTrue(html.contains('<h3><strong>Complaint Overview</strong></h3>'), html);
+        Assert.isTrue(html.contains('<h3><strong>Done</strong></h3>'), html);
+        Assert.isFalse(html.contains('<strong><strong>'), html);
+        Assert.isTrue(html.contains('<h2><strong>A <em>b</em></strong></h2>'), html);
+    }
 }

@@ -37,7 +37,7 @@ public with sharing class SaveDraftInvestigationSummary {
         for (Request req : requests) {
             SObject complaint = Schema.getGlobalDescribe()
                 .get(COMPLAINT_OBJ).newSObject(req.complaintId);
-            complaint.put(SUMMARY_FIELD, SummaryRichText.boldRecordIds(SummaryRichText.fromAgent(SummaryHtmlRepair.repair(req.summary))));
+            complaint.put(SUMMARY_FIELD, SummaryRichText.boldRecordIds(SummaryRichText.boldHeadings(SummaryRichText.fromAgent(SummaryHtmlRepair.repair(req.summary)))));
             updates.add(complaint);
         }
 
