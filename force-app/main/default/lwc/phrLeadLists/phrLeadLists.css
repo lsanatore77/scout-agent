@@ -1,5 +1,6 @@
 :host { display: block; max-width: 100%; }
-.wrap { display: flex; flex-direction: column; gap: 0.75rem; position: relative; }
+.wrap { display: flex; flex-direction: column; gap: 0.75rem; position: relative; background: #ffffff; border-radius: 0.5rem; padding: 0.75rem 1rem 1rem; }
+lightning-card { display: block; border: 1px solid #e5e5e5; border-radius: 0.5rem; }
 .top { display: flex; justify-content: space-between; align-items: center; }
 .top-title { font-weight: 700; font-size: 0.9375rem; }
 .error { color: #ba0517; font-size: 0.8125rem; }

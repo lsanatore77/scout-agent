@@ -18,9 +18,9 @@ const LEAD_HEADERS = ['Record', 'Type', 'Status', 'Match', 'Related by'];
 const SET_ASIDE_HEADERS = ['Record', 'Type', 'Title', 'Status', 'Match', 'Why set aside'];
 const ADDED_HEADER = 'Added';
 const TIERS = [
-    { key: 'Top', title: 'Top leads', empty: 'No top leads were added.' },
-    { key: 'Next', title: 'Next leads', empty: 'No further leads were added.' },
-    { key: 'Set aside', title: 'Set aside', empty: 'No set-aside records were added.' }
+    { key: 'Top', title: 'Most Relevant', empty: 'No most relevant records were added.' },
+    { key: 'Next', title: 'Less Relevant', empty: 'No less relevant records were added.' },
+    { key: 'Set aside', title: 'Set Aside', empty: 'No set aside records were added.' }
 ];
 
 export default class PhrLeadLists extends LightningElement {
