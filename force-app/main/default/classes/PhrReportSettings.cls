@@ -16,6 +16,7 @@ public with sharing class PhrReportSettings {
         public Boolean summaryOverview = true;
         public Boolean summaryAssociatedItems = true;   // the "Summary: Product History Review" checkbox
         public Boolean summaryAnalysis = true;
+        public String templateDocument;   // Document Number or record Id of the report template controlled document; blank = PHR-TEMPLATE-001
     }
 
     @TestVisible private static Values testValues;
@@ -39,7 +40,21 @@ public with sharing class PhrReportSettings {
         } catch (Exception ex) {
             // Type not deployed yet, or no access: keep the defaults.
         }
+        v.templateDocument = readTemplateDocument();
         return v;
+    }
+
+    /** Read on its own so the other settings still work in an org where this field is not deployed yet. */
+    private static String readTemplateDocument() {
+        try {
+            List<SObject> rows = Database.query(
+                'SELECT Template_Controlled_Document__c FROM PHR_Report_Setting__mdt WHERE DeveloperName = \'Default\' LIMIT 1');
+            if (rows.isEmpty() || rows[0].get('Template_Controlled_Document__c') == null) { return null; }
+            String t = String.valueOf(rows[0].get('Template_Controlled_Document__c')).trim();
+            return String.isBlank(t) ? null : t;
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private static Boolean flag(SObject r, String field, Boolean fallback) {

@@ -122,4 +122,28 @@ private class PhrTemplateReportTest {
         System.assertEquals(null, lk.text);
         System.assertEquals(null, lk.problem);
     }
+
+    @IsTest static void settingNamingMissingDocumentGivesAProblemAndFallsBack() {
+        PhrReportSettings.Values v = new PhrReportSettings.Values();
+        v.templateDocument = 'DOES-NOT-EXIST-001';
+        PhrReportSettings.testValues = v;
+        PhrReportRenderer.TemplateLookup lk = PhrReportRenderer.findControlledTemplate();
+        System.assertEquals(null, lk.text);
+        System.assert(lk.problem != null && lk.problem.contains('DOES-NOT-EXIST-001'), lk.problem);
+    }
+
+    @IsTest static void blankSettingUsesTheDefaultDocumentNumber() {
+        PhrReportSettings.testValues = new PhrReportSettings.Values();
+        System.assertEquals(PhrReportRenderer.TEMPLATE_DOC_NUMBER, PhrReportRenderer.templateRef());
+        PhrReportSettings.Values v = new PhrReportSettings.Values();
+        v.templateDocument = '  PHR-TEMPLATE-009 ';
+        PhrReportSettings.testValues = v;
+        System.assertEquals('PHR-TEMPLATE-009', PhrReportRenderer.templateRef());
+    }
+
+    @IsTest static void onlyARealControlledDocumentIdCountsAsAnId() {
+        System.assertEquals(false, PhrReportRenderer.isControlledDocumentId(null));
+        System.assertEquals(false, PhrReportRenderer.isControlledDocumentId('PHR-TEMPLATE-001'));
+        System.assertEquals(false, PhrReportRenderer.isControlledDocumentId('001000000000000AAA'));
+    }
 }

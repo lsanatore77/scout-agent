@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Template_Controlled_Document__c</fullName>
+    <description>The controlled document whose primary file is the report template. Enter its Document Number (for example PHR-TEMPLATE-001) or its record Id. Leave blank to use PHR-TEMPLATE-001. If the document is not found or not Current, the built-in template is used.</description>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>Document Number or record Id of the controlled document that holds the report template. Blank = PHR-TEMPLATE-001. The document must be Current and have a Salesforce file as its primary content.</inlineHelpText>
+    <label>Template Controlled Document</label>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

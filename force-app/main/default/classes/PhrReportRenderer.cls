@@ -5,7 +5,8 @@
  *
  * The layout comes from an XHTML template with {{placeholders}}:
  *   1. the file attached as primary content to the Current controlled document
- *      whose Document Number is TEMPLATE_DOC_NUMBER, if there is one and it is valid;
+ *      named in the PHR Report Setting (Template Controlled Document: a Document Number or a record Id;
+ *      blank means TEMPLATE_DOC_NUMBER), if it is Current and valid;
  *   2. otherwise the static resource PHR_Report_Default_Template.
  *
  * A template is only used if it is well-formed XML both before and after it is filled.
@@ -39,7 +40,7 @@ public without sharing class PhrReportRenderer {
             html = fill(custom, d, false);
             if (html == null) { html = fill(custom, d, true); } // retry with the draft summary as plain text
             if (html != null) {
-                res.source = 'Controlled document ' + TEMPLATE_DOC_NUMBER;
+                res.source = 'Controlled document ' + lk.label;
             } else {
                 res.warning = 'The controlled document template did not produce valid XML, so the built-in template was used.';
             }
@@ -61,40 +62,76 @@ public without sharing class PhrReportRenderer {
     public class TemplateLookup {
         public String text;
         public String problem;
+        public String label;   // Document Number of the controlled document that was used
+    }
+
+    /** The template named in the PHR Report Setting, or the default Document Number when it is blank. */
+    @TestVisible
+    private static String templateRef() {
+        String v = PhrReportSettings.get().templateDocument;
+        return String.isBlank(v) ? TEMPLATE_DOC_NUMBER : v.trim();
+    }
+
+    /** True when the text is a record Id of a controlled document (rather than a Document Number). */
+    @TestVisible
+    private static Boolean isControlledDocumentId(String v) {
+        if (String.isBlank(v) || (v.length() != 15 && v.length() != 18)) { return false; }
+        try {
+            return Id.valueOf(v).getSObjectType() == compliancequest__SQX_Controlled_Document__c.SObjectType;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     @TestVisible
     private static TemplateLookup findControlledTemplate() {
         TemplateLookup lk = new TemplateLookup();
+        String want = templateRef();
+        Boolean chosen = want != TEMPLATE_DOC_NUMBER;
         try {
-            List<compliancequest__SQX_Controlled_Document__c> docs = [
-                SELECT compliancequest__Valid_Content_Reference__c, compliancequest__Content_Reference__c
-                FROM compliancequest__SQX_Controlled_Document__c
-                WHERE compliancequest__Document_Number__c = :TEMPLATE_DOC_NUMBER
-                AND compliancequest__Document_Status__c = 'Current'
-                ORDER BY CreatedDate DESC LIMIT 1
-            ];
-            if (docs.isEmpty()) { return lk; } // not an error: nobody has set one up
+            List<compliancequest__SQX_Controlled_Document__c> docs;
+            if (isControlledDocumentId(want)) {
+                docs = [
+                    SELECT compliancequest__Document_Number__c, compliancequest__Valid_Content_Reference__c, compliancequest__Content_Reference__c
+                    FROM compliancequest__SQX_Controlled_Document__c
+                    WHERE Id = :want AND compliancequest__Document_Status__c = 'Current' LIMIT 1
+                ];
+            } else {
+                docs = [
+                    SELECT compliancequest__Document_Number__c, compliancequest__Valid_Content_Reference__c, compliancequest__Content_Reference__c
+                    FROM compliancequest__SQX_Controlled_Document__c
+                    WHERE compliancequest__Document_Number__c = :want
+                    AND compliancequest__Document_Status__c = 'Current'
+                    ORDER BY CreatedDate DESC LIMIT 1
+                ];
+            }
+            if (docs.isEmpty()) {
+                // Not an error when nobody has set one up; a problem when the setting names one that cannot be used.
+                if (chosen) { lk.problem = 'The controlled document ' + want + ' named in the PHR Report Setting was not found or is not Current, so the built-in template was used.'; }
+                return lk;
+            }
+            String label = String.isNotBlank(docs[0].compliancequest__Document_Number__c) ? docs[0].compliancequest__Document_Number__c : want;
             String ref = String.isNotBlank(docs[0].compliancequest__Valid_Content_Reference__c)
                 ? docs[0].compliancequest__Valid_Content_Reference__c
                 : docs[0].compliancequest__Content_Reference__c;
             if (String.isBlank(ref) || !ref.startsWith('069')) {
-                lk.problem = 'The controlled document ' + TEMPLATE_DOC_NUMBER + ' has no Salesforce file as its primary content, so the built-in template was used.';
+                lk.problem = 'The controlled document ' + label + ' has no Salesforce file as its primary content, so the built-in template was used.';
                 return lk;
             }
             List<ContentVersion> cvs = [
                 SELECT VersionData FROM ContentVersion WHERE ContentDocumentId = :ref AND IsLatest = true LIMIT 1
             ];
             if (cvs.isEmpty()) {
-                lk.problem = 'The primary content file of ' + TEMPLATE_DOC_NUMBER + ' could not be read, so the built-in template was used.';
+                lk.problem = 'The primary content file of ' + label + ' could not be read, so the built-in template was used.';
                 return lk;
             }
             String text = cvs[0].VersionData.toString();
             if (!isWellFormed(text) || !text.contains('<html')) {
-                lk.problem = 'The template file on ' + TEMPLATE_DOC_NUMBER + ' is not valid XHTML, so the built-in template was used.';
+                lk.problem = 'The template file on ' + label + ' is not valid XHTML, so the built-in template was used.';
                 return lk;
             }
             lk.text = text;
+            lk.label = label;
         } catch (Exception ex) {
             lk.problem = 'The controlled document template could not be loaded (' + ex.getMessage() + '), so the built-in template was used.';
         }
