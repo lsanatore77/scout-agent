@@ -1,5 +1,6 @@
 import { LightningElement, api } from 'lwc';
 import getLeads from '@salesforce/apex/PhrLeadListController.getLeads';
+import getLeadsForInvestigation from '@salesforce/apex/PhrLeadListController.getLeadsForInvestigation';
 
 /**
  * phrLeadLists: the three tier lists (Top, Next, Set aside) of the records that
@@ -17,6 +18,8 @@ const DOT = {
 const LEAD_HEADERS = ['Record', 'Type', 'Status', 'Match', 'Related by'];
 const SET_ASIDE_HEADERS = ['Record', 'Type', 'Title', 'Status', 'Match', 'Why set aside'];
 const ADDED_HEADER = 'Added';
+const PHR_HEADER = 'PHR';
+const INVESTIGATION_OBJECT = 'compliancequest__SQX_Investigation__c';
 const TIERS = [
     { key: 'Top', title: 'Most Relevant', empty: 'No most relevant records were added.' },
     { key: 'Next', title: 'Less Relevant', empty: 'No less relevant records were added.' },
@@ -25,6 +28,7 @@ const TIERS = [
 
 export default class PhrLeadLists extends LightningElement {
     @api recordId;
+    @api objectApiName;
     rows = [];
     loading = true;
     showNotAdded = false;
@@ -37,7 +41,10 @@ export default class PhrLeadLists extends LightningElement {
     load() {
         this.loading = true;
         this.error = undefined;
-        getLeads({ phrId: this.recordId })
+        const request = this.isInvestigation
+            ? getLeadsForInvestigation({ investigationId: this.recordId })
+            : getLeads({ phrId: this.recordId });
+        request
             .then((data) => {
                 this.rows = data || [];
             })
@@ -47,6 +54,21 @@ export default class PhrLeadLists extends LightningElement {
             .finally(() => {
                 this.loading = false;
             });
+    }
+
+    get isInvestigation() {
+        return this.objectApiName === INVESTIGATION_OBJECT;
+    }
+
+    /** The PHR column only appears when the leads come from more than one Product History Review. */
+    get showPhr() {
+        return new Set(this.rows.map((r) => r.phrName)).size > 1;
+    }
+
+    get emptyMessage() {
+        return this.isInvestigation
+            ? 'No records have been added to a Product History Review linked to this investigation yet.'
+            : 'No records have been added to this Product History Review yet.';
     }
 
     get hasError() {
@@ -79,7 +101,7 @@ export default class PhrLeadLists extends LightningElement {
             n +
             (n === 1 ? ' more record was' : ' more records were') +
             (this.showNotAdded ? ' found but not added (shown below).' : ' found but not added.') +
-            ' Ask the agent to "show package" to add them.'
+            (this.isInvestigation ? ' They can be added from the complaint in the agent.' : ' Ask the agent to "show package" to add them.')
         );
     }
 
@@ -87,7 +109,9 @@ export default class PhrLeadLists extends LightningElement {
         return TIERS.map((t) => {
             const rows = this.visibleRows.filter((r) => r.tier === t.key);
             const asideTier = t.key === 'Set aside';
-            const headers = (asideTier ? SET_ASIDE_HEADERS : LEAD_HEADERS).concat(this.showNotAdded ? [ADDED_HEADER] : []);
+            const headers = (asideTier ? SET_ASIDE_HEADERS : LEAD_HEADERS)
+                .concat(this.showPhr ? [PHR_HEADER] : [])
+                .concat(this.showNotAdded ? [ADDED_HEADER] : []);
             return {
                 key: t.key,
                 heading: t.title + ' (' + rows.length + ')',
@@ -107,7 +131,8 @@ export default class PhrLeadLists extends LightningElement {
             hasDot: !!d,
             dotClass: d ? d.cls : '',
             dotLabel: d ? d.label + (r.relevance == null ? '' : ' (' + r.relevance + ')') : '',
-            showAdded: this.showNotAdded
+            showAdded: this.showNotAdded,
+            showPhr: this.showPhr
         };
     }
 
