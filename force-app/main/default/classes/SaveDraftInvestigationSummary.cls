@@ -34,20 +34,24 @@ public with sharing class SaveDraftInvestigationSummary {
         description='Saves the draft investigation summary text to the Draft Investigation Summaries rich text field on the Complaint record, keeping bold text, bullet points and other formatting.')
     public static List<Result> save(List<Request> requests) {
         List<SObject> updates = new List<SObject>();
+        List<String> htmls = new List<String>();
         for (Request req : requests) {
             SObject complaint = Schema.getGlobalDescribe()
                 .get(COMPLAINT_OBJ).newSObject(req.complaintId);
-            complaint.put(SUMMARY_FIELD, SummaryRichText.boldRecordIds(SummaryRichText.boldHeadings(SummaryRichText.fromAgent(SummaryHtmlRepair.repair(req.summary)))));
+            String html = SummaryRichText.boldRecordIds(SummaryRichText.boldHeadings(SummaryRichText.fromAgent(SummaryHtmlRepair.repair(req.summary))));
+            complaint.put(SUMMARY_FIELD, html);
             updates.add(complaint);
+            htmls.add(html);
         }
 
         List<Database.SaveResult> saveResults = Database.update(updates, false, AccessLevel.USER_MODE);
         List<Result> results = new List<Result>();
-        for (Database.SaveResult sr : saveResults) {
+        for (Integer i = 0; i < saveResults.size(); i++) {
+            Database.SaveResult sr = saveResults[i];
             Result r = new Result();
             r.success = sr.isSuccess();
             if (sr.isSuccess()) {
-                r.message = 'Draft investigation summary saved to the complaint.';
+                r.message = 'Draft investigation summary saved to the complaint.' + updateInvestigations(requests[i].complaintId, htmls[i]);
             } else {
                 List<String> errors = new List<String>();
                 for (Database.Error e : sr.getErrors()) {
@@ -58,5 +62,54 @@ public with sharing class SaveDraftInvestigationSummary {
             results.add(r);
         }
         return results;
+    }
+
+    /**
+     * Copies the saved summary to the Investigation Summary field of every investigation linked to the
+     * complaint (and the complaint's primary investigation). The complaint is already saved, so a problem
+     * here never undoes it: the problem is reported in the message instead.
+     */
+    @TestVisible
+    private static String updateInvestigations(Id complaintId, String html) {
+        try {
+            Set<Id> invIds = new Set<Id>();
+            for (compliancequest__SQX_Linked_Investigation__c li : [
+                SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Linked_Investigation__c
+                WHERE compliancequest__SQX_Complaint__c = :complaintId
+                WITH USER_MODE
+            ]) {
+                if (li.compliancequest__SQX_Investigation__c != null) { invIds.add(li.compliancequest__SQX_Investigation__c); }
+            }
+            for (compliancequest__SQX_Complaint__c c : [
+                SELECT compliancequest__SQX_Primary_Investigation__c FROM compliancequest__SQX_Complaint__c
+                WHERE Id = :complaintId
+                WITH USER_MODE
+            ]) {
+                if (c.compliancequest__SQX_Primary_Investigation__c != null) { invIds.add(c.compliancequest__SQX_Primary_Investigation__c); }
+            }
+            if (invIds.isEmpty()) { return ' No investigation is linked to this complaint.'; }
+
+            List<compliancequest__SQX_Investigation__c> invs = new List<compliancequest__SQX_Investigation__c>();
+            for (Id invId : invIds) {
+                invs.add(new compliancequest__SQX_Investigation__c(Id = invId, compliancequest__Investigation_Summary__c = html));
+            }
+            List<Database.SaveResult> rs = Database.update(invs, false, AccessLevel.USER_MODE);
+            Integer ok = 0;
+            List<String> problems = new List<String>();
+            for (Integer i = 0; i < rs.size(); i++) {
+                if (rs[i].isSuccess()) {
+                    ok++;
+                } else {
+                    for (Database.Error e : rs[i].getErrors()) { problems.add(e.getMessage()); }
+                }
+            }
+            String msg = ' The investigation summary was also updated on ' + ok + (ok == 1 ? ' investigation.' : ' investigations.');
+            if (!problems.isEmpty()) {
+                msg += ' ' + (rs.size() - ok) + ' could not be updated: ' + String.join(problems, '; ');
+            }
+            return msg;
+        } catch (Exception ex) {
+            return ' The complaint was saved, but the investigation summary could not be updated: ' + ex.getMessage();
+        }
     }
 }
