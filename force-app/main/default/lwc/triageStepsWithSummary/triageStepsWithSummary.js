@@ -1,20 +1,42 @@
 import { LightningElement, api } from 'lwc';
-import hasDraft from '@salesforce/apex/TriageDraftSummaryController.hasDraft';
+import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
+import load from '@salesforce/apex/PhrCompleteTriageController.load';
+import saveSteps from '@salesforce/apex/PhrCompleteTriageController.saveSteps';
+import completeTriage from '@salesforce/apex/PhrCompleteTriageController.completeTriage';
 import includeDraftSummary from '@salesforce/apex/TriageDraftSummaryController.includeDraftSummary';
 
-const TASK_PREFIX = '00T';
+const TRIAGE = 'Triage';
+const NO_INVESTIGATION = 'No investigation is linked';
+const SUMMARY_RETRIES = 3;
+const SUMMARY_WAIT_MS = 2000;
+
+function wait(ms) {
+    // eslint-disable-next-line @lwc/lwc/no-async-operation
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function errorText(e) {
+    return (e && e.body && e.body.message) || (e && e.message) || 'Unknown error';
+}
 
 export default class TriageStepsWithSummary extends LightningElement {
     @api recordId;
     @api task;
     @api purpose;
 
+    loading = true;
+    loadError = '';
+    data;
+    rows = [];
+    selectedTemplateId;
     includeSummary = true;
-    saving = false;
-    message = '';
-    messageIsError = false;
-    draftExists = true;
-    handled = false;
+    comment = '';
+    busy = false;
+    busyText = '';
+    statusMessage = '';
+    statusIsError = false;
+    newKey = 0;
 
     get startId() {
         if (this.recordId) return this.recordId;
@@ -22,80 +44,190 @@ export default class TriageStepsWithSummary extends LightningElement {
         return null;
     }
 
-    get hasRecord() {
-        return !!this.startId;
+    get inTriage() {
+        return this.data && this.data.stage === TRIAGE;
     }
 
-    get complaintRecordId() {
-        const id = this.startId;
-        if (id && id.startsWith(TASK_PREFIX) && this.task && this.task.WhatId) return this.task.WhatId;
-        return id;
+    get notInTriage() {
+        return !this.inTriage;
     }
 
-    get hint() {
-        if (!this.includeSummary) return 'The draft summary will not be saved. Only the triage steps are completed.';
-        if (!this.draftExists) return 'There is no draft summary on this complaint yet, so nothing will be included.';
-        return 'When you finish, the draft summary is also saved to the complaint and its linked investigation.';
+    get noRows() {
+        return this.rows.length === 0;
     }
 
-    get messageClass() {
-        return this.messageIsError
-            ? 'slds-text-color_error slds-var-m-top_x-small'
-            : 'slds-text-color_success slds-var-m-top_x-small';
+    get templateOptions() {
+        return ((this.data && this.data.templates) || []).map((t) => ({ label: t.name, value: t.id }));
+    }
+
+    get addDisabled() {
+        return this.busy || !this.selectedTemplateId;
+    }
+
+    get summaryHint() {
+        if (!this.includeSummary) return 'The draft summary is not saved. Only the steps and stage are updated.';
+        if (this.data && !this.data.hasDraft) return 'There is no draft summary on this complaint yet, so nothing will be copied.';
+        return 'After triage, the draft summary is saved to the complaint and copied to its investigation.';
+    }
+
+    get statusClass() {
+        return this.statusIsError
+            ? 'slds-text-color_error slds-var-m-top_small'
+            : 'slds-text-color_success slds-var-m-top_small';
     }
 
     connectedCallback() {
-        // eslint-disable-next-line no-console
-        console.log('[triageStepsWithSummary] connected', JSON.stringify({ recordId: this.recordId, purpose: this.purpose, hasTask: !!this.task }));
-        if (!this.startId) return;
-        hasDraft({ recordId: this.startId })
-            .then((r) => { this.draftExists = r; })
-            .catch(() => { this.draftExists = true; });
+        this.refresh();
     }
 
-    renderedCallback() {
-        if (this.loggedRender) return;
-        this.loggedRender = true;
-        const grid = this.template.querySelector('cqext-cqui-complaint-steps-grid');
-        // eslint-disable-next-line no-console
-        console.log('[triageStepsWithSummary] rendered; steps grid element found: ' + !!grid);
+    async refresh() {
+        this.loading = true;
+        this.loadError = '';
+        if (!this.startId) {
+            this.loadError = 'The complaint for this task could not be found.';
+            this.loading = false;
+            return;
+        }
+        try {
+            this.data = await load({ recordId: this.startId });
+            this.rows = (this.data.steps || []).map((s) => this.toRow(s, false));
+        } catch (e) {
+            this.loadError = 'The triage steps could not be loaded: ' + errorText(e);
+        } finally {
+            this.loading = false;
+        }
     }
 
-    errorCallback(error, stack) {
-        // eslint-disable-next-line no-console
-        console.log('[triageStepsWithSummary] error: ' + (error && error.message) + ' | ' + stack);
-        this.messageIsError = true;
-        this.message = 'The steps grid could not be shown: ' + ((error && error.message) || 'unknown error');
+    toRow(s, isNew) {
+        const key = s.id || 'new-' + (this.newKey += 1);
+        return {
+            key,
+            id: s.id || null,
+            templateId: s.templateId,
+            name: s.name,
+            label: (s.step != null ? s.step + ' · ' : '') + s.name,
+            step: s.step,
+            assigneeId: s.assigneeId || null,
+            allowedDays: s.allowedDays,
+            include: s.include !== false,
+            isNew
+        };
     }
 
-    handleToggle(event) {
+    updateRow(key, changes) {
+        this.rows = this.rows.map((r) => (r.key === key ? { ...r, ...changes } : r));
+    }
+
+    handleInclude(event) {
+        this.updateRow(event.target.dataset.key, { include: event.target.checked });
+    }
+
+    handleAssignee(event) {
+        this.updateRow(event.target.dataset.key, { assigneeId: (event.detail && event.detail.recordId) || null });
+    }
+
+    handleTemplate(event) {
+        this.selectedTemplateId = event.detail.value;
+    }
+
+    handleAddStep() {
+        const t = (this.data.templates || []).find((x) => x.id === this.selectedTemplateId);
+        if (!t) return;
+        this.rows = [
+            ...this.rows,
+            this.toRow({ templateId: t.id, name: t.name, step: t.step, assigneeId: t.defaultAssigneeId, allowedDays: t.allowedDays, include: true }, true)
+        ];
+        this.selectedTemplateId = null;
+    }
+
+    handleSummaryToggle(event) {
         this.includeSummary = event.target.checked;
     }
 
-    // CQ's steps grid fires one of these when the user finishes. The first one wins.
-    async handleStepsDone(event) {
-        // eslint-disable-next-line no-console
-        console.log('[triageStepsWithSummary] grid event: ' + (event && event.type));
-        if (this.handled) return;
-        this.handled = true;
-        if (this.includeSummary && this.draftExists) {
-            this.saving = true;
-            try {
-                const o = await includeDraftSummary({ recordId: this.startId });
-                this.messageIsError = !o.success;
-                this.message = o.message;
-            } catch (e) {
-                this.messageIsError = true;
-                this.message = 'The triage steps were saved, but the draft summary could not be included: '
-                    + ((e && e.body && e.body.message) || (e && e.message) || 'unknown error');
-            } finally {
-                this.saving = false;
-            }
-            if (this.messageIsError) {
-                this.handled = false;
+    handleComment(event) {
+        this.comment = event.target.value;
+    }
+
+    handleCancel() {
+        this.close();
+    }
+
+    setStatus(message, isError) {
+        this.statusMessage = message;
+        this.statusIsError = isError;
+    }
+
+    async handleComplete() {
+        if (!this.rows.some((r) => r.include)) {
+            this.setStatus('Choose at least one step before completing triage.', true);
+            return;
+        }
+        this.busy = true;
+        this.setStatus('', false);
+        const complaintId = this.data.complaintId;
+        try {
+            // 1. Steps (own transaction).
+            this.busyText = 'Saving the steps';
+            const stepsPayload = this.rows.map((r) => ({
+                id: r.id, templateId: r.templateId, name: r.name, step: r.step,
+                assigneeId: r.assigneeId, allowedDays: r.allowedDays, include: r.include
+            }));
+            const s = await saveSteps({ recordId: complaintId, stepsJson: JSON.stringify(stepsPayload) });
+            if (!s.success) {
+                this.setStatus(s.message, true);
                 return;
             }
+
+            // 2. Move the complaint forward through CQ's Initiate (own transaction).
+            this.busyText = 'Completing triage';
+            const t = await completeTriage({ recordId: complaintId, comment: this.comment });
+            if (!t.success) {
+                this.setStatus(t.message, true);
+                await this.refresh();
+                return;
+            }
+
+            // 3. Draft summary to the complaint and the new investigation (own transaction).
+            let summaryMessage = '';
+            if (this.includeSummary && this.data.hasDraft) {
+                this.busyText = 'Saving the draft summary';
+                summaryMessage = await this.saveSummaryWithRetry(complaintId);
+            }
+
+            const message = t.message + (summaryMessage ? ' ' + summaryMessage : '');
+            this.dispatchEvent(new ShowToastEvent({ title: 'Triage completed', message, variant: 'success' }));
+            try {
+                await notifyRecordUpdateAvailable([{ recordId: complaintId }]);
+            } catch (ignore) {
+                // the page refreshes on its own if this is not available
+            }
+            this.close();
+        } catch (e) {
+            this.setStatus('Something went wrong: ' + errorText(e), true);
+        } finally {
+            this.busy = false;
+            this.busyText = '';
         }
+    }
+
+    // CQ may create the investigation a moment after triage, so try a few times before giving up.
+    async saveSummaryWithRetry(complaintId) {
+        let last = '';
+        for (let i = 0; i < SUMMARY_RETRIES; i += 1) {
+            try {
+                const o = await includeDraftSummary({ recordId: complaintId });
+                last = o.message || '';
+                if (!o.success) return 'The draft summary could not be saved: ' + last;
+                if (last.indexOf(NO_INVESTIGATION) === -1) return last;
+            } catch (e) {
+                return 'The draft summary could not be saved: ' + errorText(e);
+            }
+            await wait(SUMMARY_WAIT_MS);
+        }
+        return last;
+    }
+
+    close() {
         this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
     }
 }

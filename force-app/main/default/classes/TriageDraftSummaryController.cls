@@ -48,8 +48,8 @@ public with sharing class TriageDraftSummaryController {
         return o;
     }
 
-    @TestVisible
-    private static Id resolveComplaintId(String recordId) {
+    /** Accepts a complaint Id or the Id of a CQ Task on a complaint and returns the complaint Id, or null. */
+    public static Id resolveComplaintId(String recordId) {
         if (String.isBlank(recordId)) { return null; }
         Id rid;
         try { rid = (Id) recordId; } catch (Exception e) { return null; }

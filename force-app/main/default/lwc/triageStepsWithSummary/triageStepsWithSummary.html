@@ -1,39 +1,118 @@
 <template>
-    <template lwc:if={hasRecord}>
-        <div class="slds-var-p-around_small">
-            <cqext-cqui-complaint-steps-grid
-                record-id={complaintRecordId}
-                task={task}
-                purpose={purpose}
-                onclose={handleStepsDone}
-                onsave={handleStepsDone}
-                onsaved={handleStepsDone}
-                onsuccess={handleStepsDone}
-                oncomplete={handleStepsDone}
-                onfinish={handleStepsDone}>
-            </cqext-cqui-complaint-steps-grid>
-        </div>
+    <div class="slds-var-p-around_medium">
+        <template lwc:if={loading}>
+            <div class="spinner-holder">
+                <lightning-spinner alternative-text="Loading the triage steps" size="small"></lightning-spinner>
+            </div>
+        </template>
 
-        <div class="slds-var-m-horizontal_small slds-var-m-bottom_small slds-var-p-around_small summary-box">
-            <lightning-input
-                type="checkbox"
-                label="Include draft summary"
-                checked={includeSummary}
-                onchange={handleToggle}
-                disabled={saving}>
-            </lightning-input>
-            <p class="slds-text-body_small slds-text-color_weak slds-var-m-left_large">
-                {hint}
-            </p>
-            <template lwc:if={message}>
-                <p class={messageClass}>{message}</p>
+        <template lwc:elseif={loadError}>
+            <p class="slds-text-color_error">{loadError}</p>
+        </template>
+
+        <template lwc:else>
+            <div class="slds-grid slds-grid_vertical-align-center slds-wrap slds-gutters_x-small slds-var-m-bottom_medium">
+                <div class="slds-col slds-grow-none">
+                    <span class="slds-badge slds-theme_info">Stage: {data.stage}</span>
+                </div>
+                <template lwc:if={inTriage}>
+                    <div class="slds-col slds-grow-none slds-text-body_small slds-text-color_weak">
+                        Moves to In Progress when you complete triage
+                    </div>
+                </template>
+            </div>
+
+            <template lwc:if={notInTriage}>
+                <p class="slds-text-color_weak">This complaint is not in Triage, so there is nothing to complete here.</p>
             </template>
-            <template lwc:if={saving}>
-                <lightning-spinner alternative-text="Saving the draft summary" size="small"></lightning-spinner>
+
+            <template lwc:else>
+                <div class="slds-grid slds-grid_align-spread slds-var-m-bottom_x-small">
+                    <h3 class="slds-text-heading_small">Workflow steps</h3>
+                    <span class="slds-text-body_small slds-text-color_weak">From CQ Tasks flagged Transfer To Workflow</span>
+                </div>
+
+                <div class="steps-table">
+                    <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                        <thead>
+                            <tr class="slds-line-height_reset">
+                                <th scope="col" class="col-include"><span class="slds-assistive-text">Include</span></th>
+                                <th scope="col">Step</th>
+                                <th scope="col">Assigned to</th>
+                                <th scope="col" class="col-days">Days</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template for:each={rows} for:item="row">
+                                <tr key={row.key}>
+                                    <td class="col-include">
+                                        <lightning-input type="checkbox" variant="label-hidden" label="Include this step"
+                                            checked={row.include} data-key={row.key} onchange={handleInclude} disabled={busy}>
+                                        </lightning-input>
+                                    </td>
+                                    <td>
+                                        <div class="slds-truncate" title={row.name}>{row.label}</div>
+                                        <template lwc:if={row.isNew}>
+                                            <span class="slds-text-body_small slds-text-color_weak">New</span>
+                                        </template>
+                                    </td>
+                                    <td>
+                                        <lightning-record-picker object-api-name="User" label="Assigned to" variant="label-hidden"
+                                            placeholder="Search users" value={row.assigneeId} data-key={row.key}
+                                            onchange={handleAssignee} disabled={busy}>
+                                        </lightning-record-picker>
+                                    </td>
+                                    <td class="col-days">{row.allowedDays}</td>
+                                </tr>
+                            </template>
+                            <template lwc:if={noRows}>
+                                <tr><td colspan="4" class="slds-text-color_weak">No draft steps yet. Add one below.</td></tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="slds-grid slds-grid_vertical-align-end slds-gutters_x-small slds-var-m-top_small slds-wrap">
+                    <div class="slds-col add-picker">
+                        <lightning-combobox label="Add a step from CQ Tasks" placeholder="Choose a CQ Task"
+                            options={templateOptions} value={selectedTemplateId} onchange={handleTemplate} disabled={busy}>
+                        </lightning-combobox>
+                    </div>
+                    <div class="slds-col slds-grow-none">
+                        <lightning-button label="Add step" icon-name="utility:add" onclick={handleAddStep}
+                            disabled={addDisabled}></lightning-button>
+                    </div>
+                </div>
+
+                <div class="summary-box slds-var-m-top_medium slds-var-p-around_small">
+                    <lightning-input type="checkbox" label="Include draft summary" checked={includeSummary}
+                        onchange={handleSummaryToggle} disabled={busy}></lightning-input>
+                    <p class="slds-text-body_small slds-text-color_weak slds-var-m-left_large">{summaryHint}</p>
+                </div>
+
+                <div class="slds-var-m-top_medium">
+                    <lightning-textarea label="Comment" value={comment} onchange={handleComment} disabled={busy}
+                        max-length="32000"></lightning-textarea>
+                </div>
+
+                <template lwc:if={statusMessage}>
+                    <p class={statusClass}>{statusMessage}</p>
+                </template>
+
+                <div class="slds-grid slds-grid_align-end slds-gutters_x-small slds-var-m-top_medium">
+                    <div class="slds-col slds-grow-none">
+                        <lightning-button label="Cancel" onclick={handleCancel} disabled={busy}></lightning-button>
+                    </div>
+                    <div class="slds-col slds-grow-none">
+                        <lightning-button variant="brand" label="Complete triage" onclick={handleComplete}
+                            disabled={busy}></lightning-button>
+                    </div>
+                </div>
+
+                <template lwc:if={busy}>
+                    <lightning-spinner alternative-text={busyText} size="small"></lightning-spinner>
+                </template>
             </template>
-        </div>
-    </template>
-    <template lwc:else>
-        <p class="slds-var-p-around_medium">The complaint for this task could not be found.</p>
-    </template>
+        </template>
+    </div>
 </template>
