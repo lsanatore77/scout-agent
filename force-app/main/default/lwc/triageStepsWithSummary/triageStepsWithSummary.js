@@ -45,10 +45,27 @@ export default class TriageStepsWithSummary extends LightningElement {
     }
 
     connectedCallback() {
+        // eslint-disable-next-line no-console
+        console.log('[triageStepsWithSummary] connected', JSON.stringify({ recordId: this.recordId, purpose: this.purpose, hasTask: !!this.task }));
         if (!this.startId) return;
         hasDraft({ recordId: this.startId })
             .then((r) => { this.draftExists = r; })
             .catch(() => { this.draftExists = true; });
+    }
+
+    renderedCallback() {
+        if (this.loggedRender) return;
+        this.loggedRender = true;
+        const grid = this.template.querySelector('cqext-cqui-complaint-steps-grid');
+        // eslint-disable-next-line no-console
+        console.log('[triageStepsWithSummary] rendered; steps grid element found: ' + !!grid);
+    }
+
+    errorCallback(error, stack) {
+        // eslint-disable-next-line no-console
+        console.log('[triageStepsWithSummary] error: ' + (error && error.message) + ' | ' + stack);
+        this.messageIsError = true;
+        this.message = 'The steps grid could not be shown: ' + ((error && error.message) || 'unknown error');
     }
 
     handleToggle(event) {
@@ -56,7 +73,9 @@ export default class TriageStepsWithSummary extends LightningElement {
     }
 
     // CQ's steps grid fires one of these when the user finishes. The first one wins.
-    async handleStepsDone() {
+    async handleStepsDone(event) {
+        // eslint-disable-next-line no-console
+        console.log('[triageStepsWithSummary] grid event: ' + (event && event.type));
         if (this.handled) return;
         this.handled = true;
         if (this.includeSummary && this.draftExists) {
