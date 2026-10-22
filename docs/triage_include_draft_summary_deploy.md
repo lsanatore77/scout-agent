@@ -6,8 +6,12 @@
 2. `lwc/triageStepsWithSummary` (all four files).
 3. `customMetadata/compliancequest__CQ_Action.PHR_Triage_With_Summary.md-meta.xml`
    (or create it by hand: Setup > Custom Metadata Types > CQ Action > Manage Records, copy the values from the file).
+4. `customMetadata/compliancequest__CQ_Quick_Action.PHR_Triage_With_Summary.md-meta.xml`
+   (CQ's signature step looks the purpose up in CQ Quick Action; without it the popup closes with
+   "There is no action phr_triage_with_summary defined ... CQ Quick Action Custom Metadata").
+   By hand: Setup > Custom Metadata Types > CQ Quick Action > Manage Records. Esig is ticked so the signature step stays.
 
-## 2. Edit the override flow in Flow Builder (flows are not deployed from here)
+## 2. Edit the override flow (already done in dev) in Flow Builder (flows are not deployed from here)
 Open `LPA ENBA Action Override`, Save As New Version, then:
 1. Decision `Is LPA Task`: add an outcome `Complaint Triage`.
    Condition: `{!task.compliancequest__CQ_Task_Code__c}` Equals `nba__Complaint_Triage`.
