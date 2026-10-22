@@ -11,6 +11,7 @@
         <targetConfig targets="lightning__RecordPage">
             <objects>
                 <object>compliancequest__SQX_Product_History_Review__c</object>
+                <object>compliancequest__SQX_Investigation__c</object>
             </objects>
         </targetConfig>
     </targetConfigs>

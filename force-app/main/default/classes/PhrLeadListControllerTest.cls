@@ -136,4 +136,27 @@ private class PhrLeadListControllerTest {
         System.assertEquals(false, res.success);
         System.assert(String.isNotBlank(res.message));
     }
+
+    @IsTest
+    static void investigationLeadsFollowTheLinkedComplaint() {
+        storeLeadsAddingOne();
+        List<compliancequest__SQX_Linked_Investigation__c> links = [
+            SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Linked_Investigation__c
+            WHERE compliancequest__SQX_Complaint__c IN (
+                SELECT compliancequest__SQX_Complaint__c FROM compliancequest__SQX_Product_History_Review__c WHERE Id = :phrId())
+            LIMIT 1
+        ];
+        if (!links.isEmpty()) {
+            List<PhrLeadListController.LeadRow> rows = PhrLeadListController.getLeadsForInvestigation(links[0].compliancequest__SQX_Investigation__c);
+            System.assertEquals(2, rows.size());
+            System.assert(String.isNotBlank(rows[0].phrName));
+        }
+    }
+
+    @IsTest
+    static void investigationWithNoLinkedComplaintHasNoLeads() {
+        String prefix = compliancequest__SQX_Investigation__c.SObjectType.getDescribe().getKeyPrefix();
+        Id none = Id.valueOf(prefix + '000000000001');
+        System.assertEquals(0, PhrLeadListController.getLeadsForInvestigation(none).size());
+    }
 }

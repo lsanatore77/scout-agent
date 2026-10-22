@@ -23,6 +23,7 @@ public with sharing class PhrLeadListController {
         @AuraEnabled public Boolean added;
         @AuraEnabled public String addedLabel;
         @AuraEnabled public String link;
+        @AuraEnabled public String phrName;   // the Product History Review the lead belongs to
     }
 
     public class AddResult {
@@ -34,13 +35,41 @@ public with sharing class PhrLeadListController {
     /** Every lead on the PHR: NC, CAPA and Change Order first, then the rest, best first inside each group. */
     @AuraEnabled
     public static List<LeadRow> getLeads(Id phrId) {
+        return leadsFor(new Set<Id>{ phrId });
+    }
+
+    /**
+     * Every lead on the Product History Reviews of the complaints linked to an investigation.
+     * An investigation with no linked complaint, or complaints without a Product History Review, returns nothing.
+     */
+    @AuraEnabled
+    public static List<LeadRow> getLeadsForInvestigation(Id investigationId) {
+        Set<Id> complaintIds = new Set<Id>();
+        for (compliancequest__SQX_Linked_Investigation__c li : [
+            SELECT compliancequest__SQX_Complaint__c FROM compliancequest__SQX_Linked_Investigation__c
+            WHERE compliancequest__SQX_Investigation__c = :investigationId
+        ]) {
+            if (li.compliancequest__SQX_Complaint__c != null) { complaintIds.add(li.compliancequest__SQX_Complaint__c); }
+        }
+        if (complaintIds.isEmpty()) { return new List<LeadRow>(); }
+        Set<Id> phrIds = new Set<Id>();
+        for (compliancequest__SQX_Product_History_Review__c phr : [
+            SELECT Id FROM compliancequest__SQX_Product_History_Review__c
+            WHERE compliancequest__SQX_Complaint__c IN :complaintIds
+        ]) {
+            phrIds.add(phr.Id);
+        }
+        return leadsFor(phrIds);
+    }
+
+    private static List<LeadRow> leadsFor(Set<Id> phrIds) {
         List<LeadRow> priority = new List<LeadRow>();
         List<LeadRow> others = new List<LeadRow>();
         for (PHR_Lead__c l : [
             SELECT Id, Tier__c, Record_Id__c, Record_Number__c, Record_Type__c, Record_Title__c, Record_Status__c,
-                   Colour__c, Relevance__c, Related_By__c, Reason__c, Added__c
+                   Colour__c, Relevance__c, Related_By__c, Reason__c, Added__c, PHR__r.Name
             FROM PHR_Lead__c
-            WHERE PHR__c = :phrId
+            WHERE PHR__c IN :phrIds
             ORDER BY Relevance__c DESC NULLS LAST, Record_Number__c
             LIMIT 2000
         ]) {
@@ -60,6 +89,7 @@ public with sharing class PhrLeadListController {
             r.added = l.Added__c == true;
             r.addedLabel = r.added ? 'Added' : 'Not added';
             r.link = '/' + l.Record_Id__c;
+            r.phrName = l.PHR__r == null ? null : l.PHR__r.Name;
             if (isPriorityType(r.recordType)) {
                 priority.add(r);
             } else {

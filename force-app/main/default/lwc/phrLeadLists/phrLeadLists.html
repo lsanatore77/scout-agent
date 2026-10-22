@@ -16,7 +16,7 @@
 
         <template if:false={hasAny}>
             <template if:false={loading}>
-                <p class="empty">No records have been added to this Product History Review yet.</p>
+                <p class="empty">{emptyMessage}</p>
             </template>
         </template>
 
@@ -54,6 +54,9 @@
                                             </template>
                                             <template if:true={row.asideTier}>
                                                 <td class="wrap-cell">{row.reason}</td>
+                                            </template>
+                                            <template if:true={row.showPhr}>
+                                                <td>{row.phrName}</td>
                                             </template>
                                             <template if:true={row.showAdded}>
                                                 <td>{row.addedLabel}</td>
