@@ -24,6 +24,15 @@ export default class TriageStepsWithSummary extends LightningElement {
     @api recordId;
     @api task;
     @api purpose;
+    // Passed in by CQ's dynamic loader (SQX_Dynamic_Component); accepted so CQ can create this component.
+    @api activityCode;
+    @api objectApiName;
+    @api origin;
+    @api formParams;
+    @api formChanges;
+    @api relatedField;
+    @api hideSave;
+    @api activityCommentField;
 
     loading = true;
     loadError = '';
@@ -77,6 +86,8 @@ export default class TriageStepsWithSummary extends LightningElement {
     }
 
     connectedCallback() {
+        // CQ's popup shows a spinner until the component reports it has loaded.
+        this.dispatchEvent(new CustomEvent('formload'));
         this.refresh();
     }
 
@@ -201,6 +212,8 @@ export default class TriageStepsWithSummary extends LightningElement {
             } catch (ignore) {
                 // the page refreshes on its own if this is not available
             }
+            // Tell CQ's popup the work is saved (it refreshes to the record), then close it.
+            this.dispatchEvent(new CustomEvent('formsaved', { detail: { recordId: complaintId } }));
             this.close();
         } catch (e) {
             this.setStatus('Something went wrong: ' + errorText(e), true);
@@ -228,6 +241,7 @@ export default class TriageStepsWithSummary extends LightningElement {
     }
 
     close() {
-        this.dispatchEvent(new CustomEvent('close', { bubbles: true, composed: true }));
+        this.dispatchEvent(new CustomEvent('close'));
+        this.dispatchEvent(new CustomEvent('cqclosedynamicloader'));
     }
 }
