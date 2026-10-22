@@ -82,7 +82,8 @@ global with sharing class PhrTemplateReportAction {
                 ? 'I attached the report to the complaint as a new file.'
                 : 'I added version ' + next + ' to the report already attached to the complaint.')
                 + ' It uses the information in the org right now, so you can run it again later for an updated version.'
-                + (String.isBlank(rendered.warning) ? '' : ' Note: ' + rendered.warning);
+                + (String.isBlank(rendered.warning) ? '' : ' Note: ' + rendered.warning)
+                + PhrReportLink.afterReportGenerated(complaintId);
         } catch (Exception ex) {
             res.success = false;
             res.message = 'I could not create the report: ' + ex.getMessage();

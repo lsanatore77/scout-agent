@@ -39,6 +39,8 @@ public with sharing class SaveDraftInvestigationSummary {
             SObject complaint = Schema.getGlobalDescribe()
                 .get(COMPLAINT_OBJ).newSObject(req.complaintId);
             String html = SummaryRichText.boldRecordIds(SummaryRichText.boldHeadings(SummaryRichText.fromAgent(SummaryHtmlRepair.repair(req.summary))));
+            // Ends the summary with a link to the Product History Review Report PDF, when the complaint has one.
+            html = PhrReportLink.withReportLink(req.complaintId, html);
             complaint.put(SUMMARY_FIELD, html);
             updates.add(complaint);
             htmls.add(html);
@@ -51,7 +53,8 @@ public with sharing class SaveDraftInvestigationSummary {
             Result r = new Result();
             r.success = sr.isSuccess();
             if (sr.isSuccess()) {
-                r.message = 'Draft investigation summary saved to the complaint.' + updateInvestigations(requests[i].complaintId, htmls[i]);
+                r.message = 'Draft investigation summary saved to the complaint.' + updateInvestigations(requests[i].complaintId, htmls[i])
+                    + PhrReportLink.shareWithInvestigations(requests[i].complaintId);
             } else {
                 List<String> errors = new List<String>();
                 for (Database.Error e : sr.getErrors()) {
