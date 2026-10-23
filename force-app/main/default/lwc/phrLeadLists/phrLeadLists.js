@@ -164,8 +164,8 @@ export default class PhrLeadLists extends LightningElement {
     }
 }
 
-/** Titles are cut to 30 characters, ending with "..." when cut. */
-const TITLE_MAX = 30;
+/** Titles are cut to 45 characters, ending with "..." when cut. */
+const TITLE_MAX = 45;
 function shortTitle(title) {
     if (!title) {
         return 'No title';
