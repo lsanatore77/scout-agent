@@ -13,9 +13,13 @@
  *   2 part on the complaint
  *   3 Product History Review exists
  *   4 PHR is not a draft with Completed By empty
- *   5 PHR checklist answers documented
- *   6 linked investigations have a summary
+ *   5 linked investigations have a summary
  *      (the investigation has no title field, so the summary is checked instead)
+ *   6 the complaint description: details it mentions (lot or serial, part, catalog or model number,
+ *     a date, a quantity, a patient or injury) that are missing from, or differ from, the complaint fields.
+ *     See PhrDescriptionCheck. These are suggestions only.
+ *
+ * The checklist is not checked here: it is filled in at a later step of the workflow.
  */
 global with sharing class PhrMissingDataAction {
 
@@ -23,7 +27,7 @@ global with sharing class PhrMissingDataAction {
     @TestVisible private static final String OK = 'ok';
 
     global class Request {
-        @InvocableVariable(label='Complaint or PHR Id' description='The Complaint (or its Product History Review) currently open in the conversation.' required=true)
+        @InvocableVariable(label='Complaint or PHR Id' description='The Complaint (or its Product History Review, CQ Task or Investigation) currently open in the conversation.' required=true)
         global Id recordId;
     }
 
@@ -34,7 +38,7 @@ global with sharing class PhrMissingDataAction {
 
     @InvocableMethod(
         label='Find Missing Data'
-        description='Checks a Complaint, its part and lot, and its Product History Review for gaps (no lot, no part, no review, draft review with Completed By empty, unanswered checklist, linked investigations with no summary). Returns one line per check as a warning or a tick. Read only: it creates and changes nothing.'
+        description='Checks a Complaint, its part and lot, and its Product History Review for gaps (no lot, no part, no review, draft review with Completed By empty, linked investigations with no summary), and reads the complaint description for details it mentions that are missing from the complaint (lot or serial, part, catalog or model number, date, quantity, patient or injury). Returns one line per check as a warning or a tick. Read only: it creates and changes nothing.'
     )
     global static List<ActionResponse> run(List<Request> requests) {
         List<ActionResponse> out = new List<ActionResponse>();
@@ -53,24 +57,18 @@ global with sharing class PhrMissingDataAction {
             if (recordId == null) {
                 return fail(res, 'I could not tell which complaint to check.');
             }
-            Id complaintId = null;
-            Id phrId = null;
-            String t = String.valueOf(recordId.getSobjectType());
-            if (t == 'compliancequest__SQX_Complaint__c') {
-                complaintId = recordId;
-            } else if (t == 'compliancequest__SQX_Product_History_Review__c') {
-                List<compliancequest__SQX_Product_History_Review__c> p = [
-                    SELECT compliancequest__SQX_Complaint__c FROM compliancequest__SQX_Product_History_Review__c
-                    WHERE Id = :recordId LIMIT 1
-                ];
-                if (!p.isEmpty()) { complaintId = p[0].compliancequest__SQX_Complaint__c; }
-            }
+            Id complaintId = PhrRecordContext.complaintIdFor(recordId);
             if (complaintId == null) {
                 return fail(res, 'I could not find the complaint for this record.');
             }
             List<compliancequest__SQX_Complaint__c> cs = [
                 SELECT Name, compliancequest__Lot_Number__c, compliancequest__SQX_Part__c,
-                       compliancequest__SQX_Lot_Info__r.compliancequest__Manufacturing_Date__c
+                       compliancequest__SQX_Lot_Info__r.compliancequest__Manufacturing_Date__c,
+                       compliancequest__SQX_Part__r.compliancequest__Part_Number__c, compliancequest__SQX_Part__r.Name,
+                       compliancequest__Catalog_Number__c, compliancequest__Model_Name__c,
+                       compliancequest__Occurrence_Date__c, compliancequest__Complaint_Quantity__c,
+                       compliancequest__SQX_Patient_Data__c, compliancequest__Description__c,
+                       compliancequest__Description_As_Reported__c
                 FROM compliancequest__SQX_Complaint__c WHERE Id = :complaintId LIMIT 1
             ];
             if (cs.isEmpty()) {
@@ -103,17 +101,18 @@ global with sharing class PhrMissingDataAction {
             if (phrs.isEmpty()) {
                 res.checks.add(line('Product History Review', WARN, 'There is no Product History Review yet, so records cannot be added.'));
                 res.checks.add(line('Review status', WARN, 'Not checked: there is no Product History Review.'));
-                res.checks.add(line('Checklist answers', WARN, 'Not checked: there is no Product History Review.'));
             } else {
                 compliancequest__SQX_Product_History_Review__c phr = phrs[0];
-                phrId = phr.Id;
                 res.checks.add(line('Product History Review', OK, 'A Product History Review exists.'));
                 res.checks.add(phr.compliancequest__Status__c == 'Draft' && String.isBlank(phr.compliancequest__Completed_By__c)
                     ? line('Review status', WARN, 'The review is a draft and Completed By is empty. Next step: complete it.')
                     : line('Review status', OK, 'The review status and Completed By need no action.'));
-                res.checks.add(checklist(phrId));
             }
             res.checks.add(investigations(complaintId));
+
+            for (PhrDescriptionCheck.Finding f : PhrDescriptionCheck.check(c)) {
+                res.checks.add(line(f.label, f.isGap ? WARN : OK, f.detail));
+            }
 
             Integer gaps = 0;
             for (PhrMissingCheck k : res.checks) { if (k.status == WARN) { gaps++; } }
@@ -125,20 +124,6 @@ global with sharing class PhrMissingDataAction {
             return fail(res, 'Could not complete the check: ' + ex.getMessage());
         }
         return res;
-    }
-
-    private static PhrMissingCheck checklist(Id phrId) {
-        Integer total = [SELECT COUNT() FROM compliancequest__SQX_Product_History_Answer__c
-            WHERE compliancequest__SQX_Product_History_Review__c = :phrId];
-        Integer blank = [SELECT COUNT() FROM compliancequest__SQX_Product_History_Answer__c
-            WHERE compliancequest__SQX_Product_History_Review__c = :phrId AND compliancequest__Answer__c = null];
-        if (total == 0) {
-            return line('Checklist answers', WARN, 'No checklist answers are recorded on the review.');
-        }
-        if (blank > 0) {
-            return line('Checklist answers', WARN, blank + (blank == 1 ? ' checklist question is' : ' checklist questions are') + ' not answered.');
-        }
-        return line('Checklist answers', OK, 'All ' + total + (total == 1 ? ' checklist question is' : ' checklist questions are') + ' answered.');
     }
 
     private static PhrMissingCheck investigations(Id complaintId) {
