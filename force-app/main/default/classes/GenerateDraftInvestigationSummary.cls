@@ -89,9 +89,6 @@ public with sharing class GenerateDraftInvestigationSummary {
 
     @TestVisible
     static String runTemplate(String complaintData) {
-        if (Test.isRunningTest()) {
-            return mockResponse == null ? 'TEST SUMMARY' : mockResponse;
-        }
         ConnectApi.WrappedValue dataValue = new ConnectApi.WrappedValue();
         dataValue.value = complaintData;
 
@@ -100,6 +97,10 @@ public with sharing class GenerateDraftInvestigationSummary {
         input.inputParams = new Map<String, ConnectApi.WrappedValue>{ 'Input:Complaint_Data' => dataValue };
         input.additionalConfig = new ConnectApi.EinsteinLlmAdditionalConfigInput();
         input.additionalConfig.applicationName = 'PromptBuilderPreview';
+        // Tests build the same input but do not call the prompt template.
+        if (Test.isRunningTest()) {
+            return mockResponse == null ? 'TEST SUMMARY' : mockResponse;
+        }
 
         ConnectApi.EinsteinPromptTemplateGenerationsRepresentation output =
             ConnectApi.EinsteinLLM.generateMessagesForPromptTemplate(TEMPLATE_NAME, input);
