@@ -226,4 +226,21 @@ private class PhrTemplateReportTest {
         System.assertEquals(1, [SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :r.contentDocumentId AND LinkedEntityId = :invId]);
         System.assert(PhrTemplateReportAction.attachToInvestigation(r.contentDocumentId, invId, 'INV-1').contains('same file'));
     }
+
+    @IsTest static void anOlderTemplateGetsTheReportDateAndTheRightHeading() {
+        compliancequest__SQX_Complaint__c cmp = newComplaint('LOT-OLD');
+        Id invId = newInvestigation(cmp.Id, '<p>Investigation text</p>');
+        String oldTpl = '<html xmlns="http://www.w3.org/1999/xhtml"><body>'
+            + '<div class="sub">Complaint <strong>{{complaintName}}</strong>{{phrBlock}}</div>'
+            + '<div class="draftlabel">Draft investigation summary</div>{{draftSummaryBlock}}</body></html>';
+        PhrReportData phrRun = PhrReportData.build(cmp.Id, '1');
+        String a = PhrReportRenderer.fill(oldTpl, phrRun, false);
+        System.assert(a.contains('Reported ' + phrRun.reportedDate), a);
+        System.assert(a.contains('>PHR Summary<'), a);
+        PhrReportData invRun = PhrReportData.build(cmp.Id, '1', invId);
+        String b = PhrReportRenderer.fill(oldTpl, invRun, false);
+        System.assert(b.contains('>Investigation Summary<'), b);
+        System.assert(b.contains('Investigation text'), b);
+        System.assert(b.contains('Investigation <strong>'), b);
+    }
 }

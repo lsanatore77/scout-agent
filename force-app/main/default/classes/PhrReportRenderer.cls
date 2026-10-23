@@ -175,11 +175,34 @@ public without sharing class PhrReportRenderer {
         return out;
     }
 
+    /**
+     * Brings an older template (such as an earlier PHR-TEMPLATE-001 file) up to date, so it does not have to be
+     * revised for these to show:
+     *   - the complaint's Report Date in the header, after the complaint number;
+     *   - the investigation number in the header when run from an investigation;
+     *   - the summary heading: "PHR Summary", or "Investigation Summary" when run from an investigation,
+     *     in place of the old fixed "Draft investigation summary" label.
+     * A template that already uses these placeholders is left as it is.
+     */
+    @TestVisible
+    private static String upgradeTemplate(String template) {
+        if (template == null) { return null; }
+        String out = template;
+        if (!out.contains('{{reportedDate')) {
+            out = out.replaceFirst('\\{\\{complaintName\\}\\}</strong>', '{{complaintName}}</strong>{{reportedDateBlock}}');
+        }
+        if (!out.contains('{{investigationName')) {
+            out = out.replaceFirst('\\{\\{phrBlock\\}\\}', '{{phrBlock}}{{investigationNameBlock}}');
+        }
+        out = out.replaceAll('(?i)>\\s*Draft investigation summary\\s*<', '>{{summaryHeading}}<');
+        return out;
+    }
+
     /** Returns the filled template, or null if the result is not well-formed. */
     @TestVisible
     private static String fill(String template, PhrReportData d, Boolean plainDraft) {
         Map<String, String> v = buildValues(d, plainDraft);
-        String out = applyConditions(template, d);
+        String out = applyConditions(upgradeTemplate(template), d);
         for (String k : v.keySet()) {
             out = out.replace('{{' + k + '}}', v.get(k));
         }
