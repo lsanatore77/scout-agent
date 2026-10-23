@@ -11,8 +11,8 @@ lightning-card { display: block; border: 1px solid #e5e5e5; border-radius: 0.5re
 .grid { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
 .grid th { text-align: left; font-weight: 700; color: #706e6b; padding: 0.375rem 0.5rem; border-bottom: 1px solid #c9c9c9; white-space: nowrap; }
 .grid td { padding: 0.375rem 0.5rem; border-bottom: 1px solid #e5e5e5; vertical-align: top; white-space: nowrap; }
-/* The title takes the spare width; long text wraps between words only, never inside a word. */
-.wrap-cell { white-space: normal; overflow-wrap: break-word; word-break: normal; min-width: 9rem; width: 100%; }
+/* The title (cut to 30 characters) stays on one line and takes the spare width. */
+.wrap-cell { white-space: nowrap; width: 100%; }
 .dot-cell { text-align: center; }
 .dot { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; vertical-align: middle; }
 .dot-red { background: #e8403f; }
