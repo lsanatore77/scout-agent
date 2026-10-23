@@ -34,7 +34,7 @@ export default class PhrLeadLists extends LightningElement {
     loading = true;
     showNotAdded = false;
     error;
-    asidePage = 1;
+    pageByTier = {};
 
     connectedCallback() {
         this.load();
@@ -114,14 +114,15 @@ export default class PhrLeadLists extends LightningElement {
             const headers = (asideTier ? SET_ASIDE_HEADERS : LEAD_HEADERS)
                 .concat(this.showPhr ? [PHR_HEADER] : [])
                 .concat(this.showNotAdded ? [ADDED_HEADER] : []);
-            const paging = asideTier ? pageOf(rows, this.asidePage) : null;
-            const shown = paging ? paging.items : rows;
+            // Every tier shows 5 at a time.
+            const paging = pageOf(rows, this.pageByTier[t.key] || 1);
+            const shown = paging.items;
             return {
                 key: t.key,
                 heading: t.title + ' (' + rows.length + ')',
                 empty: t.empty,
                 rows: shown.map((r) => this.decorate(r, asideTier)),
-                pager: paging && paging.pages.length > 1 ? paging : null,
+                pager: paging.pages.length > 1 ? paging : null,
                 headers: headers.map((h) => ({ key: h, label: h })),
                 hasRows: rows.length > 0
             };
@@ -143,15 +144,17 @@ export default class PhrLeadLists extends LightningElement {
 
     handleShowNotAdded(event) {
         this.showNotAdded = event.target.checked;
-        this.asidePage = 1;
+        this.pageByTier = {};
     }
 
     handlePage(event) {
         const to = event.currentTarget.dataset.page;
-        const count = this.visibleRows.filter((r) => r.tier === 'Set aside').length;
+        const tier = event.currentTarget.dataset.tier;
+        const current = this.pageByTier[tier] || 1;
+        const count = this.visibleRows.filter((r) => r.tier === tier).length;
         const pages = Math.max(1, Math.ceil(count / PAGE_SIZE));
-        const n = to === 'prev' ? this.asidePage - 1 : to === 'next' ? this.asidePage + 1 : Number(to);
-        this.asidePage = Math.min(Math.max(1, n), pages);
+        const n = to === 'prev' ? current - 1 : to === 'next' ? current + 1 : Number(to);
+        this.pageByTier = { ...this.pageByTier, [tier]: Math.min(Math.max(1, n), pages) };
     }
 
     handleRefresh() {
