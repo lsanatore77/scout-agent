@@ -136,8 +136,9 @@ export default class PhrLeadLists extends LightningElement {
             hasDot: !!d,
             dotClass: d ? d.cls : '',
             dotLabel: d ? d.label + (r.relevance == null ? '' : ' (' + r.relevance + ')') : '',
-            title: r.title || 'No title',
-            titleHint: r.relatedBy ? 'Related by: ' + r.relatedBy : '',
+            title: shortTitle(r.title),
+            // Hover shows the full title and how the record is related.
+            titleHint: [r.title, r.relatedBy ? 'Related by: ' + r.relatedBy : ''].filter((x) => x).join('\n'),
             showAdded: this.showNotAdded,
             showPhr: this.showPhr
         };
@@ -161,6 +162,16 @@ export default class PhrLeadLists extends LightningElement {
     handleRefresh() {
         this.load();
     }
+}
+
+/** Titles are cut to 30 characters, ending with "..." when cut. */
+const TITLE_MAX = 30;
+function shortTitle(title) {
+    if (!title) {
+        return 'No title';
+    }
+    const t = title.trim();
+    return t.length > TITLE_MAX ? t.substring(0, TITLE_MAX).trimEnd() + '...' : t;
 }
 
 /** One page of a list, plus the page links (numbers, Previous, Next). */
