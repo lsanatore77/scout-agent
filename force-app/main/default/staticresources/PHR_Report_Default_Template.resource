@@ -67,7 +67,7 @@
     <tr>
       <td style="vertical-align: top;">
         <h1>{{reportTitle}}</h1>
-        <div class="sub">Complaint <strong>{{complaintName}}</strong>{{phrBlock}}{{partBlock}}{{lotBlock}}</div>
+        <div class="sub">Complaint <strong>{{complaintName}}</strong>{{reportedDateBlock}}{{phrBlock}}{{investigationNameBlock}}{{partBlock}}{{lotBlock}}</div>
       </td>
       <td class="meta">Generated {{generatedAt}}<br/>Version {{versionLabel}}</td>
     </tr>
@@ -85,8 +85,14 @@
   <p class="body">{{summaryText}}</p>
   <div class="note">{{summaryWords}} words. Recommendations and gaps only; records are not named here.</div>
 
-  <div class="draftlabel">Draft investigation summary</div>
-  {{draftSummaryBlock}}
+  <!--IF:phr-->
+  <div class="draftlabel">PHR Summary</div>
+  {{phrSummaryBlock}}
+  <!--END:phr-->
+  <!--IF:investigation-->
+  <div class="draftlabel">Investigation Summary</div>
+  {{investigationSummaryBlock}}
+  <!--END:investigation-->
 
   <h2>3. Top records worth reviewing</h2>
   {{leadBlock}}

@@ -45,6 +45,13 @@ public without sharing class PhrReportData {
     public String summaryText = '';
     public Integer summaryWords = 0;
     public String draftSummaryHtml;
+    /** The complaint's Reported Date, formatted for the header ('' when not set). */
+    public String reportedDate = '';
+    /** True when the report is run from an investigation: it then shows that investigation's summary. */
+    public Boolean investigationMode = false;
+    public String investigationName;
+    /** 'PHR Summary', or 'Investigation Summary' when run from an investigation. */
+    public String summaryHeading = 'PHR Summary';
     public List<LeadRow> leadRows = new List<LeadRow>();
     public Integer totalLeads = 0;
     public List<InvRow> investigationRows = new List<InvRow>();
@@ -52,7 +59,19 @@ public without sharing class PhrReportData {
     public List<String> gaps = new List<String>();
 
     public static PhrReportData build(Id complaintId, String versionLabel) {
+        return build(complaintId, versionLabel, null);
+    }
+
+    /**
+     * investigationId: when set (the report was run from an investigation), the summary section shows that
+     * investigation's Investigation Summary instead of the PHR Summary.
+     */
+    public static PhrReportData build(Id complaintId, String versionLabel, Id investigationId) {
         PhrReportData d = new PhrReportData();
+        if (investigationId != null) {
+            d.investigationMode = true;
+            d.summaryHeading = 'Investigation Summary';
+        }
         d.taskSummary = ComplaintTaskProgress.summarize(new List<compliancequest__SQX_Complaint_Task__c>(), Date.today());
         d.generatedAt = System.now().format('MMM d, yyyy h:mm a');
         if (String.isNotBlank(versionLabel)) { d.versionLabel = versionLabel; }
@@ -62,6 +81,8 @@ public without sharing class PhrReportData {
         }
         try {
             d.load(complaintId);
+            d.loadReportedDate(complaintId);
+            if (d.investigationMode) { d.loadInvestigationSummary(investigationId); }
         } catch (Exception ex) {
             d.errorMessage = ex.getMessage();
         }
@@ -131,7 +152,44 @@ public without sharing class PhrReportData {
         reasons = buildReasons(kept);
         summaryText = buildSummary(kept, gaps.size());
         summaryWords = countWords(summaryText);
-        draftSummaryHtml = loadDraftSummary(p.complaintId);
+        draftSummaryHtml = loadPhrSummary(p.phrId, p.complaintId);
+    }
+
+    private void loadReportedDate(Id complaintId) {
+        for (compliancequest__SQX_Complaint__c c : [
+            SELECT compliancequest__Reported_Date__c FROM compliancequest__SQX_Complaint__c WHERE Id = :complaintId LIMIT 1
+        ]) {
+            Date dt = c.compliancequest__Reported_Date__c;
+            reportedDate = dt == null ? '' : Datetime.newInstance(dt.year(), dt.month(), dt.day()).format('MMM d, yyyy');
+        }
+    }
+
+    private void loadInvestigationSummary(Id investigationId) {
+        draftSummaryHtml = null;
+        for (compliancequest__SQX_Investigation__c inv : [
+            SELECT Name, compliancequest__Investigation_Summary__c FROM compliancequest__SQX_Investigation__c
+            WHERE Id = :investigationId LIMIT 1
+        ]) {
+            investigationName = inv.Name;
+            if (String.isNotBlank(inv.compliancequest__Investigation_Summary__c)) {
+                draftSummaryHtml = cleanForXml(inv.compliancequest__Investigation_Summary__c);
+            }
+        }
+    }
+
+    /** The Summary on the Product History Review, or the PHR Summary saved on the complaint when the PHR's is blank. */
+    private static String loadPhrSummary(Id phrId, Id complaintId) {
+        if (phrId != null) {
+            for (compliancequest__SQX_Product_History_Review__c p : [
+                SELECT compliancequest__Product_History_Review_Summary__c FROM compliancequest__SQX_Product_History_Review__c
+                WHERE Id = :phrId LIMIT 1
+            ]) {
+                if (String.isNotBlank(p.compliancequest__Product_History_Review_Summary__c)) {
+                    return cleanForXml(p.compliancequest__Product_History_Review_Summary__c);
+                }
+            }
+        }
+        return loadDraftSummary(complaintId);
     }
 
     private void loadPhr(PhrQmsPanelController.PanelData p) {
@@ -190,7 +248,7 @@ public without sharing class PhrReportData {
         return m;
     }
 
-    /** The draft investigation summary saved on the complaint (rich text), made safe for an XML-based renderer. */
+    /** The PHR Summary saved on the complaint (rich text), made safe for an XML-based renderer. */
     private static String loadDraftSummary(Id complaintId) {
         if (complaintId == null) { return null; }
         List<compliancequest__SQX_Complaint__c> rows = [

@@ -1,6 +1,6 @@
 /**
  * Links the Product History Review Report PDF (the file PhrTemplateReportAction attaches to the complaint)
- * to the draft investigation summary and shares the same file with the complaint's primary investigation.
+ * to the PHR Summary (complaint and PHR) and shares the same file with the complaint's primary investigation.
  *
  * - withReportLink(): adds (or refreshes) one line at the end of a summary:
  *       Attached report: Product History Review Report   (a link to the file)
@@ -129,6 +129,21 @@ public with sharing class PhrReportLink {
                 updated++;
             }
 
+            Id phrId = PhrRecordContext.phrIdFor(complaintId);
+            if (phrId != null) {
+                for (compliancequest__SQX_Product_History_Review__c p : [
+                    SELECT compliancequest__Product_History_Review_Summary__c FROM compliancequest__SQX_Product_History_Review__c
+                    WHERE Id = :phrId WITH USER_MODE LIMIT 1
+                ]) {
+                    String s = p.compliancequest__Product_History_Review_Summary__c;
+                    if (!String.isBlank(s) && !hasLink(s)) {
+                        Database.SaveResult sr = Database.update(new compliancequest__SQX_Product_History_Review__c(
+                            Id = phrId, compliancequest__Product_History_Review_Summary__c = s + line(docId)), false, AccessLevel.USER_MODE);
+                        if (sr.isSuccess()) { updated++; }
+                    }
+                }
+            }
+
             Set<Id> invIds = investigationIds(complaintId);
             if (!invIds.isEmpty()) {
                 List<compliancequest__SQX_Investigation__c> invUpdates = new List<compliancequest__SQX_Investigation__c>();
@@ -148,7 +163,7 @@ public with sharing class PhrReportLink {
                     updated += invUpdates.size();
                 }
             }
-            if (updated > 0) { msg += ' A link to the report was added to the investigation summary.'; }
+            if (updated > 0) { msg += ' A link to the report was added to the summary.'; }
         } catch (Exception e) {
             msg += ' The link to the report could not be added to the summary: ' + e.getMessage();
         }

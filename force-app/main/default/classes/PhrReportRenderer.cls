@@ -9,6 +9,8 @@
  *      blank means TEMPLATE_DOC_NUMBER), if it is Current and valid;
  *   2. otherwise the static resource PHR_Report_Default_Template.
  *
+ * Sections can be kept or dropped by where the report was run from: see applyConditions.
+ *
  * A template is only used if it is well-formed XML both before and after it is filled.
  * Every value is escaped. Only the placeholders listed in buildValues are filled; any other
  * {{word}} is removed. This class does not change any record.
@@ -157,11 +159,27 @@ public without sharing class PhrReportRenderer {
 
     // ---------- Filling ----------
 
+    /**
+     * Conditional sections in a template:
+     *   <!--IF:phr--> ... <!--END:phr-->                     kept when run from the complaint or PHR
+     *   <!--IF:investigation--> ... <!--END:investigation-->  kept when run from an investigation
+     * The markers are removed; the section they wrap is kept or dropped.
+     */
+    @TestVisible
+    private static String applyConditions(String template, PhrReportData d) {
+        if (template == null) { return null; }
+        String keep = d.investigationMode ? 'investigation' : 'phr';
+        String drop = d.investigationMode ? 'phr' : 'investigation';
+        String out = template.replaceAll('(?is)<!--\\s*IF:' + drop + '\\s*-->.*?<!--\\s*END:' + drop + '\\s*-->', '');
+        out = out.replaceAll('(?i)<!--\\s*(?:IF|END):' + keep + '\\s*-->', '');
+        return out;
+    }
+
     /** Returns the filled template, or null if the result is not well-formed. */
     @TestVisible
     private static String fill(String template, PhrReportData d, Boolean plainDraft) {
         Map<String, String> v = buildValues(d, plainDraft);
-        String out = template;
+        String out = applyConditions(template, d);
         for (String k : v.keySet()) {
             out = out.replace('{{' + k + '}}', v.get(k));
         }
@@ -183,6 +201,11 @@ public without sharing class PhrReportRenderer {
         v.put('phrBlock', String.isBlank(d.phrName) ? '' : ' &#183; Product History Review <strong>' + esc(d.phrName) + '</strong>');
         v.put('partBlock', String.isBlank(d.partLabel) ? '' : ' &#183; ' + esc(d.partLabel));
         v.put('lotBlock', String.isBlank(d.lotNumber) ? '' : ' &#183; Lot ' + esc(d.lotNumber));
+        v.put('reportedDate', esc(d.reportedDate));
+        v.put('reportedDateBlock', String.isBlank(d.reportedDate) ? '' : ' &#183; Reported ' + esc(d.reportedDate));
+        v.put('summaryHeading', esc(d.summaryHeading));
+        v.put('investigationName', esc(d.investigationName));
+        v.put('investigationNameBlock', String.isBlank(d.investigationName) ? '' : ' &#183; Investigation <strong>' + esc(d.investigationName) + '</strong>');
         v.put('overallScore', String.valueOf(d.overallScore));
         v.put('overallRating', esc(d.overallRating));
         v.put('ratingClass', esc(d.overallRating == null ? 'none' : d.overallRating.toLowerCase()));
@@ -193,6 +216,9 @@ public without sharing class PhrReportRenderer {
         v.put('reasonRows', reasonRows(d));
         v.put('draftSummaryHtml', draftHtml(d, plainDraft));
         v.put('draftSummaryBlock', draftBlock(d, plainDraft));
+        // Mode-specific copies: each is empty when the report is run from the other kind of record.
+        v.put('phrSummaryBlock', d.investigationMode ? '' : draftBlock(d, plainDraft));
+        v.put('investigationSummaryBlock', d.investigationMode ? draftBlock(d, plainDraft) : '');
         v.put('leadRows', leadRows(d));
         v.put('leadBlock', leadBlock(d));
         v.put('progressBlock', progressBlock(d));
@@ -203,7 +229,7 @@ public without sharing class PhrReportRenderer {
         v.put('gapBlock', gapBlock(d));
 
         if (!d.hasComplaint) { // nothing to show but the error message
-            for (String k : new List<String>{'reasonRows', 'leadBlock', 'progressBlock', 'investigationBlock', 'gapBlock', 'draftSummaryBlock'}) { v.put(k, ''); }
+            for (String k : new List<String>{'reasonRows', 'leadBlock', 'progressBlock', 'investigationBlock', 'gapBlock', 'draftSummaryBlock', 'phrSummaryBlock', 'investigationSummaryBlock'}) { v.put(k, ''); }
         }
         return v;
     }
@@ -222,7 +248,10 @@ public without sharing class PhrReportRenderer {
 
     private static String draftBlock(PhrReportData d, Boolean plain) {
         if (String.isBlank(d.draftSummaryHtml)) {
-            return '<p class="empty">No draft investigation summary has been saved on this complaint yet. Ask the agent to draft the summary and save it, then run this report again.</p>';
+            if (d.investigationMode) {
+                return '<p class="empty">No Investigation Summary has been written on this investigation yet.</p>';
+            }
+            return '<p class="empty">No PHR Summary has been saved yet. Ask the agent to draft the summary and save it, then run this report again.</p>';
         }
         return '<div class="draft">' + draftHtml(d, plain) + '</div>';
     }
