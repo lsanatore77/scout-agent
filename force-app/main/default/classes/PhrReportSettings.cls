@@ -55,16 +55,19 @@ public with sharing class PhrReportSettings {
     }
 
     @TestVisible private static Values testValues;
+    /** Read once per transaction: the report asks for the settings many times. */
+    private static Values cached;
 
     public static Values get() {
         if (testValues != null) { return testValues; }
+        if (cached != null) { return cached; }
         Values v = new Values();
         try {
             List<SObject> rows = Database.query(
                 'SELECT Use_Manufacture_Date_Window__c, Days_After_Manufacture__c, Days_Before_Manufacture__c, '
                 + 'Summary_Complaint_Overview__c, Summary_Product_History_Review__c, Summary_Analysis_and_Next_Steps__c '
                 + 'FROM PHR_Report_Setting__mdt WHERE DeveloperName = \'Default\' LIMIT 1');
-            if (rows.isEmpty()) { return v; }
+            if (!rows.isEmpty()) {
             SObject r = rows[0];
             v.useWindow = flag(r, 'Use_Manufacture_Date_Window__c', v.useWindow);
             v.daysAfter = whole(r, 'Days_After_Manufacture__c', v.daysAfter);
@@ -72,12 +75,14 @@ public with sharing class PhrReportSettings {
             v.summaryOverview = flag(r, 'Summary_Complaint_Overview__c', v.summaryOverview);
             v.summaryAssociatedItems = flag(r, 'Summary_Product_History_Review__c', v.summaryAssociatedItems);
             v.summaryAnalysis = flag(r, 'Summary_Analysis_and_Next_Steps__c', v.summaryAnalysis);
+            }
         } catch (Exception ex) {
             // Type not deployed yet, or no access: keep the defaults.
         }
         v.templateDocument = readTemplateDocument();
         v.phrReportTitle = readText('PHR_Report_Title__c');
         v.investigationReportTitle = readText('Investigation_Report_Title__c');
+        cached = v;
         return v;
     }
 
