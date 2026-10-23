@@ -3,10 +3,12 @@ import { CurrentPageReference } from 'lightning/navigation';
 import getCandidates from '@salesforce/apex/PhrLeadSelectController.getCandidates';
 
 const TIERS = [
-    { key: 'Top', label: 'Top leads' },
-    { key: 'Next', label: 'Next leads' },
-    { key: 'Set aside', label: 'Set aside' }
+    { key: 'Top', label: 'Most Relevant' },
+    { key: 'Next', label: 'Less Relevant' },
+    { key: 'Set aside', label: 'Set Aside' }
 ];
+const SET_ASIDE = 'Set aside';
+const PAGE_SIZE = 5;
 const DOT = { Red: '#ba0517', Yellow: '#dd7a01', Grey: '#939393' };
 
 /**
@@ -26,6 +28,7 @@ export default class PhrLeadSelect extends LightningElement {
     manualId;
     complaintName;
     pageRecordId;
+    asidePage = 1;
 
     @api
     get value() {
@@ -113,7 +116,7 @@ export default class PhrLeadSelect extends LightningElement {
 
     get groups() {
         return TIERS.map((t) => {
-            const items = this.rows
+            const all = this.rows
                 .filter((r) => r.tier === t.key)
                 .map((r) => ({
                     ...r,
@@ -124,17 +127,26 @@ export default class PhrLeadSelect extends LightningElement {
                     matchLabel: r.colour ? r.colour + (r.relevance == null ? '' : ' (' + r.relevance + ')') : '',
                     note: r.alreadyAdded ? 'Already on the PHR' : r.reason || ''
                 }));
-            const free = items.filter((i) => !i.alreadyAdded);
+            const free = all.filter((i) => !i.alreadyAdded);
+            const paging = t.key === SET_ASIDE ? pageOf(all, this.asidePage) : null;
             return {
                 key: t.key,
-                label: t.label + ' (' + items.length + ')',
-                items,
-                hasItems: items.length > 0,
+                label: t.label + ' (' + all.length + ')',
+                items: paging ? paging.items : all,
+                pager: paging && paging.pages.length > 1 ? paging : null,
+                hasItems: all.length > 0,
                 canToggle: free.length > 0 && !this.readOnly,
                 allOn: free.length > 0 && free.every((i) => i.checked),
                 toggleLabel: free.length > 0 && free.every((i) => i.checked) ? 'Clear' : 'Select all'
             };
         }).filter((g) => g.hasItems);
+    }
+
+    handlePage(event) {
+        const to = event.currentTarget.dataset.page;
+        const pages = Math.max(1, Math.ceil(this.rows.filter((r) => r.tier === SET_ASIDE).length / PAGE_SIZE));
+        const n = to === 'prev' ? this.asidePage - 1 : to === 'next' ? this.asidePage + 1 : Number(to);
+        this.asidePage = Math.min(Math.max(1, n), pages);
     }
 
     get hasRows() {
@@ -174,4 +186,23 @@ export default class PhrLeadSelect extends LightningElement {
         this._value = value;
         this.dispatchEvent(new CustomEvent('valuechange', { detail: { value } }));
     }
+}
+
+/** One page of a list, plus the page links (numbers, Previous, Next). */
+function pageOf(list, page) {
+    const count = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    const current = Math.min(Math.max(1, page), count);
+    const start = (current - 1) * PAGE_SIZE;
+    return {
+        items: list.slice(start, start + PAGE_SIZE),
+        pages: Array.from({ length: count }, (_, i) => ({
+            key: 'p' + (i + 1),
+            num: String(i + 1),
+            cls: i + 1 === current ? 'page current' : 'page',
+            current: i + 1 === current
+        })),
+        hasPrev: current > 1,
+        hasNext: current < count,
+        range: start + 1 + '–' + Math.min(start + PAGE_SIZE, list.length) + ' of ' + list.length
+    };
 }

@@ -19,6 +19,7 @@ const LEAD_HEADERS = ['Record', 'Type', 'Status', 'Match', 'Related by'];
 const SET_ASIDE_HEADERS = ['Record', 'Type', 'Title', 'Status', 'Match', 'Why set aside'];
 const ADDED_HEADER = 'Added';
 const PHR_HEADER = 'PHR';
+const PAGE_SIZE = 5;
 const INVESTIGATION_OBJECT = 'compliancequest__SQX_Investigation__c';
 const TIERS = [
     { key: 'Top', title: 'Most Relevant', empty: 'No most relevant records were added.' },
@@ -33,6 +34,7 @@ export default class PhrLeadLists extends LightningElement {
     loading = true;
     showNotAdded = false;
     error;
+    asidePage = 1;
 
     connectedCallback() {
         this.load();
@@ -112,11 +114,14 @@ export default class PhrLeadLists extends LightningElement {
             const headers = (asideTier ? SET_ASIDE_HEADERS : LEAD_HEADERS)
                 .concat(this.showPhr ? [PHR_HEADER] : [])
                 .concat(this.showNotAdded ? [ADDED_HEADER] : []);
+            const paging = asideTier ? pageOf(rows, this.asidePage) : null;
+            const shown = paging ? paging.items : rows;
             return {
                 key: t.key,
                 heading: t.title + ' (' + rows.length + ')',
                 empty: t.empty,
-                rows: rows.map((r) => this.decorate(r, asideTier)),
+                rows: shown.map((r) => this.decorate(r, asideTier)),
+                pager: paging && paging.pages.length > 1 ? paging : null,
                 headers: headers.map((h) => ({ key: h, label: h })),
                 hasRows: rows.length > 0
             };
@@ -138,9 +143,37 @@ export default class PhrLeadLists extends LightningElement {
 
     handleShowNotAdded(event) {
         this.showNotAdded = event.target.checked;
+        this.asidePage = 1;
+    }
+
+    handlePage(event) {
+        const to = event.currentTarget.dataset.page;
+        const count = this.visibleRows.filter((r) => r.tier === 'Set aside').length;
+        const pages = Math.max(1, Math.ceil(count / PAGE_SIZE));
+        const n = to === 'prev' ? this.asidePage - 1 : to === 'next' ? this.asidePage + 1 : Number(to);
+        this.asidePage = Math.min(Math.max(1, n), pages);
     }
 
     handleRefresh() {
         this.load();
     }
+}
+
+/** One page of a list, plus the page links (numbers, Previous, Next). */
+function pageOf(list, page) {
+    const count = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+    const current = Math.min(Math.max(1, page), count);
+    const start = (current - 1) * PAGE_SIZE;
+    return {
+        items: list.slice(start, start + PAGE_SIZE),
+        pages: Array.from({ length: count }, (_, i) => ({
+            key: 'p' + (i + 1),
+            num: String(i + 1),
+            cls: i + 1 === current ? 'page current' : 'page',
+            current: i + 1 === current
+        })),
+        hasPrev: current > 1,
+        hasNext: current < count,
+        range: start + 1 + '–' + Math.min(start + PAGE_SIZE, list.length) + ' of ' + list.length
+    };
 }

@@ -16,3 +16,11 @@ lightning-card { display: block; border: 1px solid #e5e5e5; border-radius: 0.5re
 .dot-red { background: #e8403f; }
 .dot-yellow { background: #f5c518; }
 .dot-grey { background: #b9b9b9; }
+
+.pager { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.375rem; }
+.pages { display: flex; gap: 0.625rem; align-items: center; flex-wrap: wrap; }
+.page { background: none; border: 0; padding: 0; color: #0b5cab; cursor: pointer; font-size: 0.8125rem; }
+.page:hover, .link:hover { text-decoration: underline; }
+.page.current { color: #181818; font-weight: 700; cursor: default; text-decoration: none; }
+.link { background: none; border: 0; padding: 0; color: #0b5cab; cursor: pointer; font-size: 0.8125rem; }
+.muted { color: #706e6b; font-size: 0.8125rem; }
