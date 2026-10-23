@@ -6,14 +6,12 @@
         <members>AssociatedItemsLineItemInfo</members>
         <members>AssociatedItemsPartInfo</members>
         <members>AssociatedItemsRecordInfo</members>
-        <members>AssociatedItemsReportAction</members>
         <members>AssociatedItemsReportActionTest</members>
         <members>AssociatedItemsReportData</members>
         <members>ComplaintInvestigationGrounding</members>
         <members>ComplaintInvestigationSummaryTest</members>
         <members>ComplaintLeadRanking</members>
         <members>ComplaintLeadRankingTest</members>
-        <members>ComplaintReportPDFController</members>
         <members>ComplaintReportPDFControllerTest</members>
         <members>ComplaintTaskProgress</members>
         <members>ComplaintTaskProgressTest</members>
@@ -38,7 +36,6 @@
         <members>PhrLeadPackageData</members>
         <members>PhrLeadRecord</members>
         <members>PhrLeadReportAction</members>
-        <members>PhrLeadReportController</members>
         <members>PhrLeadReportDraftTest</members>
         <members>PhrLeadReportRenameTest</members>
         <members>PhrLeadReportTest</members>
@@ -59,6 +56,7 @@
         <members>PhrQmsRelevanceTest</members>
         <members>PhrRecordContext</members>
         <members>PhrRecordContextTest</members>
+        <members>PhrReportCoverageTest</members>
         <members>PhrReportData</members>
         <members>PhrReportLink</members>
         <members>PhrReportLinkTest</members>
