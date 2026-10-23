@@ -122,6 +122,8 @@
         <members>PHR_Lead__c.Tier__c</members>
         <members>PHR_Report_Setting__mdt.Days_After_Manufacture__c</members>
         <members>PHR_Report_Setting__mdt.Days_Before_Manufacture__c</members>
+        <members>PHR_Report_Setting__mdt.Investigation_Report_Title__c</members>
+        <members>PHR_Report_Setting__mdt.PHR_Report_Title__c</members>
         <members>PHR_Report_Setting__mdt.Summary_Analysis_and_Next_Steps__c</members>
         <members>PHR_Report_Setting__mdt.Summary_Complaint_Overview__c</members>
         <members>PHR_Report_Setting__mdt.Summary_Product_History_Review__c</members>
