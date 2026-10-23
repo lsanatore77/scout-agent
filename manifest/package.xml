@@ -11,6 +11,8 @@
         <members>AssociatedItemsReportData</members>
         <members>ComplaintInvestigationGrounding</members>
         <members>ComplaintInvestigationSummaryTest</members>
+        <members>ComplaintLeadRanking</members>
+        <members>ComplaintLeadRankingTest</members>
         <members>ComplaintReportPDFController</members>
         <members>ComplaintReportPDFControllerTest</members>
         <members>ComplaintTaskProgress</members>
@@ -19,27 +21,34 @@
         <members>GenerateAssociatedItemsReportAction</members>
         <members>GenerateAssociatedItemsReportActionTest</members>
         <members>GenerateDraftInvestigationSummary</members>
+        <members>PhrChecklistAction</members>
+        <members>PhrChecklistActionTest</members>
         <members>PhrChecklistItem</members>
         <members>PhrChecklistResult</members>
+        <members>PhrDescriptionCheck</members>
+        <members>PhrDescriptionCheckTest</members>
         <members>PhrLeadAddAction</members>
         <members>PhrLeadAddActionTest</members>
         <members>PhrLeadAddSelectedAction</members>
         <members>PhrLeadListController</members>
         <members>PhrLeadListControllerTest</members>
         <members>PhrLeadListOrderTest</members>
-        <members>PhrReportData</members>
-        <members>PhrReportRenderer</members>
-        <members>PhrTemplateReportAction</members>
-        <members>PhrTemplateReportTest</members>
         <members>PhrLeadPackageAction</members>
         <members>PhrLeadPackageActionTest</members>
         <members>PhrLeadPackageData</members>
         <members>PhrLeadRecord</members>
+        <members>PhrLeadReportAction</members>
+        <members>PhrLeadReportController</members>
+        <members>PhrLeadReportDraftTest</members>
+        <members>PhrLeadReportRenameTest</members>
+        <members>PhrLeadReportTest</members>
         <members>PhrLeadSection</members>
         <members>PhrLeadSelectController</members>
         <members>PhrLeadSelectTest</members>
         <members>PhrLeadSelection</members>
         <members>PhrMissingCheck</members>
+        <members>PhrMissingDataAction</members>
+        <members>PhrMissingDataActionTest</members>
         <members>PhrMissingDataResult</members>
         <members>PhrQmsAutoCreateTest</members>
         <members>PhrQmsPanelController</members>
@@ -48,23 +57,23 @@
         <members>PhrQmsRelevance</members>
         <members>PhrQmsRelevanceSettings</members>
         <members>PhrQmsRelevanceTest</members>
-        <members>SaveDraftInvestigationSummary</members>
-        <members>SummaryRichText</members>
-        <members>SummaryRichTextTest</members>
-        <members>SummaryHtmlRepair</members>
-        <members>SummaryHtmlRepairTest</members>
-        <members>ComplaintLeadRanking</members>
-        <members>ComplaintLeadRankingTest</members>
-        <members>PhrLeadReportRenameTest</members>
-        <members>PhrLeadReportDraftTest</members>
-        <members>PhrLeadReportController</members>
-        <members>PhrLeadReportAction</members>
-        <members>PhrLeadReportTest</members>
-        <members>PhrMissingDataAction</members>
-        <members>PhrMissingDataActionTest</members>
+        <members>PhrRecordContext</members>
+        <members>PhrRecordContextTest</members>
+        <members>PhrReportData</members>
+        <members>PhrReportLink</members>
+        <members>PhrReportLinkTest</members>
+        <members>PhrReportRenderer</members>
         <members>PhrReportSettings</members>
         <members>PhrSummarySections</members>
+        <members>PhrSummaryText</members>
+        <members>PhrTemplateReportAction</members>
+        <members>PhrTemplateReportTest</members>
         <members>PhrWindowAndSectionsTest</members>
+        <members>SaveDraftInvestigationSummary</members>
+        <members>SummaryHtmlRepair</members>
+        <members>SummaryHtmlRepairTest</members>
+        <members>SummaryRichText</members>
+        <members>SummaryRichTextTest</members>
         <name>ApexClass</name>
     </types>
     <types>
@@ -91,36 +100,37 @@
         <name>LightningTypeBundle</name>
     </types>
     <types>
-        <members>compliancequest__SQX_Complaint__c.Draft_Investigation_Summary__c</members>
-        <members>compliancequest__SQX_Complaint__c.Draft_Investigation_Summaries__c</members>
-        <members>compliancequest__SQX_Part__c.Has_NC__c</members>
-        <members>PHR_Lead__c.PHR__c</members>
-        <members>PHR_Lead__c.Tier__c</members>
+        <members>PHR_Lead__c</members>
+        <members>PHR_Report_Setting__mdt</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
+        <members>PHR_Lead__c.Added_On__c</members>
+        <members>PHR_Lead__c.Added__c</members>
         <members>PHR_Lead__c.Colour__c</members>
+        <members>PHR_Lead__c.Lead_Key__c</members>
+        <members>PHR_Lead__c.PHR__c</members>
         <members>PHR_Lead__c.Reason__c</members>
         <members>PHR_Lead__c.Record_Id__c</members>
+        <members>PHR_Lead__c.Record_Link__c</members>
         <members>PHR_Lead__c.Record_Number__c</members>
         <members>PHR_Lead__c.Record_Status__c</members>
         <members>PHR_Lead__c.Record_Title__c</members>
         <members>PHR_Lead__c.Record_Type__c</members>
         <members>PHR_Lead__c.Related_By__c</members>
         <members>PHR_Lead__c.Relevance__c</members>
-        <members>PHR_Lead__c.Added__c</members>
-        <members>PHR_Lead__c.Added_On__c</members>
-        <members>PHR_Lead__c.Lead_Key__c</members>
-        <members>PHR_Lead__c.Record_Link__c</members>
-        <members>PHR_Report_Setting__mdt.Use_Manufacture_Date_Window__c</members>
+        <members>PHR_Lead__c.Tier__c</members>
         <members>PHR_Report_Setting__mdt.Days_After_Manufacture__c</members>
         <members>PHR_Report_Setting__mdt.Days_Before_Manufacture__c</members>
+        <members>PHR_Report_Setting__mdt.Summary_Analysis_and_Next_Steps__c</members>
         <members>PHR_Report_Setting__mdt.Summary_Complaint_Overview__c</members>
         <members>PHR_Report_Setting__mdt.Summary_Product_History_Review__c</members>
-        <members>PHR_Report_Setting__mdt.Summary_Analysis_and_Next_Steps__c</members>
+        <members>PHR_Report_Setting__mdt.Template_Controlled_Document__c</members>
+        <members>PHR_Report_Setting__mdt.Use_Manufacture_Date_Window__c</members>
+        <members>compliancequest__SQX_Complaint__c.Draft_Investigation_Summaries__c</members>
+        <members>compliancequest__SQX_Complaint__c.Draft_Investigation_Summary__c</members>
+        <members>compliancequest__SQX_Part__c.Has_NC__c</members>
         <name>CustomField</name>
-    </types>
-    <types>
-        <members>PHR_Lead__c</members>
-        <members>PHR_Report_Setting__mdt</members>
-        <name>CustomObject</name>
     </types>
     <types>
         <members>PHR_Lead_Access</members>

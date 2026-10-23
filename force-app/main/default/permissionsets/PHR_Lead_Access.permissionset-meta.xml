@@ -6,6 +6,7 @@
     <classAccesses><apexClass>PhrLeadAddAction</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>PhrLeadAddSelectedAction</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>PhrMissingDataAction</apexClass><enabled>true</enabled></classAccesses>
+    <classAccesses><apexClass>PhrChecklistAction</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>PhrLeadReportAction</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>PhrLeadReportController</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>PhrLeadListController</apexClass><enabled>true</enabled></classAccesses>
