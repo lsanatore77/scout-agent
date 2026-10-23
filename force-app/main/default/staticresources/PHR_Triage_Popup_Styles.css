@@ -1,8 +1,0 @@
-/* Hides CQ's own popup footer (its Cancel and Save) only in the popup that holds the PHR Complete Triage screen.
-   The screen has its own Cancel and Complete triage buttons. Other CQ popups are not affected. */
-.slds-modal:has(c-triage-steps-with-summary) .slds-modal__footer,
-section[role="dialog"]:has(c-triage-steps-with-summary) .slds-modal__footer,
-.slds-modal:has(c-triage-steps-with-summary) .slds-docked-form-footer,
-[class*="SQX_Esig_Action_UI"]:has(c-triage-steps-with-summary) .slds-modal__footer {
-    display: none !important;
-}

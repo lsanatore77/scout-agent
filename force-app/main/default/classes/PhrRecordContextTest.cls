@@ -137,4 +137,35 @@ private class PhrRecordContextTest {
             'Keep.\n\n*This is an AI-generated draft that requires investigator review.*'));
         Assert.isNull(PhrSummaryText.stripDisclaimer(null));
     }
+
+    @IsTest
+    static void tasksOnThePhrOrAnInvestigationGiveTheComplaint() {
+        Id cId = complaint().Id;
+        Id pId = phr().Id;
+        compliancequest__SQX_Investigation__c inv = new compliancequest__SQX_Investigation__c();
+        Schema.RecordTypeInfo rt = compliancequest__SQX_Investigation__c.SObjectType.getDescribe()
+            .getRecordTypeInfosByDeveloperName().get('Complaint_Investigation');
+        if (rt != null) { inv.RecordTypeId = rt.getRecordTypeId(); }
+        insert inv;
+        insert new compliancequest__SQX_Linked_Investigation__c(
+            compliancequest__SQX_Complaint__c = cId, compliancequest__SQX_Investigation__c = inv.Id);
+        Task onPhr = new Task(Subject = 'Review', WhatId = pId);
+        Task onInv = new Task(Subject = 'Investigate', WhatId = inv.Id);
+        insert new List<Task>{ onPhr, onInv };
+        Assert.areEqual(cId, PhrRecordContext.complaintIdFor(onPhr.Id));
+        Assert.areEqual(cId, PhrRecordContext.complaintIdFor(onInv.Id));
+        Assert.areEqual(pId, PhrRecordContext.phrIdFor(onPhr.Id));
+        Assert.areEqual(pId, PhrRecordContext.phrIdFor(inv.Id));
+    }
+
+    @IsTest
+    static void anUnlinkedInvestigationGivesNoComplaint() {
+        compliancequest__SQX_Investigation__c inv = new compliancequest__SQX_Investigation__c();
+        Schema.RecordTypeInfo rt = compliancequest__SQX_Investigation__c.SObjectType.getDescribe()
+            .getRecordTypeInfosByDeveloperName().get('Complaint_Investigation');
+        if (rt != null) { inv.RecordTypeId = rt.getRecordTypeId(); }
+        insert inv;
+        Assert.isNull(PhrRecordContext.complaintIdFor(inv.Id));
+        Assert.isNull(PhrRecordContext.phrIdFor(inv.Id));
+    }
 }
