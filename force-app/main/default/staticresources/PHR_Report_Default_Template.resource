@@ -94,7 +94,7 @@
   {{investigationSummaryBlock}}
   <!--END:investigation-->
 
-  <h2>3. Top records worth reviewing</h2>
+  <h2 style="page-break-before: always;">3. Top records worth reviewing</h2>
   {{leadBlock}}
 
   <h2>4. Complaint steps and progress</h2>

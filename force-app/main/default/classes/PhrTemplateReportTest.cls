@@ -242,5 +242,7 @@ private class PhrTemplateReportTest {
         System.assert(b.contains('>Investigation Summary<'), b);
         System.assert(b.contains('Investigation text'), b);
         System.assert(b.contains('Investigation <strong>'), b);
+        String c = PhrReportRenderer.fill('<html xmlns="http://www.w3.org/1999/xhtml"><body><h2>3. Top records worth reviewing</h2></body></html>', phrRun, false);
+        System.assert(c.contains('page-break-before: always'), c);
     }
 }

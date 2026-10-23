@@ -195,6 +195,10 @@ public without sharing class PhrReportRenderer {
             out = out.replaceFirst('\\{\\{phrBlock\\}\\}', '{{phrBlock}}{{investigationNameBlock}}');
         }
         out = out.replaceAll('(?i)>\\s*Draft investigation summary\\s*<', '>{{summaryHeading}}<');
+        // The records worth reviewing always start on a new page (page 2 when the summary fits on page 1).
+        if (!out.contains('page-break-before')) {
+            out = out.replaceFirst('(?i)<h2>(\\s*3\\.\\s*Top records worth reviewing)', '<h2 style="page-break-before: always;">$1');
+        }
         return out;
     }
 
