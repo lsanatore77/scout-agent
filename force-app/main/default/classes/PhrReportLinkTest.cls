@@ -65,12 +65,18 @@ private class PhrReportLinkTest {
         Assert.isTrue(PhrReportLink.investigationIds(c.Id).isEmpty());
     }
 
-    static Id makeLinkedInvestigation(Id complaintId, String summary) {
+    static compliancequest__SQX_Investigation__c newInvestigation(String summary) {
         compliancequest__SQX_Investigation__c inv = new compliancequest__SQX_Investigation__c(
             compliancequest__Investigation_Summary__c = summary);
         Schema.RecordTypeInfo rt = compliancequest__SQX_Investigation__c.SObjectType.getDescribe()
             .getRecordTypeInfosByDeveloperName().get('Complaint_Investigation');
         if (rt != null) { inv.RecordTypeId = rt.getRecordTypeId(); }
+        return inv;
+    }
+
+    /** An investigation linked to the complaint but not its primary investigation. */
+    static Id makeLinkedInvestigation(Id complaintId, String summary) {
+        compliancequest__SQX_Investigation__c inv = newInvestigation(summary);
         insert inv;
         insert new compliancequest__SQX_Linked_Investigation__c(
             compliancequest__SQX_Complaint__c = complaintId,
@@ -78,9 +84,10 @@ private class PhrReportLinkTest {
         return inv.Id;
     }
 
+    /** A linked investigation that the code treats as the complaint's primary investigation. */
     static Id makePrimaryInvestigation(Id complaintId, String summary) {
         Id invId = makeLinkedInvestigation(complaintId, summary);
-        update new compliancequest__SQX_Complaint__c(Id = complaintId, compliancequest__SQX_Primary_Investigation__c = invId);
+        PhrReportLink.testPrimaryInvestigationId = invId;
         return invId;
     }
 

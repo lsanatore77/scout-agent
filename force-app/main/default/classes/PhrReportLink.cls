@@ -17,6 +17,8 @@ public with sharing class PhrReportLink {
 
     public static final String REPORT_TITLE = 'Product History Review Report';
     @TestVisible static final String LINE_LABEL = 'Attached report:';
+    /** Tests set this to stand in for the complaint's primary investigation (CQ's scope rules block setting one in test data). */
+    @TestVisible static Id testPrimaryInvestigationId;
     static final Pattern LINK_LINE = Pattern.compile('(?is)\\s*<p>\\s*<strong>\\s*Attached report:\\s*</strong>.*?</p>');
 
     /** ContentDocument Id of the report attached to the complaint, or null. */
@@ -62,6 +64,7 @@ public with sharing class PhrReportLink {
     public static Set<Id> investigationIds(Id complaintId) {
         Set<Id> ids = new Set<Id>();
         if (complaintId == null) { return ids; }
+        if (testPrimaryInvestigationId != null) { ids.add(testPrimaryInvestigationId); return ids; }
         for (compliancequest__SQX_Complaint__c c : [
             SELECT compliancequest__SQX_Primary_Investigation__c FROM compliancequest__SQX_Complaint__c
             WHERE Id = :complaintId
