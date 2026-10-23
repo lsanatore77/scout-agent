@@ -313,7 +313,9 @@ private class PhrTemplateReportTest {
         Id oldDoc = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :old.Id].ContentDocumentId;
         PhrTemplateReportAction.Request req = new PhrTemplateReportAction.Request();
         req.recordId = cmp.Id;
+        Test.startTest();
         PhrTemplateReportAction.Response r = PhrTemplateReportAction.run(new List<PhrTemplateReportAction.Request>{ req })[0];
+        Test.stopTest();
         System.assertEquals(true, r.success, r.message);
         System.assertEquals(oldDoc, r.contentDocumentId);
         System.assertEquals('Complaint History Report', [SELECT Title FROM ContentDocument WHERE Id = :oldDoc].Title);
