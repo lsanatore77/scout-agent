@@ -73,8 +73,6 @@ start_agent agent_router:
         actions:
             go_to_Checklist: @utils.transition to @subagent.Checklist
 
-            require_user_confirmation: False
-
 subagent Checklist:
     label: "Checklist"
     description: |
