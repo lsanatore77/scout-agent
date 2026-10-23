@@ -1,0 +1,582 @@
+system:
+    instructions: |
+        You are an AI Agent.  Display query results in a table format
+
+        The user's current context is:
+        Current App Name: {!@variables.currentAppName}
+        Current Object Name: {!@variables.currentObjectApiName}
+        Current Page Type: {!@variables.currentPageType}
+        Current Record ID: {!@variables.currentRecordId}
+
+    messages:
+        welcome: |
+            Hi, I'm Agentforce! I use AI to search trusted sources, and more. Ask me "What else can you do?" to see how I can simplify your workday. How can I help?
+        error: "Something went wrong. Try again."
+
+config:
+    agent_label: "PHR Agent"
+    agent_template: "EmployeeCopilot__AgentforceEmployeeAgent"
+    developer_name: "PHR_Agent"
+    agent_type: "AgentforceEmployeeAgent"
+    description: "Automate common business tasks and assist users in their flow of work. Agentforce Employee Agent can search knowledge articles and other data sources. Customize it further to meet your employees' business needs."
+
+language:
+    default_locale: "en_US"
+    additional_locales: "en_GB"
+    all_additional_locales: False
+
+variables:
+    EndUserId: linked string
+        source: @MessagingSession.MessagingEndUserId
+        description: "This variable may also be referred to as MessagingEndUser Id"
+    RoutableId: linked string
+        source: @MessagingSession.Id
+        description: "This variable may also be referred to as MessagingSession Id"
+    ContactId: linked string
+        source: @MessagingEndUser.ContactId
+        description: "This variable may also be referred to as MessagingEndUser ContactId"
+    EndUserLanguage: linked string
+        source: @MessagingSession.EndUserLanguage
+        description: "This variable may also be referred to as MessagingSession EndUserLanguage"
+    ChannelType: linked string
+        source: @MessagingSession.ChannelType
+        description: "This variable may also be referred to as MessagingSession ChannelType"
+    currentAppName: mutable string
+        description: "Salesforce Application Name"
+        visibility: "External"
+    currentObjectApiName: mutable string
+        description: "The API name of the current Salesforce object"
+        visibility: "External"
+    currentPageType: mutable string
+        description: "Page type (record, list, home)"
+        visibility: "External"
+    currentRecordId: mutable string
+        description: "The Salesforce ID of the current record"
+        visibility: "External"
+    VerifiedCustomerId: mutable string
+        description: "This variable may also be referred to as VerifiedCustomerId"
+        visibility: "Internal"
+    draftSummary: mutable string
+        description: "The PHR Summary text that was just generated and shown to the user, kept until the user decides whether to save it."
+        visibility: "Internal"
+
+knowledge:
+    rag_feature_config_id: ""
+    citations_url: ""
+    citations_enabled: False
+
+start_agent agent_router:
+    label: "Agent Router"
+    description: "Welcome the user and determine the appropriate subagent based on user input"
+    model_config:
+        model: "model://sfdc_ai__DefaultEinsteinHyperClassifier"
+    reasoning:
+        instructions: ->
+            |When the user asks, in any wording, to see what is worth reviewing for the current complaint or Product History Review, or to add records to it, {!@actions.go_to_Get_Relevant_Records}. Examples: "show package", "show me the package", "show the lead package", "show the relevance package", "relevance package", "what is worth reviewing", "what should I review", "what should I look at", "find the relevant records", "get relevant records", "review product history", "start the product history review", "add records", "add them to the PHR". Also when the user asks, in any wording, for the PHR Summary of the current complaint or to summarize it. Examples: "draft the summary", "PHR summary", "draft the PHR summary", "draft investigation summary", "generate the investigation summary", "generate the draft summary", "write the summary", "summarize this complaint", "summarize the complaint", "create the summary", "update the summary", "redo the summary". Also when the user asks, in any wording, for the report or the PDF report for the current complaint. Examples: "generate the report", "create the report", "make the PDF", "attach the report", "give me the report", "update the report", "run the report again". When the user asks, in any wording, what data is missing or whether the complaint and its Product History Review are ready, {!@actions.go_to_PHR_Reviewer}. Examples: "find missing data", "what is missing", "what data is missing", "check for gaps", "check the complaint", "is anything missing", "is this ready for review", "review the complaint", "run the review checks", "check the PHR". When the user asks, in any wording, for the scrap rate or the Product History Review checklist, {!@actions.go_to_Get_Relevant_Records}: the checklist is answered by the separate Scout Checklist agent. When the message is only an answer to a question you just asked, such as "yes", "no", "not now", "skip", "later", "cancel", "ok" or "sure", {!@actions.go_to_Get_Relevant_Records}: every question in this conversation is handled there. An answer like this is never a request to see the relevance package.
+        actions:
+            go_to_Get_Relevant_Records: @utils.transition to @subagent.Get_Relevant_Records
+            go_to_PHR_Reviewer: @utils.transition to @subagent.PHR_Reviewer
+
+subagent Related_Records:
+    label: "Related Records"
+    description: |
+
+        This subagent will run the associateditem apex class to retrieve records and display them in a custom table.
+    reasoning:
+        instructions: ->
+            |When the users asks "Get Related Records", the agent should run {!@actions.Get_Related_Assembly_Records} the table is only shown once and then run {!@actions.AssociatedItems}, After the table, run it in Preview mode and ask “Do you want to create the most relevant records?”. On yes, run Apply and don't display the table again.
+             . On no, don’t run it again and point the user to the panel. {!@actions.Add_Related_QMS_Records_to_PHR}
+             Rules:
+             Always use positive language when describing the response.
+
+             Always Display query results in a table format
+             Always display query results using the lightning web component named associatedItemsReport
+             Always use the lightning type associatedItemsReportType when running the associatedItemsReport
+             Never reveal information about data being in the system or not.
+             Never display a negative message to the user.
+             Always tell the user that an update was made.
+             Always tell the user that you successfully found records related to this record and it's BOM.
+             Always provide the user with a summary of field updates before making the update and request a confirmation from them.
+        actions:
+            AssociatedItems: @actions.AssociatedItems
+                with capaIds = ...
+                with changeOrderIds = ...
+                with inspectionIds = ...
+                with nonconformanceIds = ...
+                with primaryPartId = ...
+                with reportTitle = ...
+                with targetRecordId = ...
+            Get_Related_Assembly_Records: @actions.Get_Related_Assembly_Records
+                with assemblyList = ...
+                with countNC = ...
+                with counter = ...
+                with counterSingle = ...
+                with getPartList = ...
+                with idList = ...
+                with ncCounter = ...
+                with ncIDList = ...
+                with ncSingleTest = ...
+                with partList = ...
+                with primaryIDList = ...
+                with recordId = ...
+            Add_Related_QMS_Records_to_PHR: @actions.Add_Related_QMS_Records_to_PHR
+                with includeInvestigations = ...
+                with lotNumber = ...
+                with mode = ...
+                with recordId = ...
+    actions:
+        AssociatedItems:
+            label: "AssociatedItems"
+            description: "Items"
+            target: "apex://AssociatedItemsReportAction"
+            inputs:
+                capaIds: list[id]
+                    label: "CAPA Ids"
+                    is_required: False
+                    description: "list"
+                changeOrderIds: list[id]
+                    label: "Change Order Ids"
+                    is_required: False
+                    description: "list"
+                inspectionIds: list[id]
+                    label: "Inspection Ids"
+                    is_required: False
+                    description: "list"
+                nonconformanceIds: list[id]
+                    label: "Nonconformance Ids"
+                    is_required: False
+                    description: "list"
+                primaryPartId: id
+                    label: "Primary Part Id"
+                    description: "The Complaint/record's primary Part. Used to look up the Part's own details plus its Assembly and Assembly Line Items. Leave blank and set Target Record Id instead to have this resolved automatically."
+                    is_required: False
+                reportTitle: string
+                    label: "Report Title"
+                    is_required: False
+                    description: "title"
+                targetRecordId: id
+                    label: "Target Record Id"
+                    description: "The Complaint record currently open in the conversation (e.g. the current record Id). When this is set and Primary Part Id is not, the Primary Part and its Nonconformances are looked up automatically from this Complaint."
+                    is_required: True
+            outputs:
+                report: object
+                    label: "Report"
+                    complex_data_type_name: "c__associatedItemsReportType"
+                    is_displayable: True
+                    filter_from_agent: False
+                    description: "report"
+            include_in_progress_indicator: True
+            progress_indicator_message: "Scouting..."
+        Get_Related_Assembly_Records:
+            label: "Get Related Assembly Records"
+            description: "Get Related Assembly Records"
+            target: "flow://Associated_Items_Competition"
+            inputs:
+                assemblyList: list[object]
+                    label: "assemblyList"
+                    description: "list"
+                    is_required: False
+                    complex_data_type_name: "lightning__recordInfoType"
+                countNC: number
+                    label: "countNC"
+                    description: "counter"
+                    is_required: False
+                counter: list[object]
+                    label: "counter"
+                    description: "counter"
+                    is_required: False
+                    complex_data_type_name: "lightning__recordInfoType"
+                counterSingle: number
+                    label: "counterSingle"
+                    description: "counter"
+                    is_required: False
+                getPartList: object
+                    label: "getPartList"
+                    description: "list"
+                    is_required: False
+                    complex_data_type_name: "lightning__recordInfoType"
+                idList: list[string]
+                    label: "idList"
+                    description: "list"
+                    is_required: False
+                ncCounter: number
+                    label: "ncCounter"
+                    description: "counter"
+                    is_required: False
+                ncIDList: list[string]
+                    label: "ncIDList"
+                    description: "list"
+                    is_required: False
+                ncSingleTest: string
+                    label: "ncSingleTest"
+                    description: "list"
+                    is_required: False
+                partList: list[object]
+                    label: "partList"
+                    description: "list"
+                    is_required: False
+                    complex_data_type_name: "lightning__recordInfoType"
+                primaryIDList: list[string]
+                    label: "primaryIDList"
+                    description: "list"
+                    is_required: False
+                recordId: string
+                    label: "recordId"
+                    description: "list"
+                    is_required: False
+            outputs:
+                assemblyList: list[object]
+                    label: "assemblyList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                assignmentNCList: list[object]
+                    label: "assignmentNCList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                assignmentNCListSingle: object
+                    label: "assignmentNCListSingle"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                capaList: list[object]
+                    label: "capaList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                changeOrderList: list[object]
+                    label: "changeOrderList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                countNC: number
+                    label: "countNC"
+                    description: "counter"
+                    is_displayable: False
+                    filter_from_agent: False
+                counter: list[object]
+                    label: "counter"
+                    description: "counter"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                counterSingle: number
+                    label: "counterSingle"
+                    description: "counter"
+                    is_displayable: False
+                    filter_from_agent: False
+                getPartList: object
+                    label: "getPartList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                idList: list[string]
+                    label: "idList"
+                    description: "list"
+                    is_displayable: False
+                    filter_from_agent: False
+                inspectionList: list[object]
+                    label: "inspectionList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                ncCounter: number
+                    label: "ncCounter"
+                    description: "counter"
+                    is_displayable: False
+                    filter_from_agent: False
+                ncIDList: list[string]
+                    label: "ncIDList"
+                    description: "list"
+                    is_displayable: False
+                    filter_from_agent: False
+                ncList: list[object]
+                    label: "ncList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                ncSingleTest: string
+                    label: "ncSingleTest"
+                    description: "list"
+                    is_displayable: False
+                    filter_from_agent: False
+                partList: list[object]
+                    label: "partList"
+                    description: "list"
+                    complex_data_type_name: "lightning__recordInfoType"
+                    is_displayable: False
+                    filter_from_agent: False
+                primaryIDList: list[string]
+                    label: "primaryIDList"
+                    description: "list"
+                    is_displayable: False
+                    filter_from_agent: False
+                recordId: string
+                    label: "recordId"
+                    description: "id"
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Thinking..."
+        Add_Related_QMS_Records_to_PHR:
+            label: "Add Related QMS Records to PHR"
+            description: "This adds the records directly to the PHR"
+            target: "apex://PhrQmsRelatedRecordsAction"
+            inputs:
+                includeInvestigations: boolean
+                    label: "Include Investigations"
+                    description: "Also add the most relevant investigations as Linked Investigations on the Complaint. Defaults to true."
+                    is_required: False
+                lotNumber: string
+                    label: "Lot Number Override"
+                    description: "Optional. Search this lot instead of the Complaint's own lot."
+                    is_required: False
+                mode: string
+                    label: "Mode"
+                    description: "Preview (default) lists the top 3 most relevant records of each type and writes nothing. Apply creates those top 3 per type, only after the user answers yes. ApplyAll adds every related record."
+                    is_required: False
+                recordId: id
+                    label: "Complaint or PHR Id"
+                    description: "The Complaint, its Product History Review, or the Investigation currently open in the conversation."
+                    is_required: True
+            outputs:
+                applied: boolean
+                    label: "Applied"
+                    description: "True when records were written, false for a preview."
+                    is_displayable: False
+                    filter_from_agent: False
+                success: boolean
+                    label: "Success"
+                    description: ""
+                    is_displayable: False
+                    filter_from_agent: False
+                summary: string
+                    label: "Summary"
+                    description: "Plain-text result to relay to the user."
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Pondering..."
+            require_user_confirmation: False
+
+subagent Get_Relevant_Records:
+    label: "Get Relevant Records"
+    description: |
+
+        Walks through the Product History Review in order: shows the records worth reviewing for the current complaint (nonconformances, CAPAs, change orders, inspections and investigations, ranked by relevance), adds the records the user chooses to the Product History Review, drafts the PHR Summary and, after the user says yes, saves it to the complaint and its Product History Review (and copies it to the primary investigation), and generates the Product History Review report PDF and attaches it to the complaint. Use it when the user asks what is worth reviewing, to show the relevance package, to find relevant records, to add records to the PHR, for the PHR Summary, or to generate the report.
+    reasoning:
+        instructions: ->
+            |First look at your most recent message. If it ended with a question and the user's message is only an answer to it ("yes", "no", "not now", "skip", "later", "cancel", "ok", "sure"), do not run {!@actions.Relevance_Package} and do not say "Here are the records worth reviewing"; follow the answer rules below instead.
+             Run {!@actions.Relevance_Package} when the user asks, in any wording, to see what is worth reviewing for this complaint. Examples: "show package", "show me the package", "show the lead package", "show the relevance package", "relevance package", "what is worth reviewing", "what should I review", "what should I look at", "find the relevant records", "review product history". Run it only when the user asks to see the package; never run it again because the user said "no" or answered a question. After it runs, reply with one short sentence such as "Here are the records worth reviewing for this complaint." Do not ask a question and do not offer to add records, because the card already asks.
+             A "yes" or a "no" always answers the question you asked most recently, and only that one. The questions you ask here are, in order: adding records (on the relevance package card), the PHR Summary, saving the summary, and the report. You never ask about the scrap rate or the checklist. Never treat an answer as an answer to an earlier question.
+             Call the {!@actions.Ticklist} action's user_input tool when the user says, in any wording, that they want to add records. Examples: "yes", "yes please", "sure", "ok", "add them", "add the records", "add these", "add all", "add everything", "create the records", "put them on the PHR", "add to the product history review", "let me choose", "let me pick", "select records", "which ones can I add". The user can ask to add records at any time, even before the package has been shown. Always collect the choice with the tick boxes and never add records without showing them. When the user answers yes to the question on the relevance package card, or to any offer to add records, your very next step is to call the Ticklist action's user_input tool, in the same turn, with no text before it. Never ask the user in text which records to add, never tell them to select from a list, and never describe the tick boxes: the tick boxes appear only when you call this tool. Also call it when the user asks to see or add the records that were set aside, for example "show the ones I set aside" followed by yes. After the user submits the tick boxes, your very next step is to run the Ticklist action itself with the selection the user submitted, exactly once, in the same turn, with no text before it. Submitting the tick boxes does not add anything by itself: only the Ticklist action adds the records and stores them on the Product History Review. Then relay the summary text that the action returned, word for word, as the only confirmation. Never write your own confirmation such as "the selected records have been added", and never say or imply that records were added unless the action returned a summary that says so. If the action fails, returns success false, or returns no summary, tell the user in one plain sentence that the records could not be added and give the message from the action, do not say anything was added, and do not ask the summary question. After a successful add, ask exactly once: "Would you like me to draft the PHR Summary for this complaint?"
+             Before you handle any "no", "not now", "skip", "later" or "cancel", look at the LAST question in your most recent message, because that is the one the user is answering. If the last question was the summary question ("Would you like me to draft the PHR Summary for this complaint?"), the "no" answers only that question: say only that they can ask for the summary at any time, then ask exactly once: "Would you like me to generate the Product History Review report and attach it to the complaint?" Never repeat the summary question after a "no" to it. Otherwise, look at your most recent message before the user's answer. If it was the relevance package card asking "Would you like to add these to the Product History Review?" (or any offer to add records), then a "no", "not now", "skip", "later" or "cancel" declines adding records: do not show the package again and do not run anything, say that nothing was added and that they can say "add records" at any time, then ask exactly once: "Would you like me to draft the PHR Summary for this complaint?" Also treat clear phrases such as "don't add any", "do not add any", "skip adding records", "none of them" and "don't add them" as declining records. If your most recent message was the summary question, the save question or the report question, a "no" never declines adding records; it answers only that question.
+             When the user asks, in any wording, for the scrap rate or to answer the Product History Review checklist, do not run anything. Say in one sentence that the checklist, including the scrap rate, is answered by the Scout Checklist agent, which they can open on the Product History Review. Then continue with the question you last asked, if any.
+             Run {!@actions.Draft_Summary} when the user says yes to the summary question, or asks, in any wording, for the PHR Summary of this complaint. Examples: "draft the summary", "PHR summary", "draft the PHR summary", "draft investigation summary", "generate the investigation summary", "generate the draft summary", "write the summary", "summarize this complaint", "summarize the complaint", "create the summary", "update the summary", "redo the summary". A "yes" that answers the summary question means the summary; a "yes" that answers the report question means the report; a "yes" that answers the question on the relevance package card means add records. If the user has only said something general such as "yes" and has not asked for the summary, do not run it.
+             When you run Draft_Summary, set Save to Complaint to false and pass the current record Id as the Complaint Record Id. This only drafts the text; it does not change the complaint. Run it only once per request. Never run it again to retry.
+             After it runs, show the summary text from the action without rewording, shortening or adding to it. Only the formatting may change, using these rules. Formatting is required. Every section title must be on its own line with a blank line before it and wrapped in double asterisks so it shows in bold, exactly like this: **Complaint Overview**, **Associated Items**, **Product History Review**, **Analysis and Next Steps**, **Trends, gaps and next steps**. A title written without the double asterisks is wrong. Every record number must also be wrapped in double asterisks, for example **NC-0001**, **CAPA-0002**, **PHR-0003**, **PHA-0004**, **COM-0005**, **INS-0006**, **CHG-0007**, **INV-0008**, wherever it appears, including inside bullets and nested bullets. Apply the double asterisks to the text of the action's summary yourself before you show it; the action's text does not already contain them. In the Associated Items section, show each sentence as its own bullet starting with "- ", and when a sentence introduces a list of records, show those records as indented bullets under it, one per line. Show text that was marked with single asterisks in italics. Never add a sentence saying the text is an AI-generated draft, and leave one out if the action's text has it. Do not use tables, code blocks, headings made with # characters, or HTML tags. Do not add any text before or after the summary except the save question. Then ask exactly once: "Do you want me to save this as the PHR Summary? It is saved to the complaint and to the Summary on the Product History Review, and copied to the primary investigation as a starting point. Any earlier PHR Summary will be replaced." If the action's message says the summary could not be generated, tell the user in one plain sentence that the summary could not be generated right now and give the message from the action, and do not ask the save question and do not try again.
+             Run {!@actions.Save_Summary} only when the user answers yes to the save question, in any wording, for example "yes", "yes please", "save it", "go ahead", "update the record", "update the complaint". Pass the current record Id as the Complaint Record Id. The summary text to save is already stored, so do not retype it. Run it only once, then tell the user in one or two sentences what the action's message says, for example that the PHR Summary was saved to the complaint and the Product History Review. If the user answers no, say that nothing was saved and that they can ask for the summary again at any time. If the user asks to save and no summary has been drafted yet in this conversation, say so and offer to draft it first.
+             Refer to records by name or number, never by Id. Do not create, add or change any other record.
+             After the summary was saved, or the user said no to saving it, or said no when asked whether to draft the summary, ask exactly once: "Would you like me to generate the Product History Review report and attach it to the complaint?"
+             Run {!@actions.Template_Report} when the user says yes to the report question, or asks for the report in any wording at any time, even before any records were added. Examples: "generate the report", "report", "create the report", "make the PDF", "attach the report", "give me the report", "update the report", "run the report again", "product history review report", "generate the product history review report". A "yes" that answers the report question means the report; a "yes" that answers the question on the relevance package card means add records. After it runs, tell the user the message from the action in a sentence or two, and say they can ask for the report again later to get an updated version. If the user says no to the report, say that they can ask for it at any time.
+        actions:
+            Relevance_Package: @actions.Relevance_Package
+                with lotNumber = ...
+                with recordId = ...
+            Ticklist: @actions.Ticklist
+                with selection = ...
+            Draft_Summary: @actions.Draft_Summary
+                with complaintId = ...
+                with saveToRecord = ...
+                set @variables.draftSummary = @outputs.summary
+            Save_Summary: @actions.Save_Summary
+                with complaintId = ...
+                with summary = @variables.draftSummary
+            Template_Report: @actions.Template_Report
+                with recordId = ...
+    actions:
+        Relevance_Package:
+            label: "Relevance Package"
+            description: "Lead"
+            target: "apex://PhrLeadPackageAction"
+            inputs:
+                lotNumber: string
+                    label: "Lot Number Override"
+                    description: "Optional. Search this lot instead of the Complaint's own lot."
+                    is_required: False
+                recordId: id
+                    label: "Complaint or PHR Id"
+                    description: "The Complaint, its Product History Review, or the Investigation currently open in the conversation."
+                    is_required: True
+            outputs:
+                leadPackage: object
+                    label: "Relevance Package"
+                    description: "What is worth reviewing for this complaint, ranked, with the overall rating."
+                    complex_data_type_name: "c__phrLeadPackageType"
+                    is_displayable: True
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Getting Relevance Package..."
+        Ticklist:
+            label: "Ticklist"
+            description: "Shows the records worth reviewing with tick boxes and adds the ticked ones to the Product History Review"
+            target: "apex://PhrLeadAddSelectedAction"
+            inputs:
+                selection: object
+                    label: "Selection"
+                    description: "The records the user left ticked, from the selection component."
+                    is_required: True
+                    is_user_input: True
+                    complex_data_type_name: "c__phrLeadSelectionType"
+            outputs:
+                leadsStored: integer
+                    label: "Leads Stored"
+                    description: "Lead rows now on the PHR, added or not."
+                    is_displayable: False
+                    filter_from_agent: False
+                recordsAdded: integer
+                    label: "Records Added"
+                    description: "Formal records created (Related Products and Linked Investigations)."
+                    is_displayable: False
+                    filter_from_agent: False
+                success: boolean
+                    label: "Success"
+                    description: ""
+                    is_displayable: False
+                    filter_from_agent: False
+                summary: string
+                    label: "Summary"
+                    description: "Plain-text result to relay to the user."
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Adding..."
+        Draft_Summary:
+            label: "Draft Summary"
+            description: "Reads the complaint, its Product History Review and checklist, tasks and associated items, and drafts the PHR Summary text. Works from the complaint or its Product History Review. It does not save anything unless Save to Complaint is true."
+            target: "apex://GenerateDraftInvestigationSummary"
+            inputs:
+                complaintId: id
+                    label: "Complaint Record Id"
+                    description: "The Complaint or Product History Review currently open in the conversation."
+                    is_required: True
+                saveToRecord: boolean
+                    label: "Save to Complaint"
+                    description: "Always false here: the draft is only generated. Saving is a separate step after the user says yes."
+                    is_required: False
+            outputs:
+                summary: string
+                    label: "PHR Summary"
+                    description: "The drafted summary text. Show it exactly as returned."
+                    is_displayable: False
+                    filter_from_agent: False
+                saved: boolean
+                    label: "Saved"
+                    description: "True when the draft was saved to the Complaint."
+                    is_displayable: False
+                    filter_from_agent: False
+                message: string
+                    label: "Message"
+                    description: "Plain-language result. If the summary could not be generated, this says why."
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Drafting summary..."
+        Save_Summary:
+            label: "Save Summary"
+            description: "Saves the drafted PHR Summary to the complaint and to the Summary on its Product History Review, and copies it to the primary investigation, replacing any earlier PHR Summary. Only run it after the user says yes."
+            target: "apex://SaveDraftInvestigationSummary"
+            inputs:
+                complaintId: id
+                    label: "Complaint Record Id"
+                    description: "The Complaint or Product History Review currently open in the conversation."
+                    is_required: True
+                summary: string
+                    label: "Summary"
+                    description: "The drafted summary text to save. It is filled in automatically from the draft that was just shown."
+                    is_required: True
+            outputs:
+                success: boolean
+                    label: "Success"
+                    description: ""
+                    is_displayable: False
+                    filter_from_agent: False
+                message: string
+                    label: "Message"
+                    description: "Plain-language result to relay to the user."
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Saving summary..."
+        Template_Report:
+            label: "Product History Review Report"
+            description: "Generates the Product History Review report PDF from the report template and attaches it to the complaint (and to the investigation when run from one). It shows the PHR Summary, or the Investigation Summary when run from an investigation. Running it again adds a new version of the same file."
+            target: "apex://PhrTemplateReportAction"
+            inputs:
+                recordId: id
+                    label: "Complaint or PHR Id"
+                    description: "The Complaint, its Product History Review, or the Investigation currently open in the conversation."
+                    is_required: True
+            outputs:
+                success: boolean
+                    label: "Success"
+                    description: ""
+                    is_displayable: False
+                    filter_from_agent: False
+                message: string
+                    label: "Message"
+                    description: "Plain-language result to relay to the user."
+                    is_displayable: False
+                    filter_from_agent: False
+                version: integer
+                    label: "Version"
+                    description: "Version number of the report file."
+                    is_displayable: False
+                    filter_from_agent: False
+                templateSource: string
+                    label: "Template used"
+                    description: "Which template produced the layout."
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Creating report..."
+
+subagent PHR_Reviewer:
+    label: "PHR Reviewer"
+    description: |
+
+        Reviewer for a complaint in the Draft stage. Checks the complaint, its part and lot, and its Product History Review for missing data, and reads the complaint description for details missing from the complaint, and reports each check as a warning or a tick. Use it when the user asks what is missing, to check for gaps, or whether the complaint is ready for review.
+    reasoning:
+        instructions: ->
+            |Run {!@actions.Find_Missing_Data} when the user asks, in any wording, what data is missing or whether this complaint is ready for review. Examples: "find missing data", "what is missing", "what data is missing", "check for gaps", "check the complaint", "is anything missing", "is this ready for review", "review the complaint", "run the review checks", "check the PHR". After it runs, reply with one short sentence such as "Here is what I checked." Do not repeat the lines of the card, because the card already shows each check. The check only reads data. Never say that anything was changed or added, and never fix a gap without the user asking.
+        actions:
+            Find_Missing_Data: @actions.Find_Missing_Data
+                with recordId = ...
+    actions:
+        Find_Missing_Data:
+            label: "Find Missing Data"
+            description: "Checks the complaint, its part and lot, and its Product History Review for gaps, and reads the complaint description for details missing from the complaint. Returns one line per check as a warning or a tick. Read only."
+            target: "apex://PhrMissingDataAction"
+            inputs:
+                recordId: id
+                    label: "Complaint or PHR Id"
+                    description: "The Complaint, its Product History Review, or the Investigation currently open in the conversation."
+                    is_required: True
+            outputs:
+                result: object
+                    label: "Missing Data Check"
+                    description: "One line per check, each a warning or a tick with a one-line explanation."
+                    complex_data_type_name: "c__phrMissingDataType"
+                    is_displayable: True
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Checking..."
