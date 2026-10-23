@@ -86,7 +86,6 @@ public without sharing class PhrReportData {
             d.load(complaintId);
             d.loadReportedDate(complaintId);
             if (d.investigationMode) { d.loadInvestigationSummary(investigationId); }
-            d.draftSummaryHtml = applySections(d.draftSummaryHtml);
         } catch (Exception ex) {
             d.errorMessage = ex.getMessage();
         }
@@ -157,25 +156,6 @@ public without sharing class PhrReportData {
         summaryText = buildSummary(kept, gaps.size());
         summaryWords = countWords(summaryText);
         draftSummaryHtml = loadPhrSummary(p.phrId, p.complaintId);
-    }
-
-    // The report link line added at the end of a saved summary.
-    private static final Pattern REPORT_LINK_LINE = Pattern.compile('(?is)\\s*<p>\\s*<strong>\\s*Attached report:\\s*</strong>.*?</p>');
-
-    /**
-     * Applies the PHR Report Setting summary sections (Complaint Overview, Product History Review,
-     * Analysis and Next Steps) to the summary shown in the report, whichever record it was run from.
-     * The report link line at the end is kept even when the last section is turned off.
-     */
-    @TestVisible
-    private static String applySections(String html) {
-        if (String.isBlank(html)) { return html; }
-        Matcher m = REPORT_LINK_LINE.matcher(html);
-        String link = m.find() ? m.group(0).trim() : '';
-        String body = REPORT_LINK_LINE.matcher(html).replaceAll('');
-        String kept = PhrSummarySections.apply(body, PhrReportSettings.get());
-        String out = (kept == null ? '' : kept.trim()) + link;
-        return String.isBlank(out) ? null : out;
     }
 
     private void loadReportedDate(Id complaintId) {
