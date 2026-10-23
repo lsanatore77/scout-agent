@@ -52,6 +52,8 @@ public without sharing class PhrReportData {
     public String investigationName;
     /** 'PHR Summary', or 'Investigation Summary' when run from an investigation. */
     public String summaryHeading = 'PHR Summary';
+    /** The report's title: 'Product History Report', or 'Customer Report' when run from an investigation. */
+    public String reportTitle = 'Product History Report';
     public List<LeadRow> leadRows = new List<LeadRow>();
     public Integer totalLeads = 0;
     public List<InvRow> investigationRows = new List<InvRow>();
@@ -71,6 +73,7 @@ public without sharing class PhrReportData {
         if (investigationId != null) {
             d.investigationMode = true;
             d.summaryHeading = 'Investigation Summary';
+            d.reportTitle = 'Customer Report';
         }
         d.taskSummary = ComplaintTaskProgress.summarize(new List<compliancequest__SQX_Complaint_Task__c>(), Date.today());
         d.generatedAt = System.now().format('MMM d, yyyy h:mm a');

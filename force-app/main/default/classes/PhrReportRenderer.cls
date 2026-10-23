@@ -19,7 +19,8 @@ public without sharing class PhrReportRenderer {
 
     @TestVisible public static String TEMPLATE_DOC_NUMBER = 'PHR-TEMPLATE-001';
     public static final String DEFAULT_RESOURCE = 'PHR_Report_Default_Template';
-    public static final String REPORT_TITLE = 'Product History Review';
+    /** Used only when the data has no title of its own. */
+    public static final String REPORT_TITLE = 'Product History Report';
     public static final String FOOTER_NOTE = 'Leads are records worth reviewing, not confirmed causes.';
 
     public class Result {
@@ -195,6 +196,8 @@ public without sharing class PhrReportRenderer {
             out = out.replaceFirst('\\{\\{phrBlock\\}\\}', '{{phrBlock}}{{investigationNameBlock}}');
         }
         out = out.replaceAll('(?i)>\\s*Draft investigation summary\\s*<', '>{{summaryHeading}}<');
+        // An older template may have the title typed in instead of {{reportTitle}}.
+        out = out.replaceAll('(?i)<h1>\\s*Product History Review\\s*</h1>', '<h1>{{reportTitle}}</h1>');
         // The records worth reviewing always start on a new page (page 2 when the summary fits on page 1).
         if (!out.contains('page-break-before')) {
             out = out.replaceFirst('(?i)<h2>(\\s*3\\.\\s*Top records worth reviewing)', '<h2 style="page-break-before: always;">$1');
@@ -217,7 +220,7 @@ public without sharing class PhrReportRenderer {
     @TestVisible
     private static Map<String, String> buildValues(PhrReportData d, Boolean plainDraft) {
         Map<String, String> v = new Map<String, String>();
-        v.put('reportTitle', esc(REPORT_TITLE));
+        v.put('reportTitle', esc(String.isBlank(d.reportTitle) ? REPORT_TITLE : d.reportTitle));
         v.put('footerNote', esc(FOOTER_NOTE));
         v.put('generatedAt', esc(d.generatedAt));
         v.put('versionLabel', esc(d.versionLabel));

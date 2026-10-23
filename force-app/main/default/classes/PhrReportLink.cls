@@ -15,7 +15,9 @@
  */
 public with sharing class PhrReportLink {
 
-    public static final String REPORT_TITLE = 'Product History Review Report';
+    public static final String REPORT_TITLE = 'Product History Report';
+    /** The file's earlier name; files with it are still found, and renamed on their next version. */
+    public static final String OLD_REPORT_TITLE = 'Product History Review Report';
     @TestVisible static final String LINE_LABEL = 'Attached report:';
     /** Tests set this to stand in for the complaint's primary investigation (CQ's scope rules block setting one in test data). */
     @TestVisible static Id testPrimaryInvestigationId;
@@ -26,7 +28,7 @@ public with sharing class PhrReportLink {
         if (complaintId == null) { return null; }
         for (ContentDocumentLink l : [
             SELECT ContentDocumentId FROM ContentDocumentLink
-            WHERE LinkedEntityId = :complaintId AND ContentDocument.Title = :REPORT_TITLE
+            WHERE LinkedEntityId = :complaintId AND ContentDocument.Title IN (:REPORT_TITLE, :OLD_REPORT_TITLE)
             ORDER BY ContentDocument.CreatedDate DESC LIMIT 1
         ]) {
             return l.ContentDocumentId;

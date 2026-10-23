@@ -10,7 +10,11 @@
  */
 global with sharing class PhrTemplateReportAction {
 
-    @TestVisible private static final String FILE_TITLE = 'Product History Review Report';
+    /** Run from a complaint or PHR: one file on the complaint, a new version each run. */
+    @TestVisible private static final String FILE_TITLE = PhrReportLink.REPORT_TITLE;
+    @TestVisible private static final String OLD_FILE_TITLE = PhrReportLink.OLD_REPORT_TITLE;
+    /** Run from an investigation: a separate file on the investigation (also shown on the complaint). */
+    @TestVisible private static final String CUSTOMER_FILE_TITLE = 'Customer Report';
 
     global class Request {
         @InvocableVariable(label='Complaint, PHR or Investigation Id' description='The record the agent is open on: the Complaint, its Product History Review, or an Investigation. The PDF is attached to the Complaint (and to the Investigation when run from one).' required=true)
@@ -26,8 +30,8 @@ global with sharing class PhrTemplateReportAction {
     }
 
     @InvocableMethod(
-        label='Generate Product History Review Report PDF'
-        description='Builds the Product History Review report from the report template (overall significance, short summary, the PHR Summary - or the Investigation Summary when run from an investigation - top records worth reviewing, task progress, related investigations, data gaps) and attaches it to the Complaint as a PDF, and to the Investigation when run from one. Running it again adds a new version of the same file.'
+        label='Generate Product History Report PDF'
+        description='Run from a Complaint or its Product History Review: builds the Product History Report (overall significance, short summary, PHR Summary, top records worth reviewing, task progress, related investigations, data gaps) and attaches it to the Complaint as a PDF. Run from an Investigation: builds the Customer Report with the Investigation Summary and attaches it to the Investigation and the Complaint. Running it again adds a new version of the same file.'
     )
     global static List<Response> run(List<Request> requests) {
         List<Response> out = new List<Response>();
@@ -52,10 +56,13 @@ global with sharing class PhrTemplateReportAction {
                 return res;
             }
 
-            Id docId = findExistingDocument(complaintId);
+            Id investigationId = PhrRecordContext.isInvestigation(req.recordId) ? req.recordId : null;
+            String title = investigationId == null ? FILE_TITLE : CUSTOMER_FILE_TITLE;
+            Id docId = investigationId == null
+                ? findExistingDocument(complaintId)
+                : findDocument(investigationId, new List<String>{ CUSTOMER_FILE_TITLE });
             Integer next = docId == null ? 1 : nextVersion(docId);
 
-            Id investigationId = PhrRecordContext.isInvestigation(req.recordId) ? req.recordId : null;
             PhrReportData data = PhrReportData.build(complaintId, String.valueOf(next), investigationId);
             if (!data.hasComplaint) {
                 res.success = false;
@@ -65,11 +72,11 @@ global with sharing class PhrTemplateReportAction {
             PhrReportRenderer.Result rendered = PhrReportRenderer.render(data);
 
             ContentVersion cv = new ContentVersion();
-            cv.Title = FILE_TITLE;
-            cv.PathOnClient = FILE_TITLE.replace(' ', '_') + '.pdf';
+            cv.Title = title;
+            cv.PathOnClient = title.replace(' ', '_') + '.pdf';
             cv.VersionData = rendered.pdf;
             if (docId == null) {
-                cv.FirstPublishLocationId = complaintId;
+                cv.FirstPublishLocationId = investigationId == null ? complaintId : investigationId;
             } else {
                 cv.ContentDocumentId = docId;
             }
@@ -79,16 +86,22 @@ global with sharing class PhrTemplateReportAction {
             res.version = next;
             res.templateSource = rendered.source;
             res.contentDocumentId = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :cv.Id].ContentDocumentId;
-            String onInvestigation = investigationId == null ? '' : attachToInvestigation(res.contentDocumentId, investigationId, data.investigationName);
-            res.message = (next == 1
-                ? 'I attached the report to the complaint as a new file.'
-                : 'I added version ' + next + ' to the report already attached to the complaint.')
-                + (investigationId == null
-                    ? ' It shows the PHR Summary.'
-                    : ' It shows the Investigation Summary of ' + (String.isBlank(data.investigationName) ? 'this investigation' : data.investigationName) + '.' + onInvestigation)
-                + ' It uses the information in the org right now, so you can run it again later for an updated version.'
-                + (String.isBlank(rendered.warning) ? '' : ' Note: ' + rendered.warning)
-                + PhrReportLink.afterReportGenerated(complaintId);
+            String note = String.isBlank(rendered.warning) ? '' : ' Note: ' + rendered.warning;
+            String fresh = ' It uses the information in the org right now, so you can run it again later for an updated version.';
+            if (investigationId == null) {
+                res.message = (next == 1
+                    ? 'I attached the Product History Report to the complaint as a new file.'
+                    : 'I added version ' + next + ' to the Product History Report on the complaint.')
+                    + ' It shows the PHR Summary.' + fresh + note
+                    + PhrReportLink.afterReportGenerated(complaintId);
+            } else {
+                String invLabel = String.isBlank(data.investigationName) ? 'the investigation' : data.investigationName;
+                res.message = (next == 1
+                    ? 'I attached the Customer Report to ' + invLabel + ' as a new file.'
+                    : 'I added version ' + next + ' to the Customer Report on ' + invLabel + '.')
+                    + ' It shows the Investigation Summary.'
+                    + alsoOnComplaint(res.contentDocumentId, complaintId) + fresh + note;
+            }
         } catch (Exception ex) {
             res.success = false;
             res.message = 'I could not create the report: ' + ex.getMessage();
@@ -96,26 +109,31 @@ global with sharing class PhrTemplateReportAction {
         return res;
     }
 
-    /** Makes the same report file show on the investigation too (one file, so both records always show the latest version). */
+    /** Makes the Customer Report show on the complaint too (the same file, so it always shows the latest version). */
     @TestVisible
-    private static String attachToInvestigation(Id docId, Id investigationId, String invName) {
-        String label = String.isBlank(invName) ? 'the investigation' : invName;
+    private static String alsoOnComplaint(Id docId, Id complaintId) {
         try {
-            if ([SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :docId AND LinkedEntityId = :investigationId] > 0) {
-                return ' The same file is on ' + label + ', so it shows this version too.';
+            if ([SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :docId AND LinkedEntityId = :complaintId] > 0) {
+                return ' The same file is on the complaint, so it shows this version too.';
             }
-            insert new ContentDocumentLink(ContentDocumentId = docId, LinkedEntityId = investigationId, ShareType = 'V', Visibility = 'AllUsers');
-            return ' I also attached it to ' + label + '.';
+            insert new ContentDocumentLink(ContentDocumentId = docId, LinkedEntityId = complaintId, ShareType = 'V', Visibility = 'AllUsers');
+            return ' I also attached it to the complaint.';
         } catch (Exception ex) {
-            return ' It could not be attached to ' + label + ': ' + ex.getMessage();
+            return ' It could not be attached to the complaint: ' + ex.getMessage();
         }
     }
 
+    /** The Product History Report on the complaint (also finds it under its earlier name). */
     @TestVisible
     private static Id findExistingDocument(Id complaintId) {
+        return findDocument(complaintId, new List<String>{ FILE_TITLE, OLD_FILE_TITLE });
+    }
+
+    @TestVisible
+    private static Id findDocument(Id recordId, List<String> titles) {
         List<ContentDocumentLink> links = [
             SELECT ContentDocumentId FROM ContentDocumentLink
-            WHERE LinkedEntityId = :complaintId AND ContentDocument.Title = :FILE_TITLE
+            WHERE LinkedEntityId = :recordId AND ContentDocument.Title IN :titles
             ORDER BY ContentDocument.CreatedDate DESC LIMIT 1
         ];
         return links.isEmpty() ? null : links[0].ContentDocumentId;

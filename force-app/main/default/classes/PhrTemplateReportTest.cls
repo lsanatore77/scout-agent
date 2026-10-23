@@ -105,7 +105,7 @@ private class PhrTemplateReportTest {
         System.assertEquals(true, r2.success, r2.message);
         System.assertEquals(2, r2.version);
         System.assertEquals(r1.contentDocumentId, r2.contentDocumentId, 'Same file, new version');
-        System.assertEquals('Product History Review Report', [SELECT Title FROM ContentDocument WHERE Id = :r1.contentDocumentId].Title);
+        System.assertEquals('Product History Report', [SELECT Title FROM ContentDocument WHERE Id = :r1.contentDocumentId].Title);
     }
 
     @IsTest static void actionHandlesMissingAndUnsupportedIds() {
@@ -224,7 +224,8 @@ private class PhrTemplateReportTest {
         System.assert(r.message.contains('Investigation Summary'), r.message);
         System.assertEquals(1, [SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :r.contentDocumentId AND LinkedEntityId = :cmp.Id]);
         System.assertEquals(1, [SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :r.contentDocumentId AND LinkedEntityId = :invId]);
-        System.assert(PhrTemplateReportAction.attachToInvestigation(r.contentDocumentId, invId, 'INV-1').contains('same file'));
+        System.assertEquals('Customer Report', [SELECT Title FROM ContentDocument WHERE Id = :r.contentDocumentId].Title);
+        System.assert(PhrTemplateReportAction.alsoOnComplaint(r.contentDocumentId, cmp.Id).contains('same file'));
     }
 
     @IsTest static void anOlderTemplateGetsTheReportDateAndTheRightHeading() {
@@ -244,5 +245,30 @@ private class PhrTemplateReportTest {
         System.assert(b.contains('Investigation <strong>'), b);
         String c = PhrReportRenderer.fill('<html xmlns="http://www.w3.org/1999/xhtml"><body><h2>3. Top records worth reviewing</h2></body></html>', phrRun, false);
         System.assert(c.contains('page-break-before: always'), c);
+    }
+
+    @IsTest static void titleDependsOnWhereTheReportIsRun() {
+        compliancequest__SQX_Complaint__c cmp = newComplaint('LOT-TTL');
+        Id invId = newInvestigation(cmp.Id, '<p>x</p>');
+        String tpl = '<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>{{reportTitle}}</h1></body></html>';
+        System.assert(PhrReportRenderer.fill(tpl, PhrReportData.build(cmp.Id, '1'), false).contains('<h1>Product History Report</h1>'));
+        System.assert(PhrReportRenderer.fill(tpl, PhrReportData.build(cmp.Id, '1', invId), false).contains('<h1>Customer Report</h1>'));
+        String typed = '<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>Product History Review</h1></body></html>';
+        System.assert(PhrReportRenderer.fill(typed, PhrReportData.build(cmp.Id, '1', invId), false).contains('<h1>Customer Report</h1>'));
+    }
+
+    @IsTest static void aFileWithTheEarlierNameGetsTheNextVersion() {
+        compliancequest__SQX_Complaint__c cmp = newComplaint('LOT-OLDNAME');
+        ContentVersion old = new ContentVersion(Title = 'Product History Review Report', PathOnClient = 'old.pdf',
+            VersionData = Blob.valueOf('%PDF-1.4 old'), FirstPublishLocationId = cmp.Id);
+        insert old;
+        Id oldDoc = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :old.Id].ContentDocumentId;
+        PhrTemplateReportAction.Request req = new PhrTemplateReportAction.Request();
+        req.recordId = cmp.Id;
+        PhrTemplateReportAction.Response r = PhrTemplateReportAction.run(new List<PhrTemplateReportAction.Request>{ req })[0];
+        System.assertEquals(true, r.success, r.message);
+        System.assertEquals(oldDoc, r.contentDocumentId);
+        System.assertEquals(2, r.version);
+        System.assertEquals('Product History Report', [SELECT Title FROM ContentDocument WHERE Id = :oldDoc].Title);
     }
 }
