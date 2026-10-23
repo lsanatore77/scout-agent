@@ -241,23 +241,13 @@ private class ComplaintInvestigationSummaryTest {
         Test.stopTest();
 
         Assert.isTrue(results[0].success, results[0].message);
-        Set<Id> invIds = new Set<Id>();
-        for (compliancequest__SQX_Linked_Investigation__c li : [
-            SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Linked_Investigation__c
-            WHERE compliancequest__SQX_Complaint__c = :complaintId]) {
-            invIds.add(li.compliancequest__SQX_Investigation__c);
-        }
-        for (compliancequest__SQX_Complaint__c c : [
-            SELECT compliancequest__SQX_Primary_Investigation__c FROM compliancequest__SQX_Complaint__c WHERE Id = :complaintId]) {
-            if (c.compliancequest__SQX_Primary_Investigation__c != null) { invIds.add(c.compliancequest__SQX_Primary_Investigation__c); }
-        }
-        if (invIds.isEmpty()) {
-            Assert.isTrue(results[0].message.contains('No investigation is linked'), results[0].message);
+        Id primaryId = [SELECT compliancequest__SQX_Primary_Investigation__c FROM compliancequest__SQX_Complaint__c
+                        WHERE Id = :complaintId].compliancequest__SQX_Primary_Investigation__c;
+        if (primaryId == null) {
+            Assert.isTrue(results[0].message.contains('No primary investigation'), results[0].message);
         } else {
-            for (compliancequest__SQX_Investigation__c inv : [
-                SELECT compliancequest__Investigation_Summary__c FROM compliancequest__SQX_Investigation__c WHERE Id IN :invIds]) {
-                Assert.areEqual('<p>Approved summary</p>', inv.compliancequest__Investigation_Summary__c);
-            }
+            Assert.areEqual('<p>Approved summary</p>', [SELECT compliancequest__Investigation_Summary__c
+                FROM compliancequest__SQX_Investigation__c WHERE Id = :primaryId].compliancequest__Investigation_Summary__c);
             Assert.isTrue(results[0].message.contains('also updated'), results[0].message);
         }
     }

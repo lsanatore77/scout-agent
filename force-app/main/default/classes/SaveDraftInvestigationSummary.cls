@@ -68,49 +68,29 @@ public with sharing class SaveDraftInvestigationSummary {
     }
 
     /**
-     * Copies the saved summary to the Investigation Summary field of every investigation linked to the
-     * complaint (and the complaint's primary investigation). The complaint is already saved, so a problem
-     * here never undoes it: the problem is reported in the message instead.
+     * Copies the saved summary to the Investigation Summary field of the complaint's primary investigation only.
+     * Other linked investigations are left alone. The complaint is already saved, so a problem here never
+     * undoes it: the problem is reported in the message instead.
      */
     @TestVisible
     private static String updateInvestigations(Id complaintId, String html) {
         try {
-            Set<Id> invIds = new Set<Id>();
-            for (compliancequest__SQX_Linked_Investigation__c li : [
-                SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Linked_Investigation__c
-                WHERE compliancequest__SQX_Complaint__c = :complaintId
-                WITH USER_MODE
-            ]) {
-                if (li.compliancequest__SQX_Investigation__c != null) { invIds.add(li.compliancequest__SQX_Investigation__c); }
-            }
-            for (compliancequest__SQX_Complaint__c c : [
-                SELECT compliancequest__SQX_Primary_Investigation__c FROM compliancequest__SQX_Complaint__c
-                WHERE Id = :complaintId
-                WITH USER_MODE
-            ]) {
-                if (c.compliancequest__SQX_Primary_Investigation__c != null) { invIds.add(c.compliancequest__SQX_Primary_Investigation__c); }
-            }
-            if (invIds.isEmpty()) { return ' No investigation is linked to this complaint.'; }
+            Set<Id> invIds = PhrReportLink.investigationIds(complaintId);
+            if (invIds.isEmpty()) { return ' No primary investigation is set on this complaint, so only the complaint was updated.'; }
 
             List<compliancequest__SQX_Investigation__c> invs = new List<compliancequest__SQX_Investigation__c>();
             for (Id invId : invIds) {
                 invs.add(new compliancequest__SQX_Investigation__c(Id = invId, compliancequest__Investigation_Summary__c = html));
             }
             List<Database.SaveResult> rs = Database.update(invs, false, AccessLevel.USER_MODE);
-            Integer ok = 0;
             List<String> problems = new List<String>();
-            for (Integer i = 0; i < rs.size(); i++) {
-                if (rs[i].isSuccess()) {
-                    ok++;
-                } else {
-                    for (Database.Error e : rs[i].getErrors()) { problems.add(e.getMessage()); }
-                }
+            for (Database.SaveResult r : rs) {
+                if (!r.isSuccess()) { for (Database.Error e : r.getErrors()) { problems.add(e.getMessage()); } }
             }
-            String msg = ' The investigation summary was also updated on ' + ok + (ok == 1 ? ' investigation.' : ' investigations.');
             if (!problems.isEmpty()) {
-                msg += ' ' + (rs.size() - ok) + ' could not be updated: ' + String.join(problems, '; ');
+                return ' The complaint was saved, but the primary investigation could not be updated: ' + String.join(problems, '; ');
             }
-            return msg;
+            return ' The investigation summary was also updated on 1 investigation (the primary investigation).';
         } catch (Exception ex) {
             return ' The complaint was saved, but the investigation summary could not be updated: ' + ex.getMessage();
         }

@@ -1,15 +1,15 @@
 /**
  * Links the Product History Review Report PDF (the file PhrTemplateReportAction attaches to the complaint)
- * to the draft investigation summary and shares the same file with the complaint's investigations.
+ * to the draft investigation summary and shares the same file with the complaint's primary investigation.
  *
  * - withReportLink(): adds (or refreshes) one line at the end of a summary:
  *       Attached report: Product History Review Report   (a link to the file)
  *   so the link travels with the summary when it is copied to the investigation.
- * - shareWithInvestigations(): shares the report file with the complaint's linked and primary investigations,
+ * - shareWithInvestigations(): shares the report file with the complaint's primary investigation (only that one),
  *   so the link opens for their users and the PDF shows under the investigation's Files. It is the same file,
  *   so a newer report version shows there automatically.
  * - afterReportGenerated(): called by PhrTemplateReportAction after a report is created. Shares the file and adds
- *   the link line to the complaint's draft summary and the investigations' summaries when they have text and no link yet.
+ *   the link line to the complaint's draft summary and the primary investigation's summary when they have text and no link yet.
  *
  * Nothing here ever stops a summary save or a report: problems are reported back as text.
  */
@@ -58,16 +58,10 @@ public with sharing class PhrReportLink {
             + '/view" target="_blank">' + REPORT_TITLE + '</a></p>';
     }
 
-    /** Linked investigations plus the complaint's primary investigation. */
+    /** The complaint's primary investigation, as a set (empty when none is set). Other linked investigations are not used. */
     public static Set<Id> investigationIds(Id complaintId) {
         Set<Id> ids = new Set<Id>();
-        for (compliancequest__SQX_Linked_Investigation__c li : [
-            SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Linked_Investigation__c
-            WHERE compliancequest__SQX_Complaint__c = :complaintId
-            WITH USER_MODE
-        ]) {
-            if (li.compliancequest__SQX_Investigation__c != null) { ids.add(li.compliancequest__SQX_Investigation__c); }
-        }
+        if (complaintId == null) { return ids; }
         for (compliancequest__SQX_Complaint__c c : [
             SELECT compliancequest__SQX_Primary_Investigation__c FROM compliancequest__SQX_Complaint__c
             WHERE Id = :complaintId
@@ -91,7 +85,7 @@ public with sharing class PhrReportLink {
             ]) {
                 invIds.remove(l.LinkedEntityId);
             }
-            if (invIds.isEmpty()) { return ' The report was already shared with the investigation.'; }
+            if (invIds.isEmpty()) { return ' The report was already shared with the primary investigation.'; }
             List<ContentDocumentLink> links = new List<ContentDocumentLink>();
             for (Id invId : invIds) {
                 links.add(new ContentDocumentLink(
@@ -103,7 +97,7 @@ public with sharing class PhrReportLink {
             for (Database.SaveResult r : rs) {
                 if (r.isSuccess()) { ok++; } else { for (Database.Error e : r.getErrors()) { problems.add(e.getMessage()); } }
             }
-            String msg = ok > 0 ? ' The report was shared with ' + ok + (ok == 1 ? ' investigation.' : ' investigations.') : '';
+            String msg = ok > 0 ? ' The report was shared with the primary investigation.' : '';
             if (!problems.isEmpty()) { msg += ' The report could not be shared: ' + String.join(problems, '; '); }
             return msg;
         } catch (Exception e) {

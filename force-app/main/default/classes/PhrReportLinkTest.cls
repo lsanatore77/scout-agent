@@ -78,16 +78,50 @@ private class PhrReportLinkTest {
         return inv.Id;
     }
 
+    static Id makePrimaryInvestigation(Id complaintId, String summary) {
+        Id invId = makeLinkedInvestigation(complaintId, summary);
+        update new compliancequest__SQX_Complaint__c(Id = complaintId, compliancequest__SQX_Primary_Investigation__c = invId);
+        return invId;
+    }
+
+    @IsTest
+    static void onlyThePrimaryInvestigationIsUpdated() {
+        compliancequest__SQX_Complaint__c c = makeComplaint();
+        Id docId = attachReport(c.Id);
+        Id otherId = makeLinkedInvestigation(c.Id, '<p>Keep this</p>');
+        Id primaryId = makePrimaryInvestigation(c.Id, null);
+        SaveDraftInvestigationSummary.Request req = new SaveDraftInvestigationSummary.Request();
+        req.complaintId = c.Id;
+        req.summary = 'Approved summary';
+        Test.startTest();
+        SaveDraftInvestigationSummary.Result r = SaveDraftInvestigationSummary.save(
+            new List<SaveDraftInvestigationSummary.Request>{ req })[0];
+        Test.stopTest();
+        Assert.isTrue(r.success, r.message);
+        Assert.areEqual(new Set<Id>{ primaryId }, PhrReportLink.investigationIds(c.Id));
+        Assert.areEqual('<p>Keep this</p>', [SELECT compliancequest__Investigation_Summary__c
+            FROM compliancequest__SQX_Investigation__c WHERE Id = :otherId].compliancequest__Investigation_Summary__c);
+        Assert.areEqual(0, [SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :docId AND LinkedEntityId = :otherId]);
+        Assert.areEqual(1, [SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :docId AND LinkedEntityId = :primaryId]);
+    }
+
+    @IsTest
+    static void linkedButNotPrimaryIsNotUsed() {
+        compliancequest__SQX_Complaint__c c = makeComplaint();
+        makeLinkedInvestigation(c.Id, null);
+        Assert.isTrue(PhrReportLink.investigationIds(c.Id).isEmpty());
+    }
+
     @IsTest
     static void reportIsSharedWithTheInvestigationOnce() {
         compliancequest__SQX_Complaint__c c = makeComplaint();
         Id docId = attachReport(c.Id);
-        Id invId = makeLinkedInvestigation(c.Id, null);
+        Id invId = makePrimaryInvestigation(c.Id, null);
         Test.startTest();
         String first = PhrReportLink.shareWithInvestigations(c.Id);
         String second = PhrReportLink.shareWithInvestigations(c.Id);
         Test.stopTest();
-        Assert.isTrue(first.contains('shared with 1 investigation'), first);
+        Assert.isTrue(first.contains('shared with the primary investigation'), first);
         Assert.isTrue(second.contains('already shared'), second);
         Assert.areEqual(1, [SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :docId AND LinkedEntityId = :invId]);
     }
@@ -96,7 +130,7 @@ private class PhrReportLinkTest {
     static void afterReportAddsTheLinkToTheInvestigationSummary() {
         compliancequest__SQX_Complaint__c c = makeComplaint();
         attachReport(c.Id);
-        Id invId = makeLinkedInvestigation(c.Id, '<p>Investigation summary</p>');
+        Id invId = makePrimaryInvestigation(c.Id, '<p>Investigation summary</p>');
         Test.startTest();
         String msg = PhrReportLink.afterReportGenerated(c.Id);
         Test.stopTest();
@@ -109,7 +143,7 @@ private class PhrReportLinkTest {
     static void savingTheSummaryCopiesItAndSharesTheReport() {
         compliancequest__SQX_Complaint__c c = makeComplaint();
         Id docId = attachReport(c.Id);
-        Id invId = makeLinkedInvestigation(c.Id, null);
+        Id invId = makePrimaryInvestigation(c.Id, null);
         SaveDraftInvestigationSummary.Request req = new SaveDraftInvestigationSummary.Request();
         req.complaintId = c.Id;
         req.summary = 'Approved summary';
