@@ -16,7 +16,7 @@ const DOT = {
 // Top and Next lists show how each record is related instead of its title; Set aside keeps the title.
 // The Match column is a colored dot (hover for the colour and score).
 const LEAD_HEADERS = ['Record', 'Type', 'Status', 'Match', 'Related by'];
-const SET_ASIDE_HEADERS = ['Record', 'Type', 'Title', 'Status', 'Match', 'Why set aside'];
+const SET_ASIDE_HEADERS = ['Record', 'Type', 'Title', 'Status', 'Match'];
 const ADDED_HEADER = 'Added';
 const PHR_HEADER = 'PHR';
 const PAGE_SIZE = 5;
