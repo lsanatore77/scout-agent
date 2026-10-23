@@ -1,18 +1,17 @@
-:host { display: block; max-width: 100%; }
+:host { display: block; max-width: 100%; container-type: inline-size; }
 .wrap { display: flex; flex-direction: column; gap: 0.75rem; position: relative; background: #ffffff; border-radius: 0.5rem; padding: 0.75rem 1rem 1rem; }
 lightning-card { display: block; border: 1px solid #e5e5e5; border-radius: 0.5rem; }
 .top { display: flex; justify-content: space-between; align-items: center; }
 .top-title { font-weight: 700; font-size: 0.9375rem; }
 .error { color: #ba0517; font-size: 0.8125rem; }
 .empty { color: #706e6b; font-size: 0.8125rem; }
-.table { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.table { max-width: 100%; }
 .notadded { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
-/* In a narrow column the table keeps a readable width and scrolls sideways instead of squeezing. */
-.grid { width: 100%; min-width: 44rem; border-collapse: collapse; font-size: 0.8125rem; }
+.grid { width: 100%; border-collapse: collapse; font-size: 0.8125rem; }
 .grid th { text-align: left; font-weight: 700; color: #706e6b; padding: 0.5rem 0.625rem; border-bottom: 1px solid #c9c9c9; white-space: nowrap; }
 .grid td { padding: 0.5rem 0.625rem; border-bottom: 1px solid #e5e5e5; vertical-align: top; white-space: nowrap; }
 /* Long text wraps between words only, never inside a word. */
-.wrap-cell { white-space: normal; overflow-wrap: break-word; word-break: normal; min-width: 12rem; max-width: 22rem; }
+.wrap-cell { white-space: normal; overflow-wrap: break-word; word-break: normal; min-width: 10rem; }
 .dot-cell { text-align: center; }
 .dot { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 50%; vertical-align: middle; }
 .dot-red { background: #e8403f; }
@@ -26,3 +25,13 @@ lightning-card { display: block; border: 1px solid #e5e5e5; border-radius: 0.5re
 .page.current { color: #181818; font-weight: 700; cursor: default; text-decoration: none; }
 .link { background: none; border: 0; padding: 0; color: #0b5cab; cursor: pointer; font-size: 0.8125rem; }
 .muted { color: #706e6b; font-size: 0.8125rem; }
+
+/* Narrow column (record page sidebar): each record is one block on two lines instead of squeezed columns.
+   Line 1: record, type, status, match, PHR. Line 2: title or how it is related. No sideways scrolling. */
+@container (max-width: 40rem) {
+    .grid thead { display: none; }
+    .grid, .grid tbody, .grid tr, .grid td { display: block; width: auto; }
+    .grid tr { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem; padding: 0.5rem 0; border-bottom: 1px solid #e5e5e5; }
+    .grid td { padding: 0; border: 0; }
+    .grid td.wrap-cell { flex-basis: 100%; order: 10; min-width: 0; white-space: normal; }
+}
