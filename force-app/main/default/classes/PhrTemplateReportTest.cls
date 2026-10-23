@@ -283,17 +283,15 @@ private class PhrTemplateReportTest {
         System.assert(!out.toLowerCase().contains('lead'), out);
     }
 
-    @IsTest static void summarySectionsTurnedOffAreLeftOutOfTheReport() {
+    @IsTest static void investigationReportIgnoresTheSummarySectionSettings() {
         compliancequest__SQX_Complaint__c cmp = newComplaint('LOT-SEC');
         Id invId = newInvestigation(cmp.Id, '<h3><strong>Complaint Overview</strong></h3><p>Overview text</p>'
-            + '<h3><strong>Analysis and Next Steps</strong></h3><p>Analysis text</p>'
-            + '<p><strong>Attached report:</strong> <a href="/x">Product History Report</a></p>');
+            + '<h3><strong>Analysis and Next Steps</strong></h3><p>Analysis text</p>');
         PhrReportSettings.Values v = new PhrReportSettings.Values();
         v.summaryAnalysis = false;
         PhrReportSettings.testValues = v;
         PhrReportData d = PhrReportData.build(cmp.Id, '1', invId);
         System.assert(d.draftSummaryHtml.contains('Overview text'), d.draftSummaryHtml);
-        System.assert(!d.draftSummaryHtml.contains('Analysis text'), d.draftSummaryHtml);
-        System.assert(d.draftSummaryHtml.contains('Attached report:'), d.draftSummaryHtml);
+        System.assert(d.draftSummaryHtml.contains('Analysis text'), 'The Investigation Summary is printed as written');
     }
 }
