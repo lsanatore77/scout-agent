@@ -1,6 +1,8 @@
 import { LightningElement, api } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
+import { loadStyle } from 'lightning/platformResourceLoader';
+import POPUP_STYLES from '@salesforce/resourceUrl/PHR_Triage_Popup_Styles';
 import load from '@salesforce/apex/PhrCompleteTriageController.load';
 import saveSteps from '@salesforce/apex/PhrCompleteTriageController.saveSteps';
 import completeTriage from '@salesforce/apex/PhrCompleteTriageController.completeTriage';
@@ -88,6 +90,8 @@ export default class TriageStepsWithSummary extends LightningElement {
     connectedCallback() {
         // CQ's popup shows a spinner until the component reports it has loaded.
         this.dispatchEvent(new CustomEvent('formload'));
+        // Hide CQ's own Cancel and Save in this popup; the screen has its own buttons.
+        loadStyle(this, POPUP_STYLES).catch(() => {});
         this.refresh();
     }
 
