@@ -83,7 +83,7 @@
 
   <h2>2. Summary</h2>
   <p class="body">{{summaryText}}</p>
-  <div class="note">{{summaryWords}} words. Recommendations and gaps only; records are not named here.</div>
+  <div class="note">Next steps and data gaps only. The records are listed in section 3.</div>
 
   <!--IF:phr-->
   <div class="draftlabel">PHR Summary</div>

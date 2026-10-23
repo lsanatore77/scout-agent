@@ -86,7 +86,8 @@ private class PhrTemplateReportTest {
         r.name = 'NC-1'; r.tier = 'Top'; r.relevance = 80; r.status = 'Open'; r.criteriaMet = 'Lot';
         List<PhrQmsPanelController.Row> rows = new List<PhrQmsPanelController.Row>{ r };
         String s = PhrReportData.buildSummary(rows, 2);
-        System.assert(s.contains('Review the 1 top lead first.'), s);
+        System.assert(s.contains('Review the 1 most relevant record first.'), s);
+        System.assert(!s.toLowerCase().contains('lead'), s);
         System.assert(s.contains('2 data gaps'), s);
         System.assert(!s.contains('NC-1'), 'Summary never names a record');
         System.assertEquals(true, PhrReportData.buildReasons(rows).size() > 0);
@@ -270,5 +271,29 @@ private class PhrTemplateReportTest {
         System.assertEquals(oldDoc, r.contentDocumentId);
         System.assertEquals(2, r.version);
         System.assertEquals('Product History Report', [SELECT Title FROM ContentDocument WHERE Id = :oldDoc].Title);
+    }
+
+    @IsTest static void oldWordingIsReplacedAndNoLeadsAreMentioned() {
+        compliancequest__SQX_Complaint__c cmp = newComplaint('LOT-WORD');
+        String tpl = '<html xmlns="http://www.w3.org/1999/xhtml"><body><p>{{summaryText}}</p>'
+            + '<div class="note">{{summaryWords}} words. Recommendations and gaps only; records are not named here.</div>'
+            + '<p>{{footerNote}}</p><div>{{reasonRows}}</div></body></html>';
+        String out = PhrReportRenderer.fill(tpl, PhrReportData.build(cmp.Id, '1'), false);
+        System.assert(out.contains('Next steps and data gaps only.'), out);
+        System.assert(!out.toLowerCase().contains('lead'), out);
+    }
+
+    @IsTest static void summarySectionsTurnedOffAreLeftOutOfTheReport() {
+        compliancequest__SQX_Complaint__c cmp = newComplaint('LOT-SEC');
+        Id invId = newInvestigation(cmp.Id, '<h3><strong>Complaint Overview</strong></h3><p>Overview text</p>'
+            + '<h3><strong>Analysis and Next Steps</strong></h3><p>Analysis text</p>'
+            + '<p><strong>Attached report:</strong> <a href="/x">Product History Report</a></p>');
+        PhrReportSettings.Values v = new PhrReportSettings.Values();
+        v.summaryAnalysis = false;
+        PhrReportSettings.testValues = v;
+        PhrReportData d = PhrReportData.build(cmp.Id, '1', invId);
+        System.assert(d.draftSummaryHtml.contains('Overview text'), d.draftSummaryHtml);
+        System.assert(!d.draftSummaryHtml.contains('Analysis text'), d.draftSummaryHtml);
+        System.assert(d.draftSummaryHtml.contains('Attached report:'), d.draftSummaryHtml);
     }
 }
