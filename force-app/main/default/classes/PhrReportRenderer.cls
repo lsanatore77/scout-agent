@@ -21,7 +21,9 @@ public without sharing class PhrReportRenderer {
     public static final String DEFAULT_RESOURCE = 'PHR_Report_Default_Template';
     /** Used only when the data has no title of its own. */
     public static final String REPORT_TITLE = 'Product History Report';
-    public static final String FOOTER_NOTE = 'Leads are records worth reviewing, not confirmed causes.';
+    /** The note under section 2. */
+    public static final String SUMMARY_NOTE = 'Next steps and data gaps only. The records are listed in section 3.';
+    public static final String FOOTER_NOTE = 'Records worth reviewing are not confirmed causes.';
 
     public class Result {
         public Blob pdf;
@@ -198,6 +200,9 @@ public without sharing class PhrReportRenderer {
         out = out.replaceAll('(?i)>\\s*Draft investigation summary\\s*<', '>{{summaryHeading}}<');
         // An older template may have the title typed in instead of {{reportTitle}}.
         out = out.replaceAll('(?i)<h1>\\s*Product History Review\\s*</h1>', '<h1>{{reportTitle}}</h1>');
+        // Old wording in the summary note and footer.
+        out = out.replaceAll('\\{\\{summaryWords\\}\\}\\s*words\\.\\s*Recommendations and gaps only; records are not named here\\.', SUMMARY_NOTE);
+        out = out.replaceAll('(?i)Leads are records worth reviewing, not confirmed causes\\.', FOOTER_NOTE);
         // The records worth reviewing always start on a new page (page 2 when the summary fits on page 1).
         if (!out.contains('page-break-before')) {
             out = out.replaceFirst('(?i)<h2>(\\s*3\\.\\s*Top records worth reviewing)', '<h2 style="page-break-before: always;">$1');
@@ -265,7 +270,7 @@ public without sharing class PhrReportRenderer {
     }
 
     private static String reasonRows(PhrReportData d) {
-        if (d.reasons.isEmpty()) { return '<span class="empty">No leads to base a rating on.</span>'; }
+        if (d.reasons.isEmpty()) { return '<span class="empty">No records worth reviewing to base a rating on.</span>'; }
         String s = '';
         for (String r : d.reasons) { s += '<div>&#8226; ' + esc(r) + '</div>'; }
         return s;
