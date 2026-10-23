@@ -4,6 +4,10 @@
  * load()           - the complaint, its draft workflow steps that come from CQ Tasks flagged Transfer To Workflow,
  *                    and the CQ Tasks that can be added.
  * saveSteps()      - updates assignees and the Applicable flag on existing draft steps and creates new draft steps.
+ * generateDraft()  - writes a new draft investigation summary with the agent's generator, without saving it,
+ *                    formatted the way the save will store it, for screen 1 of the popup.
+ * saveDraft()      - saves the (possibly edited) draft once, through the same save the agent uses
+ *                    (formatting, report link, copy to linked investigations).
  * completeTriage() - moves the complaint forward the CQ way: it saves the complaint with Activity Code
  *                    'initiate' (or 'takeownershipandinitiate' while a queue owns it) and CQ performs the move
  *                    (stage, status, steps to Open, triage task closed). Nothing here writes the stage directly.
@@ -44,6 +48,7 @@ public with sharing class PhrCompleteTriageController {
         @AuraEnabled public String ownerName;
         @AuraEnabled public Boolean ownerIsQueue;
         @AuraEnabled public Boolean hasDraft;
+        @AuraEnabled public String draftHtml;
         @AuraEnabled public List<StepRow> steps = new List<StepRow>();
         @AuraEnabled public List<TemplateOption> templates = new List<TemplateOption>();
     }
@@ -70,6 +75,7 @@ public with sharing class PhrCompleteTriageController {
         d.ownerName = c.Owner.Name;
         d.ownerIsQueue = isQueue(c.OwnerId);
         d.hasDraft = !String.isBlank(c.Draft_Investigation_Summaries__c);
+        d.draftHtml = c.Draft_Investigation_Summaries__c;
 
         for (compliancequest__SQX_Complaint_Task__c s : [
             SELECT Id, Name, compliancequest__Step__c, compliancequest__SQX_Task__c, compliancequest__SQX_User__c,
@@ -106,6 +112,65 @@ public with sharing class PhrCompleteTriageController {
             d.templates.add(o);
         }
         return d;
+    }
+
+    public class DraftOutcome {
+        @AuraEnabled public Boolean success;
+        @AuraEnabled public String html;
+        @AuraEnabled public String message;
+    }
+
+    /** Generates a new draft without saving it. The text is formatted the way the save stores it. */
+    @AuraEnabled
+    public static DraftOutcome generateDraft(String recordId) {
+        DraftOutcome o = new DraftOutcome();
+        Id complaintId = TriageDraftSummaryController.resolveComplaintId(recordId);
+        if (complaintId == null) {
+            o.success = false;
+            o.message = 'The complaint for this task could not be found.';
+            return o;
+        }
+        GenerateDraftInvestigationSummary.Request req = new GenerateDraftInvestigationSummary.Request();
+        req.complaintId = complaintId;
+        req.saveToRecord = false;
+        GenerateDraftInvestigationSummary.Result r =
+            GenerateDraftInvestigationSummary.generate(new List<GenerateDraftInvestigationSummary.Request>{ req })[0];
+        if (String.isBlank(r.summary)) {
+            o.success = false;
+            o.message = String.isBlank(r.message) ? 'No draft was generated.' : r.message;
+            return o;
+        }
+        o.success = true;
+        o.html = format(r.summary);
+        o.message = r.message;
+        return o;
+    }
+
+    /** Saves the draft once, through the agent's save (formatting, report link, copy to linked investigations). */
+    @AuraEnabled
+    public static Outcome saveDraft(String recordId, String html) {
+        Outcome o = new Outcome();
+        Id complaintId = TriageDraftSummaryController.resolveComplaintId(recordId);
+        if (complaintId == null || String.isBlank(html)) {
+            o.success = false;
+            o.message = complaintId == null ? 'The complaint for this task could not be found.' : 'There is no draft to save.';
+            return o;
+        }
+        SaveDraftInvestigationSummary.Request req = new SaveDraftInvestigationSummary.Request();
+        req.complaintId = complaintId;
+        req.summary = html;
+        SaveDraftInvestigationSummary.Result r =
+            SaveDraftInvestigationSummary.save(new List<SaveDraftInvestigationSummary.Request>{ req })[0];
+        o.success = r.success;
+        o.message = r.message;
+        return o;
+    }
+
+    /** Same formatting steps as SaveDraftInvestigationSummary, so screen 1 shows what will be saved. */
+    @TestVisible
+    static String format(String text) {
+        return SummaryRichText.boldRecordIds(SummaryRichText.boldHeadings(
+            SummaryRichText.fromAgent(SummaryHtmlRepair.repair(text))));
     }
 
     /** stepsJson is the list of StepRow from the popup. Rows without an id are new steps. */

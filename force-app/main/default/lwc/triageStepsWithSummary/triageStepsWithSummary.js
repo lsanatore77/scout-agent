@@ -4,24 +4,25 @@ import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
 import { loadStyle } from 'lightning/platformResourceLoader';
 import POPUP_STYLES from '@salesforce/resourceUrl/PHR_Triage_Popup_Styles';
 import load from '@salesforce/apex/PhrCompleteTriageController.load';
+import generateDraft from '@salesforce/apex/PhrCompleteTriageController.generateDraft';
+import saveDraft from '@salesforce/apex/PhrCompleteTriageController.saveDraft';
 import saveSteps from '@salesforce/apex/PhrCompleteTriageController.saveSteps';
 import completeTriage from '@salesforce/apex/PhrCompleteTriageController.completeTriage';
-import includeDraftSummary from '@salesforce/apex/TriageDraftSummaryController.includeDraftSummary';
 
 const TRIAGE = 'Triage';
-const NO_INVESTIGATION = 'No investigation is linked';
-const SUMMARY_RETRIES = 3;
-const SUMMARY_WAIT_MS = 2000;
-
-function wait(ms) {
-    // eslint-disable-next-line @lwc/lwc/no-async-operation
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
+const SCREEN_DRAFT = 'draft';
+const SCREEN_STEPS = 'steps';
 
 function errorText(e) {
     return (e && e.body && e.body.message) || (e && e.message) || 'Unknown error';
 }
 
+/**
+ * PHR Complete Triage: replaces CQ's triage popup in eNBA.
+ * Screen 1 shows the draft investigation summary (the saved one, or a newly generated one).
+ * Screen 2 holds the workflow steps. Complete triage saves the steps, initiates the complaint the CQ way,
+ * then saves the draft once (formatting, report link and copy to linked investigations come from that save).
+ */
 export default class TriageStepsWithSummary extends LightningElement {
     @api recordId;
     @api task;
@@ -39,9 +40,20 @@ export default class TriageStepsWithSummary extends LightningElement {
     loading = true;
     loadError = '';
     data;
+    screen = SCREEN_DRAFT;
+
+    // Screen 1
+    draftHtml = '';
+    draftIsNew = false;
+    draftEdited = false;
+    generating = false;
+    draftError = '';
+    editing = false;
+    skipSummary = false;
+
+    // Screen 2
     rows = [];
     selectedTemplateId;
-    includeSummary = true;
     comment = '';
     busy = false;
     busyText = '';
@@ -63,6 +75,48 @@ export default class TriageStepsWithSummary extends LightningElement {
         return !this.inTriage;
     }
 
+    get onDraftScreen() {
+        return this.screen === SCREEN_DRAFT;
+    }
+
+    get screenLabel() {
+        return this.onDraftScreen
+            ? 'Step 1 of 2: review the draft summary'
+            : 'Step 2 of 2: moves to In Progress when you complete triage';
+    }
+
+    get hasDraftText() {
+        return !!(this.draftHtml && this.draftHtml.trim());
+    }
+
+    get draftSourceLabel() {
+        if (this.generating || !this.hasDraftText) return '';
+        if (this.draftEdited) return 'Edited, not saved yet';
+        return this.draftIsNew ? 'New draft, not saved yet' : 'Saved draft on this complaint';
+    }
+
+    get regenerateLabel() {
+        return this.hasDraftText ? 'Regenerate' : 'Generate';
+    }
+
+    get editLabel() {
+        return this.editing ? 'Done editing' : 'Edit';
+    }
+
+    get nextDisabled() {
+        return this.generating;
+    }
+
+    get summaryNote() {
+        if (this.skipSummary || !this.hasDraftText) {
+            return 'No draft summary will be saved with this triage.';
+        }
+        if (this.draftIsNew || this.draftEdited) {
+            return 'After triage, the draft summary from the previous screen is saved to the complaint and copied to its investigation.';
+        }
+        return 'After triage, the complaint\'s draft summary is saved again (with the report link) and copied to its investigation.';
+    }
+
     get noRows() {
         return this.rows.length === 0;
     }
@@ -73,12 +127,6 @@ export default class TriageStepsWithSummary extends LightningElement {
 
     get addDisabled() {
         return this.busy || !this.selectedTemplateId;
-    }
-
-    get summaryHint() {
-        if (!this.includeSummary) return 'The draft summary is not saved. Only the steps and stage are updated.';
-        if (this.data && !this.data.hasDraft) return 'There is no draft summary on this complaint yet, so nothing will be copied.';
-        return 'After triage, the draft summary is saved to the complaint and copied to its investigation.';
     }
 
     get statusClass() {
@@ -92,10 +140,10 @@ export default class TriageStepsWithSummary extends LightningElement {
         this.dispatchEvent(new CustomEvent('formload'));
         // Hide CQ's own Cancel and Save in this popup; the screen has its own buttons.
         loadStyle(this, POPUP_STYLES).catch(() => {});
-        this.refresh();
+        this.refresh(true);
     }
 
-    async refresh() {
+    async refresh(firstLoad) {
         this.loading = true;
         this.loadError = '';
         if (!this.startId) {
@@ -106,11 +154,70 @@ export default class TriageStepsWithSummary extends LightningElement {
         try {
             this.data = await load({ recordId: this.startId });
             this.rows = (this.data.steps || []).map((s) => this.toRow(s, false));
+            if (firstLoad) {
+                this.draftHtml = this.data.draftHtml || '';
+                this.draftIsNew = false;
+            }
         } catch (e) {
             this.loadError = 'The triage steps could not be loaded: ' + errorText(e);
         } finally {
             this.loading = false;
         }
+        // No saved draft yet: write one now, so it is ready to review.
+        if (firstLoad && !this.loadError && this.inTriage && !this.hasDraftText) {
+            this.generate();
+        }
+    }
+
+    async generate() {
+        this.generating = true;
+        this.draftError = '';
+        this.editing = false;
+        try {
+            const o = await generateDraft({ recordId: this.data.complaintId });
+            if (o.success) {
+                this.draftHtml = o.html;
+                this.draftIsNew = true;
+                this.draftEdited = false;
+            } else {
+                this.draftError = o.message || 'The draft could not be generated.';
+            }
+        } catch (e) {
+            this.draftError = 'The draft could not be generated: ' + errorText(e);
+        } finally {
+            this.generating = false;
+        }
+    }
+
+    // Screen 1 handlers
+    handleRegenerate() {
+        this.generate();
+    }
+
+    handleToggleEdit() {
+        this.editing = !this.editing;
+    }
+
+    handleDraftEdit(event) {
+        this.draftHtml = event.target.value;
+        this.draftEdited = true;
+    }
+
+    handleSkip() {
+        this.skipSummary = true;
+        this.editing = false;
+        this.screen = SCREEN_STEPS;
+    }
+
+    handleNext() {
+        this.skipSummary = !this.hasDraftText;
+        this.editing = false;
+        this.screen = SCREEN_STEPS;
+    }
+
+    // Screen 2 handlers
+    handleBack() {
+        this.screen = SCREEN_DRAFT;
     }
 
     toRow(s, isNew) {
@@ -155,10 +262,6 @@ export default class TriageStepsWithSummary extends LightningElement {
         this.selectedTemplateId = null;
     }
 
-    handleSummaryToggle(event) {
-        this.includeSummary = event.target.checked;
-    }
-
     handleComment(event) {
         this.comment = event.target.value;
     }
@@ -198,15 +301,20 @@ export default class TriageStepsWithSummary extends LightningElement {
             const t = await completeTriage({ recordId: complaintId, comment: this.comment });
             if (!t.success) {
                 this.setStatus(t.message, true);
-                await this.refresh();
+                await this.refresh(false);
                 return;
             }
 
-            // 3. Draft summary to the complaint and the new investigation (own transaction).
+            // 3. The draft summary, saved once (own transaction).
             let summaryMessage = '';
-            if (this.includeSummary && this.data.hasDraft) {
+            if (!this.skipSummary && this.hasDraftText) {
                 this.busyText = 'Saving the draft summary';
-                summaryMessage = await this.saveSummaryWithRetry(complaintId);
+                try {
+                    const d = await saveDraft({ recordId: complaintId, html: this.draftHtml });
+                    summaryMessage = d.success ? d.message : 'The draft summary could not be saved: ' + d.message;
+                } catch (e) {
+                    summaryMessage = 'The draft summary could not be saved: ' + errorText(e);
+                }
             }
 
             const message = t.message + (summaryMessage ? ' ' + summaryMessage : '');
@@ -225,23 +333,6 @@ export default class TriageStepsWithSummary extends LightningElement {
             this.busy = false;
             this.busyText = '';
         }
-    }
-
-    // CQ may create the investigation a moment after triage, so try a few times before giving up.
-    async saveSummaryWithRetry(complaintId) {
-        let last = '';
-        for (let i = 0; i < SUMMARY_RETRIES; i += 1) {
-            try {
-                const o = await includeDraftSummary({ recordId: complaintId });
-                last = o.message || '';
-                if (!o.success) return 'The draft summary could not be saved: ' + last;
-                if (last.indexOf(NO_INVESTIGATION) === -1) return last;
-            } catch (e) {
-                return 'The draft summary could not be saved: ' + errorText(e);
-            }
-            await wait(SUMMARY_WAIT_MS);
-        }
-        return last;
     }
 
     close() {
