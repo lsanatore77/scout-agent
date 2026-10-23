@@ -95,7 +95,7 @@ global with sharing class PhrChecklistAction {
             Map<String, List<String>> allowed = allowedValues(answers);
             List<compliancequest__SQX_Product_History_Answer__c> toSave = new List<compliancequest__SQX_Product_History_Answer__c>();
             List<PhrChecklistItem> sureItems = new List<PhrChecklistItem>();
-            List<String> unsure = new List<String>();
+            List<String> unsureLabels = new List<String>();
 
             for (compliancequest__SQX_Product_History_Answer__c a : answers) {
                 Suggestion s = suggest(a.compliancequest__Question__c, ev);
@@ -125,10 +125,10 @@ global with sharing class PhrChecklistAction {
                         compliancequest__Notes__c = s.basis));
                 } else {
                     res.unsureCount++;
-                    unsure.add(questionLabel(item));
+                    unsureLabels.add(questionLabel(item));
                 }
             }
-            res.unsureQuestions = String.join(unsure, '\n');
+            res.unsureQuestions = String.join(unsureLabels, '\n');
 
             if (save && !toSave.isEmpty()) {
                 List<Database.SaveResult> rs = Database.update(toSave, false, AccessLevel.USER_MODE);
@@ -189,11 +189,11 @@ global with sharing class PhrChecklistAction {
     // ---------- Rules ----------
 
     @TestVisible
-    class Suggestion {
-        String answer;
-        Boolean sure = false;
-        String basis;
-        Suggestion(String answer, Boolean sure, String basis) {
+    public class Suggestion {
+        public String answer;
+        public Boolean sure = false;
+        public String basis;
+        public Suggestion(String answer, Boolean sure, String basis) {
             this.answer = answer;
             this.sure = sure;
             this.basis = basis;
@@ -220,13 +220,13 @@ global with sharing class PhrChecklistAction {
         if (!ev.searched) {
             return new Suggestion(null, false, ev.problem);
         }
-        List<String> names = ev.names(kind);
-        if (names.isEmpty()) {
-            return new Suggestion('No', true, 'No ' + plural(kind) + ' worth reviewing were found for this part'
-                + (String.isBlank(ev.lotNumber) ? '' : ' and lot ' + ev.lotNumber) + '.');
+        List<String> found = ev.names(kind);
+        if (found.isEmpty()) {
+            String lotPart = String.isBlank(ev.lotNumber) ? '' : ' and lot ' + ev.lotNumber;
+            return new Suggestion('No', true, 'No ' + plural(kind) + ' worth reviewing were found for this part' + lotPart + '.');
         }
-        return new Suggestion('Yes', true, names.size() + ' ' + (names.size() == 1 ? singular(kind) : plural(kind))
-            + ' worth reviewing: ' + shortList(names) + '.');
+        String noun = found.size() == 1 ? singular(kind) : plural(kind);
+        return new Suggestion('Yes', true, found.size() + ' ' + noun + ' worth reviewing: ' + shortList(found) + '.');
     }
 
     static Suggestion scrapRate(Evidence ev) {
@@ -262,7 +262,9 @@ global with sharing class PhrChecklistAction {
     static String shortList(List<String> names) {
         List<String> shown = new List<String>();
         for (Integer i = 0; i < names.size() && i < MAX_NAMES; i++) { shown.add(names[i]); }
-        return String.join(shown, ', ') + (names.size() > MAX_NAMES ? ' and ' + (names.size() - MAX_NAMES) + ' more' : '');
+        String more = '';
+        if (names.size() > MAX_NAMES) { more = ' and ' + (names.size() - MAX_NAMES) + ' more'; }
+        return String.join(shown, ', ') + more;
     }
 
     /** Yes/No style answer matched to the question's own answer values (by name, ignoring case). */
@@ -297,15 +299,15 @@ global with sharing class PhrChecklistAction {
 
     /** The records worth reviewing for the PHR's complaint, loaded once. */
     @TestVisible
-    class Evidence {
-        Boolean searched = false;
-        String problem;
-        String lotNumber;
-        Id phrId;
-        Map<String, List<String>> byKind = new Map<String, List<String>>();
-        Integer ncTotal;
+    public class Evidence {
+        public Boolean searched = false;
+        public String problem;
+        public String lotNumber;
+        public Id phrId;
+        public Map<String, List<String>> byKind = new Map<String, List<String>>();
+        public Integer ncTotal;
 
-        Evidence(Id phrId) {
+        public Evidence(Id phrId) {
             this.phrId = phrId;
             for (String k : new List<String>{ 'nc', 'capa', 'change', 'inspection', 'investigation' }) { byKind.put(k, new List<String>()); }
             try {
@@ -324,24 +326,27 @@ global with sharing class PhrChecklistAction {
             }
         }
 
-        void add(String kind, List<PhrQmsPanelController.Row> rows) {
+        public void add(String kind, List<PhrQmsPanelController.Row> rows) {
             for (PhrQmsPanelController.Row r : rows) {
                 if (r.tier == null || r.tier == 'Top' || r.tier == 'Next') { byKind.get(kind).add(r.name); }
             }
         }
 
-        List<String> names(String kind) {
-            return byKind.containsKey(kind) ? byKind.get(kind) : new List<String>();
+        public List<String> names(String kind) {
+            List<String> found = byKind.get(kind);
+            if (found == null) { found = new List<String>(); }
+            return found;
         }
 
-        String describe(String kind) {
+        public String describe(String kind) {
             if (!searched) { return problem; }
             List<String> n = names(kind);
-            return n.isEmpty() ? 'No ' + PhrChecklistAction.plural(kind) + ' worth reviewing were found.' : 'Found: ' + PhrChecklistAction.shortList(n) + '.';
+            if (n.isEmpty()) { return 'No ' + PhrChecklistAction.plural(kind) + ' worth reviewing were found.'; }
+            return 'Found: ' + PhrChecklistAction.shortList(n) + '.';
         }
 
         /** Same count as the scrap rate flow: every nonconformance. */
-        Integer allNonconformances() {
+        public Integer allNonconformances() {
             if (ncTotal == null) { ncTotal = [SELECT COUNT() FROM compliancequest__SQX_Nonconformance__c WITH USER_MODE]; }
             return ncTotal;
         }

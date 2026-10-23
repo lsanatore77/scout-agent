@@ -61,7 +61,7 @@ public with sharing class GenerateDraftInvestigationSummary {
                     continue;
                 }
                 r.summary = PhrSummaryText.stripDisclaimer(PhrSummarySections.apply(runTemplate(data), settings));
-                r.message = 'Draft generated.';
+                r.message = 'PHR Summary generated.';
                 if (req.saveToRecord == true) {
                     SaveDraftInvestigationSummary.Request s = new SaveDraftInvestigationSummary.Request();
                     s.complaintId = req.complaintId; // Save resolves it the same way and also knows which PHR was open
