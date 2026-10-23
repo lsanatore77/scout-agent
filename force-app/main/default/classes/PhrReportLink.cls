@@ -15,9 +15,10 @@
  */
 public with sharing class PhrReportLink {
 
-    public static final String REPORT_TITLE = 'Product History Report';
+    /** Default title; the PHR Report Setting (PHR Report Title) can change it. */
+    public static final String REPORT_TITLE = PhrReportSettings.DEFAULT_PHR_TITLE;
     /** The file's earlier name; files with it are still found, and renamed on their next version. */
-    public static final String OLD_REPORT_TITLE = 'Product History Review Report';
+    public static final String OLD_REPORT_TITLE = PhrReportSettings.OLDEST_PHR_TITLE;
     @TestVisible static final String LINE_LABEL = 'Attached report:';
     /** Tests set this to stand in for the complaint's primary investigation (CQ's scope rules block setting one in test data). */
     @TestVisible static Id testPrimaryInvestigationId;
@@ -26,9 +27,10 @@ public with sharing class PhrReportLink {
     /** ContentDocument Id of the report attached to the complaint, or null. */
     public static Id reportDocumentId(Id complaintId) {
         if (complaintId == null) { return null; }
+        List<String> titles = PhrReportSettings.phrTitles();
         for (ContentDocumentLink l : [
             SELECT ContentDocumentId FROM ContentDocumentLink
-            WHERE LinkedEntityId = :complaintId AND ContentDocument.Title IN (:REPORT_TITLE, :OLD_REPORT_TITLE)
+            WHERE LinkedEntityId = :complaintId AND ContentDocument.Title IN :titles
             ORDER BY ContentDocument.CreatedDate DESC LIMIT 1
         ]) {
             return l.ContentDocumentId;
@@ -59,7 +61,7 @@ public with sharing class PhrReportLink {
     @TestVisible
     static String line(Id docId) {
         return '<p><strong>' + LINE_LABEL + '</strong> <a href="/lightning/r/ContentDocument/' + docId
-            + '/view" target="_blank">' + REPORT_TITLE + '</a></p>';
+            + '/view" target="_blank">' + PhrReportSettings.phrTitle().replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;') + '</a></p>';
     }
 
     /** The complaint's primary investigation, as a set (empty when none is set). Other linked investigations are not used. */

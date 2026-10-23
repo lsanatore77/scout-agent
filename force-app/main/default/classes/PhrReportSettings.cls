@@ -17,6 +17,41 @@ public with sharing class PhrReportSettings {
         public Boolean summaryAssociatedItems = true;   // the "Summary: Product History Review" checkbox
         public Boolean summaryAnalysis = true;
         public String templateDocument;   // Document Number or record Id of the report template controlled document; blank = PHR-TEMPLATE-001
+        public String phrReportTitle;            // report title when run from a complaint or PHR; blank = DEFAULT_PHR_TITLE
+        public String investigationReportTitle;  // report title when run from an investigation; blank = DEFAULT_INVESTIGATION_TITLE
+    }
+
+    public static final String DEFAULT_PHR_TITLE = 'Product History Report';
+    public static final String DEFAULT_INVESTIGATION_TITLE = 'Customer Report';
+    /** The report file's earliest name; files with it are still found, and renamed on their next version. */
+    public static final String OLDEST_PHR_TITLE = 'Product History Review Report';
+
+    /** Title of the report (and its file) when run from a complaint or PHR. */
+    public static String phrTitle() {
+        String t = get().phrReportTitle;
+        return String.isBlank(t) ? DEFAULT_PHR_TITLE : t.trim();
+    }
+
+    /** Title of the report (and its file) when run from an investigation. */
+    public static String investigationTitle() {
+        String t = get().investigationReportTitle;
+        return String.isBlank(t) ? DEFAULT_INVESTIGATION_TITLE : t.trim();
+    }
+
+    /** Every name the complaint's report file may have: the current title first, then the earlier ones. */
+    public static List<String> phrTitles() {
+        return distinct(new List<String>{ phrTitle(), DEFAULT_PHR_TITLE, OLDEST_PHR_TITLE });
+    }
+
+    /** Every name the investigation's report file may have. */
+    public static List<String> investigationTitles() {
+        return distinct(new List<String>{ investigationTitle(), DEFAULT_INVESTIGATION_TITLE });
+    }
+
+    private static List<String> distinct(List<String> names) {
+        List<String> out = new List<String>();
+        for (String n : names) { if (!out.contains(n)) { out.add(n); } }
+        return out;
     }
 
     @TestVisible private static Values testValues;
@@ -41,6 +76,8 @@ public with sharing class PhrReportSettings {
             // Type not deployed yet, or no access: keep the defaults.
         }
         v.templateDocument = readTemplateDocument();
+        v.phrReportTitle = readText('PHR_Report_Title__c');
+        v.investigationReportTitle = readText('Investigation_Report_Title__c');
         return v;
     }
 
@@ -51,6 +88,19 @@ public with sharing class PhrReportSettings {
                 'SELECT Template_Controlled_Document__c FROM PHR_Report_Setting__mdt WHERE DeveloperName = \'Default\' LIMIT 1');
             if (rows.isEmpty() || rows[0].get('Template_Controlled_Document__c') == null) { return null; }
             String t = String.valueOf(rows[0].get('Template_Controlled_Document__c')).trim();
+            return String.isBlank(t) ? null : t;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    /** One text field of the Default record, read on its own so a field not deployed yet only loses itself. */
+    private static String readText(String field) {
+        try {
+            List<SObject> rows = Database.query(
+                'SELECT ' + field + ' FROM PHR_Report_Setting__mdt WHERE DeveloperName = \'Default\' LIMIT 1');
+            if (rows.isEmpty() || rows[0].get(field) == null) { return null; }
+            String t = String.valueOf(rows[0].get(field)).trim();
             return String.isBlank(t) ? null : t;
         } catch (Exception ex) {
             return null;
