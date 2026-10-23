@@ -36,8 +36,10 @@
                                 <tbody>
                                     <template for:each={tier.rows} for:item="row">
                                         <tr key={row.id}>
-                                            <td><a href={row.link} target="_blank" rel="noopener">{row.recordNumber}</a></td>
-                                            <td>{row.recordType}</td>
+                                            <td><a href={row.link} target="_blank" rel="noopener" title={row.recordType}>{row.recordNumber}</a></td>
+                                            <template if:false={row.asideTier}>
+                                                <td>{row.recordType}</td>
+                                            </template>
                                             <template if:true={row.asideTier}>
                                                 <td class="wrap-cell">{row.title}</td>
                                             </template>
