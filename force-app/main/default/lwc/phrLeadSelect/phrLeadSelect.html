@@ -45,14 +45,14 @@
                             <span class="muted">{g.pager.range}</span>
                             <span class="pages">
                                 <template if:true={g.pager.hasPrev}>
-                                    <button class="link" type="button" data-page="prev" onclick={handlePage}>Previous</button>
+                                    <button class="link" type="button" data-tier={g.key} data-page="prev" onclick={handlePage}>Previous</button>
                                 </template>
                                 <template for:each={g.pager.pages} for:item="p">
-                                    <button key={p.key} class={p.cls} type="button" data-page={p.num} onclick={handlePage}
+                                    <button key={p.key} class={p.cls} type="button" data-tier={g.key} data-page={p.num} onclick={handlePage}
                                         aria-current={p.current}>{p.num}</button>
                                 </template>
                                 <template if:true={g.pager.hasNext}>
-                                    <button class="link" type="button" data-page="next" onclick={handlePage}>Next</button>
+                                    <button class="link" type="button" data-tier={g.key} data-page="next" onclick={handlePage}>Next</button>
                                 </template>
                             </span>
                         </div>

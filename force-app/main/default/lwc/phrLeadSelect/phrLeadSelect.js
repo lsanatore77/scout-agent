@@ -7,7 +7,6 @@ const TIERS = [
     { key: 'Next', label: 'Less Relevant' },
     { key: 'Set aside', label: 'Set Aside' }
 ];
-const SET_ASIDE = 'Set aside';
 const PAGE_SIZE = 5;
 const DOT = { Red: '#ba0517', Yellow: '#dd7a01', Grey: '#939393' };
 
@@ -28,7 +27,7 @@ export default class PhrLeadSelect extends LightningElement {
     manualId;
     complaintName;
     pageRecordId;
-    asidePage = 1;
+    pageByTier = {};
 
     @api
     get value() {
@@ -118,6 +117,7 @@ export default class PhrLeadSelect extends LightningElement {
         return TIERS.map((t) => {
             const all = this.rows
                 .filter((r) => r.tier === t.key)
+                .sort(byRelevance)
                 .map((r) => ({
                     ...r,
                     key: r.id,
@@ -128,12 +128,13 @@ export default class PhrLeadSelect extends LightningElement {
                     note: r.alreadyAdded ? 'Already on the PHR' : r.reason || ''
                 }));
             const free = all.filter((i) => !i.alreadyAdded);
-            const paging = t.key === SET_ASIDE ? pageOf(all, this.asidePage) : null;
+            // Every tier shows 5 at a time, most relevant first.
+            const paging = pageOf(all, this.pageByTier[t.key] || 1);
             return {
                 key: t.key,
                 label: t.label + ' (' + all.length + ')',
-                items: paging ? paging.items : all,
-                pager: paging && paging.pages.length > 1 ? paging : null,
+                items: paging.items,
+                pager: paging.pages.length > 1 ? paging : null,
                 hasItems: all.length > 0,
                 canToggle: free.length > 0 && !this.readOnly,
                 allOn: free.length > 0 && free.every((i) => i.checked),
@@ -144,9 +145,11 @@ export default class PhrLeadSelect extends LightningElement {
 
     handlePage(event) {
         const to = event.currentTarget.dataset.page;
-        const pages = Math.max(1, Math.ceil(this.rows.filter((r) => r.tier === SET_ASIDE).length / PAGE_SIZE));
-        const n = to === 'prev' ? this.asidePage - 1 : to === 'next' ? this.asidePage + 1 : Number(to);
-        this.asidePage = Math.min(Math.max(1, n), pages);
+        const tier = event.currentTarget.dataset.tier;
+        const current = this.pageByTier[tier] || 1;
+        const pages = Math.max(1, Math.ceil(this.rows.filter((r) => r.tier === tier).length / PAGE_SIZE));
+        const n = to === 'prev' ? current - 1 : to === 'next' ? current + 1 : Number(to);
+        this.pageByTier = { ...this.pageByTier, [tier]: Math.min(Math.max(1, n), pages) };
     }
 
     get hasRows() {
@@ -186,6 +189,13 @@ export default class PhrLeadSelect extends LightningElement {
         this._value = value;
         this.dispatchEvent(new CustomEvent('valuechange', { detail: { value } }));
     }
+}
+
+/** Highest relevance first; records without a score last. Keeps the original order for ties. */
+function byRelevance(a, b) {
+    const x = a.relevance == null ? -1 : a.relevance;
+    const y = b.relevance == null ? -1 : b.relevance;
+    return y - x;
 }
 
 /** One page of a list, plus the page links (numbers, Previous, Next). */
