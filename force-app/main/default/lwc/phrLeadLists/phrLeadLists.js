@@ -13,10 +13,9 @@ const DOT = {
     Yellow: { cls: 'dot dot-yellow', label: 'Yellow: two criteria' },
     Grey: { cls: 'dot dot-grey', label: 'Grey: one criterion' }
 };
-// Top and Next lists show how each record is related instead of its title; Set aside keeps the title.
+// All three lists show the same columns. Hover the record number for its type and the title for how it is related.
 // The Match column is a colored dot (hover for the colour and score).
-const LEAD_HEADERS = ['Record', 'Type', 'Status', 'Match', 'Related by'];
-const SET_ASIDE_HEADERS = ['Record', 'Title', 'Status', 'Match'];
+const HEADERS = ['Record', 'Title', 'Status', 'Match'];
 const ADDED_HEADER = 'Added';
 const PHR_HEADER = 'PHR';
 const PAGE_SIZE = 5;
@@ -111,7 +110,7 @@ export default class PhrLeadLists extends LightningElement {
         return TIERS.map((t) => {
             const rows = this.visibleRows.filter((r) => r.tier === t.key);
             const asideTier = t.key === 'Set aside';
-            const headers = (asideTier ? SET_ASIDE_HEADERS : LEAD_HEADERS)
+            const headers = HEADERS
                 .concat(this.showPhr ? [PHR_HEADER] : [])
                 .concat(this.showNotAdded ? [ADDED_HEADER] : []);
             // Every tier shows 5 at a time.
@@ -137,6 +136,8 @@ export default class PhrLeadLists extends LightningElement {
             hasDot: !!d,
             dotClass: d ? d.cls : '',
             dotLabel: d ? d.label + (r.relevance == null ? '' : ' (' + r.relevance + ')') : '',
+            title: r.title || 'No title',
+            titleHint: r.relatedBy ? 'Related by: ' + r.relatedBy : '',
             showAdded: this.showNotAdded,
             showPhr: this.showPhr
         };
