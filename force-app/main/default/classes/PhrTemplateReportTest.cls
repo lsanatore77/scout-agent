@@ -294,4 +294,41 @@ private class PhrTemplateReportTest {
         System.assert(d.draftSummaryHtml.contains('Overview text'), d.draftSummaryHtml);
         System.assert(d.draftSummaryHtml.contains('Analysis text'), 'The Investigation Summary is printed as written');
     }
+
+    @IsTest static void titlesComeFromTheReportSetting() {
+        compliancequest__SQX_Complaint__c cmp = newComplaint('LOT-CFG');
+        Id invId = newInvestigation(cmp.Id, '<p>x</p>');
+        PhrReportSettings.Values v = new PhrReportSettings.Values();
+        v.phrReportTitle = 'Complaint History Report';
+        v.investigationReportTitle = 'Investigation Report';
+        PhrReportSettings.testValues = v;
+        String tpl = '<html xmlns="http://www.w3.org/1999/xhtml"><body><h1>{{reportTitle}}</h1></body></html>';
+        System.assert(PhrReportRenderer.fill(tpl, PhrReportData.build(cmp.Id, '1'), false).contains('<h1>Complaint History Report</h1>'));
+        System.assert(PhrReportRenderer.fill(tpl, PhrReportData.build(cmp.Id, '1', invId), false).contains('<h1>Investigation Report</h1>'));
+
+        // A file with the default name is found, gets the next version, and takes the new name.
+        ContentVersion old = new ContentVersion(Title = 'Product History Report', PathOnClient = 'old.pdf',
+            VersionData = Blob.valueOf('%PDF-1.4 old'), FirstPublishLocationId = cmp.Id);
+        insert old;
+        Id oldDoc = [SELECT ContentDocumentId FROM ContentVersion WHERE Id = :old.Id].ContentDocumentId;
+        PhrTemplateReportAction.Request req = new PhrTemplateReportAction.Request();
+        req.recordId = cmp.Id;
+        PhrTemplateReportAction.Response r = PhrTemplateReportAction.run(new List<PhrTemplateReportAction.Request>{ req })[0];
+        System.assertEquals(true, r.success, r.message);
+        System.assertEquals(oldDoc, r.contentDocumentId);
+        System.assertEquals('Complaint History Report', [SELECT Title FROM ContentDocument WHERE Id = :oldDoc].Title);
+        System.assert(r.message.contains('Complaint History Report'), r.message);
+        System.assertEquals(oldDoc, PhrReportLink.reportDocumentId(cmp.Id));
+        System.assert(PhrReportLink.withReportLink(cmp.Id, '<p>s</p>').contains('Complaint History Report'));
+    }
+
+    @IsTest static void blankTitlesUseTheDefaults() {
+        PhrReportSettings.Values v = new PhrReportSettings.Values();
+        v.phrReportTitle = '  ';
+        PhrReportSettings.testValues = v;
+        System.assertEquals('Product History Report', PhrReportSettings.phrTitle());
+        System.assertEquals('Customer Report', PhrReportSettings.investigationTitle());
+        System.assertEquals(2, PhrReportSettings.phrTitles().size());
+        System.assertEquals(1, PhrReportSettings.investigationTitles().size());
+    }
 }

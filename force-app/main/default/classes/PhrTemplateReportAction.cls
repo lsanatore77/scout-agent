@@ -57,10 +57,11 @@ global with sharing class PhrTemplateReportAction {
             }
 
             Id investigationId = PhrRecordContext.isInvestigation(req.recordId) ? req.recordId : null;
-            String title = investigationId == null ? FILE_TITLE : CUSTOMER_FILE_TITLE;
+            // Titles come from the PHR Report Setting (PHR Report Title / Investigation Report Title).
+            String title = investigationId == null ? PhrReportSettings.phrTitle() : PhrReportSettings.investigationTitle();
             Id docId = investigationId == null
                 ? findExistingDocument(complaintId)
-                : findDocument(investigationId, new List<String>{ CUSTOMER_FILE_TITLE });
+                : findDocument(investigationId, PhrReportSettings.investigationTitles());
             Integer next = docId == null ? 1 : nextVersion(docId);
 
             PhrReportData data = PhrReportData.build(complaintId, String.valueOf(next), investigationId);
@@ -90,15 +91,15 @@ global with sharing class PhrTemplateReportAction {
             String fresh = ' It uses the information in the org right now, so you can run it again later for an updated version.';
             if (investigationId == null) {
                 res.message = (next == 1
-                    ? 'I attached the Product History Report to the complaint as a new file.'
-                    : 'I added version ' + next + ' to the Product History Report on the complaint.')
+                    ? 'I attached the ' + title + ' to the complaint as a new file.'
+                    : 'I added version ' + next + ' to the ' + title + ' on the complaint.')
                     + ' It shows the PHR Summary.' + fresh + note
                     + PhrReportLink.afterReportGenerated(complaintId);
             } else {
                 String invLabel = String.isBlank(data.investigationName) ? 'the investigation' : data.investigationName;
                 res.message = (next == 1
-                    ? 'I attached the Customer Report to ' + invLabel + ' as a new file.'
-                    : 'I added version ' + next + ' to the Customer Report on ' + invLabel + '.')
+                    ? 'I attached the ' + title + ' to ' + invLabel + ' as a new file.'
+                    : 'I added version ' + next + ' to the ' + title + ' on ' + invLabel + '.')
                     + ' It shows the Investigation Summary.'
                     + alsoOnComplaint(res.contentDocumentId, complaintId) + fresh + note;
             }
@@ -126,7 +127,7 @@ global with sharing class PhrTemplateReportAction {
     /** The Product History Report on the complaint (also finds it under its earlier name). */
     @TestVisible
     private static Id findExistingDocument(Id complaintId) {
-        return findDocument(complaintId, new List<String>{ FILE_TITLE, OLD_FILE_TITLE });
+        return findDocument(complaintId, PhrReportSettings.phrTitles());
     }
 
     @TestVisible
