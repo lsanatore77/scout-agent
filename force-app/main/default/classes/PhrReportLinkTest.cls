@@ -159,7 +159,7 @@ private class PhrReportLinkTest {
             new List<SaveDraftInvestigationSummary.Request>{ req })[0];
         Test.stopTest();
         Assert.isTrue(r.success, r.message);
-        Assert.isTrue(r.message.contains('also updated on 1 investigation'), r.message);
+        Assert.isTrue(r.message.contains('copied to the Investigation Summary'), r.message);
         String summary = [SELECT compliancequest__Investigation_Summary__c FROM compliancequest__SQX_Investigation__c
                           WHERE Id = :invId].compliancequest__Investigation_Summary__c;
         Assert.isTrue(summary.contains('Approved summary'), summary);

@@ -19,7 +19,7 @@ function errorText(e) {
 
 /**
  * PHR Complete Triage: replaces CQ's triage popup in eNBA.
- * Screen 1 shows the draft investigation summary (the saved one, or a newly generated one).
+ * Screen 1 shows the PHR summary (the saved one, or a newly generated one).
  * Screen 2 holds the workflow steps. Complete triage saves the steps, initiates the complaint the CQ way,
  * then saves the draft once (formatting, report link and copy to linked investigations come from that save).
  */
@@ -81,7 +81,7 @@ export default class TriageStepsWithSummary extends LightningElement {
 
     get screenLabel() {
         return this.onDraftScreen
-            ? 'Step 1 of 2: review the draft summary'
+            ? 'Step 1 of 2: review the PHR summary'
             : 'Step 2 of 2: moves to In Progress when you complete triage';
     }
 
@@ -92,7 +92,7 @@ export default class TriageStepsWithSummary extends LightningElement {
     get draftSourceLabel() {
         if (this.generating || !this.hasDraftText) return '';
         if (this.draftEdited) return 'Edited, not saved yet';
-        return this.draftIsNew ? 'New draft, not saved yet' : 'Saved draft on this complaint';
+        return this.draftIsNew ? 'New draft, not saved yet' : 'Saved PHR summary on this complaint';
     }
 
     get regenerateLabel() {
@@ -109,12 +109,12 @@ export default class TriageStepsWithSummary extends LightningElement {
 
     get summaryNote() {
         if (this.skipSummary || !this.hasDraftText) {
-            return 'No draft summary will be saved with this triage.';
+            return 'No PHR summary will be saved with this triage.';
         }
         if (this.draftIsNew || this.draftEdited) {
-            return 'After triage, the draft summary from the previous screen is saved to the complaint and copied to its investigation.';
+            return 'After triage, the PHR summary from the previous screen is saved to the complaint and its Product History Review, and copied to the primary investigation.';
         }
-        return 'After triage, the complaint\'s draft summary is saved again (with the report link) and copied to its investigation.';
+        return 'After triage, the complaint\'s PHR summary is saved again (with the report link) to the complaint and its Product History Review, and copied to the primary investigation.';
     }
 
     get noRows() {
@@ -180,10 +180,10 @@ export default class TriageStepsWithSummary extends LightningElement {
                 this.draftIsNew = true;
                 this.draftEdited = false;
             } else {
-                this.draftError = o.message || 'The draft could not be generated.';
+                this.draftError = o.message || 'The PHR summary could not be generated.';
             }
         } catch (e) {
-            this.draftError = 'The draft could not be generated: ' + errorText(e);
+            this.draftError = 'The PHR summary could not be generated: ' + errorText(e);
         } finally {
             this.generating = false;
         }
@@ -308,12 +308,12 @@ export default class TriageStepsWithSummary extends LightningElement {
             // 3. The draft summary, saved once (own transaction).
             let summaryMessage = '';
             if (!this.skipSummary && this.hasDraftText) {
-                this.busyText = 'Saving the draft summary';
+                this.busyText = 'Saving the PHR summary';
                 try {
                     const d = await saveDraft({ recordId: complaintId, html: this.draftHtml });
-                    summaryMessage = d.success ? d.message : 'The draft summary could not be saved: ' + d.message;
+                    summaryMessage = d.success ? d.message : 'The PHR summary could not be saved: ' + d.message;
                 } catch (e) {
-                    summaryMessage = 'The draft summary could not be saved: ' + errorText(e);
+                    summaryMessage = 'The PHR summary could not be saved: ' + errorText(e);
                 }
             }
 

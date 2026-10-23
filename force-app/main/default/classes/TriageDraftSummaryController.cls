@@ -50,18 +50,7 @@ public with sharing class TriageDraftSummaryController {
 
     /** Accepts a complaint Id or the Id of a CQ Task on a complaint and returns the complaint Id, or null. */
     public static Id resolveComplaintId(String recordId) {
-        if (String.isBlank(recordId)) { return null; }
-        Id rid;
-        try { rid = (Id) recordId; } catch (Exception e) { return null; }
-        if (rid.getSobjectType() == compliancequest__SQX_Complaint__c.SObjectType) { return rid; }
-        if (rid.getSobjectType() == Task.SObjectType) {
-            for (Task t : [SELECT WhatId FROM Task WHERE Id = :rid WITH USER_MODE LIMIT 1]) {
-                if (t.WhatId != null && t.WhatId.getSobjectType() == compliancequest__SQX_Complaint__c.SObjectType) {
-                    return t.WhatId;
-                }
-            }
-        }
-        return null;
+        return PhrRecordContext.complaintIdFor(recordId);
     }
 
     private static String draftFor(Id complaintId) {

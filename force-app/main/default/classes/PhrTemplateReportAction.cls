@@ -109,15 +109,6 @@ global with sharing class PhrTemplateReportAction {
     /** Accepts a Complaint Id, or a Product History Review Id and returns its Complaint. */
     @TestVisible
     private static Id resolveComplaint(Id recordId) {
-        String t = String.valueOf(recordId.getSobjectType());
-        if (t == 'compliancequest__SQX_Complaint__c') { return recordId; }
-        if (t == 'compliancequest__SQX_Product_History_Review__c') {
-            List<compliancequest__SQX_Product_History_Review__c> p = [
-                SELECT compliancequest__SQX_Complaint__c FROM compliancequest__SQX_Product_History_Review__c
-                WHERE Id = :recordId LIMIT 1
-            ];
-            return p.isEmpty() ? null : p[0].compliancequest__SQX_Complaint__c;
-        }
-        return null;
+        return PhrRecordContext.complaintIdFor(recordId);
     }
 }

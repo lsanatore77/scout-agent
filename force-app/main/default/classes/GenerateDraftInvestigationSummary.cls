@@ -2,8 +2,7 @@
  * Agent action: builds the grounding text for a Complaint (all fields, linked
  * Product History Reviews and checklist items, CQ Tasks, and associated items),
  * runs the "Complaint Draft Investigation Summary" prompt template, and returns
- * the draft. Optionally saves the draft to the Complaint's Draft Investigation
- * Summary field.
+ * the PHR Summary. Optionally saves it (see SaveDraftInvestigationSummary).
  *
  * The prompt wording lives in Prompt Builder, so it can be edited there without
  * changing this class.
@@ -15,16 +14,16 @@ public with sharing class GenerateDraftInvestigationSummary {
 
     public class Request {
         @InvocableVariable(required=true label='Complaint Record Id'
-            description='Salesforce record Id of the Complaint to summarize.')
+            description='Record Id of the Complaint to summarize. A Product History Review, CQ Task or Investigation Id also works: its complaint is used.')
         public Id complaintId;
 
         @InvocableVariable(label='Save to Complaint'
-            description='When true, the draft is also saved to the Draft Investigation Summary field on the Complaint.')
+            description='When true, the summary is also saved to the PHR Summary on the Complaint and the Summary on its Product History Review.')
         public Boolean saveToRecord;
     }
 
     public class Result {
-        @InvocableVariable(label='Draft Investigation Summary')
+        @InvocableVariable(label='PHR Summary')
         public String summary;
 
         @InvocableVariable(label='Saved')
@@ -35,8 +34,8 @@ public with sharing class GenerateDraftInvestigationSummary {
     }
 
     @InvocableMethod(
-        label='Generate Draft Investigation Summary'
-        description='Reads every field on a Complaint and its linked Product History Reviews and checklist items, and generates a draft investigation summary. Can optionally save it to the Complaint.')
+        label='Generate PHR Summary'
+        description='Reads every field on a Complaint and its linked Product History Reviews and checklist items, and generates the PHR Summary. Works from the Complaint or its Product History Review. Can optionally save it.')
     public static List<Result> generate(List<Request> requests) {
         List<Result> results = new List<Result>();
         List<SaveDraftInvestigationSummary.Request> toSave = new List<SaveDraftInvestigationSummary.Request>();
@@ -46,19 +45,26 @@ public with sharing class GenerateDraftInvestigationSummary {
             Result r = new Result();
             r.saved = false;
             try {
-                String data = ComplaintInvestigationGrounding.buildGroundingText(req.complaintId)
-                    + '\n\n' + ComplaintLeadRanking.buildText(req.complaintId);
+                // The agent may be opened on the complaint, its Product History Review, a CQ Task or the investigation.
+                Id complaintId = PhrRecordContext.complaintIdFor(req.complaintId);
+                if (complaintId == null) {
+                    r.message = 'I could not find the complaint for this record. Open the agent from a complaint or its Product History Review.';
+                    results.add(r);
+                    continue;
+                }
+                String data = ComplaintInvestigationGrounding.buildGroundingText(complaintId)
+                    + '\n\n' + ComplaintLeadRanking.buildText(complaintId);
                 PhrReportSettings.Values settings = PhrReportSettings.get();
                 if (!PhrSummarySections.anySectionOn(settings)) {
                     r.message = 'No summary sections are turned on in the PHR Report Setting, so no summary was generated.';
                     results.add(r);
                     continue;
                 }
-                r.summary = PhrSummarySections.apply(runTemplate(data), settings);
+                r.summary = PhrSummaryText.stripDisclaimer(PhrSummarySections.apply(runTemplate(data), settings));
                 r.message = 'Draft generated.';
                 if (req.saveToRecord == true) {
                     SaveDraftInvestigationSummary.Request s = new SaveDraftInvestigationSummary.Request();
-                    s.complaintId = req.complaintId;
+                    s.complaintId = req.complaintId; // Save resolves it the same way and also knows which PHR was open
                     s.summary = r.summary;
                     saveIndex.put(results.size(), toSave.size());
                     toSave.add(s);

@@ -26,14 +26,14 @@
 
             <template lwc:elseif={onDraftScreen}>
                 <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-var-m-bottom_x-small">
-                    <h3 class="slds-text-heading_small">Draft investigation summary</h3>
+                    <h3 class="slds-text-heading_small">PHR summary</h3>
                     <span class="slds-text-body_small slds-text-color_weak">{draftSourceLabel}</span>
                 </div>
 
                 <template lwc:if={generating}>
                     <div class="draft-box draft-waiting">
-                        <lightning-spinner alternative-text="Writing the draft investigation summary" size="small"></lightning-spinner>
-                        <p class="slds-text-color_weak waiting-text">Writing the draft investigation summary. This usually takes 10 to 30 seconds.</p>
+                        <lightning-spinner alternative-text="Writing the PHR summary" size="small"></lightning-spinner>
+                        <p class="slds-text-color_weak waiting-text">Writing the PHR summary. This usually takes 10 to 30 seconds.</p>
                     </div>
                 </template>
                 <template lwc:elseif={draftError}>
@@ -46,7 +46,7 @@
                 </template>
                 <template lwc:elseif={editing}>
                     <lightning-input-rich-text value={draftHtml} onchange={handleDraftEdit}
-                        label="Draft investigation summary"></lightning-input-rich-text>
+                        label="PHR summary"></lightning-input-rich-text>
                 </template>
                 <template lwc:elseif={hasDraftText}>
                     <div class="draft-box draft-view">

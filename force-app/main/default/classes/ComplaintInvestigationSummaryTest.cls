@@ -248,7 +248,7 @@ private class ComplaintInvestigationSummaryTest {
         } else {
             Assert.areEqual('<p>Approved summary</p>', [SELECT compliancequest__Investigation_Summary__c
                 FROM compliancequest__SQX_Investigation__c WHERE Id = :primaryId].compliancequest__Investigation_Summary__c);
-            Assert.isTrue(results[0].message.contains('also updated'), results[0].message);
+            Assert.isTrue(results[0].message.contains('copied to the Investigation Summary'), results[0].message);
         }
     }
 
