@@ -10,18 +10,26 @@
             <template if:true={hasItems}>
                 <div class="card">
                     <template for:each={items} for:item="q">
-                        <div key={q.key} class="row">
+                        <div key={q.key} class={q.rowClass}>
                             <div class="question"><span class="num">{q.number}</span> {q.question}</div>
-                            <div class={q.answerClass}>Suggested: {q.answer}</div>
+                            <div class="answer-line">
+                                <template if:true={q.sure}>
+                                    <span class={q.chipClass}>{q.answer}</span>
+                                </template>
+                                <span class={q.pillClass}>{q.pill}</span>
+                            </div>
                             <template if:true={q.basis}>
-                                <div class="basis">Based on {q.basis}</div>
+                                <div class="basis">{q.basis}</div>
                             </template>
                         </div>
                     </template>
                 </div>
+                <div class="foot">{footer}</div>
             </template>
             <template if:false={hasItems}>
-                <p class="empty">No checklist questions were returned.</p>
+                <template if:false={hasError}>
+                    <p class="empty">No checklist questions were returned.</p>
+                </template>
             </template>
         </div>
     </lightning-card>
