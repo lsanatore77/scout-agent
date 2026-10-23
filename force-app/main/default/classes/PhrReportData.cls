@@ -86,6 +86,7 @@ public without sharing class PhrReportData {
             d.load(complaintId);
             d.loadReportedDate(complaintId);
             if (d.investigationMode) { d.loadInvestigationSummary(investigationId); }
+            d.draftSummaryHtml = applySections(d.draftSummaryHtml);
         } catch (Exception ex) {
             d.errorMessage = ex.getMessage();
         }
@@ -156,6 +157,25 @@ public without sharing class PhrReportData {
         summaryText = buildSummary(kept, gaps.size());
         summaryWords = countWords(summaryText);
         draftSummaryHtml = loadPhrSummary(p.phrId, p.complaintId);
+    }
+
+    // The report link line added at the end of a saved summary.
+    private static final Pattern REPORT_LINK_LINE = Pattern.compile('(?is)\\s*<p>\\s*<strong>\\s*Attached report:\\s*</strong>.*?</p>');
+
+    /**
+     * Applies the PHR Report Setting summary sections (Complaint Overview, Product History Review,
+     * Analysis and Next Steps) to the summary shown in the report, whichever record it was run from.
+     * The report link line at the end is kept even when the last section is turned off.
+     */
+    @TestVisible
+    private static String applySections(String html) {
+        if (String.isBlank(html)) { return html; }
+        Matcher m = REPORT_LINK_LINE.matcher(html);
+        String link = m.find() ? m.group(0).trim() : '';
+        String body = REPORT_LINK_LINE.matcher(html).replaceAll('');
+        String kept = PhrSummarySections.apply(body, PhrReportSettings.get());
+        String out = (kept == null ? '' : kept.trim()) + link;
+        return String.isBlank(out) ? null : out;
     }
 
     private void loadReportedDate(Id complaintId) {
@@ -297,7 +317,7 @@ public without sharing class PhrReportData {
             if (r.recordType == 'Change Order' && !isClosed(r.status)) { co++; }
         }
         if (lot > 0) { out.add('The complaint lot appears on ' + lot + (lot == 1 ? ' other record' : ' other records')); }
-        if (open > 0) { out.add(open + (open == 1 ? ' lead is' : ' leads are') + ' still open'); }
+        if (open > 0) { out.add(open + (open == 1 ? ' record is' : ' records are') + ' still open'); }
         if (co > 0) { out.add(co + ' open change ' + (co == 1 ? 'order touches' : 'orders touch') + ' this product'); }
         if (out.isEmpty() && !leads.isEmpty()) { out.add(leads.size() + ' records are worth reviewing'); }
         while (out.size() > 3) { out.remove(3); }
@@ -318,7 +338,7 @@ public without sharing class PhrReportData {
             parts.add('No records worth reviewing were found for this complaint.');
         } else {
             Integer n = top > 0 ? top : leads.size();
-            parts.add('Review the ' + n + (top > 0 ? ' top' : '') + ' lead' + (n == 1 ? '' : 's') + ' first.');
+            parts.add('Review the ' + n + (top > 0 ? ' most relevant' : '') + ' record' + (n == 1 ? '' : 's') + ' first.');
             if (open > 0) { parts.add('Check the status of the ' + open + ' that ' + (open == 1 ? 'is' : 'are') + ' still open.'); }
         }
         if (gapCount > 0) {
