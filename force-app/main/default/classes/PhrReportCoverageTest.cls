@@ -69,6 +69,7 @@ private class PhrReportCoverageTest {
     @IsTest static void emptyTablesSaySo() {
         PhrReportData d = new PhrReportData();
         d.hasComplaint = true;
+        d.taskSummary = ComplaintTaskProgress.summarize(new List<compliancequest__SQX_Complaint_Task__c>(), Date.today());
         String out = PhrReportRenderer.fill(ALL_BLOCKS, d, false);
         System.assert(out.contains('No records worth reviewing were found.'), out);
         System.assert(out.contains('No CQ Tasks are recorded on this complaint.'), out);
