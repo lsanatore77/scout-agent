@@ -64,4 +64,71 @@ private class PhrReportLinkTest {
         compliancequest__SQX_Complaint__c c = makeComplaint();
         Assert.isTrue(PhrReportLink.investigationIds(c.Id).isEmpty());
     }
+
+    static Id makeLinkedInvestigation(Id complaintId, String summary) {
+        compliancequest__SQX_Investigation__c inv = new compliancequest__SQX_Investigation__c(
+            compliancequest__Investigation_Summary__c = summary);
+        Schema.RecordTypeInfo rt = compliancequest__SQX_Investigation__c.SObjectType.getDescribe()
+            .getRecordTypeInfosByDeveloperName().get('Complaint_Investigation');
+        if (rt != null) { inv.RecordTypeId = rt.getRecordTypeId(); }
+        insert inv;
+        insert new compliancequest__SQX_Linked_Investigation__c(
+            compliancequest__SQX_Complaint__c = complaintId,
+            compliancequest__SQX_Investigation__c = inv.Id);
+        return inv.Id;
+    }
+
+    @IsTest
+    static void reportIsSharedWithTheInvestigationOnce() {
+        compliancequest__SQX_Complaint__c c = makeComplaint();
+        Id docId = attachReport(c.Id);
+        Id invId = makeLinkedInvestigation(c.Id, null);
+        Test.startTest();
+        String first = PhrReportLink.shareWithInvestigations(c.Id);
+        String second = PhrReportLink.shareWithInvestigations(c.Id);
+        Test.stopTest();
+        Assert.isTrue(first.contains('shared with 1 investigation'), first);
+        Assert.isTrue(second.contains('already shared'), second);
+        Assert.areEqual(1, [SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :docId AND LinkedEntityId = :invId]);
+    }
+
+    @IsTest
+    static void afterReportAddsTheLinkToTheInvestigationSummary() {
+        compliancequest__SQX_Complaint__c c = makeComplaint();
+        attachReport(c.Id);
+        Id invId = makeLinkedInvestigation(c.Id, '<p>Investigation summary</p>');
+        Test.startTest();
+        String msg = PhrReportLink.afterReportGenerated(c.Id);
+        Test.stopTest();
+        String summary = [SELECT compliancequest__Investigation_Summary__c FROM compliancequest__SQX_Investigation__c
+                          WHERE Id = :invId].compliancequest__Investigation_Summary__c;
+        Assert.isTrue(PhrReportLink.hasLink(summary), msg + ' | ' + summary);
+    }
+
+    @IsTest
+    static void savingTheSummaryCopiesItAndSharesTheReport() {
+        compliancequest__SQX_Complaint__c c = makeComplaint();
+        Id docId = attachReport(c.Id);
+        Id invId = makeLinkedInvestigation(c.Id, null);
+        SaveDraftInvestigationSummary.Request req = new SaveDraftInvestigationSummary.Request();
+        req.complaintId = c.Id;
+        req.summary = 'Approved summary';
+        Test.startTest();
+        SaveDraftInvestigationSummary.Result r = SaveDraftInvestigationSummary.save(
+            new List<SaveDraftInvestigationSummary.Request>{ req })[0];
+        Test.stopTest();
+        Assert.isTrue(r.success, r.message);
+        Assert.isTrue(r.message.contains('also updated on 1 investigation'), r.message);
+        String summary = [SELECT compliancequest__Investigation_Summary__c FROM compliancequest__SQX_Investigation__c
+                          WHERE Id = :invId].compliancequest__Investigation_Summary__c;
+        Assert.isTrue(summary.contains('Approved summary'), summary);
+        Assert.isTrue(PhrReportLink.hasLink(summary), summary);
+        Assert.areEqual(1, [SELECT COUNT() FROM ContentDocumentLink WHERE ContentDocumentId = :docId AND LinkedEntityId = :invId]);
+    }
+
+    @IsTest
+    static void problemsAreReportedAsText() {
+        Assert.areEqual('', PhrReportLink.shareWithInvestigations(null));
+        Assert.isNull(PhrReportLink.reportDocumentId(null));
+    }
 }
