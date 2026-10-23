@@ -51,7 +51,7 @@ private class PhrChecklistActionTest {
         Test.startTest();
         PhrChecklistResult r = PhrChecklistAction.run(new List<PhrChecklistAction.Request>{ req })[0].result;
         Test.stopTest();
-        System.assertEquals(true, r.success, r.errorMessage);
+        System.assertEquals(true, r.success, 'Error: ' + r.errorMessage);
         System.assertEquals(4, r.items.size());
         PhrChecklistItem scrap = item(r, 'Was there a high scrap rate');
         System.assertEquals(true, scrap.sure);
@@ -71,17 +71,19 @@ private class PhrChecklistActionTest {
         Test.startTest();
         PhrChecklistResult r = PhrChecklistAction.answer(complaintId, true);
         Test.stopTest();
-        System.assertEquals(true, r.success, r.errorMessage);
+        System.assertEquals(true, r.success, 'Error: ' + r.errorMessage);
         System.assertEquals(true, r.saved);
         System.assertEquals(r.sureCount, r.savedCount);
+        Id scrapId = item(r, 'Was there a high scrap rate').answerId;
+        Id labelId = item(r, 'Is the label legible').answerId;
         compliancequest__SQX_Product_History_Answer__c scrap = [
             SELECT compliancequest__Answer__c, compliancequest__Answer_Value__c, compliancequest__Notes__c
-            FROM compliancequest__SQX_Product_History_Answer__c WHERE compliancequest__Question__c LIKE '%scrap%' LIMIT 1];
+            FROM compliancequest__SQX_Product_History_Answer__c WHERE Id = :scrapId];
         System.assertEquals('No', scrap.compliancequest__Answer__c);
         System.assertEquals('No', scrap.compliancequest__Answer_Value__c);
         System.assert(scrap.compliancequest__Notes__c.contains('scrap rate'), scrap.compliancequest__Notes__c);
         System.assertEquals(null, [SELECT compliancequest__Answer__c FROM compliancequest__SQX_Product_History_Answer__c
-            WHERE compliancequest__Question__c LIKE 'Is the label%' LIMIT 1].compliancequest__Answer__c);
+            WHERE Id = :labelId].compliancequest__Answer__c);
         System.assertEquals('saved', item(r, 'Was there a high scrap rate').status);
         System.assert(r.intro.startsWith('I saved'), r.intro);
     }
