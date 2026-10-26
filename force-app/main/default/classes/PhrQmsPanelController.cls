@@ -17,8 +17,8 @@
  *   - A Lot Number can be supplied by the caller (panel search box).
  *   - Matching records can be written back: Related Product rows on the
  *     Product History Review (NC and CAPA as lookups, Change Order and
- *     Inspection as a reference type plus number) and Linked Investigation
- *     rows on the Complaint.
+ *     Inspection as a reference type plus number). Investigations are not
+ *     linked to the Complaint.
  *   - Records already on the PHR / Complaint are flagged and never duplicated.
  *
  * Assembly Line Items are used only to FIND records. They are never written
@@ -202,9 +202,10 @@ public with sharing class PhrQmsPanelController {
     // ---------- Panel: write ----------
 
     /**
-     * Creates Related Product rows on the PHR and Linked Investigation rows
-     * on the Complaint for the selected record Ids. Records already present
+     * Creates Related Product rows on the PHR for the selected record Ids. Records already present
      * are skipped. Each list may be null or empty.
+     * Investigations are no longer added to the Complaint's Linked Investigations: investigationIds is
+     * accepted for compatibility and ignored (the investigation is still stored as a PHR Lead by the caller).
      */
     @AuraEnabled
     public static CreateResult createRelatedRecords(
@@ -281,21 +282,10 @@ public with sharing class PhrQmsPanelController {
                 }
             }
 
-            List<compliancequest__SQX_Linked_Investigation__c> lis = new List<compliancequest__SQX_Linked_Investigation__c>();
-            if (hasAny(investigationIds)) {
-                for (Id invId : new Set<Id>(investigationIds)) {
-                    if (addedInv.contains(invId)) { r.skipped++; continue; }
-                    lis.add(new compliancequest__SQX_Linked_Investigation__c(
-                        compliancequest__SQX_Complaint__c = c.complaintId,
-                        compliancequest__SQX_Investigation__c = invId));
-                }
-            }
-
             r.relatedProductsCreated = insertRows(rps, r.errors);
-            r.linkedInvestigationsCreated = insertRows(lis, r.errors);
+            r.linkedInvestigationsCreated = 0;
             r.success = r.errors.isEmpty();
-            r.message = 'Added ' + r.relatedProductsCreated + ' related record(s) to the PHR and '
-                + r.linkedInvestigationsCreated + ' linked investigation(s) to the Complaint; '
+            r.message = 'Added ' + r.relatedProductsCreated + ' related record(s) to the PHR; '
                 + r.skipped + ' already present.';
             if (!r.errors.isEmpty()) {
                 r.message += ' Some rows failed: ' + String.join(r.errors, '; ');

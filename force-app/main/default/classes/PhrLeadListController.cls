@@ -39,19 +39,15 @@ public with sharing class PhrLeadListController {
     }
 
     /**
-     * Every lead on the Product History Reviews of the complaints linked to an investigation.
-     * An investigation with no linked complaint, or complaints without a Product History Review, returns nothing.
+     * Every lead on the Product History Reviews of the investigation's complaint: the complaint it is the
+     * primary investigation of, else the complaint it was opened from, else the first complaint it is linked to
+     * (see PhrRecordContext). An investigation with no complaint, or a complaint without a PHR, returns nothing.
      */
     @AuraEnabled
     public static List<LeadRow> getLeadsForInvestigation(Id investigationId) {
-        Set<Id> complaintIds = new Set<Id>();
-        for (compliancequest__SQX_Linked_Investigation__c li : [
-            SELECT compliancequest__SQX_Complaint__c FROM compliancequest__SQX_Linked_Investigation__c
-            WHERE compliancequest__SQX_Investigation__c = :investigationId
-        ]) {
-            if (li.compliancequest__SQX_Complaint__c != null) { complaintIds.add(li.compliancequest__SQX_Complaint__c); }
-        }
-        if (complaintIds.isEmpty()) { return new List<LeadRow>(); }
+        Id complaintId = PhrRecordContext.complaintIdFor(investigationId);
+        if (complaintId == null) { return new List<LeadRow>(); }
+        Set<Id> complaintIds = new Set<Id>{ complaintId };
         Set<Id> phrIds = new Set<Id>();
         for (compliancequest__SQX_Product_History_Review__c phr : [
             SELECT Id FROM compliancequest__SQX_Product_History_Review__c

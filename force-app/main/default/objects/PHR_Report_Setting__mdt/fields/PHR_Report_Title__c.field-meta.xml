@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>PHR_Report_Title__c</fullName>
-    <description>Title of the PDF report, and its file name, when the report is run from a Complaint or Product History Review. Blank = Product History Report.</description>
+    <description>Title of the PDF report, and its file name, when the report is run from a Complaint or Product History Review. Blank = this setting record's Label (or Product History Report when the record is called Default).</description>
     <fieldManageability>SubscriberControlled</fieldManageability>
-    <inlineHelpText>Title of the report when run from a Complaint or PHR. Also used as the file name. Blank = Product History Report.</inlineHelpText>
+    <inlineHelpText>Report title when run from a Complaint or PHR. Also the file name. Blank = this record's Label, for example Complaint Summary Report.</inlineHelpText>
     <label>PHR Report Title</label>
     <length>80</length>
     <required>false</required>

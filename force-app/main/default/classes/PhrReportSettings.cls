@@ -1,7 +1,9 @@
 /**
  * PhrReportSettings
  * ------------------
- * Reads the PHR Report Setting custom metadata record named Default.
+ * Reads the PHR Report Setting custom metadata record: the one named Default if there is one,
+ * otherwise the first record (so the record can be renamed). Its Label is the report title when
+ * PHR Report Title is blank.
  *
  * The record is read with a dynamic query, so this class compiles and runs even in an org where the
  * custom metadata type has not been deployed yet. If the type or the record is missing, or a value
@@ -19,6 +21,7 @@ public with sharing class PhrReportSettings {
         public String templateDocument;   // Document Number or record Id of the report template controlled document; blank = PHR-TEMPLATE-001
         public String phrReportTitle;            // report title when run from a complaint or PHR; blank = DEFAULT_PHR_TITLE
         public String investigationReportTitle;  // report title when run from an investigation; blank = DEFAULT_INVESTIGATION_TITLE
+        public String label;                     // the setting record's Label; used as the report title when PHR Report Title is blank
     }
 
     public static final String DEFAULT_PHR_TITLE = 'Product History Report';
@@ -28,8 +31,11 @@ public with sharing class PhrReportSettings {
 
     /** Title of the report (and its file) when run from a complaint or PHR. */
     public static String phrTitle() {
-        String t = get().phrReportTitle;
-        return String.isBlank(t) ? DEFAULT_PHR_TITLE : t.trim();
+        Values v = get();
+        if (String.isNotBlank(v.phrReportTitle)) { return v.phrReportTitle.trim(); }
+        // A renamed setting record names the report, for example "Complaint Summary Report".
+        if (String.isNotBlank(v.label) && v.label.trim() != 'Default') { return v.label.trim(); }
+        return DEFAULT_PHR_TITLE;
     }
 
     /** Title of the report (and its file) when run from an investigation. */
@@ -62,11 +68,14 @@ public with sharing class PhrReportSettings {
         if (testValues != null) { return testValues; }
         if (cached != null) { return cached; }
         Values v = new Values();
+        recordName = pickRecord(v);
+        if (recordName == null) { cached = v; return v; }
+        String name = recordName;
         try {
             List<SObject> rows = Database.query(
                 'SELECT Use_Manufacture_Date_Window__c, Days_After_Manufacture__c, Days_Before_Manufacture__c, '
                 + 'Summary_Complaint_Overview__c, Summary_Product_History_Review__c, Summary_Analysis_and_Next_Steps__c '
-                + 'FROM PHR_Report_Setting__mdt WHERE DeveloperName = \'Default\' LIMIT 1');
+                + 'FROM PHR_Report_Setting__mdt WHERE DeveloperName = :name LIMIT 1');
             if (!rows.isEmpty()) {
             SObject r = rows[0];
             v.useWindow = flag(r, 'Use_Manufacture_Date_Window__c', v.useWindow);
@@ -86,11 +95,31 @@ public with sharing class PhrReportSettings {
         return v;
     }
 
+    // DeveloperName of the setting record in use (bound in the queries below).
+    private static String recordName;
+
+    /** The record named Default if there is one, otherwise the first record by name; null when there is none. */
+    private static String pickRecord(Values v) {
+        try {
+            List<SObject> rows = Database.query('SELECT DeveloperName, MasterLabel FROM PHR_Report_Setting__mdt ORDER BY DeveloperName LIMIT 50');
+            if (rows.isEmpty()) { return null; }
+            SObject chosen = rows[0];
+            for (SObject r : rows) {
+                if (String.valueOf(r.get('DeveloperName')) == 'Default') { chosen = r; break; }
+            }
+            v.label = String.valueOf(chosen.get('MasterLabel'));
+            return String.valueOf(chosen.get('DeveloperName'));
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
     /** Read on its own so the other settings still work in an org where this field is not deployed yet. */
     private static String readTemplateDocument() {
+        String name = recordName;
         try {
             List<SObject> rows = Database.query(
-                'SELECT Template_Controlled_Document__c FROM PHR_Report_Setting__mdt WHERE DeveloperName = \'Default\' LIMIT 1');
+                'SELECT Template_Controlled_Document__c FROM PHR_Report_Setting__mdt WHERE DeveloperName = :name LIMIT 1');
             if (rows.isEmpty() || rows[0].get('Template_Controlled_Document__c') == null) { return null; }
             String t = String.valueOf(rows[0].get('Template_Controlled_Document__c')).trim();
             return String.isBlank(t) ? null : t;
@@ -99,11 +128,12 @@ public with sharing class PhrReportSettings {
         }
     }
 
-    /** One text field of the Default record, read on its own so a field not deployed yet only loses itself. */
+    /** One text field of the setting record, read on its own so a field not deployed yet only loses itself. */
     private static String readText(String field) {
+        String name = recordName;
         try {
             List<SObject> rows = Database.query(
-                'SELECT ' + field + ' FROM PHR_Report_Setting__mdt WHERE DeveloperName = \'Default\' LIMIT 1');
+                'SELECT ' + field + ' FROM PHR_Report_Setting__mdt WHERE DeveloperName = :name LIMIT 1');
             if (rows.isEmpty() || rows[0].get(field) == null) { return null; }
             String t = String.valueOf(rows[0].get(field)).trim();
             return String.isBlank(t) ? null : t;
