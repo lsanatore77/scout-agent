@@ -156,4 +156,41 @@ private class PhrReportCoverageTest {
         System.assertEquals(null, r.summary);
         System.assert(r.message.contains('No summary sections are turned on'), r.message);
     }
+
+    // ---------- Settings record label and investigations ----------
+
+    @IsTest static void aRenamedSettingRecordNamesTheReport() {
+        PhrReportSettings.Values v = new PhrReportSettings.Values();
+        v.label = 'Complaint Summary Report';
+        PhrReportSettings.testValues = v;
+        System.assertEquals('Complaint Summary Report', PhrReportSettings.phrTitle());
+        v.phrReportTitle = 'Set On The Field';
+        System.assertEquals('Set On The Field', PhrReportSettings.phrTitle(), 'PHR Report Title wins over the label');
+        PhrReportSettings.Values d = new PhrReportSettings.Values();
+        d.label = 'Default';
+        PhrReportSettings.testValues = d;
+        System.assertEquals('Product History Report', PhrReportSettings.phrTitle(), 'A record still called Default keeps the default title');
+        System.assertEquals('Customer Report', PhrReportSettings.investigationTitle());
+    }
+
+    @IsTest static void theRealSettingRecordIsReadWhateverItIsCalled() {
+        PhrReportSettings.Values v = PhrReportSettings.get();
+        System.assertNotEquals(null, v);
+        System.assertNotEquals(null, PhrReportSettings.phrTitle());
+    }
+
+    @IsTest static void investigationsAreNotLinkedToTheComplaint() {
+        compliancequest__SQX_Complaint__c c = complaint();
+        compliancequest__SQX_Investigation__c inv = new compliancequest__SQX_Investigation__c();
+        Schema.RecordTypeInfo rt = compliancequest__SQX_Investigation__c.SObjectType.getDescribe()
+            .getRecordTypeInfosByDeveloperName().get('Complaint_Investigation');
+        if (rt != null) { inv.RecordTypeId = rt.getRecordTypeId(); }
+        insert inv;
+        Integer before = [SELECT COUNT() FROM compliancequest__SQX_Linked_Investigation__c WHERE compliancequest__SQX_Complaint__c = :c.Id];
+        PhrQmsPanelController.CreateResult r = PhrQmsPanelController.createRelatedRecords(
+            c.Id, null, null, null, null, new List<Id>{ inv.Id });
+        System.assertEquals(true, r.success, r.message);
+        System.assertEquals(0, r.linkedInvestigationsCreated);
+        System.assertEquals(before, [SELECT COUNT() FROM compliancequest__SQX_Linked_Investigation__c WHERE compliancequest__SQX_Complaint__c = :c.Id]);
+    }
 }

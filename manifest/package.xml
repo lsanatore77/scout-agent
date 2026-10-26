@@ -141,8 +141,8 @@
         <name>StaticResource</name>
     </types>
     <types>
-        <members>PHR_Report_Setting.Default</members>
-        <name>CustomMetadata</name>
+        <members>PHR_Report_Setting__mdt-PHR Report Setting Layout</members>
+        <name>Layout</name>
     </types>
     <version>67.0</version>
 </Package>
