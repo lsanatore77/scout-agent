@@ -1,6 +1,12 @@
 @IsTest
 private class PhrTemplateReportTest {
 
+    // Every test starts from the default settings, so the org's own PHR Report Setting record
+    // (its Label or titles) never changes what these tests expect. Tests that need other values set their own.
+    static {
+        PhrReportSettings.testValues = new PhrReportSettings.Values();
+    }
+
     @TestSetup
     static void setup() {
         compliancequest__SQX_Part_Family__c fam = new compliancequest__SQX_Part_Family__c(Name = 'Tmpl Family');
