@@ -4,10 +4,10 @@
     @page {
       size: letter;
       margin: 0.5in 0.6in 0.8in 0.6in;
-      @bottom-left { content: "{{footerNote}}"; font-family: "Arial Nova", Arial, Helvetica, sans-serif; font-size: 8.5px; color: #6b7a8c; }
-      @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: "Arial Nova", Arial, Helvetica, sans-serif; font-size: 8.5px; color: #6b7a8c; }
+      @bottom-left { content: "{{footerNote}}"; font-family: Montserrat, "Arial Nova", Arial, Helvetica, sans-serif; font-size: 8.5px; color: #6b7a8c; }
+      @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Montserrat, "Arial Nova", Arial, Helvetica, sans-serif; font-size: 8.5px; color: #6b7a8c; }
     }
-    body { font-family: "Arial Nova", Arial, Helvetica, sans-serif; font-size: 10.5px; color: #1f2933; line-height: 1.45; }
+    body { font-family: Montserrat, "Arial Nova", Arial, Helvetica, sans-serif; font-size: 10.5px; color: #1f2933; line-height: 1.45; }
     table { width: 100%; border-collapse: collapse; }
     td, th { vertical-align: top; }
 
@@ -86,7 +86,7 @@
     .empty { color: #6b7a8c; font-style: italic; }
 
     /* Data gaps */
-    .gap { margin-top: 0; border-radius: 8px; border: 1px solid #ecd28a; border-left: 5px solid #d9a21b; background-color: #fffaeb; padding: 8px 12px; font-size: 10px; }
+    .gap { margin-top: 0; border-radius: 8px; border: 1px solid #ecd28a; border-top: 5px solid #d9a21b; background-color: #fffaeb; padding: 8px 12px; font-size: 10px; }
   
     /* Two-column layouts: the cells are the cards, so they share one height and keep rounded corners */
     .cols { border-collapse: separate; border-spacing: 28px 0; margin: 14px -28px 0 -28px; width: auto; }
