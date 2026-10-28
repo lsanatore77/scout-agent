@@ -1,0 +1,183 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <style>
+    @page {
+      size: letter;
+      margin: 0.5in 0.6in 0.8in 0.6in;
+      @bottom-left { content: "{{footerNote}}"; font-family: Arial, Helvetica, sans-serif; font-size: 8.5px; color: #6b7a8c; }
+      @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Arial, Helvetica, sans-serif; font-size: 8.5px; color: #6b7a8c; }
+    }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; color: #1f2933; line-height: 1.45; }
+    table { width: 100%; border-collapse: collapse; }
+    td, th { vertical-align: top; }
+
+    /* Masthead: a deep-navy band with the title, then a thin gold rule */
+    .mast { background-color: #0b3d6e; }
+    .mast td { padding: 16px 18px 14px 18px; vertical-align: top; }
+    .kicker { font-size: 8.5px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; color: #9fc3e8; margin-bottom: 4px; }
+    h1 { font-size: 22px; font-weight: bold; color: #ffffff; margin: 0; letter-spacing: -0.3px; }
+    .sub { font-size: 10.5px; color: #dbe7f3; margin-top: 6px; }
+    .sub strong { color: #ffffff; }
+    .meta { font-size: 9px; color: #c6d6e6; line-height: 1.7; text-align: right; width: 175px; white-space: nowrap; }
+    .meta strong { color: #ffffff; font-size: 10px; }
+    .rule { height: 4px; background-color: #d9a21b; }
+
+    /* Section headings: a small numbered tab and a hairline */
+    h2 { font-size: 12.5px; color: #0b3d6e; margin: 20px 0 8px 0; padding: 0 0 4px 0; border-bottom: 2px solid #0b3d6e; }
+    h3 { font-size: 10.5px; color: #1f2933; margin: 12px 0 5px 0; }
+
+    .error { border: 1px solid #c53030; border-left: 5px solid #c53030; background-color: #fff5f5; color: #742a2a; padding: 8px 12px; margin-top: 12px; }
+
+    /* Significance card: score tile on the left, reasons on the right */
+    .sig { border: 1px solid #e3b9b4; background-color: #ffffff; }
+    .sig td { padding: 0; }
+    .sig td.tile { width: 112px; background-color: #b3261e; color: #ffffff; text-align: center; padding: 14px 8px; vertical-align: middle; }
+    .sig.r-medium { border-color: #ecd28a; }
+    .sig.r-medium td.tile { background-color: #a66f00; }
+    .sig.r-low, .sig.r-none { border-color: #c9d6e3; }
+    .sig.r-low td.tile, .sig.r-none td.tile { background-color: #4a5568; }
+    .score { font-size: 30px; font-weight: bold; line-height: 1; }
+    .outof { font-size: 8.5px; color: #ffffff; margin-top: 2px; }
+    .rating { font-size: 9px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 6px; color: #ffffff; }
+    .sig td.why { padding: 10px 14px; font-size: 10.5px; line-height: 1.55; }
+    .whylabel { font-size: 8.5px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #6b7a8c; margin-bottom: 4px; }
+
+    /* Summary */
+    .callout { border-left: 4px solid #0b3d6e; background-color: #f3f7fb; padding: 10px 14px; }
+    p.body { font-size: 11px; line-height: 1.6; margin: 0; }
+    .note { font-size: 8.5px; color: #6b7a8c; margin-top: 5px; }
+    .draftlabel { font-size: 8.5px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #6b7a8c; margin-top: 14px; }
+    .draft { margin-top: 5px; border: 1px solid #dbe4ee; border-top: 3px solid #0b3d6e; padding: 8px 12px; font-size: 10.5px; line-height: 1.5; }
+    .draft h3 { font-size: 10.5px; margin: 8px 0 3px 0; color: #0b3d6e; }
+    .draft p { margin: 3px 0; }
+    .draft ul { margin: 3px 0 3px 16px; padding-left: 0; }
+    .draft li { margin: 2px 0; }
+
+    /* Tables */
+    .grid th { background-color: #0b3d6e; color: #ffffff; text-align: left; padding: 6px 7px; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; }
+    .grid td { border-bottom: 1px solid #d9e2ec; padding: 6px 7px; font-size: 9.5px; vertical-align: top; }
+    .chip { color: #ffffff; font-weight: bold; font-size: 8.5px; }
+    .grid td.chipcell { border-bottom: none; padding: 3px 4px; text-align: center; font-size: 8.5px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; vertical-align: middle; }
+    .c-yellow td.chipcell { color: #1f2933; }
+    .grid td.chipcell { background-color: inherit; }
+    .c-red { background-color: #c62828; }
+    .c-yellow { background-color: #e0a100; color: #1f2933; }
+    .c-grey { background-color: #8a94a3; }
+    .c-none { background-color: #8a94a3; }
+
+    /* Progress */
+    .progress { margin-top: 6px; border: 1px solid #c9d6e3; background-color: #f3f7fb; }
+    .progress td { padding: 9px 12px; vertical-align: middle; }
+    .big { font-size: 13px; font-weight: bold; color: #0b3d6e; }
+    .bar td { height: 9px; }
+    .bar-done { background-color: #2f855a; }
+    .bar-rest { background-color: #c9d6e3; }
+    .badge-overdue { background-color: #b3261e; color: #ffffff; font-size: 9px; font-weight: bold; padding: 3px 8px; letter-spacing: 0.5px; }
+    .pill { padding: 2px 7px; font-size: 9px; margin-right: 4px; }
+    .st-draft { background-color: #e9eef4; color: #2d3748; }
+    .st-open { background-color: #d6e8f7; color: #1a365d; }
+    .st-ready { background-color: #fde7c4; color: #744210; }
+    .st-sub { background-color: #e9d8fd; color: #44337a; }
+    .st-done { background-color: #d2f2dd; color: #22543d; }
+    .late { color: #b3261e; font-weight: bold; }
+    .late-note { color: #b3261e; font-size: 8.5px; }
+    .empty { color: #6b7a8c; font-style: italic; }
+
+    /* Data gaps */
+    .gap { margin-top: 6px; border: 1px solid #ecd28a; border-left: 5px solid #d9a21b; background-color: #fffaeb; padding: 8px 12px; font-size: 10px; }
+  
+    /* Two-column layouts (tables, since the PDF engine has no flexbox) */
+    .cols td.col { vertical-align: top; padding: 0; }
+    .cols td.col .sig, .cols td.col .callout { height: 100%; }
+    .cols td.gutter { width: 14px; padding: 0; }
+    .scorebar td { height: 7px; }
+    .scorebar .fill { background-color: #b3261e; }
+    .r-medium .scorebar .fill { background-color: #a66f00; }
+    .r-low .scorebar .fill, .r-none .scorebar .fill { background-color: #4a5568; }
+    .scorebar .rest { background-color: #e3eaf2; }
+    .sig td.why { padding: 10px 12px; font-size: 10px; line-height: 1.5; }
+    .sig td.tile { width: 92px; padding: 12px 6px; }
+    .score { font-size: 26px; }
+    .callout { padding: 10px 12px; }
+    .cols .note { white-space: normal; }
+    p.body { font-size: 10.5px; }
+    /* Chart: horizontal bars by match colour, drawn with tables */
+    .chart { border: 1px solid #c9d6e3; background-color: #f7f9fc; }
+    .chart td { padding: 0; }
+    .chart td.pad { padding: 8px 10px; }
+    .chartlabel { font-size: 8.5px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #6b7a8c; margin-bottom: 6px; }
+    .chart table.row td { padding: 2px 0; font-size: 9px; vertical-align: middle; }
+    .chart td.lbl { width: 42px; font-weight: bold; }
+    .chart td.n { width: 18px; text-align: right; padding-left: 4px; }
+    .chart table.bar td { height: 10px; padding: 0; }
+    .chart .bar .rest { background-color: #e3eaf2; }
+    .chart .total { font-size: 20px; font-weight: bold; color: #0b3d6e; line-height: 1.1; margin-top: 8px; }
+    .chart .totallabel { font-size: 8.5px; color: #6b7a8c; }
+    .grid.compact th { padding: 5px 5px; font-size: 8px; }
+    .grid.compact td { padding: 5px 5px; font-size: 9px; }
+</style>
+</head>
+<body>
+  {{errorBlock}}
+  <table class="mast">
+    <tr>
+      <td>
+        <div class="kicker">ComplianceQuest &#183; Complaint {{complaintName}}</div>
+        <h1>{{reportTitle}}</h1>
+        <div class="sub">Complaint <strong>{{complaintName}}</strong>{{reportedDateBlock}}{{phrBlock}}{{investigationNameBlock}}{{partBlock}}{{lotBlock}}</div>
+      </td>
+      <td class="meta"><strong>Version {{versionLabel}}</strong><br/>Generated {{generatedAt}}</td>
+    </tr>
+  </table>
+  <div class="rule"></div>
+
+  <table class="cols">
+    <tr>
+      <td class="col" style="width: 50%;">
+        <h2>1. Overall significance</h2>
+        <table class="sig r-{{ratingClass}}">
+          <tr>
+            <td class="tile"><div class="score">{{overallScore}}</div><div class="outof">out of 100</div><div class="rating">{{overallRating}}</div></td>
+            <td class="why">
+              <table class="scorebar"><tr><td class="fill" style="width: {{overallScore}}%;"></td><td class="rest"></td></tr></table>
+              <div class="whylabel" style="margin-top: 8px;">Why this rating</div>
+              {{reasonRows}}
+            </td>
+          </tr>
+        </table>
+      </td>
+      <td class="gutter"></td>
+      <td class="col" style="width: 50%;">
+        <h2>2. Summary</h2>
+        <div class="callout"><p class="body">{{summaryText}}</p><div class="note">Next steps and data gaps only. The records are listed in section 3.</div></div>
+      </td>
+    </tr>
+  </table>
+
+  <!--IF:phr-->
+  <div class="draftlabel">PHR Summary</div>
+  {{phrSummaryBlock}}
+  <!--END:phr-->
+  <!--IF:investigation-->
+  <div class="draftlabel">Investigation Summary</div>
+  {{investigationSummaryBlock}}
+  <!--END:investigation-->
+
+  <h2 style="page-break-before: always;">3. Top records worth reviewing</h2>
+  <table class="cols">
+    <tr>
+      <td class="col" style="width: 150px;">{{leadChartBlock}}</td>
+      <td class="gutter"></td>
+      <td class="col">{{leadBlock}}</td>
+    </tr>
+  </table>
+
+  <h2>4. Complaint steps and progress</h2>
+  {{progressBlock}}
+
+  {{investigationBlock}}
+
+  <h2>Data gaps</h2>
+  {{gapBlock}}
+</body>
+</html>
