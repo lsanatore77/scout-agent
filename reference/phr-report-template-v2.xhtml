@@ -88,7 +88,12 @@
   
     /* Two-column layouts (tables, since the PDF engine has no flexbox) */
     .cols td.col { vertical-align: top; padding: 0; }
-    .cols td.col .sig, .cols td.col .callout { height: 100%; }
+    .card { border: 1px solid #c9d6e3; background-color: #ffffff; }
+    .card td.cardhead { background-color: #f3f7fb; border-bottom: 1px solid #c9d6e3; padding: 7px 12px; }
+    .card td.cardbody { padding: 12px; }
+    .card h2 { margin: 0; padding: 0; border-bottom: none; font-size: 12px; }
+    .sig { border: none; }
+    .callout { border-left: none; background-color: #ffffff; padding: 0; }
     .cols td.gutter { width: 14px; padding: 0; }
     .scorebar td { height: 7px; }
     .scorebar .fill { background-color: #b3261e; }
@@ -131,10 +136,12 @@
   </table>
   <div class="rule"></div>
 
-  <table class="cols">
+  <table class="cols" style="margin-top: 16px;">
     <tr>
       <td class="col" style="width: 50%;">
-        <h2>1. Overall significance</h2>
+        <table class="card">
+          <tr><td class="cardhead"><h2>1. Overall significance</h2></td></tr>
+          <tr><td style="padding: 0;">
         <table class="sig r-{{ratingClass}}">
           <tr>
             <td class="tile"><div class="score">{{overallScore}}</div><div class="outof">out of 100</div><div class="rating">{{overallRating}}</div></td>
@@ -145,11 +152,15 @@
             </td>
           </tr>
         </table>
+          </td></tr>
+        </table>
       </td>
       <td class="gutter"></td>
       <td class="col" style="width: 50%;">
-        <h2>2. Summary</h2>
-        <div class="callout"><p class="body">{{summaryText}}</p><div class="note">Next steps and data gaps only. The records are listed in section 3.</div></div>
+        <table class="card">
+          <tr><td class="cardhead"><h2>2. Summary</h2></td></tr>
+          <tr><td class="cardbody"><div class="callout"><p class="body">{{summaryText}}</p><div class="note">Next steps and data gaps only. The records are listed in section 3.</div></div></td></tr>
+        </table>
       </td>
     </tr>
   </table>
