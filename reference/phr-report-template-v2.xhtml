@@ -86,32 +86,29 @@
     /* Data gaps */
     .gap { margin-top: 6px; border-radius: 8px; border: 1px solid #ecd28a; border-left: 5px solid #d9a21b; background-color: #fffaeb; padding: 8px 12px; font-size: 10px; }
   
-    /* Two-column layouts (tables, since the PDF engine has no flexbox) */
-    .cols td.col { vertical-align: top; padding: 0; }
-    .card { border: 1px solid #c9d6e3; background-color: #ffffff; border-radius: 8px; }
-    .card td.cardhead { border-top-left-radius: 8px; border-top-right-radius: 8px; }
-    .card td.cardhead { background-color: #f3f7fb; border-bottom: 1px solid #c9d6e3; padding: 7px 12px; }
-    .card td.cardbody { padding: 12px; }
-    .card h2 { margin: 0; padding: 0; border-bottom: none; font-size: 12px; }
-    .sig { border: none; }
-    .callout { border-left: none; background-color: #ffffff; padding: 0; }
-    .cols td.gutter { width: 22px; padding: 0; }
+    /* Two-column layouts: the cells are the cards, so they share one height and keep rounded corners */
+    .cols { border-collapse: separate; border-spacing: 28px 0; margin: 14px -28px 0 -28px; width: auto; }
+    .cols td.card { vertical-align: top; padding: 0; border: 1px solid #c9d6e3; border-radius: 10px; background-color: #ffffff; width: 50%; }
+    .cardhead { background-color: #f3f7fb; border-bottom: 1px solid #c9d6e3; padding: 7px 12px; border-top-left-radius: 10px; border-top-right-radius: 10px; }
+    .cardhead h2 { margin: 0; padding: 0; border-bottom: none; font-size: 12px; }
+    .cardbody { padding: 12px; }
     .scorebar td { height: 7px; }
     .scorebar .fill { background-color: #b3261e; }
     .r-medium .scorebar .fill { background-color: #a66f00; }
     .r-low .scorebar .fill, .r-none .scorebar .fill { background-color: #4a5568; }
     .scorebar .rest { background-color: #e3eaf2; }
+    .sig { border: none; border-collapse: separate; border-spacing: 0; }
     .sig td.why { padding: 10px 12px; font-size: 10px; line-height: 1.5; }
-    .sig td.tile { width: 92px; padding: 12px 6px; border-bottom-left-radius: 8px; }
+    .sig td.tile { width: 92px; padding: 12px 6px; border-bottom-left-radius: 10px; }
     .score { font-size: 26px; }
-    .callout { padding: 10px 12px; }
-    .cols .note { white-space: normal; }
+    .callout { border-left: none; background-color: #ffffff; padding: 0; }
     p.body { font-size: 10.5px; }
-    /* Chart: horizontal bars by match colour, drawn with tables */
-    .chart { border: 1px solid #c9d6e3; background-color: #f7f9fc; border-radius: 8px; height: 100%; }
-    .cols td.chartcol { height: 100%; }
+    /* Section 3: chart card beside the table; the chart column is the card so it is as tall as the table */
+    .cols.records { border-spacing: 16px 0; margin: 0 -16px; }
+    .cols.records td.chartcol { width: 150px; vertical-align: top; padding: 0; border: 1px solid #c9d6e3; border-radius: 10px; background-color: #f7f9fc; }
+    .cols.records td.tablecol { vertical-align: top; padding: 0; }
     .chart td { padding: 0; }
-    .chart td.pad { padding: 8px 10px; }
+    .chart td.pad { padding: 10px 10px; }
     .chartlabel { font-size: 8.5px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #6b7a8c; margin-bottom: 6px; }
     .chart table.row td { padding: 2px 0; font-size: 9px; vertical-align: middle; }
     .chart td.lbl { width: 42px; font-weight: bold; }
@@ -138,12 +135,10 @@
   </table>
   <div class="rule"></div>
 
-  <table class="cols" style="margin-top: 16px;">
+  <table class="cols">
     <tr>
-      <td class="col" style="width: 50%;">
-        <table class="card">
-          <tr><td class="cardhead"><h2>1. Overall significance</h2></td></tr>
-          <tr><td style="padding: 0;">
+      <td class="card">
+        <div class="cardhead"><h2>1. Overall significance</h2></div>
         <table class="sig r-{{ratingClass}}">
           <tr>
             <td class="tile"><div class="score">{{overallScore}}</div><div class="outof">out of 100</div><div class="rating">{{overallRating}}</div></td>
@@ -154,15 +149,10 @@
             </td>
           </tr>
         </table>
-          </td></tr>
-        </table>
       </td>
-      <td class="gutter"></td>
-      <td class="col" style="width: 50%;">
-        <table class="card">
-          <tr><td class="cardhead"><h2>2. Summary</h2></td></tr>
-          <tr><td class="cardbody"><div class="callout"><p class="body">{{summaryText}}</p><div class="note">Next steps and data gaps only. The records are listed in section 3.</div></div></td></tr>
-        </table>
+      <td class="card">
+        <div class="cardhead"><h2>2. Summary</h2></div>
+        <div class="cardbody"><div class="callout"><p class="body">{{summaryText}}</p><div class="note">Next steps and data gaps only. The records are listed in section 3.</div></div></div>
       </td>
     </tr>
   </table>
@@ -177,11 +167,10 @@
   <!--END:investigation-->
 
   <h2 style="page-break-before: always;">3. Top records worth reviewing</h2>
-  <table class="cols">
+  <table class="cols records">
     <tr>
-      <td class="col chartcol" style="width: 150px;">{{leadChartBlock}}</td>
-      <td class="gutter"></td>
-      <td class="col">{{leadBlock}}</td>
+      <td class="chartcol">{{leadChartBlock}}</td>
+      <td class="tablecol">{{leadBlock}}</td>
     </tr>
   </table>
 
