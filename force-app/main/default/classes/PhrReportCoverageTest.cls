@@ -66,6 +66,19 @@ private class PhrReportCoverageTest {
         System.assert(!out.toLowerCase().contains('lead'), out);
     }
 
+    @IsTest static void chartCountsTheTopRecords() {
+        PhrReportData d = fullData();   // 2 red rows, both Open
+        String out = PhrReportRenderer.fill(
+            '<html xmlns="http://www.w3.org/1999/xhtml"><body>{{leadChartBlock}}</body></html>', d, false);
+        System.assert(out.contains('class="lbl lbl-red">Red</td>'), out);
+        System.assert(out.contains('class="n">2</td>'), 'two red rows: ' + out);
+        System.assert(out.contains('class="n">0</td>'), 'no yellow rows: ' + out);
+        System.assert(out.contains('12 records worth reviewing; the top 2 are listed in section 3.'), out);
+        d.leadRows.clear();
+        out = PhrReportRenderer.fill('<html xmlns="http://www.w3.org/1999/xhtml"><body>{{leadChartBlock}}</body></html>', d, false);
+        System.assert(!out.contains('class="chart"'), 'no chart without rows: ' + out);
+    }
+
     @IsTest static void emptyTablesSaySo() {
         PhrReportData d = new PhrReportData();
         d.hasComplaint = true;

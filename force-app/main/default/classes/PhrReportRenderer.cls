@@ -256,6 +256,7 @@ public without sharing class PhrReportRenderer {
         v.put('investigationSummaryBlock', d.investigationMode ? draftBlock(d, plainDraft) : '');
         v.put('leadRows', leadRows(d));
         v.put('leadBlock', leadBlock(d));
+        v.put('leadChartBlock', leadChartBlock(d));
         v.put('progressBlock', progressBlock(d));
         v.put('taskRows', taskRows(d));
         v.put('investigationRows', investigationRows(d));
@@ -264,7 +265,7 @@ public without sharing class PhrReportRenderer {
         v.put('gapBlock', gapBlock(d));
 
         if (!d.hasComplaint) { // nothing to show but the error message
-            for (String k : new List<String>{'reasonRows', 'leadBlock', 'progressBlock', 'investigationBlock', 'gapBlock', 'draftSummaryBlock', 'phrSummaryBlock', 'investigationSummaryBlock'}) { v.put(k, ''); }
+            for (String k : new List<String>{'reasonRows', 'leadBlock', 'leadChartBlock', 'progressBlock', 'investigationBlock', 'gapBlock', 'draftSummaryBlock', 'phrSummaryBlock', 'investigationSummaryBlock'}) { v.put(k, ''); }
         }
         return v;
     }
@@ -315,6 +316,47 @@ public without sharing class PhrReportRenderer {
             : 'Showing ' + d.leadRows.size() + (d.leadRows.size() == 1 ? ' record' : ' records') + ' worth reviewing.';
         return '<table class="grid"><tr><th>Match</th><th>Score</th><th>Type</th><th>Record</th><th>Title</th><th>Status</th><th>Date</th><th>Matched on</th></tr>'
             + leadRows(d) + '</table><div class="note">' + esc(note) + '</div>';
+    }
+
+    /** Small bar chart for the "Match breakdown" card: the top records by match colour, and how many are still open. */
+    private static String leadChartBlock(PhrReportData d) {
+        if (d.leadRows.isEmpty()) { return ''; }
+        Map<String, Integer> byColour = new Map<String, Integer>{ 'Red' => 0, 'Yellow' => 0, 'Grey' => 0 };
+        Integer open = 0;
+        for (PhrReportData.LeadRow r : d.leadRows) {
+            String c = String.isBlank(r.colour) ? 'Grey' : r.colour;
+            if (!byColour.containsKey(c)) { byColour.put(c, 0); }
+            byColour.put(c, byColour.get(c) + 1);
+            if (!isClosed(r.status)) { open++; }
+        }
+        Integer total = d.leadRows.size();
+        String s = '<table class="chart"><tr><td>';
+        for (String c : new List<String>{ 'Red', 'Yellow', 'Grey' }) {
+            s += chartBar(c, 'lbl-' + c.toLowerCase(), 'c-' + c.toLowerCase(), byColour.get(c), total);
+        }
+        s += '<div class="divider"></div>';
+        s += chartBar('Still open', 'lbl-open', 'bar-done', open, total);
+        s += '<div class="chartnote">' + d.totalLeads + ' records worth reviewing; the top ' + total
+            + ' are listed in section 3.</div>';
+        return s + '</td></tr></table>';
+    }
+
+    /** One chart row: coloured label, proportional bar, count on the right. */
+    private static String chartBar(String label, String labelCls, String barCls, Integer n, Integer total) {
+        Integer p = pct(n, total);
+        return '<table class="row"><tr><td class="lbl ' + labelCls + '">' + esc(label) + '</td><td><table class="bar"><tr>'
+            + (p > 0 ? '<td class="' + barCls + '" style="width: ' + p + '%;"></td>' : '')
+            + '<td class="rest"></td></tr></table></td><td class="n">' + n + '</td></tr></table>';
+    }
+
+    private static Integer pct(Integer n, Integer total) {
+        return total == 0 ? 0 : Integer.valueOf(Math.round(n * 100.0 / total));
+    }
+
+    private static Boolean isClosed(String status) {
+        if (String.isBlank(status)) { return false; }
+        String s = status.toLowerCase();
+        return s.contains('closed') || s.contains('complete') || s.contains('cancel') || s.contains('void');
     }
 
     private static String taskRows(PhrReportData d) {
