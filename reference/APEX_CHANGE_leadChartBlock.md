@@ -1,8 +1,9 @@
 # Apex addition for the report chart (not deployed)
 
-The v2 template has a `{{leadChartBlock}}` placeholder beside the top-records table. Until the
-renderer knows that placeholder it is removed, so the table takes the full width and the template
-works as it is today. This change makes the renderer fill it.
+The v2 template has a `{{leadChartBlock}}` placeholder in the "Match breakdown" card beside
+"1. Overall significance". Until the renderer knows that placeholder it is removed, so the card
+renders empty but the rest of the template works as it is today. This change makes the renderer
+fill it.
 
 ## PhrReportRenderer.cls
 
@@ -17,7 +18,7 @@ and add `'leadChartBlock'` to the list that is blanked when `!d.hasComplaint`.
 ### 2. New methods (anywhere in the class)
 
 ```apex
-/** Small bar chart beside the top-records table: records by match colour, and how many are still open. */
+/** Small bar chart beside the significance card: top records by match colour, and how many are still open. */
 private static String leadChartBlock(PhrReportData d) {
     if (d.leadRows.isEmpty()) { return ''; }
     Map<String, Integer> byColour = new Map<String, Integer>{ 'Red' => 0, 'Yellow' => 0, 'Grey' => 0 };
@@ -29,22 +30,22 @@ private static String leadChartBlock(PhrReportData d) {
         if (!isClosed(r.status)) { open++; }
     }
     Integer total = d.leadRows.size();
-    String s = '<table class="chart"><tr><td class="pad"><div class="chartlabel">Top records by match</div>';
+    String s = '<table class="chart"><tr><td>';
     for (String c : new List<String>{ 'Red', 'Yellow', 'Grey' }) {
-        s += chartBar(c, 'c-' + c.toLowerCase(), byColour.get(c), total);
+        s += chartBar(c, 'lbl-' + c.toLowerCase(), 'c-' + c.toLowerCase(), byColour.get(c), total);
     }
-    s += '<div class="total">' + d.totalLeads + '</div><div class="totallabel">records worth reviewing</div>';
-    s += '<div class="chartlabel" style="margin-top: 10px;">Still open (of top ' + total + ')</div>';
-    s += '<table class="row"><tr><td><table class="bar"><tr>'
-        + (open > 0 ? '<td class="bar-done" style="width: ' + pct(open, total) + '%;"></td>' : '')
-        + '<td class="rest"></td></tr></table></td><td class="n">' + open + '</td></tr></table>';
+    s += '<div class="divider"></div>';
+    s += chartBar('Still open', 'lbl-open', 'bar-done', open, total);
+    s += '<div class="chartnote">' + d.totalLeads + ' records worth reviewing; the top ' + total
+        + ' are listed in section 3.</div>';
     return s + '</td></tr></table>';
 }
 
-private static String chartBar(String label, String cls, Integer n, Integer total) {
+/** One chart row: coloured label, proportional bar, count on the right. */
+private static String chartBar(String label, String labelCls, String barCls, Integer n, Integer total) {
     Integer p = pct(n, total);
-    return '<table class="row"><tr><td class="lbl">' + esc(label) + '</td><td><table class="bar"><tr>'
-        + (p > 0 ? '<td class="' + cls + '" style="width: ' + p + '%;"></td>' : '')
+    return '<table class="row"><tr><td class="lbl ' + labelCls + '">' + esc(label) + '</td><td><table class="bar"><tr>'
+        + (p > 0 ? '<td class="' + barCls + '" style="width: ' + p + '%;"></td>' : '')
         + '<td class="rest"></td></tr></table></td><td class="n">' + n + '</td></tr></table>';
 }
 
@@ -60,12 +61,14 @@ private static Boolean isClosed(String status) {
 ```
 
 Notes
-- The colour counts are of the **top rows shown** (`d.leadRows`), because only those carry a
-  colour; the big number is `d.totalLeads`, every record found. The chart labels say so.
+- The colour counts and the "Still open" count are of the **top rows shown** (`d.leadRows`),
+  because only those carry a colour; `d.totalLeads` (every record found) goes in the note under
+  the chart. The note says so.
 - No new data is queried; everything comes from `PhrReportData` as it is.
-- The chart uses only the CSS classes already in the v2 template (`chart`, `row`, `bar`, `lbl`,
-  `n`, `rest`, `total`, `totallabel`, `chartlabel`, and the `c-red` / `c-yellow` / `c-grey` /
-  `bar-done` colours). With the old template, the chart block is simply not referenced.
+- The chart uses only CSS classes already in the v2 template: `chart`, `row`, `bar`, `rest`,
+  `lbl`, `lbl-red` / `lbl-yellow` / `lbl-grey` / `lbl-open`, `n`, `divider`, `chartnote`, and the
+  `c-red` / `c-yellow` / `c-grey` / `bar-done` colours. With the old template the chart block is
+  simply not referenced.
 
 ## PhrReportCoverageTest.cls
 
@@ -76,8 +79,8 @@ Add one test so the new code is covered:
     PhrReportData d = fullData();   // 2 red rows, both Open
     String out = PhrReportRenderer.fill(
         '<html xmlns="http://www.w3.org/1999/xhtml"><body>{{leadChartBlock}}</body></html>', d, false);
-    System.assert(out.contains('Top records by match'), out);
+    System.assert(out.contains('class="lbl lbl-red">Red</td>'), out);
     System.assert(out.contains('class="n">2</td>'), 'two red rows: ' + out);
-    System.assert(out.contains('<div class="total">12</div>'), out);
+    System.assert(out.contains('12 records worth reviewing'), out);
 }
 ```

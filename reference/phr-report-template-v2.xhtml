@@ -3,7 +3,7 @@
   <style>
     @page {
       size: letter;
-      margin: 0.5in 0.6in 0.8in 0.6in;
+      margin: 0.55in 0.6in 0.8in 0.6in;
       @bottom-left { content: "{{footerNote}}"; font-family: Montserrat, "Arial Nova", Arial, Helvetica, sans-serif; font-size: 8.5px; color: #6b7a8c; }
       @bottom-right { content: "Page " counter(page) " of " counter(pages); font-family: Montserrat, "Arial Nova", Arial, Helvetica, sans-serif; font-size: 8.5px; color: #6b7a8c; }
     }
@@ -11,61 +11,85 @@
     table { width: 100%; border-collapse: collapse; }
     td, th { vertical-align: top; }
 
-    /* Masthead: a deep-navy band with the title, then a thin gold rule */
-    .mast { background-color: #0b3d6e; }
-    .mast td { padding: 16px 18px 14px 18px; vertical-align: top; }
-    .kicker { font-size: 8.5px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; color: #9fc3e8; margin-bottom: 4px; }
-    h1 { font-size: 22px; font-weight: bold; color: #ffffff; margin: 0; letter-spacing: -0.3px; }
-    .sub { font-size: 10.5px; color: #dbe7f3; margin-top: 6px; }
-    .sub strong { color: #ffffff; }
-    .meta { font-size: 9px; color: #c6d6e6; line-height: 1.7; text-align: right; width: 175px; white-space: nowrap; }
-    .meta strong { color: #ffffff; font-size: 10px; }
-    .rule { height: 4px; background-color: #d9a21b; }
+    /* Masthead */
+    .mast td { padding: 0; vertical-align: top; }
+    .kicker { font-size: 10px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #1a73c9; margin-bottom: 3px; }
+    h1 { font-size: 22px; font-weight: bold; color: #1f2933; margin: 0; }
+    .sub { font-size: 10.5px; color: #4a5568; margin-top: 4px; }
+    .sub strong { color: #1f2933; }
+    .meta { font-size: 9px; color: #4a5568; line-height: 1.7; text-align: right; width: 190px; white-space: nowrap; }
+    .meta strong { color: #1f2933; }
+    .vbadge { display: inline-block; border: 1px solid #c9d6e3; background-color: #f3f5f8; padding: 2px 9px; font-size: 9px; font-weight: bold; color: #1f2933; border-radius: 4px; }
+    .strip { margin-top: 14px; border: 1px solid #c9d6e3; border-radius: 6px; background-color: #f3f5f8; padding: 7px 12px; font-size: 10px; color: #1f2933; }
+    .strip strong { color: #1f2933; }
+    .strip span { margin-right: 18px; }
 
-    /* Section headings: a small numbered tab and a hairline */
-    h2 { font-size: 15px; color: #0b3d6e; margin: 24px 0 14px 0; padding: 0 0 5px 0; border-bottom: 2px solid #0b3d6e; }
+    /* Section headings: dark, uppercase, with a hairline */
+    h2 { font-size: 13px; font-weight: bold; letter-spacing: 0.6px; text-transform: uppercase; color: #1f2933; margin: 22px 0 12px 0; padding: 0 0 6px 0; border-bottom: 1px solid #c9d6e3; }
+    h2, h3 { page-break-before: auto; page-break-after: avoid; }
     h3 { font-size: 11.5px; color: #1f2933; margin: 16px 0 8px 0; }
+    .grid tr, .cols, .gap, .draft { page-break-inside: avoid; }
 
     .error { border: 1px solid #c53030; border-left: 5px solid #c53030; background-color: #fff5f5; color: #742a2a; padding: 8px 12px; margin-top: 12px; }
 
-    /* Significance card: score tile on the left, reasons on the right */
-    .sig { border: 1px solid #e3b9b4; background-color: #ffffff; }
-    .sig td { padding: 0; }
-    .sig td.tile { width: 112px; background-color: #b3261e; color: #ffffff; text-align: center; padding: 14px 8px; vertical-align: middle; }
-    .sig.r-medium { border-color: #ecd28a; }
-    .sig.r-medium td.tile { background-color: #a66f00; }
-    .sig.r-low, .sig.r-none { border-color: #c9d6e3; }
-    .sig.r-low td.tile, .sig.r-none td.tile { background-color: #4a5568; }
+    /* Cards: the table cells are the cards, so cards in one row share a height */
+    .cols { border-collapse: separate; border-spacing: 20px 0; margin: 16px -20px 0 -20px; width: auto; }
+    .cols td.card { vertical-align: top; padding: 14px 14px 12px 14px; border: 1px solid #c9d6e3; border-radius: 8px; background-color: #ffffff; }
+    .card h2 { margin: 0 0 10px 0; }
+    .cardfull { margin-top: 16px; border: 1px solid #c9d6e3; border-radius: 8px; background-color: #ffffff; padding: 14px 14px 12px 14px; }
+    .cardfull h2 { margin: 0 0 10px 0; }
+
+    /* Significance: score tile + drivers */
+    .sig { border-collapse: separate; border-spacing: 0; }
+    .sig td { padding: 0; vertical-align: top; }
+    .sig td.tile { width: 88px; }
+    .tilebox { background-color: #1f2a44; border-radius: 6px; color: #ffffff; text-align: center; padding: 10px 6px 8px 6px; }
     .score { font-size: 30px; font-weight: bold; line-height: 1; }
-    .outof { font-size: 8.5px; color: #ffffff; margin-top: 2px; }
-    .rating { font-size: 9px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 6px; color: #ffffff; }
-    .sig td.why { padding: 10px 14px; font-size: 10.5px; line-height: 1.55; }
-    .whylabel { font-size: 8.5px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #6b7a8c; margin-bottom: 4px; }
+    .outof { font-size: 8px; letter-spacing: 1px; text-transform: uppercase; color: #cfd8e3; margin-top: 3px; }
+    .rating { display: inline-block; margin-top: 7px; padding: 2px 8px; font-size: 8.5px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; border-radius: 4px; background-color: #5c1a16; color: #ff8a80; }
+    .r-medium .rating { background-color: #5c4300; color: #ffd166; }
+    .r-low .rating, .r-none .rating { background-color: #2d3748; color: #cbd5e0; }
+    .sig td.why { padding-left: 14px; font-size: 10px; line-height: 1.5; }
+    .whylabel { font-size: 10px; font-weight: bold; color: #1f2933; margin-bottom: 4px; }
+    .why div { margin: 2px 0; }
+
+    /* Match breakdown (chart) */
+    .chart td { padding: 0; }
+    .chart table.row td { padding: 3px 0; font-size: 9.5px; vertical-align: middle; }
+    .chart td.lbl { width: 58px; font-weight: bold; }
+    .chart td.n { width: 20px; text-align: right; padding-left: 6px; }
+    .chart table.bar td { height: 8px; padding: 0; }
+    .chart .bar .rest { background-color: #e3eaf2; }
+    .chart .lbl-red { color: #c62828; }
+    .chart .lbl-yellow { color: #c98a00; }
+    .chart .lbl-grey { color: #6b7a8c; }
+    .chart .lbl-open { color: #2f855a; }
+    .chart .divider { border-top: 1px solid #e3eaf2; height: 1px; margin: 6px 0; }
+    .chart .chartnote { font-size: 8.5px; color: #6b7a8c; margin-top: 6px; }
 
     /* Summary */
-    .callout { border-left: 4px solid #0b3d6e; background-color: #f3f7fb; padding: 10px 14px; }
-    p.body { font-size: 11px; line-height: 1.6; margin: 0; }
+    p.body { font-size: 10.5px; line-height: 1.6; margin: 0; }
     .note { font-size: 8.5px; color: #6b7a8c; margin-top: 5px; }
-    .draftlabel { font-size: 8.5px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #6b7a8c; margin-top: 18px; }
-    .draft { margin-top: 8px; border-radius: 8px; border: 1px solid #dbe4ee; border-top: 3px solid #0b3d6e; padding: 8px 12px; font-size: 10.5px; line-height: 1.5; }
-    .draft h3 { font-size: 10.5px; margin: 8px 0 3px 0; color: #0b3d6e; }
-    .draft p { margin: 3px 0; }
-    .draft ul { margin: 3px 0 3px 16px; padding-left: 0; }
+    .draftlabel { font-size: 9px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; color: #4a5568; margin-top: 14px; }
+    .draft { margin-top: 6px; border: 1px solid #c9d6e3; border-radius: 6px; padding: 8px 12px; font-size: 10px; line-height: 1.5; }
+    .draft h3 { font-size: 10px; margin: 8px 0 2px 0; color: #1f2933; }
+    .draft p { margin: 2px 0; }
+    .draft ul { margin: 2px 0 2px 16px; padding-left: 0; }
     .draft li { margin: 2px 0; }
 
-    /* Tables */
-    .grid th { background-color: #0b3d6e; color: #ffffff; text-align: left; padding: 6px 7px; font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; }
-    .grid td { border-bottom: 1px solid #d9e2ec; padding: 6px 7px; font-size: 9.5px; vertical-align: top; }
+    /* Tables: light header, dark uppercase labels */
+    .grid th { background-color: #f3f5f8; color: #1f2933; text-align: left; padding: 7px 7px; font-size: 8.5px; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid #c9d6e3; }
+    .grid td { border-bottom: 1px solid #e3eaf2; padding: 7px 7px; font-size: 9.5px; vertical-align: top; color: #1f2933; }
     .chip { color: #ffffff; font-weight: bold; font-size: 8.5px; }
-    .grid td.chipcell { border-bottom: none; padding: 3px 4px; text-align: center; font-size: 8.5px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; vertical-align: middle; }
-    .c-yellow td.chipcell { color: #1f2933; }
+    .grid td.chipcell { border-bottom: none; padding: 3px 4px; text-align: center; font-size: 8.5px; font-weight: bold; letter-spacing: 0.5px; text-transform: uppercase; vertical-align: middle; border-radius: 3px; }
     .grid td.chipcell { background-color: inherit; }
+    .c-yellow td.chipcell { color: #1f2933; }
     .c-red { background-color: #c62828; }
     .c-yellow { background-color: #e0a100; color: #1f2933; }
     .c-grey { background-color: #8a94a3; }
     .c-none { background-color: #8a94a3; }
 
-    /* Progress */
+    /* Progress (section 4, unchanged style) */
     .progress { margin-top: 0; border: none; background-color: transparent; }
     .progress td { padding: 4px 0; vertical-align: middle; }
     .progress td + td { padding-left: 14px; }
@@ -85,100 +109,60 @@
     .late-note { color: #b3261e; font-size: 8.5px; }
     .empty { color: #6b7a8c; font-style: italic; }
 
-    /* Data gaps */
-    .gap { margin-top: 0; border-radius: 8px; border: 1px solid #ecd28a; border-top: 5px solid #d9a21b; background-color: #fffaeb; padding: 8px 12px; font-size: 10px; }
-  
-    /* Two-column layouts: the cells are the cards, so they share one height and keep rounded corners */
-    .cols { border-collapse: separate; border-spacing: 28px 0; margin: 14px -28px 0 -28px; width: auto; }
-    .cols td.card { vertical-align: top; padding: 0; border: 1px solid #c9d6e3; border-radius: 10px; background-color: #ffffff; width: 50%; }
-    .cardhead { background-color: #f3f7fb; border-bottom: 1px solid #c9d6e3; padding: 9px 12px; border-top-left-radius: 10px; border-top-right-radius: 10px; }
-    .cardhead h2 { margin: 0; padding: 0; border-bottom: none; font-size: 14px; }
-    .cardbody { padding: 14px 12px; }
-    .scorebar td { height: 7px; }
-    .scorebar .fill { background-color: #b3261e; }
-    .r-medium .scorebar .fill { background-color: #a66f00; }
-    .r-low .scorebar .fill, .r-none .scorebar .fill { background-color: #4a5568; }
-    .scorebar .rest { background-color: #e3eaf2; }
-    .sig { border: none; border-collapse: separate; border-spacing: 0; }
-    .sig td.why { padding: 12px 12px; font-size: 10px; line-height: 1.5; }
-    .sig td.tile { width: 92px; padding: 12px 6px; border-bottom-left-radius: 10px; }
-    .score { font-size: 26px; }
-    .callout { border-left: none; background-color: #ffffff; padding: 0; }
-    p.body { font-size: 10.5px; }
-    /* Section 3: chart card beside the table; the chart column is the card so it is as tall as the table */
-    /* Sections flow continuously; a card or chart+table pair is kept on one page when possible. */
-    h2, h3 { page-break-before: auto; page-break-after: avoid; }
-    .grid tr { page-break-inside: avoid; }
-    .cols, .progress, .gap, .draft { page-break-inside: avoid; }
-    .cols.records { border-spacing: 16px 0; margin: 0 -16px; }
-    .cols.records td.chartcol { width: 150px; vertical-align: top; padding: 0; border: 1px solid #c9d6e3; border-radius: 10px; background-color: #f7f9fc; }
-    .cols.records td.tablecol { vertical-align: top; padding: 0; }
-    .chart td { padding: 0; }
-    .chart td.pad { padding: 10px 10px; }
-    .chartlabel { font-size: 8.5px; font-weight: bold; letter-spacing: 1.5px; text-transform: uppercase; color: #6b7a8c; margin-bottom: 6px; }
-    .chart table.row td { padding: 2px 0; font-size: 9px; vertical-align: middle; }
-    .chart td.lbl { width: 42px; font-weight: bold; }
-    .chart td.n { width: 18px; text-align: right; padding-left: 4px; }
-    .chart table.bar td { height: 10px; padding: 0; }
-    .chart .bar .rest { background-color: #e3eaf2; }
-    .chart .total { font-size: 20px; font-weight: bold; color: #0b3d6e; line-height: 1.1; margin-top: 8px; }
-    .chart .totallabel { font-size: 8.5px; color: #6b7a8c; }
-    .grid.compact th { padding: 5px 5px; font-size: 8px; }
-    .grid.compact td { padding: 5px 5px; font-size: 9px; }
-</style>
+    /* Data gaps: red-tinted box with a red left edge */
+    .gap { margin-top: 0; border: 1px solid #f3b4b4; border-left: 5px solid #c62828; border-radius: 6px; background-color: #fff5f5; padding: 10px 14px; font-size: 10px; color: #742a2a; }
+    .gap strong { color: #c62828; font-size: 10.5px; }
+    .gap div { margin-top: 3px; }
+  </style>
 </head>
 <body>
   {{errorBlock}}
   <table class="mast">
     <tr>
       <td>
-        <div class="kicker">ComplianceQuest &#183; Complaint {{complaintName}}</div>
+        <div class="kicker">ComplianceQuest &#183; Quality Management System</div>
         <h1>{{reportTitle}}</h1>
-        <div class="sub">Complaint <strong>{{complaintName}}</strong>{{reportedDateBlock}}{{phrBlock}}{{investigationNameBlock}}{{partBlock}}{{lotBlock}}</div>
+        <div class="sub">Complaint <strong>{{complaintName}}</strong>{{phrBlock}}{{investigationNameBlock}}</div>
       </td>
-      <td class="meta"><strong>Version {{versionLabel}}</strong><br/>Generated {{generatedAt}}</td>
+      <td class="meta"><span class="vbadge">Version {{versionLabel}}</span><br/>Reported: <strong>{{reportedDate}}</strong><br/>Generated: <strong>{{generatedAt}}</strong></td>
     </tr>
   </table>
-  <div class="rule"></div>
+  <div class="strip"><span><strong>Affected Part:</strong> {{partLabel}}</span><span><strong>Complaint Lot:</strong> {{lotNumber}}</span></div>
 
   <table class="cols">
     <tr>
-      <td class="card">
-        <div class="cardhead"><h2>1. Overall significance</h2></div>
+      <td class="card" style="width: 58%;">
+        <h2>1. Overall significance</h2>
         <table class="sig r-{{ratingClass}}">
           <tr>
-            <td class="tile"><div class="score">{{overallScore}}</div><div class="outof">out of 100</div><div class="rating">{{overallRating}}</div></td>
-            <td class="why">
-              <table class="scorebar"><tr><td class="fill" style="width: {{overallScore}}%;"></td><td class="rest"></td></tr></table>
-              <div class="whylabel" style="margin-top: 8px;">Why this rating</div>
-              {{reasonRows}}
-            </td>
+            <td class="tile"><div class="tilebox"><div class="score">{{overallScore}}</div><div class="outof">out of 100</div><div class="rating">{{overallRating}}</div></div></td>
+            <td class="why"><div class="whylabel">Rating drivers and key findings:</div>{{reasonRows}}</td>
           </tr>
         </table>
       </td>
-      <td class="card">
-        <div class="cardhead"><h2>2. Summary</h2></div>
-        <div class="cardbody"><div class="callout"><p class="body">{{summaryText}}</p><div class="note">Next steps and data gaps only. The records are listed in section 3.</div></div></div>
+      <td class="card" style="width: 42%;">
+        <h2>Match breakdown</h2>
+        {{leadChartBlock}}
       </td>
     </tr>
   </table>
 
-  <!--IF:phr-->
-  <div class="draftlabel">PHR Summary</div>
-  {{phrSummaryBlock}}
-  <!--END:phr-->
-  <!--IF:investigation-->
-  <div class="draftlabel">Investigation Summary</div>
-  {{investigationSummaryBlock}}
-  <!--END:investigation-->
+  <div class="cardfull">
+    <h2>2. Summary</h2>
+    <p class="body">{{summaryText}}</p>
+    <div class="note">Next steps and data gaps only. The records are listed in section 3.</div>
+    <!--IF:phr-->
+    <div class="draftlabel">PHR Summary</div>
+    {{phrSummaryBlock}}
+    <!--END:phr-->
+    <!--IF:investigation-->
+    <div class="draftlabel">Investigation Summary</div>
+    {{investigationSummaryBlock}}
+    <!--END:investigation-->
+  </div>
 
   <h2>3. Top records worth reviewing</h2>
-  <table class="cols records">
-    <tr>
-      <td class="chartcol">{{leadChartBlock}}</td>
-      <td class="tablecol">{{leadBlock}}</td>
-    </tr>
-  </table>
+  {{leadBlock}}
 
   <h2 style="page-break-before: always;">4. Complaint steps and progress</h2>
   {{progressBlock}}
