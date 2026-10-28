@@ -105,6 +105,10 @@
     .callout { border-left: none; background-color: #ffffff; padding: 0; }
     p.body { font-size: 10.5px; }
     /* Section 3: chart card beside the table; the chart column is the card so it is as tall as the table */
+    /* Sections flow continuously; a card or chart+table pair is kept on one page when possible. */
+    h2, h3 { page-break-before: auto; page-break-after: avoid; }
+    .grid tr { page-break-inside: avoid; }
+    .cols, .progress, .gap, .draft { page-break-inside: avoid; }
     .cols.records { border-spacing: 16px 0; margin: 0 -16px; }
     .cols.records td.chartcol { width: 150px; vertical-align: top; padding: 0; border: 1px solid #c9d6e3; border-radius: 10px; background-color: #f7f9fc; }
     .cols.records td.tablecol { vertical-align: top; padding: 0; }
@@ -167,7 +171,7 @@
   {{investigationSummaryBlock}}
   <!--END:investigation-->
 
-  <h2 style="page-break-before: always;">3. Top records worth reviewing</h2>
+  <h2>3. Top records worth reviewing</h2>
   <table class="cols records">
     <tr>
       <td class="chartcol">{{leadChartBlock}}</td>
