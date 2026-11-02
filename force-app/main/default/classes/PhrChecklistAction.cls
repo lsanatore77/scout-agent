@@ -7,9 +7,10 @@
  *
  * Where suggestions come from (plain rules, no AI):
  *   - "scrap rate" questions: the same calculation as the flow
- *     CalculateScrapRateWithStaticTotalProductsManufactured (nonconformances / total products
- *     manufactured x 100, with the flow's static 2,000 products and its 5% threshold). The flow itself
- *     is not called because it writes to the checklist; this action only writes when the user confirms.
+ *     Calculate_Scrap_Rate_From_Scrapped_Quantity (units of the complaint's part actually scrapped, that
+ *     is the Actual Quantity Disposed on Complete dispositions of type Scrap for that part, / total
+ *     products manufactured x 100, with the flow's static 2,000 products and its 5% threshold). The flow
+ *     itself is not called because it writes to the checklist; this action only writes when the user confirms.
  *   - questions about nonconformances, CAPAs, change orders, inspections or investigations: the records
  *     worth reviewing (Most Relevant and Less Relevant) from the same search as the relevance package.
  *   - anything else, or a question the data cannot answer either way: "not sure", and the question is
@@ -230,11 +231,15 @@ global with sharing class PhrChecklistAction {
     }
 
     static Suggestion scrapRate(Evidence ev) {
-        Integer ncs = ev.allNonconformances();
-        Decimal rate = (Decimal.valueOf(ncs) / TOTAL_PRODUCTS_MANUFACTURED * 100).setScale(2);
+        Decimal scrapped = ev.scrappedQuantity();
+        if (scrapped == null) {
+            return new Suggestion(null, false, 'The complaint has no part, so the scrap rate for its product cannot be calculated.');
+        }
+        Decimal rate = (scrapped / TOTAL_PRODUCTS_MANUFACTURED * 100).setScale(2);
         Boolean high = rate > SCRAP_RATE_THRESHOLD;
         return new Suggestion(high ? 'Yes' : 'No', true,
-            'The scrap rate calculated = ' + rate.toPlainString() + ' (' + ncs + ' nonconformances / '
+            'The scrap rate calculated = ' + rate.toPlainString() + ' (' + scrapped.stripTrailingZeros().toPlainString()
+            + ' units of ' + ev.scrapPartName + ' scrapped / '
             + TOTAL_PRODUCTS_MANUFACTURED.format() + ' products manufactured x 100). '
             + (high ? 'That is above' : 'That is within') + ' the ' + SCRAP_RATE_THRESHOLD.format() + '% threshold.');
     }
@@ -305,7 +310,9 @@ global with sharing class PhrChecklistAction {
         public String lotNumber;
         public Id phrId;
         public Map<String, List<String>> byKind = new Map<String, List<String>>();
-        public Integer ncTotal;
+        public Decimal scrapped;
+        public String scrapPartName;
+        private Boolean scrapLoaded = false;
 
         public Evidence(Id phrId) {
             this.phrId = phrId;
@@ -345,10 +352,38 @@ global with sharing class PhrChecklistAction {
             return 'Found: ' + PhrChecklistAction.shortList(n) + '.';
         }
 
-        /** Same count as the scrap rate flow: every nonconformance. */
-        public Integer allNonconformances() {
-            if (ncTotal == null) { ncTotal = [SELECT COUNT() FROM compliancequest__SQX_Nonconformance__c WITH USER_MODE]; }
-            return ncTotal;
+        /**
+         * Same quantity as the scrap rate flow: units of the complaint's part actually scrapped, that is the
+         * Actual Quantity Disposed on Complete dispositions of type Scrap whose Part is the complaint's part.
+         * Null when the complaint has no part.
+         */
+        public Decimal scrappedQuantity() {
+            if (scrapLoaded) { return scrapped; }
+            scrapLoaded = true;
+            Id partId;
+            for (compliancequest__SQX_Product_History_Review__c p : [
+                SELECT compliancequest__SQX_Complaint__r.compliancequest__SQX_Part__c,
+                       compliancequest__SQX_Complaint__r.compliancequest__SQX_Part__r.Name
+                FROM compliancequest__SQX_Product_History_Review__c WHERE Id = :phrId WITH USER_MODE LIMIT 1
+            ]) {
+                if (p.compliancequest__SQX_Complaint__r != null) {
+                    partId = p.compliancequest__SQX_Complaint__r.compliancequest__SQX_Part__c;
+                    if (p.compliancequest__SQX_Complaint__r.compliancequest__SQX_Part__r != null) {
+                        scrapPartName = p.compliancequest__SQX_Complaint__r.compliancequest__SQX_Part__r.Name;
+                    }
+                }
+            }
+            if (partId == null) { return null; }
+            AggregateResult ar = [
+                SELECT SUM(compliancequest__Actual_Quantity_Disposed__c) total
+                FROM compliancequest__SQX_Disposition__c
+                WHERE compliancequest__Disposition_Type__c = 'Scrap' AND compliancequest__Status__c = 'Complete'
+                AND compliancequest__SQX_Part__c = :partId
+                WITH USER_MODE
+            ];
+            Object total = ar.get('total');
+            scrapped = total == null ? 0 : (Decimal) total;
+            return scrapped;
         }
     }
 }
