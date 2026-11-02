@@ -33,7 +33,7 @@ ComplianceQuest complaint's Product History Review (PHR) so the people can do th
 - Custom metadata type `PHR_Report_Setting__mdt` with the `Default` record (report titles, template document, summary sections, date window)
 - Custom fields on Complaint (`Draft_Investigation_Summaries__c`) and Part
 - Static resource `PHR_Report_Default_Template` (fallback report layout)
-- Agent scripts (`PHR_Agent_Script_TickList_v25*.txt`, `Scout_Checklist_Agent_Script_v1*.txt`) — the `_AICompetition` copies are the ones in that org
+- Agent scripts `PHR_Agent_Script_TickList_v25.txt` (Scout) and `Scout_Checklist_Agent_Script_v1.txt` (Scout Checklist) — the same script runs in the dev sandbox and AI Competition; paste into Agent Script Builder
 - `reference/phr-report-template-v2.xhtml` — the current report template to upload to `PHR-TEMPLATE-001`
 - `reference/AGENT_SETUP.md` — the pieces that are not metadata (agents, topics, prompt template)
 
@@ -44,8 +44,9 @@ Kept so the branch matches the org. Removing them is a separate, tested deploy.
 - `PhrQmsRelatedRecordsAction` — preview/apply action, replaced by `PhrLeadPackageAction` + `PhrLeadAddSelectedAction`.
 - `PhrLeadAddAction` (+ test) — replaced by `PhrLeadAddSelectedAction`.
 - `GenerateAssociatedItemsReportAction` (+ test), LWC `associatedItemsReport`, Lightning type `associatedItemsReportType` — early Associated Items PDF and card. `AssociatedItemsReportAction`/`*Info`/`*Data` are still used by the summary grounding.
-- Agent scripts v11–v24 and `optional/permissionsets/Complaint_Investigation_Report_Access`.
-- `docs/*_deploy.md` — notes for two older changes.
+- `optional/permissionsets/Complaint_Investigation_Report_Access` — for the Interim Report.
+
+Older agent scripts (v11–v24) and the first `.agent` file were removed from this branch; they are in git history and on the feature branches.
 
 ## Deploy
 From this folder, one command at a time (PowerShell: never paste `<placeholders>`).

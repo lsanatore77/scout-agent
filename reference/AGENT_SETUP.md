@@ -3,7 +3,7 @@
 Agents, topics, actions and prompt templates could not be exported from the source org with read-only access, so they are described here to rebuild in Agent Builder / Prompt Builder. Everything they call is in this package.
 
 ## 1. Associated Items agent (PHR_Agent / "Scout Agent")
-Type Agentforce Employee Agent. Full script of the published version: `PHR_Agent_v12.agent` (in this folder).
+Type Agentforce Employee Agent. Current script: `PHR_Agent_Script_TickList_v25.txt` at the project root (the Scout Checklist agent uses `Scout_Checklist_Agent_Script_v1.txt`).
 - Topic **Associated Items**: "Finds the complaint's primary part, its assembly and line items, and related Nonconformances, Inspections, CAPAs and Change Orders." Instructions: display results with the associatedItemsReport component and the associatedItemsReportType lightning type.
 - Action **Associated Items** -> Apex `AssociatedItemsReportAction`. Description: "Runs the apex class to return all records in our search. A user can define a date range before getting the records."
   - Inputs: `targetRecordId` (required), `startDate` and `endDate` (optional, YYYY-MM-DD; pass them only if the user gives a range), plus the legacy optional `primaryPartId`, `nonconformanceIds`, `capaIds`, `changeOrderIds`, `inspectionIds`, `reportTitle`.
