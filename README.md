@@ -1,74 +1,73 @@
-# Complaint Investigation Report + PHR QMS Records Panel
+# Scout Agent — ComplianceQuest Product History Review
 
-Everything is source-format (SFDX). Nothing in it has been compiled or run: it was written and statically reviewed only, with no deploy or validation against any org. **Run a check-only deploy in a sandbox first.**
+Salesforce DX project for the **Scout Agent**: an Agentforce agent that does the searching on a
+ComplianceQuest complaint's Product History Review (PHR) so the people can do the deciding.
 
-## What is in it
-- **Agent reference** (`reference/`): `PHR_Agent_v12.agent` script and `AGENT_SETUP.md` (topics, actions, prompt template, PDF action) for the parts that cannot be deployed as metadata here.
-- **Custom fields:** `Draft_Investigation_Summaries__c` (rich text, written by the agent; the PDF reads it) and the older `Draft_Investigation_Summary__c` on Complaint and `Has_NC__c` on Part, so they no longer need to be created first.
-- **Associated Items card now has collapsible sections** (all open by default, Expand all / Collapse all, chevron toggles, count and a short hint when closed).
-- **PDF report** (Visualforce `ComplaintInvestigationReportPDF`, controller `ComplaintReportPDFController`): saved Draft Investigation Summary, CQ Task progress strip (page 1), associated items with a Lot Match column (page 2), CQ Tasks table and related investigations (page 3).
-- **Associated Items card** (LWC `associatedItemsReport`, Lightning type `associatedItemsReportType`, Apex `AssociatedItemsReportAction` and info classes): adds Related Investigations and the line-item Lot Match column.
-- **Draft summary agent classes**: `ComplaintInvestigationGrounding` (now includes CQ Tasks, Lot Match and Related Investigations), `GenerateDraftInvestigationSummary`, `SaveDraftInvestigationSummary`, `FindComplaintForSummary`, `GenerateAssociatedItemsReportAction`.
-- `ComplaintTaskProgress` helper plus tests for every class.
+**This branch (`aicomp-2026-11-01`) is the code as deployed to the AI Competition org
+(`aiconfigurationworkshoporg06`) on 1 November 2026.** It merges `package-2026-10-23-no-enba`,
+`checklist-scrapped-quantity` and `report-chart-apex`. Earlier notes are in `docs/README_history_2026-10.md`.
 
-- **PHR QMS Records panel** (LWC `phrQmsRecordsPanel`, Apex `PhrQmsPanelController`, `PhrQmsRelatedRecordsAction`, `PhrQmsPanelControllerTest`): panel for the Product History Review or Complaint record page. Lists Nonconformances, CAPAs, Change Orders, Inspections and Related Investigations tied to the Complaint part (assembly components included) and lot, with a lot search box, Previous/Next paging, Part Number, Status and Created columns. Ranking: Part + Lot match first, then Lot, then Part; newest first within a group, with a small boost for records created in the last 30 days and for open statuses; the top three relevant rows per section are highlighted. **Create Related Records** adds one Related Products Review row per ticked record: NC and CAPA via their lookups; Change Order and Inspection as Reference Type plus the record number in `Other Reference Number`. Records already on the PHR are flagged and skipped. Investigations are view-only (the Reference Type picklist has no Investigation value). The invocable action's `Apply` mode additionally creates Linked Investigations on the Complaint; `Preview` (default) writes nothing. The standard PHR record page is managed, so clone it in Lightning App Builder before adding the panel.
+## What Scout does
 
-## Rules built in
-- Complaint's own investigations are excluded (matched on the Investigation's Complaint lookup and on Source Id).
-- A task is overdue when it is not Complete and its Due Date is before today, whatever its status.
-- Line-item Lot Match is the simple version: counts of Nonconformances and Inspections carrying the Complaint's lot that are filed against that component part. The bill of materials has no lot data, so this does not prove a component came from that lot. Blank when the complaint has no lot.
-- Related investigations: same part (primary or component) or same lot, newest first, max 50, within the created-date range.
+| Persona | Job | Main classes | Shown by |
+|---|---|---|---|
+| Complaint Reviewer | **Missing data check** — one line per check, tick or warning; reads the description for a lot, part, model, date, quantity or patient detail that never reached the fields. Read only. | `PhrMissingDataAction`, `PhrDescriptionCheck`, `PhrMissingCheck`, `PhrMissingDataResult` | LWC `phrMissingData` |
+| PHR Assignee | **Relevant records** — one search across the complaint part, its BOM (Part → Revision → Assembly → Line Items), products sharing a component, and the lot; nonconformances, CAPAs, change orders and inspections scored Red / Yellow / Grey. The user ticks what to add; every result is stored as a `PHR_Lead__c`. | `PhrQmsRelevance`, `PhrQmsRelevanceSettings`, `PhrQmsPanelController`, `PhrLeadPackageAction`, `PhrLeadSelectController`, `PhrLeadAddSelectedAction`, `PhrLeadRecord`, `PhrLeadSection`, `PhrLeadSelection`, `PhrLeadPackageData` | LWCs `phrLeadPackage`, `phrLeadSelect`, `phrLeadLists`, `phrQmsRecordsPanel` |
+| PHR Assignee | **PHR Summary** — grounded on the complaint, PHR, tasks and associated items via a Prompt Builder template; saved to the complaint, the PHR and the primary investigation. | `GenerateDraftInvestigationSummary`, `SaveDraftInvestigationSummary`, `ComplaintInvestigationGrounding`, `FindComplaintForSummary`, `PhrSummarySections`, `PhrSummaryText`, `SummaryRichText`, `SummaryHtmlRepair` | — |
+| PHR Assignee | **PDF report** — rendered from the XHTML template on controlled document `PHR-TEMPLATE-001` (fallback: static resource `PHR_Report_Default_Template`); attached to the complaint and the primary investigation. | `PhrTemplateReportAction`, `PhrReportRenderer`, `PhrReportData`, `PhrReportSettings`, `PhrReportLink`, `ComplaintTaskProgress` | — |
+| PHR Assignee | **Checklist** — answers every PHR checklist question from the relevant-record search and plain formulas (scrap rate first); saves only the sure answers, only after confirmation. | `PhrChecklistAction`, `PhrChecklistItem`, `PhrChecklistResult` | LWC `phrChecklist` |
+| Investigator | Sees the relevant records and summary on the primary investigation and can generate a fresh report there. | `PhrLeadListController`, `PhrRecordContext` | LWC `phrLeadLists` |
+| Triage | Complete Triage with the draft summary shown alongside. | `PhrCompleteTriageController`, `TriageDraftSummaryController` | LWC `triageStepsWithSummary` |
 
-## Prerequisites in the target org
-- ComplianceQuest managed package (`compliancequest__`, `cqext__`) with Complaint Steps, Investigations, Inspections, Nonconformances, Assemblies.
-- The two custom fields are included in the package.
-- Agentforce enabled (the Lightning type targets `lightning__AgentforceOutput`).
-- The Prompt Builder template `Complaint_Draft_Investigation_Summary` and the agents themselves are **not** in this package; see `reference/AGENT_SETUP.md`.
+### Rules worth knowing
+- **Scoring**: three criteria (product link, descriptor match, recency). Criteria met set the colour (3 Red, 2 Yellow, 1 Grey); points (0–100) rank within a colour. A record in the complaint's lot is always kept; others need two of three, and records on a component or another product must also match the descriptor. Set-aside records keep a reason. All weights and thresholds are constants in `PhrQmsRelevanceSettings` (`MAX_ROWS = 200` newest records per object).
+- **Lot matching** is by lot-number text: the complaint's Lot Number field and its Lot Info name, against the record's own Lot Number. Lot Info also supplies the manufacture date for the optional date window (PHR Report Setting).
+- **Scrap rate** (checklist): sum of `Actual Quantity Disposed` on dispositions with Type = Scrap, Status = Complete, Part = the complaint's own part (components do not count), ÷ 2,000 × 100, against a 5 % threshold.
+- **Primary investigation**: CQ sets it when the investigation is created from the complaint's Investigation step. Summary and report writes go only to that investigation.
+- Scout never changes a record without the user confirming in the conversation.
 
-## Open in VS Code
-Salesforce DX project (Salesforce Extension Pack). `Ctrl/Cmd+Shift+P` -> **SFDX: Authorize an Org**, then right-click `manifest/package.xml` -> **SFDX: Deploy Source in Manifest to Org** (or run the commands below). `.vscode/extensions.json` lists the recommended extensions. Commit everything in this folder to GitHub; `.gitignore` already excludes caches and logs.
+## Metadata in this package
+- Apex classes and tests (`force-app/main/default/classes`)
+- LWCs and Lightning types for agent output (`lwc`, `lightningTypes`)
+- Custom object `PHR_Lead__c` and its permission set `PHR_Lead_Access`
+- Custom metadata type `PHR_Report_Setting__mdt` with the `Default` record (report titles, template document, summary sections, date window)
+- Custom fields on Complaint (`Draft_Investigation_Summaries__c`) and Part
+- Static resource `PHR_Report_Default_Template` (fallback report layout)
+- Agent scripts (`PHR_Agent_Script_TickList_v25*.txt`, `Scout_Checklist_Agent_Script_v1*.txt`) — the `_AICompetition` copies are the ones in that org
+- `reference/phr-report-template-v2.xhtml` — the current report template to upload to `PHR-TEMPLATE-001`
+- `reference/AGENT_SETUP.md` — the pieces that are not metadata (agents, topics, prompt template)
 
-## What is in this version (2026-10-17)
-
-- **Relevance model** (`PhrQmsRelevance`, `PhrQmsRelevanceSettings`, `PhrQmsRelevanceTest`): ranks related records by product link, symptom and currency (Red / Yellow / Grey chips, 0 to 100 score, Top / Next / Set aside). `PhrQmsPanelController` uses it when `PhrQmsRelevanceSettings.useNewModel` is true. Set it to `false` and redeploy that one class to return to the original ranking. All weights are placeholders in that class.
-- **New agent output renderers** (Lightning types + LWCs + Apex data classes): `phrLeadPackage` (lead package and set-aside list), `phrMissingData` (missing-data check) and `phrChecklist` (checklist suggestions). They only display data. No action returns these data classes yet, so they will not appear in the agent until an action is built for each.
-- Unchanged: the agent action `PhrQmsRelatedRecordsAction`, the summary, the PDF.
-
-## Deploy from Visual Studio Code (dev sandbox)
-
-1. Open this folder in VS Code (File > Open Folder). Install the Salesforce Extension Pack if prompted.
-2. Ctrl/Cmd+Shift+P > **SFDX: Authorize an Org** > choose **Project Default** and a sandbox login, and sign in to the dev sandbox (cqse-golden--dev).
-3. Right-click `manifest/package.xml` > **SFDX: Deploy Source in Manifest to Org**.
-
-Or from a terminal in this folder:
-
-```
-sf project deploy start --manifest manifest/package.xml --target-org <dev alias> --test-level NoTestRun
-```
-
-`NoTestRun` is allowed in a sandbox. To run the tests afterwards:
-
-```
-sf apex run test --class-names PhrQmsRelevanceTest PhrQmsPanelControllerTest PhrQmsAutoCreateTest --target-org <dev alias> --result-format human --wait 10
-```
-
-The Lightning types, their components and the Apex data classes deploy together in one package, so no second step is needed. The dev org already holds these classes and components (deployed 2026-10-17); a redeploy overwrites them with identical content.
-
-Do not deploy to production without a validate run first.
+### Superseded — still deployed, no longer used
+Kept so the branch matches the org. Removing them is a separate, tested deploy.
+- `ComplaintLeadRanking` (+ test) — first scoring model, replaced by `PhrQmsRelevance`.
+- `PhrLeadReportAction`, `PhrLeadReportController`, `PhrLeadReport*Test`, `ComplaintReportPDFController` (+ test), pages `PhrLeadReportPDF`, `ComplaintInvestigationReportPDF` — the Interim Report (Visualforce PDF), replaced by the template report.
+- `PhrQmsRelatedRecordsAction` — preview/apply action, replaced by `PhrLeadPackageAction` + `PhrLeadAddSelectedAction`.
+- `PhrLeadAddAction` (+ test) — replaced by `PhrLeadAddSelectedAction`.
+- `GenerateAssociatedItemsReportAction` (+ test), LWC `associatedItemsReport`, Lightning type `associatedItemsReportType` — early Associated Items PDF and card. `AssociatedItemsReportAction`/`*Info`/`*Data` are still used by the summary grounding.
+- Agent scripts v11–v24 and `optional/permissionsets/Complaint_Investigation_Report_Access`.
+- `docs/*_deploy.md` — notes for two older changes.
 
 ## Deploy
+From this folder, one command at a time (PowerShell: never paste `<placeholders>`).
+
 ```
-sf project deploy validate -o <alias> --manifest manifest/package.xml --test-level RunLocalTests
-sf project deploy start    -o <alias> --manifest manifest/package.xml --test-level RunLocalTests
+sf project deploy validate --manifest manifest/package.xml --test-level RunLocalTests --target-org <alias>
+sf project deploy quick --use-most-recent --target-org <alias>
 ```
-Optional (outside `force-app`, so not part of the manifest deploy): `optional/permissionsets/Complaint_Investigation_Report_Access.permissionset-meta.xml` grants class and page access; deploy it separately and assign it.
 
-Several tests insert Complaints, Parts, and Nonconformances using the sandbox's required fields. If your org has extra required fields or validation rules, adjust the `@TestSetup` data.
+For a single class change, replace `--manifest …` with `--source-dir <path to .cls>` and
+`RunLocalTests` with `RunSpecifiedTests --tests <TestClass>`.
 
-## Use
-- Preview in a browser: `/apex/ComplaintInvestigationReportPDF?id=<ComplaintId>&format=html`
-- PDF: drop `format=html`. Optional `startDate` and `endDate` (yyyy-MM-dd).
+After deploying: upload `reference/phr-report-template-v2.xhtml` to controlled document `PHR-TEMPLATE-001`
+(new revision, or a new version of its primary file) and make sure it is Current.
 
-## Update the Prompt Builder template
-Add to the template instructions so the model uses the new sections:
-> The data includes "## CQ TASKS" (progress and overdue tasks), "Lot Match" on assembly line items, and "Related Investigations" with their source and match reason. Summarize task progress and overdue tasks, mention related investigations on the same part or lot (the complaint's own are excluded), and note component parts that have records on the complaint's lot. Do not claim a component came from the lot.
+## Not in this package
+- Prompt Builder template `Complaint_Draft_Investigation_Summary`, the agents, topics and actions (see `reference/AGENT_SETUP.md`).
+- Any eNBA override flows — deliberately excluded; AI Competition does not have them.
+- The dev-only flows `PHR_Dev_Set_Primary_Investigation` and `Calculate_Scrap_Rate_From_Scrapped_Quantity` (dev sandbox only, inactive).
+
+## Branches
+- `aicomp-2026-11-01` — this branch: AI Competition as deployed.
+- `dev-sandbox-current-build` — the dev sandbox (`cqse-golden--dev`), which runs ahead of AI Competition.
+- Feature branches (`report-template-v2`, `checklist-scrapped-quantity`, `report-chart-apex`, …) hold the individual changes.
+- `main` — last merged baseline; merge to it only on request.
