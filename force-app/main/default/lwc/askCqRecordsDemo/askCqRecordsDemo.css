@@ -20,8 +20,8 @@
 .badge.yellow { background: #fff3d6; color: #7a5600; }
 .badge.grey { background: #eef1f4; color: #4a5568; }
 
-.why { width: 22px; height: 22px; border-radius: 11px; border: 1px solid #c9d2dc; background: #fff; color: #7c5cc4; font-size: 11px; line-height: 1; padding: 0; cursor: pointer; }
-.why:hover { background: #f1ecfa; }
+.why { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 20px; border-radius: 10px; border: none; background: #f1ecfa; padding: 0; cursor: pointer; }
+.why:hover { background: #e4dbf6; }
 
 .switch { width: 36px; height: 20px; border-radius: 10px; border: none; padding: 0; position: relative; background: #d5dbe3; cursor: pointer; }
 .switch.on { background: #2f6fb5; }
@@ -31,4 +31,5 @@
 .sub { margin: 0 16px 8px; font-size: 12px; color: #5c6572; }
 .ok { margin: 0 16px 8px; color: #2f5d3a; background: #e6f4ea; border-radius: 6px; padding: 8px 10px; font-size: 12px; }
 .loading { position: relative; height: 40px; }
-.tag { margin-left: 6px; font-size: 10px; font-weight: 700; color: #7c5cc4; background: #f1ecfa; border-radius: 9px; padding: 1px 7px; vertical-align: middle; }
+.tag { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; font-size: 10px; font-weight: 700; color: #7c5cc4; background: #f1ecfa; border-radius: 9px; padding: 1px 7px 1px 5px; vertical-align: middle; }
+.pi { --sds-c-icon-color-foreground-default: #7c5cc4; --slds-c-icon-color-foreground-default: #7c5cc4; }

@@ -28,7 +28,7 @@
                     <th>Status</th>
                     <th>Title</th>
                     <th>Matched on</th>
-                    <th class="c-why">&#10022;</th>
+                    <th class="c-why"><lightning-icon icon-name="utility:einstein" size="xx-small" class="pi"></lightning-icon></th>
                     <th class="c-add">Add to PHR</th>
                 </tr>
             </thead>
@@ -38,14 +38,14 @@
                         <td><span class={r.badgeClass}>{r.score}</span></td>
                         <td>
                             <a href={r.link} target="_blank" class="num">{r.recordNumber}</a>
-                            <template if:true={r.suggested}><span class="tag">&#10022; Suggested</span></template>
+                            <template if:true={r.suggested}><span class="tag"><lightning-icon icon-name="utility:einstein" size="xx-small" class="pi"></lightning-icon>Suggested</span></template>
                             <div class="type">{r.recordType}</div>
                         </td>
                         <td class="muted">{r.status}</td>
                         <td>{r.title}</td>
                         <td class="muted">{r.match}</td>
                         <td class="c-why">
-                            <button class="why" data-q={r.why} onclick={handleWhy} title={r.why}>&#10022;</button>
+                            <button class="why" data-q={r.why} onclick={handleWhy} title={r.why}><lightning-icon icon-name="utility:einstein" size="xx-small" class="pi"></lightning-icon></button>
                         </td>
                         <td>
                             <template if:true={r.added}>

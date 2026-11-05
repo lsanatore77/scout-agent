@@ -1,6 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import getStatus from '@salesforce/apex/AskCqWorkspaceController.getStatus';
 import getChecklist from '@salesforce/apex/AskCqWorkspaceController.getChecklist';
+import saveAnswer from '@salesforce/apex/AskCqWorkspaceController.saveAnswer';
 
 const CHECKLIST_AGENT = '0XxW400000010ijKAA';   // Scout Checklist (dev). Blank = the PHR Agent from AskCqSecrets.
 
@@ -14,6 +15,7 @@ export default class AskCqWorkspace extends LightningElement {
     checklist = [];
     current = 'records';
     error;
+    saveNote;
 
     connectedCallback() { this.refresh(); }
 
@@ -34,6 +36,8 @@ export default class AskCqWorkspace extends LightningElement {
             number: q.number_x,
             answerText: q.answer || 'Not answered',
             cls: 'q ' + (q.answered ? 'done' : 'open'),
+            answerOptions: [{ label: '\u2014', value: '' }].concat((q.options || []).map((o) => ({ label: o, value: o }))),
+            answerValue: q.answer || '',
             why: q.answered
                 ? 'Why is the answer to "' + q.question + '" ' + q.answer + '?'
                 : 'Answer the checklist question "' + q.question + '" from the records on this review.'
@@ -115,5 +119,29 @@ export default class AskCqWorkspace extends LightningElement {
     handleDraft() { if (this.pop) { this.pop.ask('Draft the PHR Summary for this complaint.'); } }
     handleReport() { if (this.pop) { this.pop.ask('Generate the Product History Review report and attach it to the complaint.'); } }
     handleChanged() { this.refresh(); }
+
+    // ----- checklist, by hand -----
+
+    async handleAnswer(event) {
+        const id = event.target.dataset.id;
+        const q = this.checklist.find((x) => x.id === id);
+        if (!q) { return; }
+        await this.saveQuestion(q, event.target.value, q.notes);
+    }
+    async handleNotes(event) {
+        const id = event.target.dataset.id;
+        const q = this.checklist.find((x) => x.id === id);
+        if (!q) { return; }
+        await this.saveQuestion(q, q.answer, event.target.value);
+    }
+    async saveQuestion(q, answer, notes) {
+        try {
+            await saveAnswer({ answerId: q.id, answer: answer || null, notes: notes || null });
+            this.saveNote = 'Saved ' + q.number + '.';
+            await this.refresh();   // step status + checklist
+        } catch (e) {
+            this.error = (e.body && e.body.message) || 'Could not save the answer.';
+        }
+    }
     handleRefresh() { this.refresh(); }
 }

@@ -11,6 +11,9 @@
  */
 public with sharing class AskCqWorkspaceController {
 
+    /** ✦ Suggested = red (met every criterion) and at least this many relevance points. */
+    @TestVisible static Integer SUGGEST_MIN_POINTS = 80;
+
     public class Row {
         @AuraEnabled public String id;
         @AuraEnabled public String recordNumber;
@@ -24,7 +27,7 @@ public with sharing class AskCqWorkspaceController {
         @AuraEnabled public String relatedBy;
         @AuraEnabled public String reason;
         @AuraEnabled public Boolean added;
-        @AuraEnabled public Boolean suggested;   // red: met every criterion, pre-selected in the workspace
+        @AuraEnabled public Boolean suggested;   // red and 80+ points: pre-selected in the workspace
         @AuraEnabled public String link;
     }
 
@@ -121,6 +124,7 @@ public with sharing class AskCqWorkspaceController {
         @AuraEnabled public String answer;
         @AuraEnabled public String notes;
         @AuraEnabled public Boolean answered;
+        @AuraEnabled public List<String> options = new List<String>();   // allowed answers from the question's result type
     }
 
     /** Where each review step stands, read from the PHR itself. */
@@ -167,16 +171,19 @@ public with sharing class AskCqWorkspaceController {
         return st;
     }
 
-    /** The checklist questions on the PHR with their current answers. Read only. */
+    /** The checklist questions on the PHR with their current answers and the answers allowed for each. */
     @AuraEnabled
     public static List<Question> getChecklist(Id phrId) {
-        List<Question> out = new List<Question>();
-        for (compliancequest__SQX_Product_History_Answer__c a : [
-            SELECT Id, compliancequest__Question_Number__c, compliancequest__Question__c, compliancequest__Answer__c, compliancequest__Notes__c
+        List<compliancequest__SQX_Product_History_Answer__c> answers = [
+            SELECT Id, compliancequest__Question_Number__c, compliancequest__Question__c, compliancequest__Answer__c,
+                   compliancequest__Notes__c, compliancequest__Result_Type_Id__c
             FROM compliancequest__SQX_Product_History_Answer__c
             WHERE compliancequest__SQX_Product_History_Review__c = :phrId
             ORDER BY compliancequest__Question_Number__c, Name
-        ]) {
+        ];
+        Map<String, List<String>> allowed = allowedValues(answers);
+        List<Question> out = new List<Question>();
+        for (compliancequest__SQX_Product_History_Answer__c a : answers) {
             Question q = new Question();
             q.id = a.Id;
             q.number_x = a.compliancequest__Question_Number__c;
@@ -184,7 +191,44 @@ public with sharing class AskCqWorkspaceController {
             q.answer = a.compliancequest__Answer__c;
             q.notes = a.compliancequest__Notes__c;
             q.answered = String.isNotBlank(a.compliancequest__Answer__c);
+            String key = a.compliancequest__Result_Type_Id__c;
+            if (key != null && allowed.containsKey(key)) { q.options = allowed.get(key); }
+            else if (key != null && allowed.containsKey(key.left(15))) { q.options = allowed.get(key.left(15)); }
+            if (q.options.isEmpty()) { q.options = new List<String>{ 'Yes', 'No', 'N/A' }; }
             out.add(q);
+        }
+        return out;
+    }
+
+    /** Saves one answer (and its notes) typed or picked by the user. */
+    @AuraEnabled
+    public static void saveAnswer(Id answerId, String answer, String notes) {
+        compliancequest__SQX_Product_History_Answer__c a = new compliancequest__SQX_Product_History_Answer__c(
+            Id = answerId,
+            compliancequest__Answer__c = answer,
+            compliancequest__Answer_Value__c = answer,
+            compliancequest__Notes__c = notes
+        );
+        update a;
+    }
+
+    /** Same lookup the checklist agent uses: result type Id -> the answer values it allows. */
+    private static Map<String, List<String>> allowedValues(List<compliancequest__SQX_Product_History_Answer__c> answers) {
+        Set<Id> typeIds = new Set<Id>();
+        for (compliancequest__SQX_Product_History_Answer__c a : answers) {
+            try { if (String.isNotBlank(a.compliancequest__Result_Type_Id__c)) { typeIds.add((Id) a.compliancequest__Result_Type_Id__c); } } catch (Exception e) { continue; }
+        }
+        Map<String, List<String>> out = new Map<String, List<String>>();
+        if (typeIds.isEmpty()) { return out; }
+        for (compliancequest__SQX_Result_Type_Value__c v : [
+            SELECT Name, compliancequest__SQX_Result_Type__c FROM compliancequest__SQX_Result_Type_Value__c
+            WHERE compliancequest__SQX_Result_Type__c IN :typeIds ORDER BY Name
+        ]) {
+            for (String key : new List<String>{ String.valueOf(v.compliancequest__SQX_Result_Type__c),
+                    String.valueOf(v.compliancequest__SQX_Result_Type__c).left(15) }) {
+                if (!out.containsKey(key)) { out.put(key, new List<String>()); }
+                out.get(key).add(v.Name);
+            }
         }
         return out;
     }
@@ -203,7 +247,7 @@ public with sharing class AskCqWorkspaceController {
         w.relatedBy = r.relatedBy;
         w.reason = r.reason;
         w.added = r.alreadyAdded == true;
-        w.suggested = r.colour == 'Red';
+        w.suggested = r.colour == 'Red' && r.relevance != null && r.relevance >= SUGGEST_MIN_POINTS;
         w.link = '/' + r.id;
         return w;
     }

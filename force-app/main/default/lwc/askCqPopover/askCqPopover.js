@@ -43,7 +43,7 @@ export default class AskCqPopover extends LightningElement {
     async openPanel() {
         this.open = true;
         this.error = undefined;
-        if (!this.sessionId) { await this.start(); }
+        if (!this.sessionId) { this.busy = true; await this.start(); this.busy = false; }
         this.focusInput();
     }
 
@@ -58,33 +58,41 @@ export default class AskCqPopover extends LightningElement {
 
     @api
     async ask(question) {
-        await this.openPanel();
-        if (this.sessionId) { await this.send(question); }
+        // Show the question at once; the session starts behind the spinner.
+        this.open = true;
+        this.error = undefined;
+        this.push('user', question);
+        this.busy = true;
+        if (!this.sessionId) { await this.start(true); }
+        if (this.sessionId) { await this.send(question, true); } else { this.busy = false; }
+        this.focusInput();
     }
 
-    async start() {
+    async start(quiet) {
         this.busy = true;
         try {
             const r = await startSession({ recordId: this.recordId, agentId: this._agentId });
             this.sessionId = r.sessionId;
             this.sequence = r.nextSequence;
-            if (r.text) { this.push('agent', r.text); }
+            if (r.text && !quiet) { this.push('agent', r.text); }   // no greeting when a ✦ asked a question
         } catch (e) {
             this.error = this.errorText(e);
-        } finally {
             this.busy = false;
         }
     }
 
-    async send(text) {
+    async send(text, alreadyShown) {
         if (!text || !this.sessionId) { return; }
-        this.push('user', text);
+        if (!alreadyShown) { this.push('user', text); }
         this.draft = '';
         this.busy = true;
         try {
             const r = await sendMessage({ sessionId: this.sessionId, sequenceId: this.sequence, text, recordId: this.recordId });
             this.sequence = r.nextSequence;
             this.push('agent', r.text || '(no answer)');
+            if (/\b(saved|added|attached|updated)\b/i.test(r.text || '')) {
+                this.dispatchEvent(new CustomEvent('changed', { bubbles: true, composed: true }));
+            }
         } catch (e) {
             this.error = this.errorText(e);
         } finally {
