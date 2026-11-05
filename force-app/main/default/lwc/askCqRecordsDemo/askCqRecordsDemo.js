@@ -53,9 +53,11 @@ export default class AskCqRecordsDemo extends LightningElement {
     decorate(r) {
         const colour = (r.colour || 'Grey').toLowerCase();
         const on = this.staged.has(r.id);
+        const recordType = r.recordType || (String(r.id || '').startsWith('a2N') ? 'Investigation' : 'Other');   // investigations come untyped from the engine
         return {
             ...r,
-            score: r.relevance == null ? '' : (r.relevance / 100).toFixed(2),
+            recordType,
+            score: r.relevance == null ? '\u2014' : (r.relevance / 100).toFixed(2),
             badgeClass: 'badge ' + colour,
             match: r.relatedBy || r.matchedBy,
             viaBom: r.relatedBy === 'Component of the part' || r.relatedBy === 'Product sharing a component',
