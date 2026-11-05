@@ -2,20 +2,26 @@ import { LightningElement, api } from 'lwc';
 import getPackage from '@salesforce/apex/AskCqWorkspaceController.getPackage';
 import addSelected from '@salesforce/apex/AskCqWorkspaceController.addSelected';
 
+const PAGE_SIZE = 5;
+const TYPE_ORDER = ['Nonconformance', 'CAPA', 'Change Order', 'Inspection', 'Investigation'];
+const TYPE_LABEL = { 'Nonconformance': 'NC', 'CAPA': 'CAPA', 'Change Order': 'Change', 'Inspection': 'Inspection', 'Investigation': 'Investigation' };
+
 /**
- * Proof-of-concept workspace table: the live relevance package for the complaint of the PHR on screen,
- * "✦ Suggested" (red) rows switched on already, a ✦ on each row that opens Ask CQ focused on
- * "why is this record here?", and one Submit that adds the switched-on records to the PHR.
+ * Workspace table: the live relevance package for the complaint of the PHR on screen, one tab per
+ * record type, five rows a page. "✦ Suggested" rows start switched on; a ✦ on each row asks Ask CQ
+ * why the record is there; one Submit adds every switched-on record (across all tabs) to the PHR.
  */
 export default class AskCqRecordsDemo extends LightningElement {
     @api recordId;
-    rows = [];
+    all = [];
     staged = new Set();
     error;
     notice;
     busy = false;
     loading = true;
     header;
+    tab;
+    pages = {};   // tab -> current page (1-based)
 
     connectedCallback() { this.load(); }
 
@@ -26,12 +32,15 @@ export default class AskCqRecordsDemo extends LightningElement {
             const p = await getPackage({ recordId: this.recordId });
             if (!p.success) {
                 this.error = p.errorMessage || 'Could not read the relevant records.';
-                this.rows = [];
+                this.all = [];
             } else {
                 this.header = p;
-                // CQ Suggested rows (red) start switched on, unless already on the review.
                 this.staged = new Set(p.rows.filter((r) => r.suggested && !r.added).map((r) => r.id));
-                this.rows = p.rows.map((r) => this.decorate(r));
+                this.all = p.rows.map((r) => this.decorate(r));
+                if (!this.tab || !this.all.some((r) => r.recordType === this.tab)) {
+                    const first = TYPE_ORDER.find((t) => this.all.some((r) => r.recordType === t));
+                    this.tab = first || (this.all[0] && this.all[0].recordType);
+                }
             }
         } catch (e) {
             this.error = (e.body && e.body.message) || 'Could not read the relevant records.';
@@ -55,8 +64,48 @@ export default class AskCqRecordsDemo extends LightningElement {
         };
     }
 
-    get count() { return this.rows.length; }
-    get suggestedCount() { return this.rows.filter((r) => r.suggested && !r.added).length; }
+    // ----- tabs and pages -----
+
+    get tabs() {
+        const types = TYPE_ORDER.filter((t) => this.all.some((r) => r.recordType === t));
+        this.all.forEach((r) => { if (!types.includes(r.recordType)) { types.push(r.recordType); } });
+        return types.map((t) => {
+            const rows = this.all.filter((r) => r.recordType === t);
+            const stagedHere = rows.filter((r) => this.staged.has(r.id)).length;
+            return {
+                key: t,
+                label: (TYPE_LABEL[t] || t) + ' (' + rows.length + ')',
+                badge: stagedHere ? String(stagedHere) : '',
+                cls: 'tab' + (t === this.tab ? ' active' : '')
+            };
+        });
+    }
+    get tabRows() { return this.all.filter((r) => r.recordType === this.tab); }
+    get page() { return this.pages[this.tab] || 1; }
+    get pageCount() { return Math.max(1, Math.ceil(this.tabRows.length / PAGE_SIZE)); }
+    get rows() {
+        const start = (this.page - 1) * PAGE_SIZE;
+        return this.tabRows.slice(start, start + PAGE_SIZE);
+    }
+    get pageLabel() {
+        const n = this.tabRows.length;
+        if (!n) { return ''; }
+        const start = (this.page - 1) * PAGE_SIZE + 1;
+        const end = Math.min(n, this.page * PAGE_SIZE);
+        return start + '–' + end + ' of ' + n;
+    }
+    get prevDisabled() { return this.page <= 1; }
+    get nextDisabled() { return this.page >= this.pageCount; }
+    get hasPages() { return this.pageCount > 1; }
+
+    handleTab(event) { this.tab = event.currentTarget.dataset.key; }
+    handlePrev() { if (this.page > 1) { this.pages = { ...this.pages, [this.tab]: this.page - 1 }; } }
+    handleNext() { if (this.page < this.pageCount) { this.pages = { ...this.pages, [this.tab]: this.page + 1 }; } }
+
+    // ----- header -----
+
+    get count() { return this.all.length; }
+    get suggestedCount() { return this.all.filter((r) => r.suggested && !r.added).length; }
     get subtitle() {
         if (!this.header) { return ''; }
         const bits = [];
@@ -71,6 +120,8 @@ export default class AskCqRecordsDemo extends LightningElement {
     get submitLabel() { return this.staged.size ? 'Submit (' + this.staged.size + ')' : 'Submit'; }
     get submitDisabled() { return this.busy || this.loading || this.staged.size === 0; }
 
+    // ----- actions -----
+
     /** ✦ on a row: the workspace owns the Ask CQ popover, so hand it the question. */
     handleWhy(event) {
         const question = event.currentTarget.dataset.q;
@@ -81,7 +132,7 @@ export default class AskCqRecordsDemo extends LightningElement {
         const id = event.currentTarget.dataset.id;
         if (this.staged.has(id)) { this.staged.delete(id); } else { this.staged.add(id); }
         this.staged = new Set(this.staged);
-        this.rows = this.rows.map((r) => this.decorate(r));
+        this.all = this.all.map((r) => this.decorate(r));
     }
 
     async handleSubmit() {

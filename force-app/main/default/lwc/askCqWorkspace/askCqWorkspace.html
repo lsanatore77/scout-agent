@@ -47,15 +47,19 @@
                             <template if:true={saveNote}><div class="ok">{saveNote}</div></template>
                             <template for:each={checklist} for:item="q">
                                 <div key={q.id} class={q.cls}>
-                                    <span class="qn">{q.number}</span>
-                                    <span class="qt">
+                                    <div class="qhead">
                                         <span class="question">{q.question}</span>
-                                        <div class="edit">
-                                            <lightning-combobox class="ans" variant="label-hidden" label="Answer" placeholder="Answer" value={q.answerValue} options={q.answerOptions} data-id={q.id} onchange={handleAnswer}></lightning-combobox>
-                                            <lightning-input class="note" variant="label-hidden" label="Notes" placeholder="Notes or evidence" value={q.notes} data-id={q.id} onchange={handleNotes}></lightning-input>
-                                        </div>
-                                    </span>
-                                    <button class="why" data-q={q.why} onclick={handleWhy} title={q.why}><lightning-icon icon-name="utility:einstein" size="xx-small" class="pi"></lightning-icon></button>
+                                        <template if:true={q.suggested}>
+                                            <span class="tag" title="Suggested by Scout Checklist and accepted">&#10022; Suggested</span>
+                                        </template>
+                                        <template if:true={q.notSuggested}>
+                                            <button class="why" data-q={q.why} onclick={handleWhy} title={q.why}>&#10022;</button>
+                                        </template>
+                                    </div>
+                                    <div class="qbody">
+                                        <lightning-combobox class="ans" variant="label-hidden" label="Answer" placeholder="Answer" value={q.answerValue} options={q.answerOptions} data-id={q.id} onchange={handleAnswer}></lightning-combobox>
+                                        <template if:true={q.notes}><span class="notes">{q.notes}</span></template>
+                                    </div>
                                 </div>
                             </template>
                         </div>

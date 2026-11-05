@@ -1,7 +1,7 @@
 <template>
     <lightning-card>
         <div slot="title" class="head">
-            <span class="title">Relevant records</span>
+            <span class="title">Relevant Records</span>
             <span class="count">{subtitle}</span>
         </div>
         <div slot="actions" class="actions">
@@ -20,6 +20,15 @@
             <div class="loading"><lightning-spinner alternative-text="Scouting" size="small"></lightning-spinner></div>
         </template>
 
+        <div class="tabs" role="tablist">
+            <template for:each={tabs} for:item="t">
+                <button key={t.key} class={t.cls} role="tab" data-key={t.key} onclick={handleTab}>
+                    {t.label}
+                    <template if:true={t.badge}><span class="on-badge">{t.badge}</span></template>
+                </button>
+            </template>
+        </div>
+
         <table class="grid">
             <thead>
                 <tr>
@@ -28,7 +37,7 @@
                     <th>Status</th>
                     <th>Title</th>
                     <th>Matched on</th>
-                    <th class="c-why"><lightning-icon icon-name="utility:einstein" size="xx-small" class="pi"></lightning-icon></th>
+                    <th class="c-why">&#10022;</th>
                     <th class="c-add">Add to PHR</th>
                 </tr>
             </thead>
@@ -38,14 +47,13 @@
                         <td><span class={r.badgeClass}>{r.score}</span></td>
                         <td>
                             <a href={r.link} target="_blank" class="num">{r.recordNumber}</a>
-                            <template if:true={r.suggested}><span class="tag"><lightning-icon icon-name="utility:einstein" size="xx-small" class="pi"></lightning-icon>Suggested</span></template>
-                            <div class="type">{r.recordType}</div>
+                            <template if:true={r.suggested}><span class="tag">&#10022; Suggested</span></template>
                         </td>
                         <td class="muted">{r.status}</td>
                         <td>{r.title}</td>
                         <td class="muted">{r.match}</td>
                         <td class="c-why">
-                            <button class="why" data-q={r.why} onclick={handleWhy} title={r.why}><lightning-icon icon-name="utility:einstein" size="xx-small" class="pi"></lightning-icon></button>
+                            <button class="why" data-q={r.why} onclick={handleWhy} title={r.why}>&#10022;</button>
                         </td>
                         <td>
                             <template if:true={r.added}>
@@ -59,5 +67,13 @@
                 </template>
             </tbody>
         </table>
+
+        <div class="pager">
+            <span class="page-label">{pageLabel}</span>
+            <template if:true={hasPages}>
+                <lightning-button-icon icon-name="utility:chevronleft" variant="border-filled" size="small" alternative-text="Previous" onclick={handlePrev} disabled={prevDisabled}></lightning-button-icon>
+                <lightning-button-icon icon-name="utility:chevronright" variant="border-filled" size="small" alternative-text="Next" onclick={handleNext} disabled={nextDisabled}></lightning-button-icon>
+            </template>
+        </div>
     </lightning-card>
 </template>

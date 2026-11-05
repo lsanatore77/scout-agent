@@ -38,6 +38,7 @@ export default class AskCqWorkspace extends LightningElement {
             cls: 'q ' + (q.answered ? 'done' : 'open'),
             answerOptions: [{ label: '\u2014', value: '' }].concat((q.options || []).map((o) => ({ label: o, value: o }))),
             answerValue: q.answer || '',
+            notSuggested: !q.suggested,
             why: q.answered
                 ? 'Why is the answer to "' + q.question + '" ' + q.answer + '?'
                 : 'Answer the checklist question "' + q.question + '" from the records on this review.'
@@ -49,7 +50,7 @@ export default class AskCqWorkspace extends LightningElement {
     get steps() {
         const s = this.status || {};
         const defs = [
-            { key: 'records', n: 1, label: 'Relevant records',
+            { key: 'records', n: 1, label: 'Relevant Records',
               done: (s.recordsAdded || 0) > 0,
               sub: (s.recordsAdded || 0) > 0 ? s.recordsAdded + ' added to the PHR' : 'None added yet' },
             { key: 'checklist', n: 2, label: 'Checklist',
@@ -126,18 +127,12 @@ export default class AskCqWorkspace extends LightningElement {
         const id = event.target.dataset.id;
         const q = this.checklist.find((x) => x.id === id);
         if (!q) { return; }
-        await this.saveQuestion(q, event.target.value, q.notes);
+        await this.saveQuestion(q, event.target.value);
     }
-    async handleNotes(event) {
-        const id = event.target.dataset.id;
-        const q = this.checklist.find((x) => x.id === id);
-        if (!q) { return; }
-        await this.saveQuestion(q, q.answer, event.target.value);
-    }
-    async saveQuestion(q, answer, notes) {
+    async saveQuestion(q, answer) {
         try {
-            await saveAnswer({ answerId: q.id, answer: answer || null, notes: notes || null });
-            this.saveNote = 'Saved ' + q.number + '.';
+            await saveAnswer({ answerId: q.id, answer: answer || null });
+            this.saveNote = 'Saved.';
             await this.refresh();   // step status + checklist
         } catch (e) {
             this.error = (e.body && e.body.message) || 'Could not save the answer.';

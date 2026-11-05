@@ -29,6 +29,9 @@ public with sharing class AskCqWorkspaceController {
         @AuraEnabled public Boolean added;
         @AuraEnabled public Boolean suggested;   // red and 80+ points: pre-selected in the workspace
         @AuraEnabled public String link;
+        @AuraEnabled public String partName;
+        @AuraEnabled public String lotNumber;
+        @AuraEnabled public String rootCause;
     }
 
     public class PackageData {
@@ -69,8 +72,14 @@ public with sharing class AskCqWorkspaceController {
             all.addAll(d.inspections);
             all.addAll(d.investigations);
             Map<Id, String> titles = loadTitles(all);
+            Map<Id, String> lots = loadLots(all);
+            Map<Id, String> causes = loadRootCauses(all);
             for (PhrQmsPanelController.Row r : all) {
-                p.rows.add(toRow(r, titles));
+                Row w = toRow(r, titles);
+                w.partName = r.partNumber;
+                w.lotNumber = lots.get(r.id);
+                w.rootCause = causes.get(r.id);
+                p.rows.add(w);
             }
         } catch (Exception ex) {
             p.success = false;
@@ -101,6 +110,11 @@ public with sharing class AskCqWorkspaceController {
         @AuraEnabled public String complaintId;
         @AuraEnabled public String complaintName;
         @AuraEnabled public String phrStatus;
+        @AuraEnabled public String partName;
+        @AuraEnabled public String lotNumber;
+        @AuraEnabled public String ownerName;
+        @AuraEnabled public Integer pendingChecklist = 0;
+        @AuraEnabled public Integer suggestedPending = 0;  // suggestions the user has not accepted yet
         @AuraEnabled public Integer recordsAdded = 0;      // Related Products on the PHR
         @AuraEnabled public Integer questionsTotal = 0;
         @AuraEnabled public Integer questionsAnswered = 0;
@@ -125,6 +139,9 @@ public with sharing class AskCqWorkspaceController {
         @AuraEnabled public String notes;
         @AuraEnabled public Boolean answered;
         @AuraEnabled public List<String> options = new List<String>();   // allowed answers from the question's result type
+        @AuraEnabled public Boolean suggested = false;                     // answered by the checklist agent and accepted
+        @AuraEnabled public String suggestedAnswer;                        // what the checklist logic would answer (unanswered questions only)
+        @AuraEnabled public String suggestedBasis;
     }
 
     /** Where each review step stands, read from the PHR itself. */
@@ -133,10 +150,21 @@ public with sharing class AskCqWorkspaceController {
         StepStatus st = new StepStatus();
         compliancequest__SQX_Product_History_Review__c phr = [
             SELECT Id, Name, compliancequest__Status__c, compliancequest__Product_History_Review_Summary__c,
-                   compliancequest__SQX_Complaint__c, compliancequest__SQX_Complaint__r.Name
+                   compliancequest__SQX_Complaint__c, compliancequest__SQX_Complaint__r.Name,
+                   compliancequest__SQX_Complaint__r.compliancequest__SQX_Part__r.Name,
+                   compliancequest__SQX_Complaint__r.compliancequest__Lot_Number__c,
+                   Owner.Name, compliancequest__Pending_PHR_Checklist_Count__c
             FROM compliancequest__SQX_Product_History_Review__c WHERE Id = :phrId LIMIT 1
         ];
         st.phrName = phr.Name;
+        st.ownerName = phr.Owner.Name;
+        st.pendingChecklist = phr.compliancequest__Pending_PHR_Checklist_Count__c == null ? 0 : Integer.valueOf(phr.compliancequest__Pending_PHR_Checklist_Count__c);
+        if (phr.compliancequest__SQX_Complaint__r != null) {
+            st.lotNumber = phr.compliancequest__SQX_Complaint__r.compliancequest__Lot_Number__c;
+            if (phr.compliancequest__SQX_Complaint__r.compliancequest__SQX_Part__r != null) {
+                st.partName = phr.compliancequest__SQX_Complaint__r.compliancequest__SQX_Part__r.Name;
+            }
+        }
         st.phrStatus = phr.compliancequest__Status__c;
         st.complaintId = phr.compliancequest__SQX_Complaint__c;
         st.complaintName = phr.compliancequest__SQX_Complaint__r == null ? null : phr.compliancequest__SQX_Complaint__r.Name;
@@ -176,12 +204,13 @@ public with sharing class AskCqWorkspaceController {
     public static List<Question> getChecklist(Id phrId) {
         List<compliancequest__SQX_Product_History_Answer__c> answers = [
             SELECT Id, compliancequest__Question_Number__c, compliancequest__Question__c, compliancequest__Answer__c,
-                   compliancequest__Notes__c, compliancequest__Result_Type_Id__c
+                   compliancequest__Notes__c, compliancequest__Result_Type_Id__c, compliancequest__Description__c
             FROM compliancequest__SQX_Product_History_Answer__c
             WHERE compliancequest__SQX_Product_History_Review__c = :phrId
             ORDER BY compliancequest__Question_Number__c, Name
         ];
         Map<String, List<String>> allowed = allowedValues(answers);
+        Map<String, PhrChecklistItem> suggestions = suggestionsFor(phrId, answers);
         List<Question> out = new List<Question>();
         for (compliancequest__SQX_Product_History_Answer__c a : answers) {
             Question q = new Question();
@@ -191,24 +220,64 @@ public with sharing class AskCqWorkspaceController {
             q.answer = a.compliancequest__Answer__c;
             q.notes = a.compliancequest__Notes__c;
             q.answered = String.isNotBlank(a.compliancequest__Answer__c);
+            q.suggested = q.answered && a.compliancequest__Description__c == PhrChecklistAction.CQ_SUGGESTED;
             String key = a.compliancequest__Result_Type_Id__c;
             if (key != null && allowed.containsKey(key)) { q.options = allowed.get(key); }
             else if (key != null && allowed.containsKey(key.left(15))) { q.options = allowed.get(key.left(15)); }
             if (q.options.isEmpty()) { q.options = new List<String>{ 'Yes', 'No', 'N/A' }; }
+            PhrChecklistItem sug = suggestions.get(a.Id);
+            if (!q.answered && sug != null && sug.sure == true && String.isNotBlank(sug.suggestedAnswer)) {
+                q.suggestedAnswer = sug.suggestedAnswer;
+                q.suggestedBasis = sug.basis;
+            }
             out.add(q);
         }
         return out;
     }
 
-    /** Saves one answer (and its notes) typed or picked by the user. */
+    /** The checklist logic's suggestions (no save), keyed by answer Id. Empty when every question is answered. */
+    private static Map<String, PhrChecklistItem> suggestionsFor(Id phrId, List<compliancequest__SQX_Product_History_Answer__c> answers) {
+        Map<String, PhrChecklistItem> out = new Map<String, PhrChecklistItem>();
+        Boolean anyOpen = false;
+        for (compliancequest__SQX_Product_History_Answer__c a : answers) { if (String.isBlank(a.compliancequest__Answer__c)) { anyOpen = true; } }
+        if (!anyOpen) { return out; }
+        try {
+            PhrChecklistAction.Request req = new PhrChecklistAction.Request();
+            req.recordId = phrId;
+            req.saveAnswers = false;
+            PhrChecklistResult res = PhrChecklistAction.run(new List<PhrChecklistAction.Request>{ req })[0].result;
+            if (res != null && res.items != null) {
+                for (PhrChecklistItem it : res.items) { if (it.answerId != null) { out.put(it.answerId, it); } }
+            }
+        } catch (Exception ex) {
+            // suggestions are a convenience; the checklist still works without them
+        }
+        return out;
+    }
+
+    /** The user accepted a suggestion: save it with its evidence and the "suggested" stamp. */
     @AuraEnabled
-    public static void saveAnswer(Id answerId, String answer, String notes) {
-        compliancequest__SQX_Product_History_Answer__c a = new compliancequest__SQX_Product_History_Answer__c(
+    public static void acceptSuggestion(Id answerId, String answer, String basis) {
+        update new compliancequest__SQX_Product_History_Answer__c(
             Id = answerId,
             compliancequest__Answer__c = answer,
             compliancequest__Answer_Value__c = answer,
-            compliancequest__Notes__c = notes
+            compliancequest__Notes__c = basis,
+            compliancequest__Description__c = PhrChecklistAction.CQ_SUGGESTED
         );
+    }
+
+    /** Saves an answer picked by the user. A changed answer is the user's, so the "suggested" stamp comes off. */
+    @AuraEnabled
+    public static void saveAnswer(Id answerId, String answer) {
+        compliancequest__SQX_Product_History_Answer__c a = [
+            SELECT Id, compliancequest__Answer__c, compliancequest__Description__c
+            FROM compliancequest__SQX_Product_History_Answer__c WHERE Id = :answerId LIMIT 1
+        ];
+        Boolean changed = a.compliancequest__Answer__c != answer;
+        a.compliancequest__Answer__c = answer;
+        a.compliancequest__Answer_Value__c = answer;
+        if (changed && a.compliancequest__Description__c == PhrChecklistAction.CQ_SUGGESTED) { a.compliancequest__Description__c = null; }
         update a;
     }
 
@@ -250,6 +319,62 @@ public with sharing class AskCqWorkspaceController {
         w.suggested = r.colour == 'Red' && r.relevance != null && r.relevance >= SUGGEST_MIN_POINTS;
         w.link = '/' + r.id;
         return w;
+    }
+
+    /** Lot numbers for NCs and inspections. */
+    private static Map<Id, String> loadLots(List<PhrQmsPanelController.Row> rows) {
+        Set<Id> nc = new Set<Id>();
+        Set<Id> insp = new Set<Id>();
+        for (PhrQmsPanelController.Row r : rows) {
+            if (r.id == null) { continue; }
+            String t = String.valueOf(r.id.getSobjectType());
+            if (t == 'compliancequest__SQX_Nonconformance__c') { nc.add(r.id); }
+            else if (t == 'compliancequest__SQX_Inspection__c') { insp.add(r.id); }
+        }
+        Map<Id, String> m = new Map<Id, String>();
+        for (compliancequest__SQX_Nonconformance__c x : [SELECT Id, compliancequest__Lot_Number__c FROM compliancequest__SQX_Nonconformance__c WHERE Id IN :nc]) {
+            m.put(x.Id, x.compliancequest__Lot_Number__c);
+        }
+        for (compliancequest__SQX_Inspection__c x : [SELECT Id, compliancequest__Lot_Number__c FROM compliancequest__SQX_Inspection__c WHERE Id IN :insp]) {
+            m.put(x.Id, x.compliancequest__Lot_Number__c);
+        }
+        return m;
+    }
+
+    /**
+     * Root cause per record, read from the Root Cause records of the record's investigation
+     * (NC and CAPA through their investigation; an investigation row directly). Code name, else
+     * category, else the first line of the description.
+     */
+    private static Map<Id, String> loadRootCauses(List<PhrQmsPanelController.Row> rows) {
+        Set<Id> ids = new Set<Id>();
+        for (PhrQmsPanelController.Row r : rows) { if (r.id != null) { ids.add(r.id); } }
+        Map<Id, String> m = new Map<Id, String>();
+        if (ids.isEmpty()) { return m; }
+        for (compliancequest__SQX_Root_Cause__c rc : [
+            SELECT compliancequest__SQX_Investigation__c,
+                   compliancequest__SQX_Investigation__r.compliancequest__SQX_Nonconformance__c,
+                   compliancequest__SQX_Investigation__r.compliancequest__SQX_CAPA__c,
+                   compliancequest__Root_Cause_Code_Name__c, compliancequest__Root_Cause_Category_Name__c, compliancequest__Description__c
+            FROM compliancequest__SQX_Root_Cause__c
+            WHERE compliancequest__SQX_Investigation__c IN :ids
+               OR compliancequest__SQX_Investigation__r.compliancequest__SQX_Nonconformance__c IN :ids
+               OR compliancequest__SQX_Investigation__r.compliancequest__SQX_CAPA__c IN :ids
+            ORDER BY CreatedDate
+        ]) {
+            String text = String.isNotBlank(rc.compliancequest__Root_Cause_Code_Name__c) ? rc.compliancequest__Root_Cause_Code_Name__c
+                : String.isNotBlank(rc.compliancequest__Root_Cause_Category_Name__c) ? rc.compliancequest__Root_Cause_Category_Name__c
+                : rc.compliancequest__Description__c;
+            if (String.isBlank(text)) { continue; }
+            text = text.stripHtmlTags().trim();
+            if (text.length() > 90) { text = text.left(87) + '\u2026'; }
+            for (Id key : new List<Id>{ rc.compliancequest__SQX_Investigation__c,
+                    rc.compliancequest__SQX_Investigation__r.compliancequest__SQX_Nonconformance__c,
+                    rc.compliancequest__SQX_Investigation__r.compliancequest__SQX_CAPA__c }) {
+                if (key != null && ids.contains(key) && !m.containsKey(key)) { m.put(key, text); }
+            }
+        }
+        return m;
     }
 
     /** Titles for NCs, CAPAs and change orders. Inspections and investigations have none. */
