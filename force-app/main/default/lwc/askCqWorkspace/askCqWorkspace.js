@@ -6,6 +6,13 @@ import saveAnswer from '@salesforce/apex/AskCqWorkspaceController.saveAnswer';
 import acceptSuggestion from '@salesforce/apex/AskCqWorkspaceController.acceptSuggestion';
 
 const CHECKLIST_AGENT = '0XxW400000010ijKAA';   // Scout Checklist (dev). Blank = the PHR Agent from AskCqSecrets.
+const OPTION_ORDER = ['Yes', 'No', 'N/A'];
+
+/** Yes before No before anything else, whatever order the result type lists them in. */
+function orderOptions(options) {
+    const rank = (o) => { const i = OPTION_ORDER.findIndex((x) => x.toLowerCase() === String(o).toLowerCase()); return i < 0 ? 99 : i; };
+    return [...(options || [])].sort((a, b) => rank(a) - rank(b));
+}
 
 /**
  * PHR workspace: highlights header, review steps down the left (a green check when a step is done),
@@ -43,7 +50,7 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
                 ...q,
                 showPill: q.suggested || pending,
                 evidence: q.answered ? q.notes : (pending ? q.suggestedBasis : ''),
-                buttons: (q.options || []).map((o) => ({
+                buttons: orderOptions(q.options).map((o) => ({
                     key: q.id + ':' + o,
                     value: o,
                     cls: 'yn' + (o === shownAnswer ? (purple ? ' sug' : ' sel') : ''),

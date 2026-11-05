@@ -62,6 +62,7 @@ export default class AskCqRecordsDemo extends LightningElement {
             switchClass: 'switch' + (on ? ' on' : ''),
             partText: r.partName || '\u2014',
             lotText: r.lotNumber || '\u2014',
+            titleText: r.title || '\u2014',
             rootCauseText: r.rootCause || '\u2014',
             why: r.suggested ? 'Why is ' + r.recordNumber + ' suggested for this review?' : 'Why is ' + r.recordNumber + ' ' + colour + '?'
         };
