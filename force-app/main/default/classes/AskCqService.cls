@@ -34,6 +34,14 @@ public with sharing class AskCqService {
             'streamingCapabilities' => new Map<String, Object>{ 'chunkTypes' => new List<String>{ 'Text' } },
             'bypassUser' => false
         };
+        // Same context the native panel gives the agent, so the script's {!@variables.currentRecordId} works.
+        if (recordId != null) {
+            body.put('variables', new List<Object>{
+                variable('currentRecordId', String.valueOf(recordId)),
+                variable('currentObjectApiName', String.valueOf(recordId.getSObjectType())),
+                variable('currentPageType', 'record')
+            });
+        }
         HttpResponse res = send('POST', API_BASE + '/agents/' + s.agentId + '/sessions', token, JSON.serialize(body), null);
         Map<String, Object> out = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
         Reply r = new Reply();
@@ -151,6 +159,10 @@ public with sharing class AskCqService {
             }
         }
         return String.join(parts, '\n\n');
+    }
+
+    private static Map<String, Object> variable(String name, String value) {
+        return new Map<String, Object>{ 'name' => name, 'type' => 'Text', 'value' => value };
     }
 
     private static String orgDomain() {
