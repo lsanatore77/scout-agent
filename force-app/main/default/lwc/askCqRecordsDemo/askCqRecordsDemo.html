@@ -1,0 +1,52 @@
+<template>
+    <lightning-card>
+        <div slot="title" class="head">
+            <span class="title">Relevant records</span>
+            <span class="count">{count} found &middot; switch on the ones that belong on this review, then Submit</span>
+        </div>
+        <div slot="actions" class="actions">
+            <c-ask-cq-popover record-id={recordId} suggestions={suggestions}></c-ask-cq-popover>
+            <lightning-button label={submitLabel} variant="brand" onclick={handleSubmit} disabled={submitDisabled}></lightning-button>
+        </div>
+
+        <template if:true={error}>
+            <div class="err">{error}</div>
+        </template>
+
+        <table class="grid">
+            <thead>
+                <tr>
+                    <th class="c-score">Score</th>
+                    <th>Record</th>
+                    <th>Status</th>
+                    <th>Title</th>
+                    <th>Matched on</th>
+                    <th class="c-why">&#10022;</th>
+                    <th class="c-add">Add to PHR</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template for:each={rows} for:item="r">
+                    <tr key={r.id}>
+                        <td><span class={r.badgeClass}>{r.score}</span></td>
+                        <td><a href={r.link} target="_blank" class="num">{r.recordNumber}</a><div class="type">{r.recordType}</div></td>
+                        <td class="muted">{r.status}</td>
+                        <td>{r.title}</td>
+                        <td class="muted">{r.match}</td>
+                        <td class="c-why">
+                            <button class="why" data-q={r.why} onclick={handleWhy} title={r.why}>&#10022;</button>
+                        </td>
+                        <td>
+                            <template if:true={r.added}>
+                                <span class="added">Added</span>
+                            </template>
+                            <template if:true={r.canToggle}>
+                                <button class={r.switchClass} data-id={r.id} onclick={handleToggle} role="switch" aria-checked={r.on} aria-label="Add to PHR"><span class="knob"></span></button>
+                            </template>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </lightning-card>
+</template>

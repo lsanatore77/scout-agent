@@ -1,0 +1,47 @@
+<template>
+    <div class="wrap">
+        <button class="trigger" onclick={toggle} title="Ask CQ: facts only, can't change or sign anything">
+            <span class="star">&#10022;</span> Ask CQ
+        </button>
+
+        <template if:true={open}>
+            <section class="pop" role="dialog" aria-label="Ask CQ">
+                <header class="head">
+                    <span class="star">&#10022;</span>
+                    <span class="title">Ask CQ</span>
+                    <span class="sub">facts only &middot; can&rsquo;t change or sign anything</span>
+                    <lightning-button-icon icon-name="utility:close" variant="bare" alternative-text="Close" onclick={close} class="close"></lightning-button-icon>
+                </header>
+
+                <div class="log">
+                    <template for:each={messages} for:item="m">
+                        <div key={m.key} class={m.cls}>
+                            <template if:true={m.isAgent}><span class="star small">&#10022;</span></template>
+                            <lightning-formatted-text value={m.text}></lightning-formatted-text>
+                        </div>
+                    </template>
+                    <template if:true={busy}>
+                        <div class="msg agent thinking"><lightning-spinner alternative-text="Thinking" size="small"></lightning-spinner></div>
+                    </template>
+                    <template if:true={error}>
+                        <div class="err">{error}</div>
+                    </template>
+                </div>
+
+                <template if:false={hasMessages}>
+                    <div class="suggest">
+                        <span class="label">Questions for this page</span>
+                        <template for:each={suggestionList} for:item="q">
+                            <button key={q.key} class="chip" data-q={q.label} onclick={handleSuggestion}>{q.label}</button>
+                        </template>
+                    </div>
+                </template>
+
+                <footer class="foot">
+                    <lightning-input variant="label-hidden" placeholder="Ask about this review…" value={draft} onchange={handleDraft} onkeyup={handleKey} disabled={busy}></lightning-input>
+                    <lightning-button-icon icon-name="utility:send" variant="brand" alternative-text="Send" onclick={handleSend} disabled={sendDisabled}></lightning-button-icon>
+                </footer>
+            </section>
+        </template>
+    </div>
+</template>

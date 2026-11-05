@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Ask CQ</masterLabel>
+    <description>Scout (the PHR agent) in a popover: facts-only answers about the record on screen, through the Agent API.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage,lightning__AppPage">
+            <property name="suggestions" type="String" label="Ready questions (comma-separated)" default="Why are these records relevant?,What is the scrap rate?,What is left on this review?"/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
