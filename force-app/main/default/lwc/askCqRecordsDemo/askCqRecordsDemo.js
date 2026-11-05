@@ -22,6 +22,7 @@ export default class AskCqRecordsDemo extends LightningElement {
     header;
     tab;
     pages = {};   // tab -> current page (1-based)
+    includeBom = true;   // off = only the complaint's own part and lot; on = also records linked through the assembly (BOM)
 
     connectedCallback() { this.load(); }
 
@@ -57,6 +58,7 @@ export default class AskCqRecordsDemo extends LightningElement {
             score: r.relevance == null ? '' : (r.relevance / 100).toFixed(2),
             badgeClass: 'badge ' + colour,
             match: r.relatedBy || r.matchedBy,
+            viaBom: r.relatedBy === 'Component of the part' || r.relatedBy === 'Product sharing a component',
             canToggle: !r.added,
             on,
             switchClass: 'switch' + (on ? ' on' : ''),
@@ -70,11 +72,15 @@ export default class AskCqRecordsDemo extends LightningElement {
 
     // ----- tabs and pages -----
 
+    /** Rows after the Include BOM switch. */
+    get shown() {
+        return this.includeBom ? this.all : this.all.filter((r) => !r.viaBom);
+    }
     get tabs() {
-        const types = TYPE_ORDER.filter((t) => this.all.some((r) => r.recordType === t));
-        this.all.forEach((r) => { if (!types.includes(r.recordType)) { types.push(r.recordType); } });
+        const types = TYPE_ORDER.filter((t) => this.shown.some((r) => r.recordType === t));
+        this.shown.forEach((r) => { if (!types.includes(r.recordType)) { types.push(r.recordType); } });
         return types.map((t) => {
-            const rows = this.all.filter((r) => r.recordType === t);
+            const rows = this.shown.filter((r) => r.recordType === t);
             const stagedHere = rows.filter((r) => this.staged.has(r.id)).length;
             return {
                 key: t,
@@ -84,7 +90,7 @@ export default class AskCqRecordsDemo extends LightningElement {
             };
         });
     }
-    get tabRows() { return this.all.filter((r) => r.recordType === this.tab); }
+    get tabRows() { return this.shown.filter((r) => r.recordType === this.tab); }
     get page() { return this.pages[this.tab] || 1; }
     get pageCount() { return Math.max(1, Math.ceil(this.tabRows.length / PAGE_SIZE)); }
     get rows() {
@@ -103,13 +109,21 @@ export default class AskCqRecordsDemo extends LightningElement {
     get hasPages() { return this.pageCount > 1; }
 
     handleTab(event) { this.tab = event.currentTarget.dataset.key; }
+    handleBom(event) {
+        this.includeBom = event.target.checked;
+        this.pages = {};
+        if (!this.shown.some((r) => r.recordType === this.tab)) {
+            const first = TYPE_ORDER.find((t) => this.shown.some((r) => r.recordType === t));
+            this.tab = first || (this.shown[0] && this.shown[0].recordType);
+        }
+    }
     handlePrev() { if (this.page > 1) { this.pages = { ...this.pages, [this.tab]: this.page - 1 }; } }
     handleNext() { if (this.page < this.pageCount) { this.pages = { ...this.pages, [this.tab]: this.page + 1 }; } }
 
     // ----- header -----
 
-    get count() { return this.all.length; }
-    get suggestedCount() { return this.all.filter((r) => r.suggested && !r.added).length; }
+    get count() { return this.shown.length; }
+    get suggestedCount() { return this.shown.filter((r) => r.suggested && !r.added).length; }
     get subtitle() {
         if (!this.header) { return ''; }
         const bits = [];

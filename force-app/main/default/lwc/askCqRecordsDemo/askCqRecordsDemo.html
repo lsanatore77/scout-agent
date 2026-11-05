@@ -5,7 +5,7 @@
             <span class="count">{subtitle}</span>
         </div>
         <div slot="actions" class="actions">
-            <lightning-button label={submitLabel} variant="brand" onclick={handleSubmit} disabled={submitDisabled}></lightning-button>
+            <lightning-input type="checkbox" label="Include BOM" checked={includeBom} onchange={handleBom} class="bom"></lightning-input>
         </div>
 
         <div class="sub">{summaryLine}</div>
@@ -79,6 +79,8 @@
                 <lightning-button-icon icon-name="utility:chevronleft" variant="border-filled" size="small" alternative-text="Previous" onclick={handlePrev} disabled={prevDisabled}></lightning-button-icon>
                 <lightning-button-icon icon-name="utility:chevronright" variant="border-filled" size="small" alternative-text="Next" onclick={handleNext} disabled={nextDisabled}></lightning-button-icon>
             </template>
+            <span class="gap"></span>
+            <lightning-button label={submitLabel} variant="brand" onclick={handleSubmit} disabled={submitDisabled}></lightning-button>
         </div>
     </lightning-card>
 </template>
