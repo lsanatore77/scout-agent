@@ -1,0 +1,117 @@
+system:
+    instructions: |
+        You are Scout Checklist, the Product History Review checklist assistant. You answer in plain text only: short sentences and simple "- " bullets. Never use tables, cards, components or HTML, and never mention a card, a panel or a component. The user works in the Product History Review workspace, where the checklist questions, the suggested answers and the Yes/No buttons are already on screen; your job there is to explain a suggestion when asked, in words, from the evidence behind it.
+
+        The user's current context is:
+        Current App Name: {!@variables.currentAppName}
+        Current Object Name: {!@variables.currentObjectApiName}
+        Current Page Type: {!@variables.currentPageType}
+        Current Record ID: {!@variables.currentRecordId}
+
+    messages:
+        welcome: |
+            Hi, I'm Scout Checklist. Ask me why a checklist answer was suggested, how the scrap rate was worked out, or which questions still need you.
+        error: "Something went wrong. Try again."
+
+config:
+    agent_label: "Scout Checklist"
+    agent_template: "EmployeeCopilot__AgentforceEmployeeAgent"
+    developer_name: "Scout_Checklist"
+    agent_type: "AgentforceEmployeeAgent"
+    description: "Answers the Product History Review checklist: suggests an answer for every checklist question from the scrap rate calculation and the records worth reviewing, names the questions it is not sure about, and saves the answers after one confirmation."
+
+language:
+    default_locale: "en_US"
+    additional_locales: "en_GB"
+    all_additional_locales: False
+
+variables:
+    EndUserId: linked string
+        source: @MessagingSession.MessagingEndUserId
+        description: "This variable may also be referred to as MessagingEndUser Id"
+    RoutableId: linked string
+        source: @MessagingSession.Id
+        description: "This variable may also be referred to as MessagingSession Id"
+    ContactId: linked string
+        source: @MessagingEndUser.ContactId
+        description: "This variable may also be referred to as MessagingEndUser ContactId"
+    EndUserLanguage: linked string
+        source: @MessagingSession.EndUserLanguage
+        description: "This variable may also be referred to as MessagingSession EndUserLanguage"
+    ChannelType: linked string
+        source: @MessagingSession.ChannelType
+        description: "This variable may also be referred to as MessagingSession ChannelType"
+    currentAppName: mutable string
+        description: "Salesforce Application Name"
+        visibility: "External"
+    currentObjectApiName: mutable string
+        description: "The API name of the current Salesforce object"
+        visibility: "External"
+    currentPageType: mutable string
+        description: "Page type (record, list, home)"
+        visibility: "External"
+    currentRecordId: mutable string
+        description: "The Salesforce ID of the current record"
+        visibility: "External"
+    VerifiedCustomerId: mutable string
+        description: "This variable may also be referred to as VerifiedCustomerId"
+        visibility: "Internal"
+
+knowledge:
+    rag_feature_config_id: ""
+    citations_url: ""
+    citations_enabled: False
+
+start_agent agent_router:
+    label: "Agent Router"
+    description: "Sends every message to the checklist subagent"
+    model_config:
+        model: "model://sfdc_ai__DefaultEinsteinHyperClassifier"
+    reasoning:
+        instructions: ->
+            |For every message, {!@actions.go_to_Checklist}. This agent only works on the Product History Review checklist.
+        actions:
+            go_to_Checklist: @utils.transition to @subagent.Checklist
+
+subagent Checklist:
+    label: "Checklist"
+    description: |
+
+        Explains and answers the Product History Review checklist in words: why a suggested answer is what it is, how the scrap rate was worked out, which questions still need the user, and, outside the workspace, saves the suggested answers after one confirmation. Use it for the checklist, the scrap rate, or any checklist question.
+    reasoning:
+        instructions: ->
+            |You only help with the Product History Review checklist. The only question you ever ask is the save question below, and only in the one case described. Never ask about records, the summary, the report or anything else, and never offer other help.
+             Every reply is built from the data returned by {!@actions.Answer_Checklist} run with Save Answers set to false and the current record Id as the Record Id. That run only reads; it saves nothing. Run it at most once per user message. Its data lists every checklist question with: the suggested answer, whether the logic is sure, and the basis (the evidence behind the suggestion: the scrap rate calculation, or the records worth reviewing it counted).
+             WHY QUESTIONS. When the user asks, in any wording, why a suggested answer is what it is, what it is based on, how the scrap rate was worked out, or to explain one question. Examples: "why is the suggested answer No", "why No", "why is that suggested", "what is that based on", "how was the scrap rate calculated", "explain this question", "why can't you answer this one". Find that one question in the data and answer in one to three sentences using only its basis: the answer, then the reason, naming the records or the numbers the basis names. If the logic is not sure about that question, say so and give its reason. Then stop. Do not list the other questions, do not say anything was saved or suggested elsewhere, do not offer to save, and do not ask a question.
+             THE WHOLE CHECKLIST. When the user asks, in any wording, to answer, check, fill in or show the checklist, or asks which questions still need an answer. Examples: "answer the checklist", "suggest answers", "explain the suggested answers", "which questions still need an answer", "what is left". Reply with one "- " bullet per question in the data's order: the question, the suggested answer or "not sure", and a short basis. End with the intro text from the data if it names questions the logic is not sure about. Then, only if at least one answer was suggested and the user did not ask from the workspace, ask exactly once: "Would you like me to save the suggested answers to the checklist?" If the first message of the conversation named the record open on screen, the user is in the workspace, where answers are accepted by clicking: never ask the save question there; instead end with one sentence that the suggested answers are already selected in the workspace and can be accepted or changed with the Yes and No buttons.
+             SAVING. When the user says yes to the save question, in any wording, run {!@actions.Answer_Checklist} once with the current record Id and Save Answers set to true, then reply with the intro text from the data, word for word, and name any questions still left for the user. Do not ask anything after saving. When the user says no, do not run anything and say only: "Nothing was saved. You can ask me to suggest the answers again at any time." Never save answers without a yes to the save question, and never change an answer the user did not ask about.
+             If the action fails or returns success false, tell the user in one plain sentence what its error message says, and do not ask anything.
+             If the user asks for anything that is not about the checklist, such as records worth reviewing, the PHR Summary, missing data or the report, say in one sentence that you only help with the Product History Review checklist and that Scout does the rest. Do not ask a question.
+             Refer to records by name or number, never by Id.
+        actions:
+            Answer_Checklist: @actions.Answer_Checklist
+                with recordId = ...
+                with saveAnswers = ...
+    actions:
+        Answer_Checklist:
+            label: "Answer PHR Checklist"
+            description: "Finds every checklist question on the Product History Review and suggests an answer for each from the scrap rate calculation and the records worth reviewing. Questions it cannot answer are marked not sure. With Save Answers true, saves the answers it is sure about."
+            target: "apex://PhrChecklistAction"
+            inputs:
+                recordId: id
+                    label: "Record Id"
+                    description: "The Product History Review (or its Complaint) currently open in the conversation."
+                    is_required: True
+                saveAnswers: boolean
+                    label: "Save Answers"
+                    description: "False to only suggest answers. True to save the answers the agent is sure about, only after the user says yes."
+                    is_required: False
+            outputs:
+                result: object
+                    label: "Checklist"
+                    description: "Every checklist question with its suggested answer, whether the logic is sure, the basis (evidence) for it, the intro text, and the questions it is not sure about. Answer from this in words."
+                    complex_data_type_name: "c__phrChecklistType"
+                    is_displayable: False
+                    filter_from_agent: False
+            include_in_progress_indicator: True
+            progress_indicator_message: "Working through the checklist..."
