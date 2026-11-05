@@ -204,7 +204,7 @@ public with sharing class AskCqWorkspaceController {
     public static List<Question> getChecklist(Id phrId) {
         List<compliancequest__SQX_Product_History_Answer__c> answers = [
             SELECT Id, compliancequest__Question_Number__c, compliancequest__Question__c, compliancequest__Answer__c,
-                   compliancequest__Notes__c, compliancequest__Result_Type_Id__c, compliancequest__Description__c
+                   compliancequest__Notes__c, compliancequest__Result_Type_Id__c
             FROM compliancequest__SQX_Product_History_Answer__c
             WHERE compliancequest__SQX_Product_History_Review__c = :phrId
             ORDER BY compliancequest__Question_Number__c, Name
@@ -218,9 +218,9 @@ public with sharing class AskCqWorkspaceController {
             q.number_x = a.compliancequest__Question_Number__c;
             q.question = a.compliancequest__Question__c;
             q.answer = a.compliancequest__Answer__c;
-            q.notes = a.compliancequest__Notes__c;
             q.answered = String.isNotBlank(a.compliancequest__Answer__c);
-            q.suggested = q.answered && a.compliancequest__Description__c == PhrChecklistAction.CQ_SUGGESTED;
+            q.suggested = q.answered && a.compliancequest__Notes__c != null && a.compliancequest__Notes__c.startsWith(PhrChecklistAction.CQ_MARK);
+            q.notes = q.suggested ? a.compliancequest__Notes__c.substring(PhrChecklistAction.CQ_MARK.length()) : a.compliancequest__Notes__c;
             String key = a.compliancequest__Result_Type_Id__c;
             if (key != null && allowed.containsKey(key)) { q.options = allowed.get(key); }
             else if (key != null && allowed.containsKey(key.left(15))) { q.options = allowed.get(key.left(15)); }
@@ -262,8 +262,7 @@ public with sharing class AskCqWorkspaceController {
             Id = answerId,
             compliancequest__Answer__c = answer,
             compliancequest__Answer_Value__c = answer,
-            compliancequest__Notes__c = basis,
-            compliancequest__Description__c = PhrChecklistAction.CQ_SUGGESTED
+            compliancequest__Notes__c = PhrChecklistAction.CQ_MARK + (basis == null ? '' : basis)
         );
     }
 
@@ -271,13 +270,15 @@ public with sharing class AskCqWorkspaceController {
     @AuraEnabled
     public static void saveAnswer(Id answerId, String answer) {
         compliancequest__SQX_Product_History_Answer__c a = [
-            SELECT Id, compliancequest__Answer__c, compliancequest__Description__c
+            SELECT Id, compliancequest__Answer__c, compliancequest__Notes__c
             FROM compliancequest__SQX_Product_History_Answer__c WHERE Id = :answerId LIMIT 1
         ];
         Boolean changed = a.compliancequest__Answer__c != answer;
         a.compliancequest__Answer__c = answer;
         a.compliancequest__Answer_Value__c = answer;
-        if (changed && a.compliancequest__Description__c == PhrChecklistAction.CQ_SUGGESTED) { a.compliancequest__Description__c = null; }
+        if (changed && a.compliancequest__Notes__c != null && a.compliancequest__Notes__c.startsWith(PhrChecklistAction.CQ_MARK)) {
+            a.compliancequest__Notes__c = a.compliancequest__Notes__c.substring(PhrChecklistAction.CQ_MARK.length());
+        }
         update a;
     }
 

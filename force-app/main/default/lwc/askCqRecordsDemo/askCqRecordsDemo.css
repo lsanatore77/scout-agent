@@ -17,20 +17,22 @@
 .grid th { text-align: left; padding: 8px 12px; border-bottom: 1px solid #eceff2; color: #5c6572; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 700; }
 .grid td { padding: 9px 12px; border-bottom: 1px solid #eceff2; vertical-align: middle; }
 .c-score { width: 70px; }
-.c-why { width: 40px; text-align: center; }
-.grid th.c-why { text-align: center; color: #7c5cc4; font-size: 13px; }
+.c-why { width: 120px; text-align: center; }
+.grid th.c-why { text-align: center; color: #b05fc0; font-size: 13px; }
 .c-add { width: 120px; }
 .num { font-weight: 700; }
 .muted { color: #5c6572; }
 
-.badge { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 22px; border-radius: 11px; font-size: 11px; font-weight: 700; }
-.badge.red { background: #fbe9e7; color: #9b2c2c; }
-.badge.yellow { background: #fff3d6; color: #7a5600; }
-.badge.grey { background: #eef1f4; color: #4a5568; }
+.badge { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 44px; border-radius: 8px; font-size: 14px; font-weight: 700; color: #fff; }
+.badge.red { background: #e06c6c; }
+.badge.yellow { background: #e8b64a; }
+.badge.grey { background: #b8c0cc; }
+.line { font-size: 11px; color: #5c6572; }
+.line.dim { color: #8a94a3; }
 
-.tag { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font-size: 10px; font-weight: 700; color: #7c5cc4; background: #f1ecfa; border-radius: 9px; padding: 1px 7px; vertical-align: middle; }
-.why { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 20px; border-radius: 10px; border: none; background: #f1ecfa; color: #7c5cc4; font-size: 12px; line-height: 1; padding: 0; cursor: pointer; }
-.why:hover { background: #e4dbf6; }
+.pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 12px; border: none; background: #f3e6f7; color: #b05fc0; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.pill .st { font-size: 13px; }
+.pill:hover { background: #ead6f0; }
 
 .switch { width: 36px; height: 20px; border-radius: 10px; border: none; padding: 0; position: relative; background: #d5dbe3; cursor: pointer; }
 .switch.on { background: #2f6fb5; }

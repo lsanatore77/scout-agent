@@ -60,7 +60,10 @@ export default class AskCqRecordsDemo extends LightningElement {
             canToggle: !r.added,
             on,
             switchClass: 'switch' + (on ? ' on' : ''),
-            why: 'Why is ' + r.recordNumber + ' ' + colour + '?'
+            partText: r.partName || '\u2014',
+            lotText: r.lotNumber || '\u2014',
+            rootCauseText: r.rootCause || '\u2014',
+            why: r.suggested ? 'Why is ' + r.recordNumber + ' suggested for this review?' : 'Why is ' + r.recordNumber + ' ' + colour + '?'
         };
     }
 

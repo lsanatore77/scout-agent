@@ -21,8 +21,8 @@
  */
 global with sharing class PhrChecklistAction {
 
-    /** Stamp on an answer the checklist agent suggested and the user accepted. */
-    public static final String CQ_SUGGESTED = 'Suggested by Scout Checklist';
+    /** Leads the Notes of an answer the checklist agent suggested and the user accepted. */
+    public static final String CQ_MARK = '\u2726 ';
 
     // Mirrors the scrap rate flow. Change both together.
     @TestVisible static final Decimal TOTAL_PRODUCTS_MANUFACTURED = 2000;
@@ -126,8 +126,7 @@ global with sharing class PhrChecklistAction {
                         Id = a.Id,
                         compliancequest__Answer__c = value,
                         compliancequest__Answer_Value__c = value,
-                        compliancequest__Notes__c = s.basis,
-                        compliancequest__Description__c = CQ_SUGGESTED));   // the workspace shows "Suggested" on these
+                        compliancequest__Notes__c = CQ_MARK + s.basis));   // the workspace shows "Suggested" on these
                 } else {
                     res.unsureCount++;
                     unsureLabels.add(questionLabel(item));

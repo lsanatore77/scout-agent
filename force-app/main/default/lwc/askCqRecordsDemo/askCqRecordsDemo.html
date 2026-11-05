@@ -35,7 +35,7 @@
                     <th class="c-score">Score</th>
                     <th>Record</th>
                     <th>Status</th>
-                    <th>Title</th>
+                    <th>Root Cause</th>
                     <th>Matched on</th>
                     <th class="c-why">&#10022;</th>
                     <th class="c-add">Add to PHR</th>
@@ -47,13 +47,16 @@
                         <td><span class={r.badgeClass}>{r.score}</span></td>
                         <td>
                             <a href={r.link} target="_blank" class="num">{r.recordNumber}</a>
-                            <template if:true={r.suggested}><span class="tag">&#10022; Suggested</span></template>
+                            <div class="line">{r.partText}</div>
+                            <div class="line dim">{r.lotText}</div>
                         </td>
                         <td class="muted">{r.status}</td>
-                        <td>{r.title}</td>
+                        <td>{r.rootCauseText}</td>
                         <td class="muted">{r.match}</td>
                         <td class="c-why">
-                            <button class="why" data-q={r.why} onclick={handleWhy} title={r.why}>&#10022;</button>
+                            <template if:true={r.suggested}>
+                                <button class="pill" data-q={r.why} onclick={handleWhy} title={r.why}><span class="st">&#10022;</span>Suggested</button>
+                            </template>
                         </td>
                         <td>
                             <template if:true={r.added}>
