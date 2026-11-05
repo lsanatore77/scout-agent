@@ -1,14 +1,14 @@
 <template>
     <div class="wrap">
-        <button class="trigger" onclick={toggle} title="Ask CQ: facts only, can't change or sign anything">
-            <span class="star">&#10022;</span> Ask CQ
+        <button class="trigger" onclick={toggle} title="Ask CQ.AI: facts only, can't change or sign anything">
+            <span class="star">&#10022;</span> Ask CQ.AI
         </button>
 
         <template if:true={open}>
-            <section class="pop" role="dialog" aria-label="Ask CQ">
+            <section class="pop" role="dialog" aria-label="Ask CQ.AI">
                 <header class="head">
                     <span class="star">&#10022;</span>
-                    <span class="title">Ask CQ</span>
+                    <span class="title">Ask CQ.AI</span>
                     <span class="sub">facts only &middot; can&rsquo;t change or sign anything</span>
                     <lightning-button-icon icon-name="utility:close" variant="bare" alternative-text="Close" onclick={close} class="close"></lightning-button-icon>
                 </header>

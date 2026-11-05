@@ -135,7 +135,7 @@ export default class AskCqRecordsDemo extends LightningElement {
         return bits.join(' · ');
     }
     get summaryLine() {
-        return this.count + ' relevant records · ' + this.suggestedCount + ' suggested · switch on the ones that belong on this review, then Submit';
+        return this.count + ' relevant records · ' + this.suggestedCount + ' CQ.AI suggested · switch on the ones that belong on this review, then Submit';
     }
     get submitLabel() { return this.staged.size ? 'Submit (' + this.staged.size + ')' : 'Submit'; }
     get submitDisabled() { return this.busy || this.loading || this.staged.size === 0; }

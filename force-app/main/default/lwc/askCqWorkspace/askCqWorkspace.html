@@ -56,7 +56,7 @@
                     <div class="sect">
                         <div class="sect-head">
                             <span class="sect-title">Checklist</span>
-                            <span class="sect-sub">Suggested answers are pre-selected in purple · click Yes or No to answer or change · saved as you go</span>
+                            <span class="sect-sub">CQ.AI suggested answers are pre-selected in purple · click Yes or No to answer or change · saved as you go</span>
                         </div>
                         <template if:false={hasChecklist}>
                             <p class="muted">No checklist questions on this review yet.</p>
@@ -68,7 +68,7 @@
                                     <div class="qh">
                                         <span class="question">{q.question}</span>
                                         <template if:true={q.showPill}>
-                                            <button class="pill" data-q={q.why} onclick={handleWhy} title={q.why}><span class="st">&#10022;</span>Suggested</button>
+                                            <button class="pill" data-q={q.why} onclick={handleWhy} title={q.why}><span class="st">&#10022;</span>CQ.AI Suggested</button>
                                         </template>
                                     </div>
                                     <template if:true={q.evidence}><div class="ev">{q.evidence}</div></template>
@@ -87,13 +87,13 @@
                     <div class="sect">
                         <div class="sect-head">
                             <span class="sect-title">PHR Summary</span>
-                            <lightning-button label="Draft with ✦ CQ" onclick={handleDraft}></lightning-button>
+                            <lightning-button label="Generate with ✦ CQ.AI" onclick={handleDraft}></lightning-button>
                         </div>
                         <template if:true={hasSummary}>
                             <lightning-formatted-rich-text value={summaryHtml}></lightning-formatted-rich-text>
                         </template>
                         <template if:false={hasSummary}>
-                            <p class="muted">No summary on this review yet. Ask CQ can draft one from the records, the checklist and the complaint; you say whether to save it.</p>
+                            <p class="muted">No summary on this review yet. Ask CQ.AI can draft one from the records, the checklist and the complaint; you say whether to save it.</p>
                         </template>
                     </div>
                 </template>
@@ -102,7 +102,7 @@
                     <div class="sect">
                         <div class="sect-head">
                             <span class="sect-title">Reports</span>
-                            <lightning-button label="Generate with ✦ CQ" onclick={handleReport}></lightning-button>
+                            <lightning-button label="Generate with ✦ CQ.AI" onclick={handleReport}></lightning-button>
                         </div>
                         <template if:false={hasReports}>
                             <p class="muted">No report attached to the complaint yet.</p>

@@ -69,7 +69,7 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
 
     get steps() {
         const s = this.status || {};
-        const sugg = this.suggestedPending ? ' · ' + this.suggestedPending + ' suggested' : '';
+        const sugg = this.suggestedPending ? ' · ' + this.suggestedPending + ' CQ.AI suggested' : '';
         const defs = [
             { key: 'records', n: 1, label: 'Relevant Records',
               done: (s.recordsAdded || 0) > 0,
@@ -131,8 +131,8 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
     get agentId() { return this.current === 'checklist' ? CHECKLIST_AGENT : ''; }
     get suggestions() {
         switch (this.current) {
-            case 'checklist': return 'Explain the suggested answers,What is the scrap rate?,Which questions still need an answer?';
-            case 'summary': return 'Draft the PHR Summary,What should the summary cover?';
+            case 'checklist': return 'Explain the CQ.AI suggested answers,What is the scrap rate?,Which questions still need an answer?';
+            case 'summary': return 'Generate the PHR Summary,What should the summary cover?';
             case 'reports': return 'Generate the report,What does the report include?';
             default: return 'Why are these records relevant?,Which of these share the complaint lot?,What is missing on this complaint?';
         }
@@ -151,7 +151,7 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         if (q && this.pop) { this.pop.ask(q); }
     }
     handleWhy(event) { const q = event.currentTarget.dataset.q; if (this.pop) { this.pop.ask(q); } }
-    handleDraft() { if (this.pop) { this.pop.ask('Draft the PHR Summary for this complaint.'); } }
+    handleDraft() { if (this.pop) { this.pop.ask('Generate the PHR Summary for this complaint.'); } }
     handleReport() { if (this.pop) { this.pop.ask('Generate the Product History Review report and attach it to the complaint.'); } }
     handleChanged() { this.refresh(); }
     handleRefresh() { this.refresh(); }

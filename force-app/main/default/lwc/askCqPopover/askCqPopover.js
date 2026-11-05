@@ -126,6 +126,6 @@ export default class AskCqPopover extends LightningElement {
         setTimeout(() => { const el = this.template.querySelector('lightning-input'); if (el) { el.focus(); } }, 0);
     }
     errorText(e) {
-        return (e && e.body && e.body.message) || (e && e.message) || 'Ask CQ could not reach the agent.';
+        return (e && e.body && e.body.message) || (e && e.message) || 'Ask CQ.AI could not reach the agent.';
     }
 }
