@@ -40,7 +40,7 @@ private class AskCqServiceTest {
         compliancequest__SQX_Complaint__c c = new compliancequest__SQX_Complaint__c(compliancequest__Description__c = 'x');
         insert c;
         Test.startTest();
-        AskCqService.Reply r = AskCqService.startSession(c.Id);
+        AskCqService.Reply r = AskCqService.startSession(c.Id, null);
         System.assertEquals('S1', r.sessionId);
         System.assert(r.text.contains('Scout'), r.text);
         AskCqService.Reply a = AskCqService.sendMessage(r.sessionId, r.nextSequence, 'Why is NC-000139 red?', c.Id);
@@ -55,7 +55,7 @@ private class AskCqServiceTest {
         AskCqService.Settings s = new AskCqService.Settings();
         AskCqService.testSettings = s;
         try {
-            AskCqService.startSession(null);
+            AskCqService.startSession(null, null);
             System.assert(false, 'expected an exception');
         } catch (AskCqService.AskCqException e) {
             System.assert(e.getMessage().contains('not set up'), e.getMessage());

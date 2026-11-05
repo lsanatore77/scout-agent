@@ -1,0 +1,100 @@
+<template>
+    <div class="ws" onask={handleAsk} onchanged={handleChanged}>
+        <header class="bar">
+            <div class="who">
+                <span class="phr">{title}</span>
+                <span class="meta">{subtitle}</span>
+            </div>
+            <div class="tools">
+                <lightning-button-icon icon-name="utility:refresh" variant="bare" alternative-text="Refresh" onclick={handleRefresh}></lightning-button-icon>
+                <c-ask-cq-popover record-id={recordId} agent-id={agentId} suggestions={suggestions}></c-ask-cq-popover>
+            </div>
+        </header>
+
+        <template if:true={error}>
+            <div class="err">{error}</div>
+        </template>
+
+        <div class="body">
+            <nav class="steps">
+                <div class="steps-title">Review steps</div>
+                <template for:each={steps} for:item="s">
+                    <button key={s.key} class={s.cls} data-key={s.key} onclick={handleStep}>
+                        <span class="mark">
+                            <template if:true={s.done}>&#10003;</template>
+                            <template if:true={s.notDone}>{s.n}</template>
+                        </span>
+                        <span class="txt">
+                            <span class="lbl">{s.label}</span>
+                            <span class="sub">{s.sub}</span>
+                        </span>
+                    </button>
+                </template>
+                <div class="progress">{progress}</div>
+            </nav>
+
+            <main class="work">
+                <template if:true={isRecords}>
+                    <c-ask-cq-records-demo record-id={recordId}></c-ask-cq-records-demo>
+                </template>
+
+                <template if:true={isChecklist}>
+                    <lightning-card title="Checklist">
+                        <div class="pad">
+                            <template if:false={hasChecklist}>
+                                <p class="muted">No checklist questions on this review yet.</p>
+                            </template>
+                            <template for:each={checklist} for:item="q">
+                                <div key={q.id} class={q.cls}>
+                                    <span class="qn">{q.number}</span>
+                                    <span class="qt">
+                                        <span class="question">{q.question}</span>
+                                        <span class="answer">{q.answerText}</span>
+                                        <template if:true={q.notes}><span class="notes">{q.notes}</span></template>
+                                    </span>
+                                    <button class="why" data-q={q.why} onclick={handleWhy} title={q.why}>&#10022;</button>
+                                </div>
+                            </template>
+                        </div>
+                    </lightning-card>
+                </template>
+
+                <template if:true={isSummary}>
+                    <lightning-card title="PHR Summary">
+                        <div slot="actions">
+                            <lightning-button label="Draft with ✦ CQ" onclick={handleDraft}></lightning-button>
+                        </div>
+                        <div class="pad">
+                            <template if:true={hasSummary}>
+                                <lightning-formatted-rich-text value={summaryHtml}></lightning-formatted-rich-text>
+                            </template>
+                            <template if:false={hasSummary}>
+                                <p class="muted">No summary on this review yet. Ask CQ can draft one from the records, the checklist and the complaint; you say whether to save it.</p>
+                            </template>
+                        </div>
+                    </lightning-card>
+                </template>
+
+                <template if:true={isReports}>
+                    <lightning-card title="Reports">
+                        <div slot="actions">
+                            <lightning-button label="Generate with ✦ CQ" onclick={handleReport}></lightning-button>
+                        </div>
+                        <div class="pad">
+                            <template if:false={hasReports}>
+                                <p class="muted">No report attached to the complaint yet.</p>
+                            </template>
+                            <template for:each={reports} for:item="r">
+                                <div key={r.key} class="file">
+                                    <lightning-icon icon-name="doctype:pdf" size="small"></lightning-icon>
+                                    <a href={r.link} target="_blank">{r.label}</a>
+                                    <lightning-formatted-date-time value={r.modified} year="numeric" month="short" day="numeric" hour="2-digit" minute="2-digit"></lightning-formatted-date-time>
+                                </div>
+                            </template>
+                        </div>
+                    </lightning-card>
+                </template>
+            </main>
+        </div>
+    </div>
+</template>

@@ -11,6 +11,15 @@ export default class AskCqPopover extends LightningElement {
     @api recordId;
     /** Comma-separated ready questions for this page or step. */
     @api suggestions = 'Why are these records relevant?,What is the scrap rate?,What is left on this review?';
+    /** Optional: another agent's Id (the Scout Checklist agent, say). Blank = the Id in AskCqSecrets. */
+    _agentId;
+    @api get agentId() { return this._agentId; }
+    set agentId(v) {
+        if (v !== this._agentId) {
+            this._agentId = v;
+            if (this.sessionId) { this.close(); }   // a different agent needs a new session
+        }
+    }
 
     @track messages = [];
     open = false;
@@ -56,7 +65,7 @@ export default class AskCqPopover extends LightningElement {
     async start() {
         this.busy = true;
         try {
-            const r = await startSession({ recordId: this.recordId });
+            const r = await startSession({ recordId: this.recordId, agentId: this._agentId });
             this.sessionId = r.sessionId;
             this.sequence = r.nextSequence;
             if (r.text) { this.push('agent', r.text); }

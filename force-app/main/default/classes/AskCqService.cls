@@ -25,8 +25,9 @@ public with sharing class AskCqService {
 
     /** Opens a session with the agent and returns its opening message, if any. */
     @AuraEnabled
-    public static Reply startSession(Id recordId) {
+    public static Reply startSession(Id recordId, String agentId) {
         Settings s = settings();
+        if (String.isNotBlank(agentId)) { s.agentId = agentId; }   // another agent (the Scout Checklist agent, say) through the same pipe
         String token = accessToken(s);
         Map<String, Object> body = new Map<String, Object>{
             'externalSessionKey' => uuid(),

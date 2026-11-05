@@ -47,7 +47,7 @@ export default class AskCqRecordsDemo extends LightningElement {
             ...r,
             score: r.relevance == null ? '' : (r.relevance / 100).toFixed(2),
             badgeClass: 'badge ' + colour,
-            match: [r.matchedBy, r.relatedBy].filter(Boolean).join(' · '),
+            match: r.relatedBy || r.matchedBy,
             canToggle: !r.added,
             on,
             switchClass: 'switch' + (on ? ' on' : ''),
@@ -70,14 +70,11 @@ export default class AskCqRecordsDemo extends LightningElement {
     }
     get submitLabel() { return this.staged.size ? 'Submit (' + this.staged.size + ')' : 'Submit'; }
     get submitDisabled() { return this.busy || this.loading || this.staged.size === 0; }
-    get suggestions() {
-        return 'Why are these records relevant?,Which of these share the complaint lot?,What is missing on this complaint?,What is left on this review?';
-    }
 
+    /** ✦ on a row: the workspace owns the Ask CQ popover, so hand it the question. */
     handleWhy(event) {
-        const q = event.currentTarget.dataset.q;
-        const pop = this.template.querySelector('c-ask-cq-popover');
-        if (pop) { pop.ask(q); }
+        const question = event.currentTarget.dataset.q;
+        this.dispatchEvent(new CustomEvent('ask', { detail: { question }, bubbles: true, composed: true }));
     }
 
     handleToggle(event) {
@@ -97,6 +94,7 @@ export default class AskCqRecordsDemo extends LightningElement {
             this.notice = res.message;
             this.staged = new Set();
             await this.load();
+            this.dispatchEvent(new CustomEvent('changed', { bubbles: true, composed: true }));
         } catch (e) {
             this.error = (e.body && e.body.message) || 'Could not add the records.';
         } finally {

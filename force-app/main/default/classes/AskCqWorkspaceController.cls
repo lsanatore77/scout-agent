@@ -91,6 +91,104 @@ public with sharing class AskCqWorkspaceController {
         return out;
     }
 
+    // ---------- review steps ----------
+
+    public class StepStatus {
+        @AuraEnabled public String phrName;
+        @AuraEnabled public String complaintId;
+        @AuraEnabled public String complaintName;
+        @AuraEnabled public String phrStatus;
+        @AuraEnabled public Integer recordsAdded = 0;      // Related Products on the PHR
+        @AuraEnabled public Integer questionsTotal = 0;
+        @AuraEnabled public Integer questionsAnswered = 0;
+        @AuraEnabled public Boolean summarySaved = false;
+        @AuraEnabled public String summaryHtml;
+        @AuraEnabled public Integer reportCount = 0;
+        @AuraEnabled public List<ReportFile> reports = new List<ReportFile>();
+    }
+
+    public class ReportFile {
+        @AuraEnabled public String title;
+        @AuraEnabled public String link;
+        @AuraEnabled public Datetime modified;
+        @AuraEnabled public Integer version;
+    }
+
+    public class Question {
+        @AuraEnabled public String id;
+        @AuraEnabled public String number_x;
+        @AuraEnabled public String question;
+        @AuraEnabled public String answer;
+        @AuraEnabled public String notes;
+        @AuraEnabled public Boolean answered;
+    }
+
+    /** Where each review step stands, read from the PHR itself. */
+    @AuraEnabled
+    public static StepStatus getStatus(Id phrId) {
+        StepStatus st = new StepStatus();
+        compliancequest__SQX_Product_History_Review__c phr = [
+            SELECT Id, Name, compliancequest__Status__c, compliancequest__Product_History_Review_Summary__c,
+                   compliancequest__SQX_Complaint__c, compliancequest__SQX_Complaint__r.Name
+            FROM compliancequest__SQX_Product_History_Review__c WHERE Id = :phrId LIMIT 1
+        ];
+        st.phrName = phr.Name;
+        st.phrStatus = phr.compliancequest__Status__c;
+        st.complaintId = phr.compliancequest__SQX_Complaint__c;
+        st.complaintName = phr.compliancequest__SQX_Complaint__r == null ? null : phr.compliancequest__SQX_Complaint__r.Name;
+        st.summarySaved = String.isNotBlank(phr.compliancequest__Product_History_Review_Summary__c);
+        st.summaryHtml = phr.compliancequest__Product_History_Review_Summary__c;
+        st.recordsAdded = [SELECT COUNT() FROM compliancequest__SQX_Related_Product__c WHERE compliancequest__SQX_Product_History_Review__c = :phrId];
+        for (compliancequest__SQX_Product_History_Answer__c a : [
+            SELECT compliancequest__Answer__c FROM compliancequest__SQX_Product_History_Answer__c
+            WHERE compliancequest__SQX_Product_History_Review__c = :phrId
+        ]) {
+            st.questionsTotal++;
+            if (String.isNotBlank(a.compliancequest__Answer__c)) { st.questionsAnswered++; }
+        }
+        if (st.complaintId != null) {
+            List<String> titles = PhrReportSettings.phrTitles();
+            for (ContentDocumentLink l : [
+                SELECT ContentDocumentId, ContentDocument.Title, ContentDocument.LatestPublishedVersionId,
+                       ContentDocument.LastModifiedDate, ContentDocument.LatestPublishedVersion.VersionNumber
+                FROM ContentDocumentLink
+                WHERE LinkedEntityId = :st.complaintId AND ContentDocument.Title IN :titles
+                ORDER BY ContentDocument.LastModifiedDate DESC
+            ]) {
+                ReportFile f = new ReportFile();
+                f.title = l.ContentDocument.Title;
+                f.link = '/' + l.ContentDocumentId;
+                f.modified = l.ContentDocument.LastModifiedDate;
+                f.version = l.ContentDocument.LatestPublishedVersion == null ? null : Integer.valueOf(l.ContentDocument.LatestPublishedVersion.VersionNumber);
+                st.reports.add(f);
+            }
+            st.reportCount = st.reports.size();
+        }
+        return st;
+    }
+
+    /** The checklist questions on the PHR with their current answers. Read only. */
+    @AuraEnabled
+    public static List<Question> getChecklist(Id phrId) {
+        List<Question> out = new List<Question>();
+        for (compliancequest__SQX_Product_History_Answer__c a : [
+            SELECT Id, compliancequest__Question_Number__c, compliancequest__Question__c, compliancequest__Answer__c, compliancequest__Notes__c
+            FROM compliancequest__SQX_Product_History_Answer__c
+            WHERE compliancequest__SQX_Product_History_Review__c = :phrId
+            ORDER BY compliancequest__Question_Number__c, Name
+        ]) {
+            Question q = new Question();
+            q.id = a.Id;
+            q.number_x = a.compliancequest__Question_Number__c;
+            q.question = a.compliancequest__Question__c;
+            q.answer = a.compliancequest__Answer__c;
+            q.notes = a.compliancequest__Notes__c;
+            q.answered = String.isNotBlank(a.compliancequest__Answer__c);
+            out.add(q);
+        }
+        return out;
+    }
+
     private static Row toRow(PhrQmsPanelController.Row r, Map<Id, String> titles) {
         Row w = new Row();
         w.id = r.id;
