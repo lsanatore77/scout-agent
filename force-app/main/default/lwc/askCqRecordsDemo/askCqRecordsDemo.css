@@ -27,3 +27,7 @@
 .knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 8px; background: #fff; transition: left .15s; }
 .switch.on .knob { left: 18px; }
 .added { font-size: 12px; font-weight: 700; color: #3b6e48; }
+.sub { margin: 0 16px 8px; font-size: 12px; color: #5c6572; }
+.ok { margin: 0 16px 8px; color: #2f5d3a; background: #e6f4ea; border-radius: 6px; padding: 8px 10px; font-size: 12px; }
+.loading { position: relative; height: 40px; }
+.tag { margin-left: 6px; font-size: 10px; font-weight: 700; color: #9b2c2c; background: #fbe9e7; border-radius: 9px; padding: 1px 7px; vertical-align: middle; }

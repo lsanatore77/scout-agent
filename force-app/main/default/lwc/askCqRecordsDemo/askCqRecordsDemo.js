@@ -1,29 +1,42 @@
-import { LightningElement, api, wire } from 'lwc';
-import { refreshApex } from '@salesforce/apex';
-import getLeads from '@salesforce/apex/PhrLeadListController.getLeads';
-import addLeads from '@salesforce/apex/PhrLeadListController.addLeads';
+import { LightningElement, api } from 'lwc';
+import getPackage from '@salesforce/apex/AskCqWorkspaceController.getPackage';
+import addSelected from '@salesforce/apex/AskCqWorkspaceController.addSelected';
 
 /**
- * Proof-of-concept workspace table: the relevant records already stored on the PHR, with a ✦ on each
- * row that opens Ask CQ focused on "why is this record here?", and Add to PHR switches committed by
- * one Submit (PhrLeadListController.addLeads, the same Apex the agent uses).
+ * Proof-of-concept workspace table: the live relevance package for the complaint of the PHR on screen,
+ * "✦ Suggested" (red) rows switched on already, a ✦ on each row that opens Ask CQ focused on
+ * "why is this record here?", and one Submit that adds the switched-on records to the PHR.
  */
 export default class AskCqRecordsDemo extends LightningElement {
     @api recordId;
     rows = [];
     staged = new Set();
     error;
+    notice;
     busy = false;
-    wired;
+    loading = true;
+    header;
 
-    @wire(getLeads, { phrId: '$recordId' })
-    wiredLeads(result) {
-        this.wired = result;
-        if (result.data) {
-            this.error = undefined;
-            this.rows = result.data.map((r) => this.decorate(r));
-        } else if (result.error) {
-            this.error = (result.error.body && result.error.body.message) || 'Could not load the relevant records.';
+    connectedCallback() { this.load(); }
+
+    async load() {
+        this.loading = true;
+        this.error = undefined;
+        try {
+            const p = await getPackage({ recordId: this.recordId });
+            if (!p.success) {
+                this.error = p.errorMessage || 'Could not read the relevant records.';
+                this.rows = [];
+            } else {
+                this.header = p;
+                // CQ Suggested rows (red) start switched on, unless already on the review.
+                this.staged = new Set(p.rows.filter((r) => r.suggested && !r.added).map((r) => r.id));
+                this.rows = p.rows.map((r) => this.decorate(r));
+            }
+        } catch (e) {
+            this.error = (e.body && e.body.message) || 'Could not read the relevant records.';
+        } finally {
+            this.loading = false;
         }
     }
 
@@ -34,7 +47,7 @@ export default class AskCqRecordsDemo extends LightningElement {
             ...r,
             score: r.relevance == null ? '' : (r.relevance / 100).toFixed(2),
             badgeClass: 'badge ' + colour,
-            rootCause: r.title,
+            match: [r.matchedBy, r.relatedBy].filter(Boolean).join(' · '),
             canToggle: !r.added,
             on,
             switchClass: 'switch' + (on ? ' on' : ''),
@@ -43,11 +56,22 @@ export default class AskCqRecordsDemo extends LightningElement {
     }
 
     get count() { return this.rows.length; }
-    get stagedCount() { return this.staged.size; }
+    get suggestedCount() { return this.rows.filter((r) => r.suggested && !r.added).length; }
+    get subtitle() {
+        if (!this.header) { return ''; }
+        const bits = [];
+        if (this.header.complaintName) { bits.push(this.header.complaintName); }
+        if (this.header.partName) { bits.push(this.header.partName); }
+        if (this.header.lotNumber) { bits.push('lot ' + this.header.lotNumber); }
+        return bits.join(' · ');
+    }
+    get summaryLine() {
+        return this.count + ' relevant records · ' + this.suggestedCount + ' suggested · switch on the ones that belong on this review, then Submit';
+    }
     get submitLabel() { return this.staged.size ? 'Submit (' + this.staged.size + ')' : 'Submit'; }
-    get submitDisabled() { return this.busy || this.staged.size === 0; }
+    get submitDisabled() { return this.busy || this.loading || this.staged.size === 0; }
     get suggestions() {
-        return 'Why are these records relevant?,Which of these share the complaint lot?,What is the scrap rate?,What is left on this review?';
+        return 'Why are these records relevant?,Which of these share the complaint lot?,What is missing on this complaint?,What is left on this review?';
     }
 
     handleWhy(event) {
@@ -66,10 +90,13 @@ export default class AskCqRecordsDemo extends LightningElement {
     async handleSubmit() {
         if (!this.staged.size) { return; }
         this.busy = true;
+        this.error = undefined;
+        this.notice = undefined;
         try {
-            await addLeads({ phrId: this.recordId, leadIds: [...this.staged] });
+            const res = await addSelected({ recordId: this.recordId, selectedIds: [...this.staged] });
+            this.notice = res.message;
             this.staged = new Set();
-            await refreshApex(this.wired);
+            await this.load();
         } catch (e) {
             this.error = (e.body && e.body.message) || 'Could not add the records.';
         } finally {

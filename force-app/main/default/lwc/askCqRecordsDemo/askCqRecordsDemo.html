@@ -2,15 +2,23 @@
     <lightning-card>
         <div slot="title" class="head">
             <span class="title">Relevant records</span>
-            <span class="count">{count} found &middot; switch on the ones that belong on this review, then Submit</span>
+            <span class="count">{subtitle}</span>
         </div>
         <div slot="actions" class="actions">
             <c-ask-cq-popover record-id={recordId} suggestions={suggestions}></c-ask-cq-popover>
             <lightning-button label={submitLabel} variant="brand" onclick={handleSubmit} disabled={submitDisabled}></lightning-button>
         </div>
 
+        <div class="sub">{summaryLine}</div>
+
         <template if:true={error}>
             <div class="err">{error}</div>
+        </template>
+        <template if:true={notice}>
+            <div class="ok">{notice}</div>
+        </template>
+        <template if:true={loading}>
+            <div class="loading"><lightning-spinner alternative-text="Scouting" size="small"></lightning-spinner></div>
         </template>
 
         <table class="grid">
@@ -29,7 +37,11 @@
                 <template for:each={rows} for:item="r">
                     <tr key={r.id}>
                         <td><span class={r.badgeClass}>{r.score}</span></td>
-                        <td><a href={r.link} target="_blank" class="num">{r.recordNumber}</a><div class="type">{r.recordType}</div></td>
+                        <td>
+                            <a href={r.link} target="_blank" class="num">{r.recordNumber}</a>
+                            <template if:true={r.suggested}><span class="tag">&#10022; Suggested</span></template>
+                            <div class="type">{r.recordType}</div>
+                        </td>
                         <td class="muted">{r.status}</td>
                         <td>{r.title}</td>
                         <td class="muted">{r.match}</td>
