@@ -33,8 +33,9 @@
 .pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 12px; border: none; background: #f3e6f7; color: #b05fc0; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .pill .st { font-size: 13px; }
 .pill:hover { background: #ead6f0; }
-.pill.sm { height: 22px; padding: 0 9px; font-size: 11px; }
-.pill.sm .st { font-size: 11px; }
+/* read-only count above the table: grey so it does not look like the clickable purple pills */
+.tag { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 11px; background: #f0f1f3; color: #5c6572; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.tag .st { font-size: 11px; }
 
 .switch { width: 36px; height: 20px; border-radius: 10px; border: none; padding: 0; position: relative; background: #d5dbe3; cursor: pointer; }
 .switch.on { background: #2f6fb5; }
