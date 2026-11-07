@@ -28,7 +28,7 @@
                     </template>
                 </div>
 
-                <template if:false={hasMessages}>
+                <template if:true={showSuggestions}>
                     <div class="suggest">
                         <span class="label">Questions for this page</span>
                         <template for:each={suggestionList} for:item="q">

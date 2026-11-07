@@ -29,11 +29,15 @@ export default class AskCqPopover extends LightningElement {
     sessionId;
     sequence = 1;
     _seq = 0;
+    asked = false;        // the user has sent a first question
+    _starting;            // the in-flight startSession, so two callers share one session
 
     get suggestionList() {
         return (this.suggestions || '').split(',').map((s) => s.trim()).filter(Boolean).map((q) => ({ key: q, label: q }));
     }
     get hasMessages() { return this.messages.length > 0; }
+    /** The ready questions stay until the user asks something, whatever the agent has said. */
+    get showSuggestions() { return !this.asked; }
     get sendDisabled() { return this.busy || !this.draft; }
 
     toggle() {
@@ -41,10 +45,11 @@ export default class AskCqPopover extends LightningElement {
     }
 
     async openPanel() {
+        // Open on the ready questions. The session starts quietly behind them; the agent speaks only when asked.
         this.open = true;
         this.error = undefined;
-        if (!this.sessionId) { this.busy = true; await this.start(); this.busy = false; }
         this.focusInput();
+        this.ensureSession();
     }
 
     async close() {
@@ -53,32 +58,40 @@ export default class AskCqPopover extends LightningElement {
         this.sessionId = undefined;
         this.sequence = 1;
         this.messages = [];
+        this.asked = false;
+        this._starting = undefined;
         if (id) { try { await endSession({ sessionId: id }); } catch (e) { /* session will expire on its own */ } }
     }
 
     @api
     async ask(question) {
-        // Show the question at once; the session starts behind the spinner.
+        // Show the question at once; if the session is still starting, wait for it rather than drop the click.
+        if (!question) { return; }
         this.open = true;
         this.error = undefined;
         this.push('user', question);
+        this.asked = true;
+        this.draft = '';
         this.busy = true;
-        if (!this.sessionId) { await this.start(true); }
+        await this.ensureSession();
         if (this.sessionId) { await this.send(question, true); } else { this.busy = false; }
         this.focusInput();
     }
 
-    async start(quiet) {
-        this.busy = true;
-        try {
-            const r = await startSession({ recordId: this.recordId, agentId: this._agentId });
-            this.sessionId = r.sessionId;
-            this.sequence = r.nextSequence;
-            if (r.text && !quiet) { this.push('agent', r.text); }   // no greeting when a ✦ asked a question
-        } catch (e) {
-            this.error = this.errorText(e);
-            this.busy = false;
+    /** Starts the agent session once; later callers share the same promise. The greeting is not shown. */
+    ensureSession() {
+        if (this.sessionId) { return Promise.resolve(); }
+        if (!this._starting) {
+            const p = startSession({ recordId: this.recordId, agentId: this._agentId })
+                .then((r) => {
+                    if (this._starting !== p) { endSession({ sessionId: r.sessionId }).catch(() => {}); return; }   // closed meanwhile
+                    this.sessionId = r.sessionId; this.sequence = r.nextSequence;
+                })
+                .catch((e) => { if (this._starting === p) { this.error = this.errorText(e); } })
+                .finally(() => { if (this._starting === p) { this._starting = undefined; } });
+            this._starting = p;
         }
+        return this._starting;
     }
 
     async send(text, alreadyShown) {
@@ -101,10 +114,10 @@ export default class AskCqPopover extends LightningElement {
         }
     }
 
-    handleSuggestion(event) { this.send(event.currentTarget.dataset.q); }
+    handleSuggestion(event) { this.ask(event.currentTarget.dataset.q); }
     handleDraft(event) { this.draft = event.target.value; }
-    handleKey(event) { if (event.key === 'Enter' && !this.sendDisabled) { this.send(this.draft); } }
-    handleSend() { this.send(this.draft); }
+    handleKey(event) { if (event.key === 'Enter' && !this.sendDisabled) { this.ask(this.draft); } }
+    handleSend() { this.ask(this.draft); }
 
     push(role, text) {
         this._seq += 1;
