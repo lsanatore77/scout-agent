@@ -5,6 +5,20 @@
         </div>
         <div slot="actions" class="actions">
             <lightning-input type="checkbox" label="Include BOM" checked={includeBom} onchange={handleBom} class="bom"></lightning-input>
+            <div class="cols">
+                <lightning-button-icon icon-name="utility:settings" variant="border" size="small" alternative-text="Choose columns" title="Choose columns" onclick={toggleCols}></lightning-button-icon>
+                <template if:true={colsOpen}>
+                    <div class="cols-menu" role="menu">
+                        <div class="cols-title">Columns</div>
+                        <template for:each={colOptions} for:item="c">
+                            <label key={c.key} class="cols-item">
+                                <input type="checkbox" data-key={c.key} checked={c.on} onchange={handleCol} />
+                                <span>{c.label}</span>
+                            </label>
+                        </template>
+                    </div>
+                </template>
+            </div>
         </div>
 
         <template if:true={hasSuggested}>
@@ -37,10 +51,10 @@
                 <tr>
                     <th class="c-score">Score</th>
                     <th>Record</th>
-                    <th>Status</th>
-                    <th>Title</th>
-                    <th>Root Cause</th>
-                    <th>Matched on</th>
+                    <template if:true={col.status}><th>Status</th></template>
+                    <template if:true={col.title}><th>Title</th></template>
+                    <template if:true={col.rootCause}><th>Root Cause</th></template>
+                    <template if:true={col.match}><th>Matched on</th></template>
                     <th class="c-why">&#10022;</th>
                     <th class="c-add">Add to PHR</th>
                 </tr>
@@ -54,10 +68,10 @@
                             <div class="line">{r.partText}</div>
                             <div class="line dim">{r.lotText}</div>
                         </td>
-                        <td class="muted">{r.status}</td>
-                        <td>{r.titleText}</td>
-                        <td>{r.rootCauseText}</td>
-                        <td class="muted">{r.match}</td>
+                        <template if:true={col.status}><td class="muted">{r.status}</td></template>
+                        <template if:true={col.title}><td>{r.titleText}</td></template>
+                        <template if:true={col.rootCause}><td>{r.rootCauseText}</td></template>
+                        <template if:true={col.match}><td class="muted">{r.match}</td></template>
                         <td class="c-why">
                             <template if:true={r.suggested}>
                                 <button class="pill" data-q={r.why} onclick={handleWhy} title={r.why}><span class="st">&#10022;</span>CQ.AI Suggested</button>

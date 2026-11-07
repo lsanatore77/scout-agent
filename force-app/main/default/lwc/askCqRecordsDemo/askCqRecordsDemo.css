@@ -1,6 +1,12 @@
 .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .title { font-size: 15px; font-weight: 700; }
-.actions { display: flex; align-items: center; gap: 8px; }
+.actions { display: flex; align-items: center; gap: 10px; }
+.cols { position: relative; }
+.cols-menu { position: absolute; right: 0; top: 30px; z-index: 20; background: #fff; border: 1px solid #e3e6ea; border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.12); padding: 8px 0; min-width: 160px; }
+.cols-title { font-size: 11px; font-weight: 700; color: #5c6572; text-transform: uppercase; letter-spacing: .4px; padding: 2px 12px 6px; }
+.cols-item { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+.cols-item:hover { background: #f5f6f8; }
+.cols-item input { margin: 0; }
 .err { margin: 0 16px 8px; color: #9b2c2c; background: #fbe9e7; border-radius: 6px; padding: 8px 10px; font-size: 12px; }
 .ok { margin: 0 16px 8px; color: #2f5d3a; background: #e6f4ea; border-radius: 6px; padding: 8px 10px; font-size: 12px; }
 .sub { margin: 0 16px 10px; }

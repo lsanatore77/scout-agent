@@ -4,6 +4,13 @@ import addSelected from '@salesforce/apex/AskCqWorkspaceController.addSelected';
 
 const PAGE_SIZE = 5;
 const TYPE_ORDER = ['Nonconformance', 'CAPA', 'Change Order', 'Inspection', 'Investigation'];
+const COLS_KEY = 'phrWorkspace.records.columns';   // per user, per browser
+const OPTIONAL_COLS = [
+    { key: 'status', label: 'Status' },
+    { key: 'title', label: 'Title' },
+    { key: 'rootCause', label: 'Root Cause' },
+    { key: 'match', label: 'Matched on' }
+];
 const TYPE_LABEL = { 'Nonconformance': 'NC', 'CAPA': 'CAPA', 'Change Order': 'Change', 'Inspection': 'Inspection', 'Investigation': 'Investigation' };
 
 /**
@@ -23,8 +30,13 @@ export default class AskCqRecordsDemo extends LightningElement {
     tab;
     pages = {};   // tab -> current page (1-based)
     includeBom = true;   // off = only the complaint's own part and lot; on = also records linked through the assembly (BOM)
+    col = { status: true, title: true, rootCause: true, match: true };   // optional columns; Score, Record, ✦ and Add to PHR are fixed
+    colsOpen = false;
 
-    connectedCallback() { this.load(); }
+    connectedCallback() {
+        this.col = { ...this.col, ...readCols() };
+        this.load();
+    }
 
     async load() {
         this.loading = true;
@@ -119,6 +131,16 @@ export default class AskCqRecordsDemo extends LightningElement {
             this.tab = first || (this.shown[0] && this.shown[0].recordType);
         }
     }
+    // ----- columns (level 1: remembered in this browser) -----
+
+    get colOptions() { return OPTIONAL_COLS.map((c) => ({ ...c, on: !!this.col[c.key] })); }
+    toggleCols() { this.colsOpen = !this.colsOpen; }
+    handleCol(event) {
+        const key = event.target.dataset.key;
+        this.col = { ...this.col, [key]: event.target.checked };
+        writeCols(this.col);
+    }
+
     handlePrev() { if (this.page > 1) { this.pages = { ...this.pages, [this.tab]: this.page - 1 }; } }
     handleNext() { if (this.page < this.pageCount) { this.pages = { ...this.pages, [this.tab]: this.page + 1 }; } }
 
@@ -167,4 +189,11 @@ export default class AskCqRecordsDemo extends LightningElement {
             this.busy = false;
         }
     }
+}
+
+function readCols() {
+    try { const v = window.localStorage.getItem(COLS_KEY); return v ? JSON.parse(v) : {}; } catch (e) { return {}; }
+}
+function writeCols(col) {
+    try { window.localStorage.setItem(COLS_KEY, JSON.stringify(col)); } catch (e) { /* private window or storage off: the choice lasts for this page only */ }
 }
