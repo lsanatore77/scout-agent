@@ -1,7 +1,7 @@
 .ws { background: #fff; border-radius: 8px; border: 1px solid #e3e6ea; overflow: hidden; }
 
 /* highlights panel */
-.hl { padding: 14px 20px 12px; border-bottom: 1px solid #eceff2; display: flex; flex-direction: column; gap: 12px; }
+.hl { padding: 14px 20px 12px; background: #f3f3f3; border-bottom: 1px solid #e5e5e5; display: flex; flex-direction: column; gap: 12px; }
 .hl-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .hl-who { display: flex; align-items: center; gap: 12px; }
 .hl-icon { display: inline-flex; }
