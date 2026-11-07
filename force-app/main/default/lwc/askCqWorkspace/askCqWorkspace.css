@@ -5,6 +5,8 @@
 .hl-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .hl-who { display: flex; align-items: center; gap: 12px; }
 .hl-icon { display: inline-flex; }
+/* Same icon and colour Salesforce gives the Product History Review object (theme colour 747E96, no custom icon). */
+.hl-icon lightning-icon { --slds-c-icon-color-background: #747e96; --sds-c-icon-color-background: #747e96; }
 .hl-name { display: flex; flex-direction: column; gap: 1px; }
 .hl-obj { font-size: 12px; color: #5c6572; }
 .hl-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
