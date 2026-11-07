@@ -126,14 +126,6 @@ export default class AskCqRecordsDemo extends LightningElement {
 
     get count() { return this.shown.length; }
     get suggestedCount() { return this.shown.filter((r) => r.suggested && !r.added).length; }
-    get subtitle() {
-        if (!this.header) { return ''; }
-        const bits = [];
-        if (this.header.complaintName) { bits.push(this.header.complaintName); }
-        if (this.header.partName) { bits.push(this.header.partName); }
-        if (this.header.lotNumber) { bits.push('lot ' + this.header.lotNumber); }
-        return bits.join(' · ');
-    }
     get hasSuggested() { return this.suggestedCount > 0; }
     /** "✦ CQ.AI Suggested – 1 Recommendation" above the table; nothing when CQ.AI suggests nothing. */
     get summaryLabel() {

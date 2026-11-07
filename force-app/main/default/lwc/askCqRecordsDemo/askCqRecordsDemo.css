@@ -1,6 +1,5 @@
 .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .title { font-size: 15px; font-weight: 700; }
-.count { font-size: 12px; color: #5c6572; font-weight: 400; }
 .actions { display: flex; align-items: center; gap: 8px; }
 .err { margin: 0 16px 8px; color: #9b2c2c; background: #fbe9e7; border-radius: 6px; padding: 8px 10px; font-size: 12px; }
 .ok { margin: 0 16px 8px; color: #2f5d3a; background: #e6f4ea; border-radius: 6px; padding: 8px 10px; font-size: 12px; }
