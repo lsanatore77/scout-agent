@@ -134,8 +134,17 @@ export default class AskCqRecordsDemo extends LightningElement {
         if (this.header.lotNumber) { bits.push('lot ' + this.header.lotNumber); }
         return bits.join(' · ');
     }
-    get summaryLine() {
-        return this.count + ' relevant records · ' + this.suggestedCount + ' CQ.AI suggested · switch on the ones that belong on this review, then Submit';
+    get hasSuggested() { return this.suggestedCount > 0; }
+    /** "✦ CQ.AI Suggested – 1 Recommendation" above the table; nothing when CQ.AI suggests nothing. */
+    get summaryLabel() {
+        const n = this.suggestedCount;
+        return 'CQ.AI Suggested \u2013 ' + n + (n === 1 ? ' Recommendation' : ' Recommendations');
+    }
+    get summaryWhy() {
+        const names = this.shown.filter((r) => r.suggested && !r.added).map((r) => r.recordNumber);
+        return names.length === 1
+            ? 'Why is ' + names[0] + ' suggested for this review?'
+            : 'Why are ' + names.join(', ') + ' suggested for this review?';
     }
     get submitLabel() { return this.staged.size ? 'Submit (' + this.staged.size + ')' : 'Submit'; }
     get submitDisabled() { return this.busy || this.loading || this.staged.size === 0; }

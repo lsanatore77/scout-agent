@@ -8,7 +8,11 @@
             <lightning-input type="checkbox" label="Include BOM" checked={includeBom} onchange={handleBom} class="bom"></lightning-input>
         </div>
 
-        <div class="sub">{summaryLine}</div>
+        <template if:true={hasSuggested}>
+            <div class="sub">
+                <button class="pill sm" data-q={summaryWhy} onclick={handleWhy} title={summaryWhy}><span class="st">&#10022;</span>{summaryLabel}</button>
+            </div>
+        </template>
 
         <template if:true={error}>
             <div class="err">{error}</div>
