@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
+        <members>AskCqSecrets</members>
+        <members>AskCqService</members>
+        <members>AskCqServiceTest</members>
+        <members>AskCqWorkspaceController</members>
         <members>AssociatedItemsAssemblyInfo</members>
         <members>AssociatedItemsInvestigationInfo</members>
         <members>AssociatedItemsLineItemInfo</members>
@@ -80,6 +84,9 @@
         <name>ApexPage</name>
     </types>
     <types>
+        <members>askCqPopover</members>
+        <members>askCqRecordsDemo</members>
+        <members>askCqWorkspace</members>
         <members>associatedItemsReport</members>
         <members>phrChecklist</members>
         <members>phrLeadLists</members>
