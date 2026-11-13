@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Action_Review__c</fullName>
+    <label>Field Action Review</label>
+    <description>Set at triage: whether this nonconformance was sent to the recall coordinator for field action review.</description>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Not Needed</fullName><default>false</default><label>Not Needed</label></value>
+            <value><fullName>Sent for Review</fullName><default>false</default><label>Sent for Review</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

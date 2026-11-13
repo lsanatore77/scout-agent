@@ -1,0 +1,49 @@
+<template>
+    <section class="panel">
+        <h2 class="h">Triage at a Glance</h2>
+        <template if:true={error}><div class="err">{error}</div></template>
+        <template if:true={ready}>
+            <div class="problem">
+                <div class="photo">No photo attached</div>
+                <div class="ptext">
+                    <div class="plabel">The problem</div>
+                    <div class="quote">{description}</div>
+                    <div class="tiles">
+                        <template for:each={tiles} for:item="t">
+                            <div key={t.key} class="tile"><div class="tl">{t.label}</div><div class={t.cls}>{t.value}</div></div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            <div class="cards">
+                <template for:each={cards} for:item="c">
+                    <div key={c.id} class={c.cls}>
+                        <div class="chead"><span class="ct">{c.title}</span><template if:true={c.isSuggestion}><span class="star" title="CQ.AI Suggestion">&#10022;</span></template></div>
+                        <div class="cheadline">{c.headline}</div>
+                        <div class="cwhy">{c.why}</div>
+                        <template if:true={c.flag}><div class="cflag">{c.flag}</div></template>
+                        <template if:true={c.isOpen}>
+                            <ul class="facts">
+                                <template for:each={c.facts} for:item="f">
+                                    <li key={f.key}><span class="fk">{f.k}</span><span class={f.cls}>{f.v}</span></li>
+                                </template>
+                            </ul>
+                        </template>
+                        <div class="grow"></div>
+                        <button class="more" data-id={c.id} onclick={handleToggle} aria-expanded={c.isOpen}>{c.toggleLabel}</button>
+                    </div>
+                </template>
+            </div>
+            <div class="actions">
+                <button class="btn primary" disabled title="The Triage Assistant is the next piece to build"><span class="star w">&#10022;</span>Triage Assistant</button>
+                <button class="btn outline" onclick={handleEdit}>Edit</button>
+                <template if:true={hasGaps}><button class="btn" onclick={handleGaps}>{gapsLabel}</button></template>
+            </div>
+            <template if:true={showGaps}>
+                <ul class="gaps">
+                    <template for:each={gaps} for:item="x"><li key={x.key}>{x.text}</li></template>
+                </ul>
+            </template>
+        </template>
+    </section>
+</template>

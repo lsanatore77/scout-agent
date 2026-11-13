@@ -1,0 +1,33 @@
+<template>
+    <div class={boxClass}>
+        <div class="left">
+            <div class="ttl">Field Action Review</div>
+            <div class="val">{statusText}</div>
+        </div>
+        <div class="mid">
+            <template if:true={fa}>
+                <div class="sug"><span class="star">&#10022;</span>CQ.AI Suggests: <span class="rec">{fa.suggestion}</span></div>
+                <div class="why">{fa.suggestionWhy}</div>
+            </template>
+            <template if:true={asking}>
+                <label class="lbl" for="why">Why does this need field action review? (required)</label>
+                <textarea id="why" class="ta" rows="2" oninput={handleReason} placeholder="For example: this lot may have shipped before the hold"></textarea>
+            </template>
+            <template if:true={doneNote}><div class={noteClass}>{doneNote}</div></template>
+            <template if:true={error}><div class="err">{error}</div></template>
+        </div>
+        <div class="btns">
+            <template if:true={isOpen}>
+                <button class="btn" onclick={handleNotNeeded} disabled={busy}>Not Needed</button>
+                <button class="btn red" onclick={handleAsk} disabled={busy}>Send for Review</button>
+            </template>
+            <template if:true={asking}>
+                <button class="link grey" onclick={handleCancel}>Cancel</button>
+                <button class="btn solid" onclick={handleSend} disabled={cannotSend}>Send to Recall Coordinator</button>
+            </template>
+            <template if:true={isDone}>
+                <button class="link" onclick={handleChange} disabled={busy}>Change</button>
+            </template>
+        </div>
+    </div>
+</template>

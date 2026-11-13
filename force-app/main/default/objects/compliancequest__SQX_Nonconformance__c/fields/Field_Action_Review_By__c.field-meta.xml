@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Action_Review_By__c</fullName>
+    <label>Field Action Review Set By</label>
+    <referenceTo>User</referenceTo>
+    <relationshipName>NC_Field_Action_Reviews</relationshipName>
+    <relationshipLabel>NC Field Action Reviews</relationshipLabel>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>
