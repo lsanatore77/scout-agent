@@ -1,7 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import saveTriage from '@salesforce/apex/CqTriageAssistant.saveTriage';
 
-const STEPS = ['Under control?', 'Data check', 'Risk', 'Path'];
+const STEPS = ['Containment', 'Data Check', 'Risk', 'Path'];
 const RISKS = ['Low', 'Medium', 'High'];
 const ASKS = ['More photos', 'Measurements', 'When it started', 'Other lots affected?'];
 const DISPS = ['Rework', 'Use as is', 'Scrap', 'Return to supplier'];
@@ -61,11 +61,21 @@ export default class CqTriageAssistant extends LightningElement {
     get is3() { return !this.done && this.step === 3; }
     get working() { return !this.done; }
 
-    // ---- step 1: under control?
-    get facts() {
-        const rows = [...(this.card('cont').facts || []), ...['Same lot', 'Complaints'].map((k) => this.fact('risk', k)).filter(Boolean)];
-        return rows.map((f, i) => ({ key: 'f' + i, k: f.k, v: f.v, icon: f.warn ? '!' : '✓', cls: 'row' + (f.warn ? ' bad' : '') }));
+    // ---- step 1: containment
+    get factLines() {
+        const g = this.g;
+        const same = this.fact('risk', 'Same lot');
+        const comp = this.fact('risk', 'Complaints');
+        const lines = [
+            { t: (g.lot ? 'Lot ' + g.lot : 'No lot recorded') + (g.lotQuantity != null ? ', ' + g.lotQuantity + ' in the lot.' : ', quantity not recorded.'), warn: !g.lot },
+            { t: this.contained ? 'Containment is already recorded on this NC.' : 'No containment is recorded on this NC yet.', warn: !this.contained },
+            same && { t: same.v + '.', warn: same.warn },
+            comp && { t: 'Complaints: ' + comp.v + '.', warn: comp.warn },
+            { t: 'Hold status and shipments are not known (no ERP connection).', muted: true }
+        ].filter(Boolean);
+        return lines.map((l, i) => ({ key: 'f' + i, text: l.t, cls: 'fline' + (l.warn ? ' bad' : l.muted ? ' muted' : '') }));
     }
+    get suggestedAct() { return this.contained ? 'No action' : this.g.lot ? 'Hold lot ' + this.g.lot : 'Hold the affected stock'; }
     get actions() {
         const lot = this.g.lot;
         const defs = [
@@ -163,7 +173,7 @@ export default class CqTriageAssistant extends LightningElement {
     buildSummary() {
         return [
             { k: 'Containment', v: this.noAction ? 'No action: ' + this.noActionWhy.trim() : this.chosenActs.join('; ') },
-            { k: 'Data check', v: this.dataAsk ? 'More information requested: ' + [...this.askList, this.askNote.trim()].filter(Boolean).join(', ') : 'Good enough' },
+            { k: 'Data Check', v: this.dataAsk ? 'More information requested: ' + [...this.askList, this.askNote.trim()].filter(Boolean).join(', ') : 'Good enough' },
             { k: 'Risk', v: this.risk + (this.riskChanged ? ' (changed from CQ.AI ' + this.suggestedRisk + ': ' + this.riskWhy.trim() + ')' : ' (as CQ.AI suggested)') },
             { k: 'Path', v: this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : 'Log only: ' + this.disp + ' (' + this.logWhy.trim() + ')' }
         ];

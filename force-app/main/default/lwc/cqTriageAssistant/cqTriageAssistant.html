@@ -13,14 +13,8 @@
                 </nav>
                 <div class="main">
                     <template if:true={is0}>
-                        <h3 class="q">Is It Under Control?</h3>
+                        <h3 class="q">Containment</h3>
                         <div class="cols">
-                            <div class="col">
-                                <div class="lab">Facts</div>
-                                <template for:each={facts} for:item="f">
-                                    <div key={f.key} class={f.cls}><span class="ic">{f.icon}</span><div class="rt"><div class="rv">{f.v}</div><div class="rk">{f.k}</div></div></div>
-                                </template>
-                            </div>
                             <div class="col">
                                 <div class="lab">Possible actions</div>
                                 <template for:each={actions} for:item="a">
@@ -36,11 +30,20 @@
                                     </label>
                                 </template>
                             </div>
+                            <div class="col">
+                                <div class="lab">What we know</div>
+                                <div class="factcard">
+                                    <ul class="flist">
+                                        <template for:each={factLines} for:item="f"><li key={f.key} class={f.cls}>{f.text}</li></template>
+                                    </ul>
+                                    <div class="fsug"><span class="star">&#10022;</span> CQ.AI suggests: <strong>{suggestedAct}</strong></div>
+                                </div>
+                            </div>
                         </div>
                     </template>
 
                     <template if:true={is1}>
-                        <h3 class="q">Data check</h3>
+                        <h3 class="q">Data Check</h3>
                         <p class="p">What was reported, and is it enough to send on? Photos and a description may be all you get.</p>
                         <template for:each={dataRows} for:item="r">
                             <div key={r.key} class={r.cls}><span class="ic">{r.icon}</span><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
