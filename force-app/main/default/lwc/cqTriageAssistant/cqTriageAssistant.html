@@ -1,9 +1,16 @@
 <template>
-    <div class="veil" role="dialog" aria-modal="true" aria-label="Triage Assistant">
-        <div class="box">
+    <div class={veilCls} role={dlgRole} aria-modal={dlgModal} aria-label={heading}>
+        <div class={boxCls}>
             <header class="top">
-                <div class="tt"><div class="h"><span class="star">&#10022;</span> Triage Assistant</div><div class="sub">{title}</div></div>
-                <button class="x" onclick={handleClose} aria-label="Close">&times;</button>
+                <div class="tt"><div class="h"><span class="star">&#10022;</span> {heading}</div><div class="sub">{title}</div></div>
+                <template if:true={popup}><button class="x" onclick={handleClose} aria-label="Close">&times;</button></template>
+                <template if:true={topNav}>
+                    <div class="topnav">
+                        <span class="blocker">{blocker}</span>
+                        <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
+                        <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+                    </div>
+                </template>
             </header>
             <div class="body">
                 <nav class="steps" aria-label="Triage steps">
@@ -21,8 +28,11 @@
                         </button>
                     </template>
                     <div class="progress">{progress}</div>
+                    <template if:true={canRestart}><button class="restart" onclick={handleRestart}>Start over</button></template>
                 </nav>
                 <div class="main">
+                    <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
+                    <template if:true={isGlance}><slot></slot></template>
                     <template if:true={is0}>
                         <h3 class="q">Containment</h3>
                         <div class="cols">
@@ -232,12 +242,12 @@
                             <div key={r.key} class="row slim"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
                         </template>
                         <template if:true={warning}><div class="warnbox">{warning}</div></template>
-                        <div class="opts"><button class="btn primary" onclick={handleClose}>Back to the nonconformance</button></div>
+                        <template if:true={popup}><div class="opts"><button class="btn primary" onclick={handleClose}>Back to the nonconformance</button></div></template>
                     </template>
                     <template if:true={error}><div class="errbox">{error}</div></template>
                 </div>
             </div>
-            <template if:true={working}>
+            <template if:true={footNav}>
                 <footer class="foot">
                     <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
                     <span class="grow"></span>

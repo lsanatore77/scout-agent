@@ -1,0 +1,8 @@
+<template>
+    <template if:true={error}><div class="err">{error}</div></template>
+    <template if:true={ready}>
+        <c-cq-triage-assistant inline record-id={recordId} glance={g} has-photo={hasPhoto} onchanged={handleChanged} ondone={handleChanged}>
+            <c-cq-triage-glance embedded record-id={recordId} onchanged={handleChanged}></c-cq-triage-glance>
+        </c-cq-triage-assistant>
+    </template>
+</template>

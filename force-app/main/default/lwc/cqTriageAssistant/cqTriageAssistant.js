@@ -6,6 +6,8 @@ import saveRisk from '@salesforce/apex/CqTriageRisk.saveRisk';
 import getLinks from '@salesforce/apex/CqTriageLinks.getLinks';
 import getOne from '@salesforce/apex/CqTriageLinks.getOne';
 import saveLinks from '@salesforce/apex/CqTriageLinks.saveLinks';
+import getDraft from '@salesforce/apex/CqTriageDraft.getDraft';
+import saveDraft from '@salesforce/apex/CqTriageDraft.saveDraft';
 import userId from '@salesforce/user/Id';
 
 const STEPS = ['Containment', 'Data Check', 'Risk', 'Investigation Links'];
@@ -14,14 +16,21 @@ const LIK = ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'];
 const band = (n) => (n >= 15 ? 'High' : n >= 6 ? 'Medium' : 'Low');
 const ASKS = ['More photos', 'Measurements', 'When it started', 'Other lots affected?'];
 
-/** Triage Assistant: four steps over the facts in Triage at a Glance (containment, data check, risk, investigation links). CQ.AI suggests, the triager decides. */
+/**
+ * Triage Assistant: containment, data check, risk, investigation links. CQ.AI suggests, the triager decides.
+ * As a popup it is those four steps. With inline set (Triage workspace) it sits in the page, Triage at a Glance
+ * is slotted in as step 1, and work in progress is remembered on the record.
+ */
 export default class CqTriageAssistant extends LightningElement {
     @api recordId;
     @api glance;
     @api hasPhoto = false;
+    @api inline = false;
 
     step = 0;
     maxStep = 0;
+    booted = false;
+    resumed = false;
     done = false;
     saving = false;
     error;
@@ -50,22 +59,68 @@ export default class CqTriageAssistant extends LightningElement {
     summary = [];
 
     async connectedCallback() {
-        const d = new Date(Date.now() + 86400000);
-        const p = (n) => String(n).padStart(2, '0');
-        this.due = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        this.due = this.tomorrow();
+        let draft;
+        if (this.inline) {
+            try { const d = await getDraft({ recordId: this.recordId }); draft = d ? JSON.parse(d) : null; } catch (e) { draft = null; }
+        }
+        if (draft && draft.v === 1) {
+            ['step', 'maxStep', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'picks', 'extra'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
+            this.resumed = this.maxStep > 0;
+        }
+        this.booted = true;
         try {
             this.rk = await getRisk({ recordId: this.recordId });
         } catch (e) {
             this.rk = { count: 0, recent: [], severity: 3, severityAssumed: true, severityWhy: 'Assumed: could not read the record', likelihood: 1, likelihoodWhy: 'Could not count recent NCs', escaped: false };
         }
-        this.sev = this.rk.severity;
-        this.lik = this.rk.likelihood;
+        const keep = draft && draft.v === 1 && draft.sev && draft.lik;
+        this.sev = keep ? draft.sev : this.rk.severity;
+        this.lik = keep ? draft.lik : this.rk.likelihood;
         try {
             this.lk = await getLinks({ recordId: this.recordId });
         } catch (e) {
             this.lk = { items: [] };
             this.linkError = 'Could not look for related investigations.';
         }
+    }
+
+    tomorrow() {
+        const d = new Date(Date.now() + 86400000);
+        const p = (n) => String(n).padStart(2, '0');
+        return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+
+    // ---- in the page (Triage workspace) or as a popup
+    get off() { return this.inline ? 1 : 0; }
+    get cur() { return this.step - this.off; }
+    get last() { return STEPS.length - 1 + this.off; }
+    get veilCls() { return 'veil' + (this.inline ? ' inline' : ''); }
+    get boxCls() { return 'box' + (this.inline ? ' inline' : ''); }
+    get dlgRole() { return this.inline ? undefined : 'dialog'; }
+    get dlgModal() { return this.inline ? undefined : 'true'; }
+    get heading() { return this.inline ? 'CQ.AI Triage' : 'Triage Assistant'; }
+    get popup() { return !this.inline; }
+    get topNav() { return this.inline && !this.done; }
+    get footNav() { return !this.inline && !this.done; }
+    get showResumed() { return this.resumed && this.live; }
+    get canRestart() { return this.inline && (this.done || this.maxStep > 0) && !this.saving; }
+
+    // work in progress is kept on the record (workspace only) and cleared on Complete triage
+    persist() {
+        if (!this.inline || this.done) { return; }
+        const s = {};
+        ['step', 'maxStep', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra'].forEach((k) => { s[k] = this[k]; });
+        saveDraft({ recordId: this.recordId, draft: JSON.stringify({ v: 1, ...s }) }).catch(() => {});
+    }
+    handleRestart() {
+        this.step = 0; this.maxStep = 0; this.done = false; this.resumed = false;
+        this.error = undefined; this.warning = undefined;
+        this.acts = {}; this.noActionWhy = ''; this.due = this.tomorrow(); this.showAdd = false; this.added = [];
+        this.data = ''; this.asks = {}; this.askNote = '';
+        if (this.rk) { this.sev = this.rk.severity; this.lik = this.rk.likelihood; }
+        this.picks = {}; this.extra = []; this.summary = [];
+        if (this.inline) { saveDraft({ recordId: this.recordId, draft: null }).catch(() => {}); }
     }
 
     // ---- facts from the glance
@@ -83,33 +138,38 @@ export default class CqTriageAssistant extends LightningElement {
 
     // ---- step rail (same pattern as the PHR workspace): a step ticks only when it has a valid answer
     get valid() {
-        return [
+        const v = [
             (this.hasActs && !!this.due) || (this.noAction && !!this.noActionWhy.trim()) || this.hasAdded,
             this.data === 'ok' || (this.dataAsk && (this.askList.length > 0 || !!this.askNote.trim())),
-            this.maxStep > 2,
+            this.maxStep > 2 + this.off,
             this.done
         ];
+        return this.inline ? [this.maxStep > 0, ...v] : v;
     }
     get steps() {
         const n = this.chosenActs.length + this.added.length;
         const subs = [
             this.noAction ? 'No action' : n ? n + ' action' + (n > 1 ? 's' : '') : 'Not decided',
             this.data === 'ok' ? 'Good enough' : this.data === 'ask' ? 'More information requested' : 'Not checked',
-            this.maxStep > 2 || this.done ? this.risk + ' \u00b7 score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
+            this.maxStep > 2 + this.off || this.done ? this.risk + ' \u00b7 score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
             this.linkCount ? this.linkCount + ' to link' : this.done ? 'None linked' : 'Optional'
         ];
         const valid = this.valid;
-        return STEPS.map((label, i) => {
+        const names = this.inline ? ['Triage at a Glance', ...STEPS] : STEPS;
+        if (this.inline) { subs.unshift(this.maxStep > 0 || this.done ? 'Reviewed' : 'Start here'); }
+        return names.map((label, i) => {
             const stepDone = this.done || valid[i];
             return { i, n: i + 1, label, sub: subs[i], done: stepDone, notDone: !stepDone,
                 cls: 'step' + (!this.done && i === this.step ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done || i > this.maxStep };
         });
     }
-    get progress() { return this.steps.filter((x) => x.done).length + ' of ' + STEPS.length + ' steps complete'; }
-    get is0() { return !this.done && this.step === 0; }
-    get is1() { return !this.done && this.step === 1; }
-    get is2() { return !this.done && this.step === 2; }
-    get is3() { return !this.done && this.step === 3; }
+    get progress() { return this.steps.filter((x) => x.done).length + ' of ' + this.steps.length + ' steps complete'; }
+    get live() { return this.booted && !this.done; }
+    get isGlance() { return this.live && this.cur === -1; }
+    get is0() { return this.live && this.cur === 0; }
+    get is1() { return this.live && this.cur === 1; }
+    get is2() { return this.live && this.cur === 2; }
+    get is3() { return this.live && this.cur === 3; }
     get working() { return !this.done; }
 
     // ---- step 1: containment
@@ -169,6 +229,8 @@ export default class CqTriageAssistant extends LightningElement {
             this.cDesc = '';
             this.cAssignee = userId;
             this.showAdd = false;
+            this.persist();
+            this.dispatchEvent(new CustomEvent('changed'));
         } catch (e) {
             this.addError = (e && e.body && e.body.message) || 'Could not create the containment.';
         }
@@ -300,26 +362,27 @@ export default class CqTriageAssistant extends LightningElement {
 
     // ---- navigation
     get blocker() {
-        if (this.step === 0) {
+        if (!this.booted) { return 'Loading'; }
+        if (this.cur === 0) {
             if (!this.hasActs && !this.noAction && !this.hasAdded) { return 'Choose an action, add a containment, or No action'; }
             if (this.hasActs && !this.due) { return 'Set a due date'; }
             if (this.noAction && !this.noActionWhy.trim()) { return 'Say why no action is needed'; }
         }
-        if (this.step === 1) {
+        if (this.cur === 1) {
             if (!this.data) { return 'Is the data good enough?'; }
             if (this.dataAsk && !this.askList.length && !this.askNote.trim()) { return 'Say what you need'; }
         }
-        if (this.step === 2 && !this.rk) { return 'Working out the risk'; }
-        if (this.step === 3 && !this.lk) { return 'Looking for related investigations'; }
+        if (this.cur === 2 && !this.rk) { return 'Working out the risk'; }
+        if (this.cur === 3 && !this.lk) { return 'Looking for related investigations'; }
         return '';
     }
     get cantNext() { return !!this.blocker || this.saving; }
     get cantBack() { return this.step === 0 || this.saving; }
-    get nextLabel() { return this.saving ? 'Saving…' : this.step === 3 ? 'Complete triage' : 'Next'; }
-    handleBack() { if (this.step > 0) { this.step -= 1; } }
+    get nextLabel() { return this.saving ? 'Saving…' : this.step === this.last ? 'Complete triage' : 'Next'; }
+    handleBack() { if (this.step > 0) { this.step -= 1; this.persist(); } }
     handleStep(event) {
         const i = Number(event.currentTarget.dataset.i);
-        if (!this.done && i <= this.maxStep) { this.step = i; }
+        if (!this.done && i <= this.maxStep) { this.step = i; this.persist(); }
     }
     handleClose() { this.dispatchEvent(new CustomEvent('close')); }
 
@@ -338,9 +401,11 @@ export default class CqTriageAssistant extends LightningElement {
 
     async handleNext() {
         if (this.blocker || this.saving) { return; }
-        if (this.step < 3) {
+        this.resumed = false;
+        if (this.step < this.last) {
             this.step += 1;
             this.maxStep = Math.max(this.maxStep, this.step);
+            this.persist();
             return;
         }
         this.saving = true;
@@ -372,6 +437,7 @@ export default class CqTriageAssistant extends LightningElement {
             this.summary = rows.map((r) => ({ ...r, key: r.k }));
             this.warning = [t && t.warning, riskWarning, linkWarning].filter(Boolean).join(' ') || undefined;
             this.done = true;
+            if (this.inline) { saveDraft({ recordId: this.recordId, draft: null }).catch(() => {}); }
             this.dispatchEvent(new CustomEvent('done'));
         } catch (e) {
             this.error = (e && e.body && e.body.message) || 'Could not save the triage.';

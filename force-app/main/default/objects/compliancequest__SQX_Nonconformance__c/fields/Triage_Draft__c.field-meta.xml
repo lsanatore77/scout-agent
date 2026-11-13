@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Triage_Draft__c</fullName>
+    <label>Triage Draft</label>
+    <description>Work in progress in the Triage workspace, so a triager can leave and pick up where they left off. Cleared when triage is completed.</description>
+    <length>20000</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

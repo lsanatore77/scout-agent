@@ -8,6 +8,7 @@ import getTriage from '@salesforce/apex/CqTriageAssistant.getTriage';
 /** Triage at a Glance on a Nonconformance: the problem, then four cards. Purple cards are CQ.AI suggestions. */
 export default class CqTriageGlance extends NavigationMixin(LightningElement) {
     @api recordId;
+    @api embedded = false;   // inside the Triage workspace: no heading, no Triage Assistant button
     g;
     error;
     open = {};
@@ -37,6 +38,8 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
     }
     get triageNotes() { return (this.triage && this.triage.notes) || ''; }
     get hasPhoto() { return !!this.photoId; }
+    get standalone() { return !this.embedded; }
+    get panelCls() { return 'panel' + (this.embedded ? ' embedded' : ''); }
     handleAssistant() { this.showAssistant = true; }
     handleAssistantClose() { this.showAssistant = false; }
     handleTriageDone() { this.load(); }
@@ -74,6 +77,7 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
             const base64Data = await this.shrink(file);
             const fileName = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
             this.photoId = await savePhoto({ recordId: this.recordId, fileName, base64Data });
+            this.dispatchEvent(new CustomEvent('changed'));
         } catch (e) {
             this.photoError = (e && e.body && e.body.message) || 'Could not save the photo.';
         }

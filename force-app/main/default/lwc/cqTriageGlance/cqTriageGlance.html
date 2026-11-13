@@ -1,6 +1,6 @@
 <template>
-    <section class="panel">
-        <h2 class="h">Triage at a Glance</h2>
+    <section class={panelCls}>
+        <template if:true={standalone}><h2 class="h">Triage at a Glance</h2></template>
         <template if:true={error}><div class="err">{error}</div></template>
         <template if:true={ready}>
             <template if:true={triaged}><div class="triaged" title={triageNotes}><span class="okdot">&#10003;</span>{triageLine}</div></template>
@@ -30,7 +30,7 @@
                             </template>
                         </div>
                         <div class="actions">
-                            <button class="btn primary" onclick={handleAssistant}><span class="star w">&#10022;</span>Triage Assistant</button>
+                            <template if:true={standalone}><button class="btn primary" onclick={handleAssistant}><span class="star w">&#10022;</span>Triage Assistant</button></template>
                             <button class="btn outline" onclick={handleEdit}>Edit</button>
                             <template if:true={hasGaps}><button class="btn" onclick={handleGaps}>{gapsLabel}</button></template>
                         </div>

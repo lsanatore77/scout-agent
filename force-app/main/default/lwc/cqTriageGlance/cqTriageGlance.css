@@ -48,3 +48,7 @@
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .gaps { margin: 0; padding: 10px 14px 10px 30px; border-radius: 8px; background: #fafbfc; border: 1px solid #eef0f3; color: #3d4550; }
 @media (max-width: 900px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .problem { grid-template-columns: 1fr; } }
+.panel.embedded { border: none; border-radius: 0; padding: 0; }
+.panel.embedded .problem { margin-top: 0; }
+.panel.embedded .triaged { margin-bottom: 12px; }
+.panel.embedded .cards { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
