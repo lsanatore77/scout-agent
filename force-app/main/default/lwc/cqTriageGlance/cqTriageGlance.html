@@ -4,7 +4,12 @@
         <template if:true={error}><div class="err">{error}</div></template>
         <template if:true={ready}>
             <div class="problem">
-                <div class="photo">No photo attached</div>
+                <div class={photoCls}>
+                    <template if:true={photoUrl}><img src={photoUrl} alt="Photo of the problem" /></template>
+                    <template if:false={photoUrl}>
+                        <lightning-file-upload label="Add a photo" name="photo" accept={accepted} record-id={recordId} onuploadfinished={handleUploaded}></lightning-file-upload>
+                    </template>
+                </div>
                 <div class="ptext">
                     <div class="plabel">The problem</div>
                     <div class="quote">{description}</div>

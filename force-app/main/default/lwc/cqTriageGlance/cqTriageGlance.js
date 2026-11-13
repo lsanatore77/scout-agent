@@ -1,6 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import getGlance from '@salesforce/apex/CqTriageController.getGlance';
+import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 
 /** Triage at a Glance on a Nonconformance: the problem, then four cards. Purple cards are CQ.AI suggestions. */
 export default class CqTriageGlance extends NavigationMixin(LightningElement) {
@@ -9,6 +10,7 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
     error;
     open = {};
     showGaps = false;
+    photoId;
 
     connectedCallback() { this.load(); }
 
@@ -16,7 +18,18 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
     async load() {
         try { this.g = await getGlance({ recordId: this.recordId }); this.error = undefined; }
         catch (e) { this.error = (e && e.body && e.body.message) || 'Could not read this nonconformance.'; }
+        this.loadPhoto();
     }
+
+    async loadPhoto() {
+        try { this.photoId = await getPhotoVersionId({ recordId: this.recordId }); }
+        catch (e) { this.photoId = null; }
+    }
+
+    get photoUrl() { return this.photoId ? '/sfc/servlet.shepherd/version/download/' + this.photoId : null; }
+    get photoCls() { return 'photo' + (this.photoId ? ' has' : ''); }
+    get accepted() { return ['.jpg', '.jpeg', '.png', '.gif']; }
+    handleUploaded() { this.loadPhoto(); }
 
     get ready() { return !!this.g; }
     get description() { return (this.g && this.g.description) || 'No description on this nonconformance yet.'; }
