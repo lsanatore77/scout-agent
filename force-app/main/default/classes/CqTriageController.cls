@@ -46,20 +46,16 @@ public with sharing class CqTriageController {
         List<compliancequest__SQX_Complaint__c> complaints = new List<compliancequest__SQX_Complaint__c>();
         if (nc.compliancequest__SQX_Part__c != null) {
             Date since = Date.today().addDays(-REPEAT_DAYS);
-            others = [SELECT Id, Name, compliancequest__Lot_Number__c, compliancequest__Status__c, compliancequest__SQX_Investigation__c,
-                             compliancequest__SQX_Investigation__r.Name, CreatedDate
+            others = [SELECT Id, Name, compliancequest__Lot_Number__c, compliancequest__Status__c, CreatedDate
                       FROM compliancequest__SQX_Nonconformance__c
                       WHERE compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c AND Id != :nc.Id AND CreatedDate >= :since
                       ORDER BY CreatedDate DESC LIMIT 200];
             complaints = [SELECT Id, Name, compliancequest__Lot_Number__c FROM compliancequest__SQX_Complaint__c
                           WHERE compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c ORDER BY CreatedDate DESC LIMIT 200];
         }
-        Integer sameLot = 0; String openInv; Id openInvId; Integer withInv = 0;
+        Integer sameLot = 0;
         for (compliancequest__SQX_Nonconformance__c o : others) {
             if (g.lot != null && o.compliancequest__Lot_Number__c == g.lot) { sameLot++; }
-            if (o.compliancequest__SQX_Investigation__c != null && o.compliancequest__SQX_Investigation__c != nc.compliancequest__SQX_Investigation__c) {
-                withInv++; if (openInv == null) { openInv = o.compliancequest__SQX_Investigation__r.Name; openInvId = o.compliancequest__SQX_Investigation__c; }
-            }
         }
         List<String> lotComplaints = new List<String>();
         for (compliancequest__SQX_Complaint__c c : complaints) {
@@ -104,26 +100,25 @@ public with sharing class CqTriageController {
 
         // 3. Disposition
         Card disp = new Card(); disp.id = 'disp'; disp.title = 'Disposition'; disp.isSuggestion = false;
-        disp.headline = 'Your decision'; disp.why = 'Only if not investigating.';
+        disp.headline = 'Your decision'; disp.why = 'Decided after triage.';
         disp.facts.add(new Fact('Quantity', g.lotQuantity == null ? 'Not set' : g.lotQuantity.format() + ' in lot ' + g.lot, false));
         disp.facts.add(new Fact('Defective', g.defectiveQuantity == null ? 'Not set' : g.defectiveQuantity.format(), g.defectiveQuantity == null));
         if (g.defectiveQuantity == null) { g.gaps.add('Defective quantity is not set on the NC.'); }
         g.cards.add(disp);
 
-        // 4. Investigate
-        Card inv = new Card(); inv.id = 'inv'; inv.title = 'Investigate'; inv.isSuggestion = true;
-        if (nc.compliancequest__SQX_Investigation__c != null) {
-            inv.headline = 'Linked: ' + nc.compliancequest__SQX_Investigation__r.Name; inv.why = 'This NC already has an investigation. Continue with it.';
-        } else if (openInv != null) {
-            inv.headline = 'Join ' + openInv; inv.why = 'Already investigating another NC on this part.';
-        } else if (!others.isEmpty()) {
-            inv.headline = 'Open new'; inv.why = 'Repeat issue with no investigation yet.';
-        } else {
-            inv.headline = 'Not needed'; inv.why = 'First NC on this part in ' + REPEAT_DAYS + ' days.';
+        // 4. Investigate: every NC gets its own investigation; related ones can be linked for research (CqTriageLinks)
+        CqTriageLinks.Links lk = CqTriageLinks.getLinks(recordId);
+        Integer sugLinks = 0; Integer linkedN = 0; String firstSug;
+        for (CqTriageLinks.Inv v : lk.items) {
+            if (v.linked) { linkedN++; } else if (v.suggested) { sugLinks++; if (firstSug == null) { firstSug = v.name; } }
         }
+        Card inv = new Card(); inv.id = 'inv'; inv.title = 'Investigate'; inv.isSuggestion = sugLinks > 0;
+        inv.headline = lk.ownName != null ? lk.ownName : 'Required';
+        inv.why = sugLinks > 0 ? 'Link ' + firstSug + (sugLinks > 1 ? ' and ' + (sugLinks - 1) + ' more' : '') + ' for research.'
+            : linkedN > 0 ? linkedN + ' related investigation(s) linked for research.' : 'No related investigations to link.';
+        inv.facts.add(new Fact('This NC', lk.ownName != null ? lk.ownName : 'Its own investigation is not started', lk.ownName == null));
+        inv.facts.add(new Fact('Linked for research', String.valueOf(linkedN), false));
         inv.facts.add(new Fact('Other NCs', others.size() + ' on this part in ' + REPEAT_DAYS + ' days', false));
-        inv.facts.add(new Fact('With investigation', String.valueOf(withInv), false));
-        if (!others.isEmpty()) { inv.facts.add(new Fact('Latest', others[0].Name + ' · ' + others[0].compliancequest__Status__c, false)); }
         g.cards.add(inv);
 
         // Field Action Review

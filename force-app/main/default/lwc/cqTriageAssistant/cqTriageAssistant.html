@@ -178,27 +178,51 @@
                     </template>
 
                     <template if:true={is3}>
-                        <h3 class="q">Decide the path</h3>
-                        <p class="p">Please make your selection below.</p>
-                        <div class="paths">
-                            <template for:each={pathOpts} for:item="o">
-                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handlePath}>
-                                    <template if:true={o.cq}><span class="pill">&#10022; CQ.AI Suggests</span></template>
-                                    <span class="pl">{o.label}</span>
-                                    <span class="rk">{o.why}</span>
-                                </button>
+                        <h3 class="q">Investigation Links</h3>
+                        <div class="ownbox"><strong>{ownLine}</strong> Linked investigations are for research only and do not replace it. Linking is optional.</div>
+                        <template if:false={linksReady}><p class="p">Looking for related investigations&hellip;</p></template>
+                        <template if:true={linksReady}>
+                            <div class="lab">Related investigations</div>
+                            <template if:true={noLinks}><p class="note">No other investigations were found on this part.</p></template>
+                            <template if:true={hasSug}>
+                                <div class="invlist">
+                                    <template for:each={sugItems} for:item="v">
+                                    <button key={v.id} class={v.cls} data-id={v.id} onclick={handleLink} aria-pressed={v.pressed}>
+                                        <span class="tick">{v.tick}</span>
+                                        <span class="rt">
+                                            <span class="rv">{v.name}</span>
+                                            <span class="rk">{v.meta}</span>
+                                            <template if:true={v.summary}><span class="isum">{v.summary}</span></template>
+                                        </span>
+                                        <template if:true={v.suggested}><span class="pill">&#10022; CQ.AI Suggests</span></template>
+                                    </button>
+                                    </template>
+                                </div>
                             </template>
-                        </div>
-                        <template if:true={pathLog}>
-                            <label class="fl">Disposition *
-                                <select class="sel" data-f="disp" onchange={handleInput}>
-                                    <option value="">Choose</option>
-                                    <template for:each={dispOpts} for:item="d"><option key={d.value} value={d.value} selected={d.selected}>{d.value}</option></template>
-                                </select>
-                            </label>
-                            <label class="fl">Why no investigation? *
-                                <textarea class="ta" rows="2" data-f="logWhy" value={logWhy} oninput={handleInput}></textarea>
-                            </label>
+                            <template if:true={hasOther}>
+                                <details class="know">
+                                    <summary>{otherLabel}</summary>
+                                    <div class="invlist">
+                                        <template for:each={otherItems} for:item="v">
+                                        <button key={v.id} class={v.cls} data-id={v.id} onclick={handleLink} aria-pressed={v.pressed}>
+                                            <span class="tick">{v.tick}</span>
+                                            <span class="rt">
+                                                <span class="rv">{v.name}</span>
+                                                <span class="rk">{v.meta}</span>
+                                                <template if:true={v.summary}><span class="isum">{v.summary}</span></template>
+                                            </span>
+                                            <template if:true={v.suggested}><span class="pill">&#10022; CQ.AI Suggests</span></template>
+                                        </button>
+                                        </template>
+                                    </div>
+                                </details>
+                            </template>
+                            <div class="addinv">
+                                <lightning-record-picker label="Add another investigation" placeholder="Search by investigation number"
+                                    object-api-name="compliancequest__SQX_Investigation__c" onchange={handlePick}></lightning-record-picker>
+                            </div>
+                            <template if:true={linkError}><div class="errbox">{linkError}</div></template>
+                            <p class="note">Ticked investigations are linked to this NC when you click Complete triage.</p>
                         </template>
                     </template>
 

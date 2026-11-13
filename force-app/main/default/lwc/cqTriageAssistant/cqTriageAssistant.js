@@ -3,16 +3,18 @@ import saveTriage from '@salesforce/apex/CqTriageAssistant.saveTriage';
 import createContainment from '@salesforce/apex/CqTriageContainment.create';
 import getRisk from '@salesforce/apex/CqTriageRisk.getRisk';
 import saveRisk from '@salesforce/apex/CqTriageRisk.saveRisk';
+import getLinks from '@salesforce/apex/CqTriageLinks.getLinks';
+import getOne from '@salesforce/apex/CqTriageLinks.getOne';
+import saveLinks from '@salesforce/apex/CqTriageLinks.saveLinks';
 import userId from '@salesforce/user/Id';
 
-const STEPS = ['Containment', 'Data Check', 'Risk', 'Path'];
+const STEPS = ['Containment', 'Data Check', 'Risk', 'Investigation Links'];
 const SEV = ['Negligible', 'Low', 'Moderate', 'Significant', 'Catastrophic'];
 const LIK = ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'];
 const band = (n) => (n >= 15 ? 'High' : n >= 6 ? 'Medium' : 'Low');
 const ASKS = ['More photos', 'Measurements', 'When it started', 'Other lots affected?'];
-const DISPS = ['Rework', 'Use as is', 'Scrap', 'Return to supplier'];
 
-/** Triage Assistant: four steps over the facts in Triage at a Glance. CQ.AI suggests, the triager decides. */
+/** Triage Assistant: four steps over the facts in Triage at a Glance (containment, data check, risk, investigation links). CQ.AI suggests, the triager decides. */
 export default class CqTriageAssistant extends LightningElement {
     @api recordId;
     @api glance;
@@ -41,9 +43,10 @@ export default class CqTriageAssistant extends LightningElement {
     rk;
     sev = 3;
     lik = 1;
-    path = '';
-    disp = '';
-    logWhy = '';
+    lk;
+    picks = {};
+    extra = [];
+    linkError;
     summary = [];
 
     async connectedCallback() {
@@ -57,6 +60,12 @@ export default class CqTriageAssistant extends LightningElement {
         }
         this.sev = this.rk.severity;
         this.lik = this.rk.likelihood;
+        try {
+            this.lk = await getLinks({ recordId: this.recordId });
+        } catch (e) {
+            this.lk = { items: [] };
+            this.linkError = 'Could not look for related investigations.';
+        }
     }
 
     // ---- facts from the glance
@@ -71,13 +80,6 @@ export default class CqTriageAssistant extends LightningElement {
     get score() { return this.sev * this.lik; }
     get risk() { return this.escaped ? 'High' : band(this.score); }
     get contained() { const h = this.card('cont').headline; return h === 'Contained' || h === 'Containment raised'; }
-    get invHeadline() { return this.card('inv').headline || ''; }
-    get linked() { return this.invHeadline.startsWith('Linked: '); }
-    get invName() {
-        const h = this.invHeadline;
-        return h.startsWith('Join ') ? h.substring(5) : this.linked ? h.substring(8) : null;
-    }
-    get suggestedPath() { return this.invName ? 'join' : this.invHeadline === 'Open new' ? 'new' : 'log'; }
 
     // ---- step rail (same pattern as the PHR workspace): a step ticks only when it has a valid answer
     get valid() {
@@ -94,7 +96,7 @@ export default class CqTriageAssistant extends LightningElement {
             this.noAction ? 'No action' : n ? n + ' action' + (n > 1 ? 's' : '') : 'Not decided',
             this.data === 'ok' ? 'Good enough' : this.data === 'ask' ? 'More information requested' : 'Not checked',
             this.maxStep > 2 || this.done ? this.risk + ' \u00b7 score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
-            this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : this.path === 'log' ? 'Log only' : 'Not chosen'
+            this.linkCount ? this.linkCount + ' to link' : this.done ? 'None linked' : 'Optional'
         ];
         const valid = this.valid;
         return STEPS.map((label, i) => {
@@ -240,21 +242,59 @@ export default class CqTriageAssistant extends LightningElement {
         this.lik = Number(event.currentTarget.dataset.l);
     }
 
-    // ---- step 4: path
-    get joinLabel() { return (this.linked ? 'Continue with ' : 'Join ') + this.invName; }
-    get pathValue() {
-        return this.path === 'join' ? (this.linked ? 'Continue with Investigation' : 'Join Investigation') : this.path === 'new' ? 'New Investigation' : 'Log Only';
+    // ---- step 4: investigation links (optional, research only; never replaces the NC's own investigation)
+    get linksReady() { return !!this.lk; }
+    get ownLine() {
+        const l = this.lk || {};
+        if (l.ownName) { return 'This NC has its own investigation: ' + l.ownName + '.'; }
+        return 'This NC needs its own investigation' + (l.due ? ', due ' + l.due : '') + '.';
     }
-    get pathOpts() {
-        const defs = [];
-        if (this.invName) { defs.push(['join', this.joinLabel, this.card('inv').why]); }
-        defs.push(['new', 'New investigation', 'Start a fresh investigation. This NC is flagged as needing one.']);
-        defs.push(['log', 'Log only', 'No investigation. You set the disposition now.']);
-        return defs.map(([id, label, why]) => ({ id, label, why, cq: id === this.suggestedPath, cls: 'pathopt' + (this.path === id ? ' on' : id === this.suggestedPath ? ' sug' : '') }));
+    get linkItems() {
+        const base = (this.lk && this.lk.items) || [];
+        return [...base, ...this.extra].map((v) => {
+            const on = v.linked || !!this.picks[v.id];
+            return { ...v, on, pressed: on ? 'true' : 'false', tick: on ? '✓' : '',
+                meta: [v.ncName ? 'From ' + v.ncName : '', v.status, v.linked ? 'Already linked' : v.why].filter(Boolean).join(' · '),
+                cls: 'act inv' + (on ? ' on' : v.suggested ? ' sug' : '') };
+        });
     }
-    get pathLog() { return this.path === 'log'; }
-    get dispOpts() { return DISPS.map((d) => ({ value: d, selected: this.disp === d })); }
-    handlePath(event) { this.path = event.currentTarget.dataset.id; }
+    get sugItems() { return this.linkItems.filter((v) => v.suggested || v.linked || v.mine); }
+    get otherItems() { return this.linkItems.filter((v) => !(v.suggested || v.linked || v.mine)); }
+    get hasSug() { return this.sugItems.length > 0; }
+    get hasOther() { return this.otherItems.length > 0; }
+    get noLinks() { return this.linksReady && !this.linkItems.length; }
+    get otherLabel() { return 'Other investigations on this part (' + this.otherItems.length + ')'; }
+    get chosenLinks() { return this.linkItems.filter((v) => v.on && !v.linked); }
+    get linkCount() { return this.chosenLinks.length; }
+    handleLink(event) {
+        const id = event.currentTarget.dataset.id;
+        const v = this.linkItems.find((x) => x.id === id);
+        if (!v || v.linked) { return; }
+        this.picks = { ...this.picks, [id]: !this.picks[id] };
+    }
+    async handlePick(event) {
+        const id = event.detail && event.detail.recordId;
+        const picker = event.target;
+        if (!id) { return; }
+        this.linkError = undefined;
+        const have = this.linkItems.find((x) => x.id === id || x.id.substring(0, 15) === id.substring(0, 15));
+        if (have) {
+            if (!have.linked) { this.picks = { ...this.picks, [have.id]: true }; }
+        } else {
+            try {
+                const v = await getOne({ recordId: this.recordId, investigationId: id });
+                if (v.ncName && v.ncName === this.g.name) {
+                    this.linkError = v.name + " is this NC's own investigation, so it is not linked.";
+                } else {
+                    this.extra = [...this.extra, { ...v, mine: true }];
+                    this.picks = { ...this.picks, [v.id]: true };
+                }
+            } catch (e) {
+                this.linkError = (e && e.body && e.body.message) || 'Could not add that investigation.';
+            }
+        }
+        if (picker && picker.clearSelection) { picker.clearSelection(); }
+    }
 
     handleInput(event) { this[event.target.dataset.f] = event.target.value; }
 
@@ -270,10 +310,7 @@ export default class CqTriageAssistant extends LightningElement {
             if (this.dataAsk && !this.askList.length && !this.askNote.trim()) { return 'Say what you need'; }
         }
         if (this.step === 2 && !this.rk) { return 'Working out the risk'; }
-        if (this.step === 3) {
-            if (!this.path) { return 'Click a path above to choose it'; }
-            if (this.pathLog && (!this.disp || !this.logWhy.trim())) { return 'Disposition and reason needed'; }
-        }
+        if (this.step === 3 && !this.lk) { return 'Looking for related investigations'; }
         return '';
     }
     get cantNext() { return !!this.blocker || this.saving; }
@@ -294,7 +331,8 @@ export default class CqTriageAssistant extends LightningElement {
             { k: 'Risk', v: this.risk + ' \u00b7 score ' + this.score + ' (' + this.sevLabel + ' severity x ' + this.likLabel + ' likelihood)'
                 + (this.escaped ? ' \u00b7 High because of complaints on the lot' : '')
                 + (this.riskChanged ? ' \u00b7 changed from CQ.AI ' + this.suggestedRisk : ' \u00b7 as CQ.AI suggested') },
-            { k: 'Path', v: this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : 'Log only: ' + this.disp + ' (' + this.logWhy.trim() + ')' }
+            { k: 'Investigation', v: this.lk && this.lk.ownName ? 'Continues with ' + this.lk.ownName : 'Needs its own investigation' },
+            { k: 'Links', v: this.linkCount ? this.chosenLinks.map((v) => v.name).join(', ') + ' (research only)' : 'None' }
         ];
     }
 
@@ -315,16 +353,24 @@ export default class CqTriageAssistant extends LightningElement {
             const t = await saveTriage({
                 recordId: this.recordId,
                 risk: this.risk,
-                path: this.pathValue,
+                path: this.lk && this.lk.ownName ? 'Continue with Investigation' : 'New Investigation',
                 notes: rows.map((r) => r.k + ': ' + r.v).join('\n'),
                 containment: this.hasActs || this.hasAdded,
-                investigate: this.path !== 'log',
+                investigate: true,
                 containmentTitles: this.chosenActs,
                 dueDate: this.due
             });
             if (t && t.created && t.created.length) { rows.push({ k: 'Created', v: 'Containment ' + t.created.join(', ') }); }
+            let linkWarning;
+            const ids = this.chosenLinks.map((v) => v.id);
+            if (ids.length) {
+                try {
+                    const names = await saveLinks({ recordId: this.recordId, investigationIds: ids });
+                    if (names && names.length) { rows.push({ k: 'Linked', v: names.join(', ') }); }
+                } catch (e) { linkWarning = (e && e.body && e.body.message) || 'CQ did not accept the investigation links.'; }
+            }
             this.summary = rows.map((r) => ({ ...r, key: r.k }));
-            this.warning = [t && t.warning, riskWarning].filter(Boolean).join(' ') || undefined;
+            this.warning = [t && t.warning, riskWarning, linkWarning].filter(Boolean).join(' ') || undefined;
             this.done = true;
             this.dispatchEvent(new CustomEvent('done'));
         } catch (e) {

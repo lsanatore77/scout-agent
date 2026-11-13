@@ -122,11 +122,14 @@
 .lvl.low { color: #12784a; }
 .lvl.medium { color: #7a4100; }
 .lvl.high { color: #b42318; }
-.paths { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
-.pathopt { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 100px; padding: 14px; border-radius: 10px; border: 1px solid #dde1e6; background: #fff; color: #1a1d21; font: inherit; text-align: left; cursor: pointer; }
-.pathopt.sug { border-color: #dcd3ff; background: #f8f6ff; }
-.pathopt.on { border: 2px solid #1d5fd1; background: #e8f0fd; padding: 13px; }
-.pl { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 700; }
+.ownbox { margin: -4px 0 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid #dde1e6; background: #fafbfc; font-size: 13px; line-height: 1.45; color: #3d4550; }
+.ownbox strong { color: #1a1d21; }
+.invlist { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.act.inv { align-items: flex-start; }
+.act.inv .tick { margin-top: 2px; }
+.act.inv .pill { flex: none; white-space: nowrap; }
+.isum { margin-top: 4px; font-size: 12px; line-height: 1.4; color: #3d4550; }
+.addinv { max-width: 360px; margin-top: 14px; }
 .pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: #ece7ff; border: 1px solid #dcd3ff; color: #4a2fc0; font-size: 11px; font-weight: 600; }
 .donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .okdot { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 999px; background: #12784a; color: #fff; font-weight: 700; }
