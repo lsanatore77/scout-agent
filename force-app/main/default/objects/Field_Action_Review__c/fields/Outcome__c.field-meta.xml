@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Outcome__c</fullName>
+    <label>Outcome</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>No Field Action</fullName>
+                <default>false</default>
+                <label>No Field Action</label>
+            </value>
+            <value>
+                <fullName>Field Action Needed</fullName>
+                <default>false</default>
+                <label>Field Action Needed</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Field Action object records one field action for a product problem: a correction, removal (recall) or advisory notice. It holds the Title, Status, Action Type, Recall Class, the affected Part, lots and quantities, and who decided and why. Each Field Action gathers the Field Action Reviews that led to it.</description>
+    <enableActivities>true</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Field Action</label>
+    <nameField>
+        <displayFormat>FA-{0000}</displayFormat>
+        <label>Field Action Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Field Actions</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

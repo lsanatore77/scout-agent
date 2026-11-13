@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Field Action Reviews and the Field Actions that come out of them.</description>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
+    <label>Field Actions</label>
+    <navType>Standard</navType>
+    <tabs>Field_Action_Review__c</tabs>
+    <tabs>Field_Action__c</tabs>
+    <uiType>Lightning</uiType>
+</CustomApplication>

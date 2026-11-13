@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Field Action Review object records the review of whether one Nonconformance or one Complaint needs a field action. It holds the Reason for Review, requester, Reviewer, affected Part and lot, Risk Level, the Outcome and its rationale, and the Field Action it led to. Created by Send for Review at triage.</description>
+    <enableActivities>true</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Field Action Review</label>
+    <nameField>
+        <displayFormat>FAR-{0000}</displayFormat>
+        <label>Review Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Field Action Reviews</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

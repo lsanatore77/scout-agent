@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Nonconformance__c</fullName>
+    <label>Nonconformance</label>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <referenceTo>compliancequest__SQX_Nonconformance__c</referenceTo>
+    <relationshipLabel>Field Action Reviews</relationshipLabel>
+    <relationshipName>Field_Action_Reviews</relationshipName>
+    <type>Lookup</type>
+</CustomField>
