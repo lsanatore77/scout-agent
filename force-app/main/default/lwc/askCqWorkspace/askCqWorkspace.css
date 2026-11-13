@@ -45,7 +45,7 @@
 .q { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid #eceff2; }
 .qt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .qh { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.question { font-size: 15px; font-weight: 700; color: #2b2f36; }
+.question { font-size: 14px; font-weight: 400; color: #1a1d21; }
 .ev { font-size: 13px; color: #5c6572; line-height: 1.5; }
 .pill { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 12px; border: none; background: #f3e6f7; color: #b05fc0; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .pill .st { font-size: 13px; }
