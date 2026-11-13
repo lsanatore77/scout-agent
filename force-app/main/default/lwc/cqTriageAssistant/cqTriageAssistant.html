@@ -25,6 +25,7 @@
                 <div class="main">
                     <template if:true={is0}>
                         <h3 class="q">Containment</h3>
+                        <p class="p">Tick what applies, add your own containment, or choose No action. <span class="star">&#10022;</span> marks what CQ.AI recommends.</p>
                         <div class="cols">
                             <div class="col">
                                 <div class="lab">Possible actions</div>
@@ -136,6 +137,7 @@
 
                     <template if:true={is3}>
                         <h3 class="q">Decide the path</h3>
+                        <p class="p">Click one to choose it. <span class="star">&#10022;</span> marks what CQ.AI recommends; nothing is selected until you click.</p>
                         <div class="paths">
                             <template for:each={pathOpts} for:item="o">
                                 <button key={o.id} class={o.cls} data-id={o.id} onclick={handlePath}>

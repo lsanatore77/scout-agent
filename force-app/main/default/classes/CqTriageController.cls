@@ -81,15 +81,26 @@ public with sharing class CqTriageController {
         if (sev == null) { g.gaps.add('Severity is not set on the NC, so risk is suggested from repeats and complaints only.'); }
         g.cards.add(risk);
 
-        // 2. Containment
-        Card cont = new Card(); cont.id = 'cont'; cont.title = 'Containment'; cont.isSuggestion = true;
-        Boolean contained = nc.compliancequest__Has_Containment__c == true;
-        cont.headline = g.lot == null ? 'No lot recorded' : contained ? 'Contained' : 'Hold lot ' + g.lot;
-        cont.why = (g.lotQuantity == null ? 'Quantity not recorded' : g.lotQuantity.format() + ' in the lot') + (contained ? ', containment recorded.' : ', no containment recorded.');
+        // 2. Containment: counts the CQ containment records on this NC (CQ's own Has Containment box lags behind them)
+        List<compliancequest__SQX_Containment__c> cons = [
+            SELECT Name, compliancequest__Status__c, compliancequest__Is_Complete__c FROM compliancequest__SQX_Containment__c
+            WHERE compliancequest__SQX_Nonconformance__c = :nc.Id AND compliancequest__Status__c != 'Void' ORDER BY CreatedDate LIMIT 50];
+        Integer openCons = 0; List<String> conLabels = new List<String>();
+        for (compliancequest__SQX_Containment__c c : cons) {
+            conLabels.add(c.Name + ' (' + c.compliancequest__Status__c + ')');
+            if (c.compliancequest__Is_Complete__c != true) { openCons++; }
+        }
+        Card cont = new Card(); cont.id = 'cont'; cont.title = 'Containment';
+        Boolean contained = nc.compliancequest__Has_Containment__c == true || !cons.isEmpty();
+        Boolean allDone = contained && openCons == 0;
+        cont.isSuggestion = !contained;
+        cont.headline = allDone ? 'Contained' : contained ? 'Containment raised' : g.lot == null ? 'No lot recorded' : 'Hold lot ' + g.lot;
+        cont.why = (g.lotQuantity == null ? 'Quantity not recorded' : g.lotQuantity.format() + ' in the lot')
+            + (allDone ? ', containment complete.' : contained ? ', ' + openCons + ' containment(s) not yet complete.' : ', no containment recorded.');
         cont.flag = contained ? null : 'No containment on this NC yet.';
         cont.facts.add(new Fact('Lot', g.lot == null ? 'Not set' : g.lot, g.lot == null));
         cont.facts.add(new Fact('Quantity', g.lotQuantity == null ? 'Not set' : g.lotQuantity.format(), g.lotQuantity == null));
-        cont.facts.add(new Fact('Containment', contained ? 'Recorded in CQ' : 'None recorded', !contained));
+        cont.facts.add(new Fact('Containment', !cons.isEmpty() ? String.join(conLabels, ', ') : contained ? 'Recorded in CQ' : 'None recorded', !contained));
         cont.facts.add(new Fact('Hold status', 'Not known (no ERP connection)', true));
         g.gaps.add('No ERP or MES connection: lot hold status, stock location and shipped quantities are not known.');
         g.cards.add(cont);

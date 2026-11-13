@@ -54,7 +54,7 @@ export default class CqTriageAssistant extends LightningElement {
     fact(cardId, k) { return (this.card(cardId).facts || []).find((f) => f.k === k); }
     get title() { return (this.g.name || '') + (this.g.title ? ' · ' + this.g.title : ''); }
     get suggestedRisk() { const h = this.card('risk').headline; return RISKS.includes(h) ? h : 'Medium'; }
-    get contained() { return this.card('cont').headline === 'Contained'; }
+    get contained() { const h = this.card('cont').headline; return h === 'Contained' || h === 'Containment raised'; }
     get invHeadline() { return this.card('inv').headline || ''; }
     get linked() { return this.invHeadline.startsWith('Linked: '); }
     get invName() {
@@ -101,21 +101,21 @@ export default class CqTriageAssistant extends LightningElement {
         const comp = this.fact('risk', 'Complaints');
         const lines = [
             { t: (g.lot ? 'Lot ' + g.lot : 'No lot recorded') + (g.lotQuantity != null ? ', ' + g.lotQuantity + ' in the lot.' : ', quantity not recorded.'), warn: !g.lot },
-            { t: this.contained ? 'Containment is already recorded on this NC.' : 'No containment is recorded on this NC yet.', warn: !this.contained },
+            { t: this.contained ? 'Containment on this NC: ' + ((this.fact('cont', 'Containment') || {}).v || 'recorded') + '.' : 'No containment is recorded on this NC yet.', warn: !this.contained },
             same && { t: same.v + '.', warn: same.warn },
             comp && { t: 'Complaints: ' + comp.v + '.', warn: comp.warn },
             { t: 'Hold status and shipments are not known (no ERP connection).', muted: true }
         ].filter(Boolean);
         return lines.map((l, i) => ({ key: 'f' + i, text: l.t, cls: 'fline' + (l.warn ? ' bad' : l.muted ? ' muted' : '') }));
     }
-    get suggestedAct() { return this.contained ? 'No action' : this.g.lot ? 'Hold lot ' + this.g.lot : 'Hold the affected stock'; }
+    get suggestedAct() { return this.contained ? 'No further action' : this.g.lot ? 'Hold lot ' + this.g.lot : 'Hold the affected stock'; }
     get actions() {
         const lot = this.g.lot;
         const defs = [
             ['hold', 'Hold', lot ? 'Hold lot ' + lot : 'Hold the affected stock', !this.contained],
             ['check', 'Check', '100% inspect remaining stock of this part', false],
             ['stop', 'Stop', 'Stop the process until the cause is known', false],
-            ['none', 'No action', 'It is already under control', this.contained]
+            ['none', 'No action', this.contained ? 'Containment is already raised' : 'It is already under control', this.contained]
         ];
         return defs.map(([id, label, why, cq]) => {
             const on = !!this.acts[id];
@@ -216,7 +216,7 @@ export default class CqTriageAssistant extends LightningElement {
         }
         if (this.step === 2 && this.riskChanged && !this.riskWhy.trim()) { return 'Give a reason'; }
         if (this.step === 3) {
-            if (!this.path) { return 'Choose a path'; }
+            if (!this.path) { return 'Click a path above to choose it'; }
             if (this.pathLog && (!this.disp || !this.logWhy.trim())) { return 'Disposition and reason needed'; }
         }
         return '';
