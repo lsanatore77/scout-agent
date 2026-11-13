@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Review_Summary__c</fullName>
+    <description>What the reviewer considered: evidence, checklist answers and the risk score factors, written by the workspace when the decision is submitted.</description>
+    <label>Review Summary</label>
+    <length>10000</length>
+    <type>LongTextArea</type>
+    <visibleLines>8</visibleLines>
+</CustomField>

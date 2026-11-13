@@ -1,0 +1,203 @@
+<template>
+    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:true={ready}>
+        <div class="box">
+            <header class="top">
+                <div class="tt"><div class="h"><span class="star">&#10022;</span> CQ.AI Field Action Review</div><div class="sub">{heading}</div></div>
+                <template if:true={live}>
+                    <div class="topnav">
+                        <span class="blocker">{blocker}</span>
+                        <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
+                        <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+                    </div>
+                </template>
+            </header>
+            <div class="body">
+                <nav class="steps" aria-label="Review steps">
+                    <div class="steps-title">Review steps</div>
+                    <template for:each={steps} for:item="s">
+                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}>
+                            <span class="mark">
+                                <template if:true={s.done}>&#10003;</template>
+                                <template if:true={s.notDone}>{s.n}</template>
+                            </span>
+                            <span class="txt"><span class="lbl">{s.label}</span><span class="ssub">{s.sub}</span></span>
+                        </button>
+                    </template>
+                    <div class="progress">{progress}</div>
+                    <template if:true={canRestart}><button class="restart" onclick={handleRestart}>Start over</button></template>
+                    <template if:true={canReopen}><button class="restart" onclick={handleReopen}>Reopen review</button></template>
+                </nav>
+                <div class="main">
+                    <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
+
+                    <template if:true={is0}>
+                        <template if:true={done}>
+                            <div class="decided"><span class="okdot sm">&#10003;</span><span>{decidedLine}</span>
+                                <template if:true={hasFa}><button class="link" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
+                            </div>
+                        </template>
+                        <div class="problem">
+                            <div class="plabel">The problem
+                                <template if:true={hasSource}><span class="from">from <button class="link" data-id={v.sourceId} onclick={handleOpen}>{sourceLabel}</button></span></template>
+                            </div>
+                            <div class="quote">{problem}</div>
+                            <div class="tiles">
+                                <template for:each={tiles} for:item="t">
+                                    <div key={t.key} class="tile"><div class="tl">{t.label}</div><div class="tv">{t.value}</div></div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="cols top14">
+                            <div class="card">
+                                <div class="lab">Why it was sent for review</div>
+                                <div class="para">{v.reason}</div>
+                            </div>
+                            <div class="card sug">
+                                <div class="rec">&#10022; CQ.AI Suggests:</div>
+                                <div class="sughead"><span class="big">{v.suggestedOutcome}</span></div>
+                                <div class="para">{v.suggestedWhy}</div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template if:true={is1}>
+                        <h3 class="q">Signals and Evidence</h3>
+                        <p class="p">Other records on the same part. Tick the ones you considered in this review.</p>
+                        <template if:true={noRecs}><p class="note">No other nonconformances or complaints were found on this part.</p></template>
+                        <template if:true={hasSameLot}>
+                            <div class="lab">On the same lot</div>
+                            <div class="list">
+                                <template for:each={sameLot} for:item="r">
+                                    <button key={r.id} class={r.cls} data-id={r.id} onclick={handleRec} aria-pressed={r.pressed}>
+                                        <span class="tick">{r.tick}</span>
+                                        <span class="rt"><span class="rv">{r.line}</span><span class="rk">{r.meta}</span></span>
+                                        <span class="pill">&#10022; CQ.AI Suggests</span>
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:true={hasOther}>
+                            <details class="know">
+                                <summary>{otherLabel}</summary>
+                                <div class="list">
+                                    <template for:each={otherRecs} for:item="r">
+                                        <button key={r.id} class={r.cls} data-id={r.id} onclick={handleRec} aria-pressed={r.pressed}>
+                                            <span class="tick">{r.tick}</span>
+                                            <span class="rt"><span class="rv">{r.line}</span><span class="rk">{r.meta}</span></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </details>
+                        </template>
+                        <p class="note">Shipments, customers and markets are not shown: there is no distribution data connected.</p>
+                    </template>
+
+                    <template if:true={is2}>
+                        <h3 class="q">Risk</h3>
+                        <div class="cols">
+                            <div class="card sug">
+                                <div class="rec">&#10022; CQ.AI Suggests:</div>
+                                <div class="sughead"><span class="score">{v.score}</span><span class="rk">out of 100</span><span class={bandCls}>{v.band}</span></div>
+                                <div class="ftable">
+                                    <template for:each={factors} for:item="f">
+                                        <div key={f.key} class="frow"><span class="fn"><span class="fname">{f.name}</span><span class="rk">{f.detail}</span></span><span class="fpts">{f.of}</span></div>
+                                    </template>
+                                </div>
+                                <p class="note">Bands: 0&ndash;39 Low &middot; 40&ndash;69 Medium &middot; 70&ndash;100 High. The score supports the decision; it does not make it.</p>
+                            </div>
+                            <div class="col">
+                                <div class="lab">Risk level *</div>
+                                <div class="opts tight">
+                                    <template for:each={levels} for:item="l">
+                                        <button key={l.id} class={l.cls} data-id={l.id} onclick={handleLevel}><template if:true={l.cq}><span class="star">&#10022;</span>&nbsp;</template>{l.id}</button>
+                                    </template>
+                                </div>
+                                <label class="fl">Health hazard summary *
+                                    <textarea class="ta" rows="7" data-f="hazard" value={hazard} oninput={handleInput} placeholder="What could happen to a patient or user, how likely, and how serious."></textarea>
+                                </label>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template if:true={is3}>
+                        <h3 class="q">Reviewer Checklist</h3>
+                        <template for:each={questions} for:item="q">
+                            <div key={q.id} class="qrow">
+                                <span class="qt">{q.text}<template if:true={q.cq}><span class="star" title="CQ.AI Suggestion"> &#10022;</span></template></span>
+                                <span class="chips">
+                                    <template for:each={q.opts} for:item="o">
+                                        <button key={o.key} class={o.cls} data-q={o.q} data-a={o.a} onclick={handleCheck} aria-pressed={o.pressed}>{o.a}</button>
+                                    </template>
+                                </span>
+                            </div>
+                        </template>
+                        <p class="note">&#10022; marks an answer CQ.AI filled in from the records. Change it if it is wrong.</p>
+                    </template>
+
+                    <template if:true={is4}>
+                        <h3 class="q">Decision</h3>
+                        <p class="p">Please make your selection below.</p>
+                        <div class="paths">
+                            <template for:each={outcomes} for:item="o">
+                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleOutcome}>
+                                    <template if:true={o.cq}><span class="pill">&#10022; CQ.AI Suggests</span></template>
+                                    <span class="pl">{o.id}</span>
+                                    <span class="rk">{o.why}</span>
+                                </button>
+                            </template>
+                        </div>
+                        <template if:true={needed}>
+                            <div class="lab top14">Which field action?</div>
+                            <div class="list">
+                                <template for:each={faOpts} for:item="f">
+                                    <button key={f.id} class={f.cls} data-id={f.id} onclick={handleFa}>
+                                        <span class="tick round">{f.tick}</span>
+                                        <span class="rt"><span class="rv">{f.label}</span><span class="rk">{f.why}</span></span>
+                                        <template if:true={f.cq}><span class="pill">&#10022; CQ.AI Suggests</span></template>
+                                    </button>
+                                </template>
+                            </div>
+                            <template if:true={isNew}>
+                                <div class="newfa">
+                                    <label class="fl">Title *
+                                        <input class="ta" type="text" data-f="faTitle" value={faTitle} oninput={handleInput} />
+                                    </label>
+                                    <div class="pair">
+                                        <label class="fl">Action type *
+                                            <select class="ta" data-f="actionType" onchange={handleInput}>
+                                                <option value="">Choose</option>
+                                                <template for:each={typeOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
+                                            </select>
+                                        </label>
+                                        <label class="fl">Recall class
+                                            <select class="ta" data-f="recallClass" onchange={handleInput}>
+                                                <option value="">Not yet determined</option>
+                                                <template for:each={classOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
+                                            </select>
+                                        </label>
+                                    </div>
+                                </div>
+                            </template>
+                        </template>
+                        <label class="fl">Rationale *
+                            <textarea class="ta" rows="3" data-f="rationale" value={rationale} oninput={handleInput}></textarea>
+                        </label>
+                    </template>
+
+                    <template if:true={showSummary}>
+                        <div class="donehead"><span class="okdot">&#10003;</span><h3 class="q nom">Decision submitted</h3></div>
+                        <template for:each={summaryRows} for:item="r">
+                            <div key={r.key} class="row"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
+                        </template>
+                        <div class="opts">
+                            <button class="btn primary" onclick={handleFinish}>Done</button>
+                            <template if:true={hasFa}><button class="btn" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
+                        </div>
+                    </template>
+                    <template if:true={error}><div class="errbox">{error}</div></template>
+                </div>
+            </div>
+        </div>
+    </template>
+</template>
