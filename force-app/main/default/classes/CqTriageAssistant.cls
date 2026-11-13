@@ -5,7 +5,7 @@
  */
 public with sharing class CqTriageAssistant {
     public static final Set<String> RISKS = new Set<String>{ 'Low', 'Medium', 'High' };
-    public static final Set<String> PATHS = new Set<String>{ 'Join Investigation', 'New Investigation', 'Log Only' };
+    public static final Set<String> PATHS = new Set<String>{ 'Continue with Investigation', 'Join Investigation', 'New Investigation', 'Log Only' };
 
     public class Triage {
         @AuraEnabled public String risk; @AuraEnabled public String path; @AuraEnabled public String notes;

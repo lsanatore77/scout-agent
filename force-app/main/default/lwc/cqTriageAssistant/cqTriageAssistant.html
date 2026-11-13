@@ -113,20 +113,45 @@
 
                     <template if:true={is2}>
                         <h3 class="q">Confirm the risk</h3>
-                        <div class="sugbox">
-                            <div class="lab"><span class="rec">&#10022; CQ.AI Suggests:</span></div>
-                            <div class="big">{suggestedRisk}</div>
-                            <div class="tiles">
-                                <template for:each={riskFacts} for:item="t">
-                                    <div key={t.key} class="tile"><div class="tl">{t.k}</div><div class={t.cls}>{t.v}</div></div>
-                                </template>
+                        <template if:false={riskReady}><p class="p">Working out the risk&hellip;</p></template>
+                        <template if:true={riskReady}>
+                            <div class="riskwrap">
+                                <div class="heat">
+                                    <div class="axis">Severity &uarr; &nbsp; Likelihood &rarr;</div>
+                                    <template for:each={heatRows} for:item="r">
+                                        <div key={r.key} class="hrow">
+                                            <span class="hlab">{r.label}</span>
+                                            <template for:each={r.cells} for:item="c">
+                                                <button key={c.key} class={c.cls} data-s={c.s} data-l={c.l} onclick={handleCell} title={c.title} aria-pressed={c.pressed}>
+                                                    <template if:true={c.sug}><span class="cstar">&#10022;</span></template>{c.n}
+                                                </button>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <div class="hrow">
+                                        <span class="hlab"></span>
+                                        <template for:each={heatCols} for:item="c"><span key={c.key} class="clab">{c.label}</span></template>
+                                    </div>
+                                </div>
+                                <div class="rside">
+                                    <div class="sugbox">
+                                        <div class="lab"><span class="rec">&#10022; CQ.AI Suggests:</span> <span class={sugCls}>{suggestedRisk}</span> <span class="rk">score {suggestedScore} of 25</span></div>
+                                        <ul class="flist small">
+                                            <li><strong>Severity:</strong> {sevWhy}</li>
+                                            <li><strong>Likelihood:</strong> {likWhy}</li>
+                                            <template if:true={recentList}><li class="fline muted">{recentList}</li></template>
+                                            <template if:true={escaped}><li class="fline bad">{escapedWhy}. Risk is High whatever cell is chosen.</li></template>
+                                        </ul>
+                                    </div>
+                                    <div class="yours">
+                                        <div class="lab">Selected</div>
+                                        <div class="big"><span class={riskCls}>{risk}</span></div>
+                                        <div class="rk">Severity {sevLabel} &times; likelihood {likLabel} = {score}</div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="opts">
-                            <template for:each={riskOpts} for:item="o">
-                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleRisk}>{o.label}</button>
-                            </template>
-                        </div>
+                            <p class="note">The &#10022; cell is CQ.AI's suggestion and is already selected. Click another cell to change it. Low 1&ndash;5, Medium 6&ndash;12, High 15&ndash;25.</p>
+                        </template>
                         <template if:true={riskChanged}>
                             <label class="fl">Why change it? *
                                 <textarea class="ta" rows="2" data-f="riskWhy" value={riskWhy} oninput={handleInput}></textarea>

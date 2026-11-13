@@ -9,6 +9,7 @@
         <restricted>true</restricted>
         <valueSetDefinition>
             <sorted>false</sorted>
+            <value><fullName>Continue with Investigation</fullName><default>false</default><label>Continue with Investigation</label></value>
             <value><fullName>Join Investigation</fullName><default>false</default><label>Join Investigation</label></value>
             <value><fullName>New Investigation</fullName><default>false</default><label>New Investigation</label></value>
             <value><fullName>Log Only</fullName><default>false</default><label>Log Only</label></value>

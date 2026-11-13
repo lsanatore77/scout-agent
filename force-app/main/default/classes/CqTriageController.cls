@@ -66,19 +66,16 @@ public with sharing class CqTriageController {
             if (g.lot != null && c.compliancequest__Lot_Number__c == g.lot) { lotComplaints.add(c.Name); }
         }
 
-        // 1. Risk
+        // 1. Risk: CQ's Severity x Probability, with both inputs suggested by CqTriageRisk
+        CqTriageRisk.Risk rr = CqTriageRisk.getRisk(recordId);
         Card risk = new Card(); risk.id = 'risk'; risk.title = 'Risk'; risk.isSuggestion = true;
-        String sev = nc.compliancequest__Defect_Severity__c != null ? nc.compliancequest__Defect_Severity__c : nc.compliancequest__Severity__c;
-        if (!lotComplaints.isEmpty() || (sev != null && sev.containsIgnoreCase('critical'))) { risk.headline = 'High'; }
-        else if (!others.isEmpty() || nc.compliancequest__Reoccurring__c == true) { risk.headline = 'Medium'; }
-        else { risk.headline = 'Low'; }
-        risk.why = (lotComplaints.isEmpty() ? 'No complaints on this lot' : lotComplaints.size() + ' complaint(s) on this lot')
-            + (others.isEmpty() ? ', first NC on this part in ' + REPEAT_DAYS + ' days.' : ', repeat issue.');
-        risk.facts.add(new Fact('Severity', sev == null ? 'Not set on the NC' : sev, sev == null));
-        risk.facts.add(new Fact('Repeat', others.size() + ' other NC(s) on this part in ' + REPEAT_DAYS + ' days', !others.isEmpty()));
+        risk.headline = rr.level;
+        risk.why = rr.escaped ? rr.escapedWhy + '.' : 'Score ' + rr.score + ' of 25. ' + rr.likelihoodWhy + '.';
+        risk.facts.add(new Fact('Severity', CqTriageRisk.SEV[rr.severity - 1] + ' · ' + rr.severityWhy, rr.severityAssumed));
+        risk.facts.add(new Fact('Likelihood', CqTriageRisk.LIK[rr.likelihood - 1] + ' · ' + rr.likelihoodWhy, rr.likelihood >= 3));
         risk.facts.add(new Fact('Same lot', sameLot + ' other NC(s) on lot ' + (g.lot == null ? '(none)' : g.lot), sameLot > 0));
         risk.facts.add(new Fact('Complaints', complaints.size() + ' on this part, ' + lotComplaints.size() + ' on this lot', !lotComplaints.isEmpty()));
-        if (sev == null) { g.gaps.add('Severity is not set on the NC, so risk is suggested from repeats and complaints only.'); }
+        if (rr.severityAssumed) { g.gaps.add('Severity is assumed Moderate: nothing on the NC, its failure code or the part sets it.'); }
         g.cards.add(risk);
 
         // 2. Containment: counts the CQ containment records on this NC (CQ's own Has Containment box lags behind them)

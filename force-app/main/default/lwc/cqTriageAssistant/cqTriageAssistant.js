@@ -1,10 +1,14 @@
 import { LightningElement, api } from 'lwc';
 import saveTriage from '@salesforce/apex/CqTriageAssistant.saveTriage';
 import createContainment from '@salesforce/apex/CqTriageContainment.create';
+import getRisk from '@salesforce/apex/CqTriageRisk.getRisk';
+import saveRisk from '@salesforce/apex/CqTriageRisk.saveRisk';
 import userId from '@salesforce/user/Id';
 
 const STEPS = ['Containment', 'Data Check', 'Risk', 'Path'];
-const RISKS = ['Low', 'Medium', 'High'];
+const SEV = ['Negligible', 'Low', 'Moderate', 'Significant', 'Catastrophic'];
+const LIK = ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'];
+const band = (n) => (n >= 15 ? 'High' : n >= 6 ? 'Medium' : 'Low');
 const ASKS = ['More photos', 'Measurements', 'When it started', 'Other lots affected?'];
 const DISPS = ['Rework', 'Use as is', 'Scrap', 'Return to supplier'];
 
@@ -34,18 +38,26 @@ export default class CqTriageAssistant extends LightningElement {
     data = '';
     asks = {};
     askNote = '';
-    risk;
+    rk;
+    sev = 3;
+    lik = 1;
     riskWhy = '';
     path = '';
     disp = '';
     logWhy = '';
     summary = [];
 
-    connectedCallback() {
-        this.risk = this.suggestedRisk;
+    async connectedCallback() {
         const d = new Date(Date.now() + 86400000);
         const p = (n) => String(n).padStart(2, '0');
         this.due = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        try {
+            this.rk = await getRisk({ recordId: this.recordId });
+        } catch (e) {
+            this.rk = { count: 0, recent: [], severity: 3, severityAssumed: true, severityWhy: 'Assumed: could not read the record', likelihood: 1, likelihoodWhy: 'Could not count recent NCs', escaped: false };
+        }
+        this.sev = this.rk.severity;
+        this.lik = this.rk.likelihood;
     }
 
     // ---- facts from the glance
@@ -53,7 +65,12 @@ export default class CqTriageAssistant extends LightningElement {
     card(id) { return (this.g.cards || []).find((c) => c.id === id) || { facts: [] }; }
     fact(cardId, k) { return (this.card(cardId).facts || []).find((f) => f.k === k); }
     get title() { return (this.g.name || '') + (this.g.title ? ' · ' + this.g.title : ''); }
-    get suggestedRisk() { const h = this.card('risk').headline; return RISKS.includes(h) ? h : 'Medium'; }
+    // risk: CQ's Severity x Probability; CQ.AI fills both, the triager can move the cell
+    get escaped() { return !!(this.rk && this.rk.escaped); }
+    get suggestedScore() { return this.rk ? this.rk.severity * this.rk.likelihood : 0; }
+    get suggestedRisk() { return this.escaped ? 'High' : band(this.suggestedScore); }
+    get score() { return this.sev * this.lik; }
+    get risk() { return this.escaped ? 'High' : band(this.score); }
     get contained() { const h = this.card('cont').headline; return h === 'Contained' || h === 'Containment raised'; }
     get invHeadline() { return this.card('inv').headline || ''; }
     get linked() { return this.invHeadline.startsWith('Linked: '); }
@@ -77,7 +94,7 @@ export default class CqTriageAssistant extends LightningElement {
         const subs = [
             this.noAction ? 'No action' : n ? n + ' action' + (n > 1 ? 's' : '') : 'Not decided',
             this.data === 'ok' ? 'Good enough' : this.data === 'ask' ? 'More information requested' : 'Not checked',
-            this.maxStep > 2 || this.done ? this.risk + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
+            this.maxStep > 2 || this.done ? this.risk + ' \u00b7 score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
             this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : this.path === 'log' ? 'Log only' : 'Not chosen'
         ];
         const valid = this.valid;
@@ -182,14 +199,42 @@ export default class CqTriageAssistant extends LightningElement {
     handleData(event) { this.data = event.currentTarget.dataset.id; }
     handleAsk(event) { const l = event.currentTarget.dataset.id; this.asks = { ...this.asks, [l]: !this.asks[l] }; }
 
-    // ---- step 3: risk
-    get riskFacts() { return (this.card('risk').facts || []).map((f, i) => ({ key: 'r' + i, k: f.k, v: f.v, cls: 'tv' + (f.warn ? ' red' : '') })); }
-    get riskOpts() { return RISKS.map((l) => ({ id: l, label: l, cls: 'opt wide' + (this.risk === l ? ' on' : l === this.suggestedRisk ? ' sug' : '') })); }
-    get riskChanged() { return this.risk !== this.suggestedRisk; }
-    handleRisk(event) { this.risk = event.currentTarget.dataset.id; }
+    // ---- step 3: risk heat map
+    get heatRows() {
+        const r = this.rk || {};
+        return [5, 4, 3, 2, 1].map((sv) => ({
+            key: 's' + sv, label: sv + ' ' + SEV[sv - 1],
+            cells: [1, 2, 3, 4, 5].map((lk) => {
+                const n = sv * lk;
+                const on = sv === this.sev && lk === this.lik;
+                const sug = sv === r.severity && lk === r.likelihood;
+                return { key: sv + '-' + lk, s: sv, l: lk, n, sug, pressed: on ? 'true' : 'false',
+                    title: SEV[sv - 1] + ' x ' + LIK[lk - 1] + ' = ' + n + ' (' + band(n) + ')',
+                    cls: 'cell ' + band(n).toLowerCase() + (on ? ' on' : '') };
+            })
+        }));
+    }
+    get heatCols() { return LIK.map((l, i) => ({ key: 'l' + i, label: (i + 1) + ' ' + l })); }
+    get sevLabel() { return this.sev + ' ' + SEV[this.sev - 1]; }
+    get likLabel() { return this.lik + ' ' + LIK[this.lik - 1]; }
+    get riskReady() { return !!this.rk; }
+    get sevWhy() { return this.rk ? SEV[this.rk.severity - 1] + ' · ' + this.rk.severityWhy : ''; }
+    get likWhy() { return this.rk ? LIK[this.rk.likelihood - 1] + ' · ' + this.rk.likelihoodWhy : ''; }
+    get recentList() { return this.rk && this.rk.recent && this.rk.recent.length ? 'Most recent: ' + this.rk.recent.join(', ') : ''; }
+    get escapedWhy() { return this.rk ? this.rk.escapedWhy : ''; }
+    get riskCls() { return 'lvl ' + this.risk.toLowerCase(); }
+    get sugCls() { return 'lvl ' + this.suggestedRisk.toLowerCase(); }
+    get riskChanged() { return !!this.rk && (this.sev !== this.rk.severity || this.lik !== this.rk.likelihood); }
+    handleCell(event) {
+        this.sev = Number(event.currentTarget.dataset.s);
+        this.lik = Number(event.currentTarget.dataset.l);
+    }
 
     // ---- step 4: path
     get joinLabel() { return (this.linked ? 'Continue with ' : 'Join ') + this.invName; }
+    get pathValue() {
+        return this.path === 'join' ? (this.linked ? 'Continue with Investigation' : 'Join Investigation') : this.path === 'new' ? 'New Investigation' : 'Log Only';
+    }
     get pathOpts() {
         const defs = [];
         if (this.invName) { defs.push(['join', this.joinLabel, this.card('inv').why]); }
@@ -214,7 +259,10 @@ export default class CqTriageAssistant extends LightningElement {
             if (!this.data) { return 'Is the data good enough?'; }
             if (this.dataAsk && !this.askList.length && !this.askNote.trim()) { return 'Say what you need'; }
         }
-        if (this.step === 2 && this.riskChanged && !this.riskWhy.trim()) { return 'Give a reason'; }
+        if (this.step === 2) {
+            if (!this.rk) { return 'Working out the risk'; }
+            if (this.riskChanged && !this.riskWhy.trim()) { return 'Give a reason'; }
+        }
         if (this.step === 3) {
             if (!this.path) { return 'Click a path above to choose it'; }
             if (this.pathLog && (!this.disp || !this.logWhy.trim())) { return 'Disposition and reason needed'; }
@@ -236,7 +284,9 @@ export default class CqTriageAssistant extends LightningElement {
             { k: 'Containment', v: this.noAction ? 'No action: ' + this.noActionWhy.trim()
                 : [...this.chosenActs, ...this.added.map((a) => a.name + ' ' + a.title)].join('; ') },
             { k: 'Data Check', v: this.dataAsk ? 'More information requested: ' + [...this.askList, this.askNote.trim()].filter(Boolean).join(', ') : 'Good enough' },
-            { k: 'Risk', v: this.risk + (this.riskChanged ? ' (changed from CQ.AI ' + this.suggestedRisk + ': ' + this.riskWhy.trim() + ')' : ' (as CQ.AI suggested)') },
+            { k: 'Risk', v: this.risk + ' \u00b7 score ' + this.score + ' (severity ' + this.sevLabel + ' x likelihood ' + this.likLabel + ')'
+                + (this.escaped ? ' \u00b7 High because of complaints on the lot' : '')
+                + (this.riskChanged ? ' \u00b7 changed from CQ.AI ' + this.suggestedRisk + ': ' + this.riskWhy.trim() : ' \u00b7 as CQ.AI suggested') },
             { k: 'Path', v: this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : 'Log only: ' + this.disp + ' (' + this.logWhy.trim() + ')' }
         ];
     }
@@ -251,11 +301,14 @@ export default class CqTriageAssistant extends LightningElement {
         this.saving = true;
         this.error = undefined;
         const rows = this.buildSummary();
+        let riskWarning;
         try {
+            try { await saveRisk({ recordId: this.recordId, severity: this.sev, likelihood: this.lik }); }
+            catch (e) { riskWarning = (e && e.body && e.body.message) || 'CQ did not accept Severity and Probability.'; }
             const t = await saveTriage({
                 recordId: this.recordId,
                 risk: this.risk,
-                path: this.path === 'join' ? 'Join Investigation' : this.path === 'new' ? 'New Investigation' : 'Log Only',
+                path: this.pathValue,
                 notes: rows.map((r) => r.k + ': ' + r.v).join('\n'),
                 containment: this.hasActs || this.hasAdded,
                 investigate: this.path !== 'log',
@@ -264,7 +317,7 @@ export default class CqTriageAssistant extends LightningElement {
             });
             if (t && t.created && t.created.length) { rows.push({ k: 'Created', v: 'Containment ' + t.created.join(', ') }); }
             this.summary = rows.map((r) => ({ ...r, key: r.k }));
-            this.warning = t && t.warning;
+            this.warning = [t && t.warning, riskWarning].filter(Boolean).join(' ') || undefined;
             this.done = true;
             this.dispatchEvent(new CustomEvent('done'));
         } catch (e) {
