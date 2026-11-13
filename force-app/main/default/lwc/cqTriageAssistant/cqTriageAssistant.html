@@ -122,10 +122,16 @@
                                     </div>
                                     <template for:each={heatRows} for:item="r">
                                         <div key={r.key} class="hrow">
-                                            <span class="hlab">{r.label}</span>
+                                            <span class="hlab"><span class="cnum">{r.num}</span>{r.rest}</span>
                                             <template for:each={r.cells} for:item="c">
-                                                <button key={c.key} class={c.cls} data-s={c.s} data-l={c.l} onclick={handleCell} title={c.title} aria-pressed={c.pressed}>
+                                                <button key={c.key} class={c.cls} data-s={c.s} data-l={c.l} onclick={handleCell} aria-label={c.aria} aria-pressed={c.pressed}>
                                                     <template if:true={c.sug}><span class="cstar">&#10022;</span></template>{c.text}
+                                                    <span class="tip" role="tooltip">
+                                                        <template if:true={c.sug}><span class="tips">&#10022; CQ.AI Suggests</span></template>
+                                                        <span class="tiph">{c.tipHead}</span>
+                                                        <span class="tipc">{c.tipCalc}</span>
+                                                        <span class="tipm">{c.tipRange}</span>
+                                                    </span>
                                                 </button>
                                             </template>
                                         </div>

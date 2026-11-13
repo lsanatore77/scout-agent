@@ -203,13 +203,15 @@ export default class CqTriageAssistant extends LightningElement {
     get heatRows() {
         const r = this.rk || {};
         return [5, 4, 3, 2, 1].map((sv) => ({
-            key: 's' + sv, label: sv + ' - ' + SEV[sv - 1],
+            key: 's' + sv, num: String(sv), rest: ' - ' + SEV[sv - 1],
             cells: [1, 2, 3, 4, 5].map((lk) => {
                 const n = sv * lk;
                 const on = sv === this.sev && lk === this.lik;
                 const sug = sv === r.severity && lk === r.likelihood;
+                const calc = sv + ' - ' + SEV[sv - 1] + ' severity × ' + lk + ' - ' + LIK[lk - 1] + ' likelihood';
                 return { key: sv + '-' + lk, s: sv, l: lk, text: band(n), sug, pressed: on ? 'true' : 'false',
-                    title: (sug ? 'CQ.AI Suggests. ' : '') + band(n) + ': score ' + n + ' of 25 (' + sv + ' - ' + SEV[sv - 1] + ' severity x ' + lk + ' - ' + LIK[lk - 1] + ' likelihood). ' + RANGES[band(n)],
+                    tipHead: band(n) + ' · Score ' + n + ' of 25', tipCalc: calc, tipRange: RANGES[band(n)],
+                    aria: band(n) + ', score ' + n + ' of 25, ' + calc,
                     cls: 'cell ' + (sug ? 'sug' : band(n).toLowerCase()) + (on ? ' on' : '') };
             })
         }));
