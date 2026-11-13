@@ -21,14 +21,7 @@
                     <template if:true={photoError}><div class="perr">{photoError}</div></template>
                 </div>
                 <div class="ptext">
-                    <div class="phead">
-                        <div class="plabel">The problem</div>
-                        <div class="actions">
-                            <button class="btn primary" onclick={handleAssistant}><span class="star w">&#10022;</span>Triage Assistant</button>
-                            <button class="btn outline" onclick={handleEdit}>Edit</button>
-                            <template if:true={hasGaps}><button class="btn" onclick={handleGaps}>{gapsLabel}</button></template>
-                        </div>
-                    </div>
+                    <div class="plabel">The problem</div>
                     <div class="quote">{description}</div>
                     <div class="tiles">
                         <template for:each={tiles} for:item="t">
@@ -40,6 +33,11 @@
                             <template for:each={gaps} for:item="x"><li key={x.key}>{x.text}</li></template>
                         </ul>
                     </template>
+                    <div class="actions">
+                        <button class="btn primary" onclick={handleAssistant}><span class="star w">&#10022;</span>Triage Assistant</button>
+                        <button class="btn outline" onclick={handleEdit}>Edit</button>
+                        <template if:true={hasGaps}><button class="btn" onclick={handleGaps}>{gapsLabel}</button></template>
+                    </div>
                 </div>
             </div>
             <div class="cards">
