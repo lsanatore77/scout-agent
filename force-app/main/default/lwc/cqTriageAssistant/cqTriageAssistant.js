@@ -9,7 +9,6 @@ const STEPS = ['Containment', 'Data Check', 'Risk', 'Path'];
 const SEV = ['Negligible', 'Low', 'Moderate', 'Significant', 'Catastrophic'];
 const LIK = ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'];
 const band = (n) => (n >= 15 ? 'High' : n >= 6 ? 'Medium' : 'Low');
-const RANGES = { Low: 'Low is 1 to 5.', Medium: 'Medium is 6 to 12.', High: 'High is 15 to 25.' };
 const ASKS = ['More photos', 'Measurements', 'When it started', 'Other lots affected?'];
 const DISPS = ['Rework', 'Use as is', 'Scrap', 'Return to supplier'];
 
@@ -208,10 +207,11 @@ export default class CqTriageAssistant extends LightningElement {
                 const n = sv * lk;
                 const on = sv === this.sev && lk === this.lik;
                 const sug = sv === r.severity && lk === r.likelihood;
-                const calc = sv + ' - ' + SEV[sv - 1] + ' severity × ' + lk + ' - ' + LIK[lk - 1] + ' likelihood';
-                return { key: sv + '-' + lk, s: sv, l: lk, text: band(n), sug, pressed: on ? 'true' : 'false',
-                    tipHead: band(n) + ' · Score ' + n + ' of 25', tipCalc: calc, tipRange: RANGES[band(n)],
-                    aria: band(n) + ', score ' + n + ' of 25, ' + calc,
+                const sevText = sv + ' - ' + SEV[sv - 1] + ' Severity';
+                const likText = lk + ' - ' + LIK[lk - 1] + ' Likelihood';
+                return { key: sv + '-' + lk, s: sv, l: lk, n, text: band(n), sug, pressed: on ? 'true' : 'false',
+                    lvlCls: 'lvl ' + band(n).toLowerCase(), tipSev: sevText, tipLik: likText,
+                    aria: band(n) + ', score ' + n + ' of 25, ' + sevText + ' x ' + likText,
                     cls: 'cell ' + (sug ? 'sug' : band(n).toLowerCase()) + (on ? ' on' : '') };
             })
         }));

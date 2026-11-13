@@ -128,9 +128,10 @@
                                                     <template if:true={c.sug}><span class="cstar">&#10022;</span></template>{c.text}
                                                     <span class="tip" role="tooltip">
                                                         <template if:true={c.sug}><span class="tips">&#10022; CQ.AI Suggests</span></template>
-                                                        <span class="tiph">{c.tipHead}</span>
-                                                        <span class="tipc">{c.tipCalc}</span>
-                                                        <span class="tipm">{c.tipRange}</span>
+                                                        <span class="tiph"><span class={c.lvlCls}>{c.text}</span><span class="tipdot">&middot;</span><span>Score {c.n} of 25</span></span>
+                                                        <span class="tipc">{c.tipSev}</span>
+                                                        <span class="tipx">&times;</span>
+                                                        <span class="tipc">{c.tipLik}</span>
                                                     </span>
                                                 </button>
                                             </template>
