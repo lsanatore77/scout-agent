@@ -117,45 +117,53 @@
                         <template if:true={riskReady}>
                             <div class="riskwrap">
                                 <div class="heat">
-                                    <div class="axis">Severity &uarr; &nbsp; Likelihood &rarr;</div>
+                                    <div class="hrow">
+                                        <span class="axis">Severity</span>
+                                    </div>
                                     <template for:each={heatRows} for:item="r">
                                         <div key={r.key} class="hrow">
                                             <span class="hlab">{r.label}</span>
                                             <template for:each={r.cells} for:item="c">
                                                 <button key={c.key} class={c.cls} data-s={c.s} data-l={c.l} onclick={handleCell} title={c.title} aria-pressed={c.pressed}>
-                                                    <template if:true={c.sug}><span class="cstar">&#10022;</span></template>{c.n}
+                                                    <template if:true={c.sug}><span class="cstar">&#10022;</span></template>{c.text}
                                                 </button>
                                             </template>
                                         </div>
                                     </template>
                                     <div class="hrow">
                                         <span class="hlab"></span>
-                                        <template for:each={heatCols} for:item="c"><span key={c.key} class="clab">{c.label}</span></template>
+                                        <template for:each={heatCols} for:item="c">
+                                            <span key={c.key} class="clab"><span class="cnum">{c.num}</span><span>{c.word}</span></span>
+                                        </template>
+                                    </div>
+                                    <div class="hrow">
+                                        <span class="hlab"></span>
+                                        <span class="axis across">Likelihood</span>
                                     </div>
                                 </div>
                                 <div class="rside">
                                     <div class="sugbox">
-                                        <div class="lab"><span class="rec">&#10022; CQ.AI Suggests:</span> <span class={sugCls}>{suggestedRisk}</span> <span class="rk">score {suggestedScore} of 25</span></div>
-                                        <ul class="flist small">
-                                            <li><strong>Severity:</strong> {sevWhy}</li>
-                                            <li><strong>Likelihood:</strong> {likWhy}</li>
-                                            <template if:true={recentList}><li class="fline muted">{recentList}</li></template>
-                                            <template if:true={escaped}><li class="fline bad">{escapedWhy}. Risk is High whatever cell is chosen.</li></template>
-                                        </ul>
+                                        <div class="rec">&#10022; CQ.AI Suggests:</div>
+                                        <div class="sughead"><span class={sugCls}>{suggestedRisk}</span><span class="rk">Score {suggestedScore} of 25</span></div>
+                                        <div class="why">
+                                            <div class="whyk">Severity: {sevHead}</div>
+                                            <div class="whyv">{sevWhy}</div>
+                                        </div>
+                                        <div class="why">
+                                            <div class="whyk">Likelihood: {likHead}</div>
+                                            <div class="whyv">{likWhy}</div>
+                                            <template if:true={recentList}><div class="whyv muted">Latest: {recentList}</div></template>
+                                        </div>
+                                        <template if:true={escaped}><div class="why bad">{escapedWhy}. Risk is High whatever cell is chosen.</div></template>
                                     </div>
                                     <div class="yours">
                                         <div class="lab">Selected</div>
-                                        <div class="big"><span class={riskCls}>{risk}</span></div>
-                                        <div class="rk">Severity {sevLabel} &times; likelihood {likLabel} = {score}</div>
+                                        <div class="sughead"><span class={riskCls}>{risk}</span><span class="rk">Score {score} of 25</span></div>
+                                        <div class="whyv">{sevLabel} severity &times; {likLabel} likelihood</div>
                                     </div>
                                 </div>
                             </div>
-                            <p class="note">The &#10022; cell is CQ.AI's suggestion and is already selected. Click another cell to change it. Low 1&ndash;5, Medium 6&ndash;12, High 15&ndash;25.</p>
-                        </template>
-                        <template if:true={riskChanged}>
-                            <label class="fl">Why change it? *
-                                <textarea class="ta" rows="2" data-f="riskWhy" value={riskWhy} oninput={handleInput}></textarea>
-                            </label>
+                            <p class="note">The purple &#10022; cell is CQ.AI's suggestion and is already selected. Click another cell to change it; hover over a cell for its score.</p>
                         </template>
                     </template>
 

@@ -9,6 +9,7 @@ const STEPS = ['Containment', 'Data Check', 'Risk', 'Path'];
 const SEV = ['Negligible', 'Low', 'Moderate', 'Significant', 'Catastrophic'];
 const LIK = ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'];
 const band = (n) => (n >= 15 ? 'High' : n >= 6 ? 'Medium' : 'Low');
+const RANGES = { Low: 'Low is 1 to 5.', Medium: 'Medium is 6 to 12.', High: 'High is 15 to 25.' };
 const ASKS = ['More photos', 'Measurements', 'When it started', 'Other lots affected?'];
 const DISPS = ['Rework', 'Use as is', 'Scrap', 'Return to supplier'];
 
@@ -41,7 +42,6 @@ export default class CqTriageAssistant extends LightningElement {
     rk;
     sev = 3;
     lik = 1;
-    riskWhy = '';
     path = '';
     disp = '';
     logWhy = '';
@@ -85,7 +85,7 @@ export default class CqTriageAssistant extends LightningElement {
         return [
             (this.hasActs && !!this.due) || (this.noAction && !!this.noActionWhy.trim()) || this.hasAdded,
             this.data === 'ok' || (this.dataAsk && (this.askList.length > 0 || !!this.askNote.trim())),
-            this.maxStep > 2 && (!this.riskChanged || !!this.riskWhy.trim()),
+            this.maxStep > 2,
             this.done
         ];
     }
@@ -203,24 +203,32 @@ export default class CqTriageAssistant extends LightningElement {
     get heatRows() {
         const r = this.rk || {};
         return [5, 4, 3, 2, 1].map((sv) => ({
-            key: 's' + sv, label: sv + ' ' + SEV[sv - 1],
+            key: 's' + sv, label: sv + ' - ' + SEV[sv - 1],
             cells: [1, 2, 3, 4, 5].map((lk) => {
                 const n = sv * lk;
                 const on = sv === this.sev && lk === this.lik;
                 const sug = sv === r.severity && lk === r.likelihood;
-                return { key: sv + '-' + lk, s: sv, l: lk, n, sug, pressed: on ? 'true' : 'false',
-                    title: SEV[sv - 1] + ' x ' + LIK[lk - 1] + ' = ' + n + ' (' + band(n) + ')',
-                    cls: 'cell ' + band(n).toLowerCase() + (on ? ' on' : '') };
+                return { key: sv + '-' + lk, s: sv, l: lk, text: band(n), sug, pressed: on ? 'true' : 'false',
+                    title: (sug ? 'CQ.AI Suggests. ' : '') + band(n) + ': score ' + n + ' of 25 (' + sv + ' - ' + SEV[sv - 1] + ' severity x ' + lk + ' - ' + LIK[lk - 1] + ' likelihood). ' + RANGES[band(n)],
+                    cls: 'cell ' + (sug ? 'sug' : band(n).toLowerCase()) + (on ? ' on' : '') };
             })
         }));
     }
-    get heatCols() { return LIK.map((l, i) => ({ key: 'l' + i, label: (i + 1) + ' ' + l })); }
-    get sevLabel() { return this.sev + ' ' + SEV[this.sev - 1]; }
-    get likLabel() { return this.lik + ' ' + LIK[this.lik - 1]; }
+    get heatCols() { return LIK.map((l, i) => ({ key: 'l' + i, num: String(i + 1), word: l })); }
+    get sevLabel() { return this.sev + ' - ' + SEV[this.sev - 1]; }
+    get likLabel() { return this.lik + ' - ' + LIK[this.lik - 1]; }
     get riskReady() { return !!this.rk; }
-    get sevWhy() { return this.rk ? SEV[this.rk.severity - 1] + ' · ' + this.rk.severityWhy : ''; }
-    get likWhy() { return this.rk ? LIK[this.rk.likelihood - 1] + ' · ' + this.rk.likelihoodWhy : ''; }
-    get recentList() { return this.rk && this.rk.recent && this.rk.recent.length ? 'Most recent: ' + this.rk.recent.join(', ') : ''; }
+    get sevHead() { return this.rk ? this.rk.severity + ' - ' + SEV[this.rk.severity - 1] : ''; }
+    get likHead() { return this.rk ? this.rk.likelihood + ' - ' + LIK[this.rk.likelihood - 1] : ''; }
+    get sevWhy() {
+        const r = this.rk || {};
+        return r.severityAssumed ? 'No severity is recorded on the NC, its failure code or the part, so Moderate is assumed.' : 'Taken from: ' + r.severityWhy + '.';
+    }
+    get likWhy() {
+        const n = (this.rk && this.rk.count) || 0;
+        return (n === 1 ? '1 other nonconformance' : n + ' other nonconformances') + ' on this part in the last 14 days.';
+    }
+    get recentList() { return this.rk && this.rk.recent && this.rk.recent.length ? this.rk.recent.join(', ') : ''; }
     get escapedWhy() { return this.rk ? this.rk.escapedWhy : ''; }
     get riskCls() { return 'lvl ' + this.risk.toLowerCase(); }
     get sugCls() { return 'lvl ' + this.suggestedRisk.toLowerCase(); }
@@ -259,10 +267,7 @@ export default class CqTriageAssistant extends LightningElement {
             if (!this.data) { return 'Is the data good enough?'; }
             if (this.dataAsk && !this.askList.length && !this.askNote.trim()) { return 'Say what you need'; }
         }
-        if (this.step === 2) {
-            if (!this.rk) { return 'Working out the risk'; }
-            if (this.riskChanged && !this.riskWhy.trim()) { return 'Give a reason'; }
-        }
+        if (this.step === 2 && !this.rk) { return 'Working out the risk'; }
         if (this.step === 3) {
             if (!this.path) { return 'Click a path above to choose it'; }
             if (this.pathLog && (!this.disp || !this.logWhy.trim())) { return 'Disposition and reason needed'; }
@@ -284,9 +289,9 @@ export default class CqTriageAssistant extends LightningElement {
             { k: 'Containment', v: this.noAction ? 'No action: ' + this.noActionWhy.trim()
                 : [...this.chosenActs, ...this.added.map((a) => a.name + ' ' + a.title)].join('; ') },
             { k: 'Data Check', v: this.dataAsk ? 'More information requested: ' + [...this.askList, this.askNote.trim()].filter(Boolean).join(', ') : 'Good enough' },
-            { k: 'Risk', v: this.risk + ' \u00b7 score ' + this.score + ' (severity ' + this.sevLabel + ' x likelihood ' + this.likLabel + ')'
+            { k: 'Risk', v: this.risk + ' \u00b7 score ' + this.score + ' (' + this.sevLabel + ' severity x ' + this.likLabel + ' likelihood)'
                 + (this.escaped ? ' \u00b7 High because of complaints on the lot' : '')
-                + (this.riskChanged ? ' \u00b7 changed from CQ.AI ' + this.suggestedRisk + ': ' + this.riskWhy.trim() : ' \u00b7 as CQ.AI suggested') },
+                + (this.riskChanged ? ' \u00b7 changed from CQ.AI ' + this.suggestedRisk : ' \u00b7 as CQ.AI suggested') },
             { k: 'Path', v: this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : 'Log only: ' + this.disp + ' (' + this.logWhy.trim() + ')' }
         ];
     }
