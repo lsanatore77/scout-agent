@@ -3,6 +3,7 @@ import { NavigationMixin } from 'lightning/navigation';
 import getGlance from '@salesforce/apex/CqTriageController.getGlance';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 import savePhoto from '@salesforce/apex/CqTriagePhoto.savePhoto';
+import getTriage from '@salesforce/apex/CqTriageAssistant.getTriage';
 
 /** Triage at a Glance on a Nonconformance: the problem, then four cards. Purple cards are CQ.AI suggestions. */
 export default class CqTriageGlance extends NavigationMixin(LightningElement) {
@@ -15,6 +16,8 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
     uploading = false;
     dragging = false;
     photoError;
+    triage;
+    showAssistant = false;
 
     connectedCallback() { this.load(); }
 
@@ -23,7 +26,20 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
         try { this.g = await getGlance({ recordId: this.recordId }); this.error = undefined; }
         catch (e) { this.error = (e && e.body && e.body.message) || 'Could not read this nonconformance.'; }
         this.loadPhoto();
+        try { this.triage = await getTriage({ recordId: this.recordId }); }
+        catch (e) { this.triage = undefined; }
     }
+
+    get triaged() { return !!(this.triage && this.triage.setOn); }
+    get triageLine() {
+        const t = this.triage || {};
+        return 'Triaged' + (t.setBy ? ' by ' + t.setBy : '') + ' \u00b7 Risk ' + t.risk + ' \u00b7 ' + t.path;
+    }
+    get triageNotes() { return (this.triage && this.triage.notes) || ''; }
+    get hasPhoto() { return !!this.photoId; }
+    handleAssistant() { this.showAssistant = true; }
+    handleAssistantClose() { this.showAssistant = false; }
+    handleTriageDone() { this.load(); }
 
     async loadPhoto() {
         try { this.photoId = await getPhotoVersionId({ recordId: this.recordId }); }

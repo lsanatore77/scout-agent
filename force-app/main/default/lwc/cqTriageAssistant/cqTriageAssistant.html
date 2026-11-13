@@ -1,0 +1,132 @@
+<template>
+    <div class="veil" role="dialog" aria-modal="true" aria-label="Triage Assistant">
+        <div class="box">
+            <header class="top">
+                <div class="tt"><div class="h"><span class="star">&#10022;</span> Triage Assistant</div><div class="sub">{title}</div></div>
+                <button class="x" onclick={handleClose} aria-label="Close">&times;</button>
+            </header>
+            <div class="body">
+                <nav class="steps" aria-label="Steps">
+                    <template for:each={steps} for:item="s">
+                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}><span class="dot">{s.mark}</span>{s.label}</button>
+                    </template>
+                </nav>
+                <div class="main">
+                    <template if:true={is0}>
+                        <h3 class="q">Is It Under Control?</h3>
+                        <div class="cols">
+                            <div class="col">
+                                <div class="lab">Facts</div>
+                                <template for:each={facts} for:item="f">
+                                    <div key={f.key} class={f.cls}><span class="ic">{f.icon}</span><div class="rt"><div class="rv">{f.v}</div><div class="rk">{f.k}</div></div></div>
+                                </template>
+                            </div>
+                            <div class="col">
+                                <div class="lab">Possible actions</div>
+                                <template for:each={actions} for:item="a">
+                                    <button key={a.id} class={a.cls} data-id={a.id} onclick={handleAct} aria-pressed={a.pressed}>
+                                        <span class="tick">{a.tick}</span>
+                                        <span class="rt"><span class="rv">{a.label}</span><span class="rk">{a.why}</span></span>
+                                        <template if:true={a.cq}><span class="star" title="CQ.AI Suggestion">&#10022;</span></template>
+                                    </button>
+                                </template>
+                                <template if:true={noAction}>
+                                    <label class="fl">Why is no action needed? *
+                                        <textarea class="ta" rows="2" data-f="noActionWhy" value={noActionWhy} oninput={handleInput}></textarea>
+                                    </label>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template if:true={is1}>
+                        <h3 class="q">Data check</h3>
+                        <p class="p">What was reported, and is it enough to send on? Photos and a description may be all you get.</p>
+                        <template for:each={dataRows} for:item="r">
+                            <div key={r.key} class={r.cls}><span class="ic">{r.icon}</span><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
+                        </template>
+                        <div class="opts">
+                            <template for:each={dataOpts} for:item="o">
+                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleData}>{o.label}</button>
+                            </template>
+                        </div>
+                        <template if:true={dataAsk}>
+                            <div class="lab top8">What do you need? *</div>
+                            <div class="chips">
+                                <template for:each={askChips} for:item="c">
+                                    <button key={c.label} class={c.cls} data-id={c.label} onclick={handleAsk} aria-pressed={c.pressed}>{c.label}</button>
+                                </template>
+                            </div>
+                            <textarea class="ta" rows="2" placeholder="Anything else" data-f="askNote" value={askNote} oninput={handleInput}></textarea>
+                            <p class="note">The request is recorded on the nonconformance. Sending it to the reporter is not built yet.</p>
+                        </template>
+                    </template>
+
+                    <template if:true={is2}>
+                        <h3 class="q">Confirm the risk</h3>
+                        <div class="sugbox">
+                            <div class="lab"><span class="star">&#10022;</span> CQ.AI suggests</div>
+                            <div class="big">{suggestedRisk}</div>
+                            <div class="tiles">
+                                <template for:each={riskFacts} for:item="t">
+                                    <div key={t.key} class="tile"><div class="tl">{t.k}</div><div class={t.cls}>{t.v}</div></div>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="opts">
+                            <template for:each={riskOpts} for:item="o">
+                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleRisk}>{o.label}</button>
+                            </template>
+                        </div>
+                        <template if:true={riskChanged}>
+                            <label class="fl">Why change it? *
+                                <textarea class="ta" rows="2" data-f="riskWhy" value={riskWhy} oninput={handleInput}></textarea>
+                            </label>
+                        </template>
+                    </template>
+
+                    <template if:true={is3}>
+                        <h3 class="q">Decide the path</h3>
+                        <div class="paths">
+                            <template for:each={pathOpts} for:item="o">
+                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handlePath}>
+                                    <span class="pl">{o.label}<template if:true={o.cq}><span class="star" title="CQ.AI Suggestion">&#10022;</span></template></span>
+                                    <span class="rk">{o.why}</span>
+                                </button>
+                            </template>
+                        </div>
+                        <template if:true={pathLog}>
+                            <label class="fl">Disposition *
+                                <select class="sel" data-f="disp" onchange={handleInput}>
+                                    <option value="">Choose</option>
+                                    <template for:each={dispOpts} for:item="d"><option key={d.value} value={d.value} selected={d.selected}>{d.value}</option></template>
+                                </select>
+                            </label>
+                            <label class="fl">Why no investigation? *
+                                <textarea class="ta" rows="2" data-f="logWhy" value={logWhy} oninput={handleInput}></textarea>
+                            </label>
+                        </template>
+                    </template>
+
+                    <template if:true={done}>
+                        <div class="donehead"><span class="okdot">&#10003;</span><h3 class="q nom">Triage complete</h3></div>
+                        <template for:each={summary} for:item="r">
+                            <div key={r.key} class="row slim"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
+                        </template>
+                        <template if:true={warning}><div class="warnbox">{warning}</div></template>
+                        <div class="opts"><button class="btn primary" onclick={handleClose}>Back to the nonconformance</button></div>
+                    </template>
+                    <template if:true={error}><div class="errbox">{error}</div></template>
+                </div>
+            </div>
+            <template if:true={working}>
+                <footer class="foot">
+                    <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
+                    <span class="grow"></span>
+                    <span class="blocker">{blocker}</span>
+                    <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+                </footer>
+            </template>
+        </div>
+    </div>
+</template>
