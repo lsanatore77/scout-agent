@@ -236,13 +236,14 @@
                         </template>
                     </template>
 
-                    <template if:true={done}>
+                    <template if:true={showSummary}>
                         <div class="donehead"><span class="okdot">&#10003;</span><h3 class="q nom">Triage complete</h3></div>
                         <template for:each={summary} for:item="r">
                             <div key={r.key} class="row slim"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
                         </template>
                         <template if:true={warning}><div class="warnbox">{warning}</div></template>
                         <template if:true={popup}><div class="opts"><button class="btn primary" onclick={handleClose}>Back to the nonconformance</button></div></template>
+                        <template if:true={inline}><div class="opts"><button class="btn primary" onclick={handleFinish}>Done</button></div></template>
                     </template>
                     <template if:true={error}><div class="errbox">{error}</div></template>
                 </div>

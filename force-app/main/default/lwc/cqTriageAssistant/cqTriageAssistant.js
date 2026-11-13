@@ -32,6 +32,7 @@ export default class CqTriageAssistant extends LightningElement {
     booted = false;
     resumed = false;
     done = false;
+    finished = false;
     saving = false;
     error;
     warning;
@@ -114,7 +115,7 @@ export default class CqTriageAssistant extends LightningElement {
         saveDraft({ recordId: this.recordId, draft: JSON.stringify({ v: 1, ...s }) }).catch(() => {});
     }
     handleRestart() {
-        this.step = 0; this.maxStep = 0; this.done = false; this.resumed = false;
+        this.step = 0; this.maxStep = 0; this.done = false; this.finished = false; this.resumed = false;
         this.error = undefined; this.warning = undefined;
         this.acts = {}; this.noActionWhy = ''; this.due = this.tomorrow(); this.showAdd = false; this.added = [];
         this.data = ''; this.asks = {}; this.askNote = '';
@@ -160,12 +161,14 @@ export default class CqTriageAssistant extends LightningElement {
         return names.map((label, i) => {
             const stepDone = this.done || valid[i];
             return { i, n: i + 1, label, sub: subs[i], done: stepDone, notDone: !stepDone,
-                cls: 'step' + (!this.done && i === this.step ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done || i > this.maxStep };
+                cls: 'step' + ((!this.done && i === this.step) || (this.finished && i === 0) ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done || i > this.maxStep };
         });
     }
     get progress() { return this.steps.filter((x) => x.done).length + ' of ' + this.steps.length + ' steps complete'; }
     get live() { return this.booted && !this.done; }
-    get isGlance() { return this.live && this.cur === -1; }
+    get isGlance() { return (this.live && this.cur === -1) || (this.done && this.finished); }
+    get showSummary() { return this.done && !this.finished; }
+    handleFinish() { this.finished = true; }
     get is0() { return this.live && this.cur === 0; }
     get is1() { return this.live && this.cur === 1; }
     get is2() { return this.live && this.cur === 2; }
