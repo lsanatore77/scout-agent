@@ -35,15 +35,40 @@
                                         <template if:true={a.cq}><span class="star" title="CQ.AI Suggestion">&#10022;</span></template>
                                     </button>
                                 </template>
-                                <div class="addrow">
-                                    <input class="ta" type="text" placeholder="Add another action" data-f="newAct" value={newAct} oninput={handleInput} onkeydown={handleAddKey} />
-                                    <button class="btn" onclick={handleAddAct} disabled={cantAdd}>Add</button>
-                                </div>
+                                <template for:each={added} for:item="a">
+                                    <div key={a.key} class="row slim added"><span class="ic">&#10003;</span><span class="dv">{a.name} &middot; {a.title}</span></div>
+                                </template>
+                                <template if:false={showAdd}>
+                                    <button class="btn addbtn" onclick={handleShowAdd}>Add Containment</button>
+                                </template>
+                                <template if:true={showAdd}>
+                                    <div class="addform">
+                                        <div class="lab">New containment</div>
+                                        <label class="fl">Title *
+                                            <input class="ta" type="text" data-f="cTitle" value={cTitle} oninput={handleInput} />
+                                        </label>
+                                        <label class="fl">Description
+                                            <textarea class="ta" rows="2" data-f="cDesc" value={cDesc} oninput={handleInput}></textarea>
+                                        </label>
+                                        <label class="fl">Due date *
+                                            <input class="ta date" type="date" data-f="cDue" value={cDue} onchange={handleInput} />
+                                        </label>
+                                        <div class="fl">
+                                            <lightning-record-picker label="Assignee" object-api-name="User" value={cAssignee} onchange={handleAssignee}></lightning-record-picker>
+                                        </div>
+                                        <template if:true={addError}><div class="errbox">{addError}</div></template>
+                                        <div class="opts">
+                                            <button class="btn primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
+                                            <button class="btn" onclick={handleCancelAdd}>Cancel</button>
+                                        </div>
+                                        <p class="note">Creates the CQ containment on this NC straight away.</p>
+                                    </div>
+                                </template>
                                 <template if:true={hasActs}>
-                                    <label class="fl">Due date for these actions *
+                                    <label class="fl">Due date for the ticked actions *
                                         <input class="ta date" type="date" data-f="due" value={due} onchange={handleInput} />
                                     </label>
-                                    <p class="note">On Complete triage, each action is created as a CQ containment on this NC, assigned to you.</p>
+                                    <p class="note">On Complete triage, each ticked action is created as a CQ containment on this NC, assigned to you.</p>
                                 </template>
                                 <template if:true={noAction}>
                                     <label class="fl">Why is no action needed? *

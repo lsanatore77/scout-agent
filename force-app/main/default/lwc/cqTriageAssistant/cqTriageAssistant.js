@@ -1,5 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import saveTriage from '@salesforce/apex/CqTriageAssistant.saveTriage';
+import createContainment from '@salesforce/apex/CqTriageContainment.create';
+import userId from '@salesforce/user/Id';
 
 const STEPS = ['Containment', 'Data Check', 'Risk', 'Path'];
 const RISKS = ['Low', 'Medium', 'High'];
@@ -20,9 +22,15 @@ export default class CqTriageAssistant extends LightningElement {
     warning;
     acts = {};
     noActionWhy = '';
-    custom = [];
-    newAct = '';
     due;
+    showAdd = false;
+    cTitle = '';
+    cDesc = '';
+    cDue;
+    cAssignee = userId;
+    adding = false;
+    addError;
+    added = [];
     data = '';
     asks = {};
     askNote = '';
@@ -55,16 +63,26 @@ export default class CqTriageAssistant extends LightningElement {
     }
     get suggestedPath() { return this.invName ? 'join' : this.invHeadline === 'Open new' ? 'new' : 'log'; }
 
-    // ---- step rail (same pattern as the PHR workspace)
+    // ---- step rail (same pattern as the PHR workspace): a step ticks only when it has a valid answer
+    get valid() {
+        return [
+            (this.hasActs && !!this.due) || (this.noAction && !!this.noActionWhy.trim()) || this.hasAdded,
+            this.data === 'ok' || (this.dataAsk && (this.askList.length > 0 || !!this.askNote.trim())),
+            this.maxStep > 2 && (!this.riskChanged || !!this.riskWhy.trim()),
+            this.done
+        ];
+    }
     get steps() {
+        const n = this.chosenActs.length + this.added.length;
         const subs = [
-            this.noAction ? 'No action' : this.chosenActs.length ? this.chosenActs.length + ' action' + (this.chosenActs.length > 1 ? 's' : '') + ' chosen' : 'Not decided',
+            this.noAction ? 'No action' : n ? n + ' action' + (n > 1 ? 's' : '') : 'Not decided',
             this.data === 'ok' ? 'Good enough' : this.data === 'ask' ? 'More information requested' : 'Not checked',
             this.maxStep > 2 || this.done ? this.risk + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
             this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : this.path === 'log' ? 'Log only' : 'Not chosen'
         ];
+        const valid = this.valid;
         return STEPS.map((label, i) => {
-            const stepDone = this.done || i < this.maxStep;
+            const stepDone = this.done || valid[i];
             return { i, n: i + 1, label, sub: subs[i], done: stepDone, notDone: !stepDone,
                 cls: 'step' + (!this.done && i === this.step ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done || i > this.maxStep };
         });
@@ -99,31 +117,45 @@ export default class CqTriageAssistant extends LightningElement {
             ['stop', 'Stop', 'Stop the process until the cause is known', false],
             ['none', 'No action', 'It is already under control', this.contained]
         ];
-        this.custom.forEach((t, i) => defs.splice(defs.length - 1, 0, ['own' + i, t, 'Your own action. Click to remove.', false, true]));
-        return defs.map(([id, label, why, cq, mine]) => {
-            const on = mine || !!this.acts[id];
-            return { id, label, why, cq, mine, on, pressed: on ? 'true' : 'false', tick: on ? '✓' : '', cls: 'act' + (on ? ' on' : cq ? ' sug' : '') };
+        return defs.map(([id, label, why, cq]) => {
+            const on = !!this.acts[id];
+            return { id, label, why, cq, on, pressed: on ? 'true' : 'false', tick: on ? '✓' : '', cls: 'act' + (on ? ' on' : cq ? ' sug' : '') };
         });
     }
     get noAction() { return !!this.acts.none; }
-    get chosenActs() { return this.actions.filter((a) => a.on && a.id !== 'none').map((a) => (a.mine ? a.label : a.why)); }
+    get chosenActs() { return this.actions.filter((a) => a.on && a.id !== 'none').map((a) => a.why); }
     get hasActs() { return this.chosenActs.length > 0; }
-    get cantAdd() { return !this.newAct.trim(); }
     handleAct(event) {
         const id = event.currentTarget.dataset.id;
-        if (id.startsWith('own')) { this.custom = this.custom.filter((t, i) => 'own' + i !== id); return; }
         const on = !this.acts[id];
-        if (id === 'none') { this.acts = { none: on }; if (on) { this.custom = []; } return; }
-        this.acts = { ...this.acts, none: false, [id]: on };
+        this.acts = id === 'none' ? { none: on } : { ...this.acts, none: false, [id]: on };
     }
-    handleAddAct() {
-        const t = this.newAct.trim();
-        if (!t) { return; }
-        this.custom = [...this.custom, t];
-        this.acts = { ...this.acts, none: false };
-        this.newAct = '';
+
+    // Add Containment: creates the CQ record straight away
+    get hasAdded() { return this.added.length > 0; }
+    get cantCreate() { return this.adding || !this.cTitle.trim() || !this.cDue; }
+    get createLabel() { return this.adding ? 'Creating…' : 'Create containment'; }
+    handleShowAdd() { this.cDue = this.due; this.addError = undefined; this.showAdd = true; }
+    handleCancelAdd() { this.showAdd = false; }
+    handleAssignee(event) { this.cAssignee = (event.detail && event.detail.recordId) || null; }
+    async handleCreate() {
+        if (this.cantCreate) { return; }
+        this.adding = true;
+        this.addError = undefined;
+        try {
+            const title = this.cTitle.trim();
+            const name = await createContainment({ recordId: this.recordId, title, description: this.cDesc, dueDate: this.cDue, assigneeId: this.cAssignee });
+            this.added = [...this.added, { key: name, name, title }];
+            this.acts = { ...this.acts, none: false };
+            this.cTitle = '';
+            this.cDesc = '';
+            this.cAssignee = userId;
+            this.showAdd = false;
+        } catch (e) {
+            this.addError = (e && e.body && e.body.message) || 'Could not create the containment.';
+        }
+        this.adding = false;
     }
-    handleAddKey(event) { if (event.key === 'Enter') { this.newAct = event.target.value; this.handleAddAct(); } }
 
     // ---- step 2: data check
     get dataRows() {
@@ -174,7 +206,7 @@ export default class CqTriageAssistant extends LightningElement {
     // ---- navigation
     get blocker() {
         if (this.step === 0) {
-            if (!this.hasActs && !this.noAction) { return 'Choose an action, or No action'; }
+            if (!this.hasActs && !this.noAction && !this.hasAdded) { return 'Choose an action, add a containment, or No action'; }
             if (this.hasActs && !this.due) { return 'Set a due date'; }
             if (this.noAction && !this.noActionWhy.trim()) { return 'Say why no action is needed'; }
         }
@@ -201,7 +233,8 @@ export default class CqTriageAssistant extends LightningElement {
 
     buildSummary() {
         return [
-            { k: 'Containment', v: this.noAction ? 'No action: ' + this.noActionWhy.trim() : this.chosenActs.join('; ') },
+            { k: 'Containment', v: this.noAction ? 'No action: ' + this.noActionWhy.trim()
+                : [...this.chosenActs, ...this.added.map((a) => a.name + ' ' + a.title)].join('; ') },
             { k: 'Data Check', v: this.dataAsk ? 'More information requested: ' + [...this.askList, this.askNote.trim()].filter(Boolean).join(', ') : 'Good enough' },
             { k: 'Risk', v: this.risk + (this.riskChanged ? ' (changed from CQ.AI ' + this.suggestedRisk + ': ' + this.riskWhy.trim() + ')' : ' (as CQ.AI suggested)') },
             { k: 'Path', v: this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : 'Log only: ' + this.disp + ' (' + this.logWhy.trim() + ')' }
@@ -224,9 +257,9 @@ export default class CqTriageAssistant extends LightningElement {
                 risk: this.risk,
                 path: this.path === 'join' ? 'Join Investigation' : this.path === 'new' ? 'New Investigation' : 'Log Only',
                 notes: rows.map((r) => r.k + ': ' + r.v).join('\n'),
-                containment: !this.noAction,
+                containment: this.hasActs || this.hasAdded,
                 investigate: this.path !== 'log',
-                containmentTitles: this.noAction ? [] : this.chosenActs,
+                containmentTitles: this.chosenActs,
                 dueDate: this.due
             });
             if (t && t.created && t.created.length) { rows.push({ k: 'Created', v: 'Containment ' + t.created.join(', ') }); }
