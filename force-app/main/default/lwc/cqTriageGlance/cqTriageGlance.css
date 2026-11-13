@@ -3,8 +3,16 @@
 .h { margin: 0; font-size: 17px; font-weight: 700; }
 .err { margin-top: 10px; color: #b42318; }
 .problem { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; margin-top: 14px; padding: 14px; border-radius: 10px; background: #f8f6ff; border: 1px solid #dcd3ff; }
-.photo { display: flex; align-items: center; justify-content: center; min-height: 130px; box-sizing: border-box; padding: 8px; border-radius: 8px; background: #fff; border: 1px dashed #c4cad2; overflow: hidden; }
+.photo { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 130px; box-sizing: border-box; padding: 8px; border-radius: 8px; background: #fff; border: 1px dashed #c4cad2; overflow: hidden; }
 .photo.has { padding: 0; border: none; background: #2b3138; }
+.photo.drag { border: 1px dashed #1d5fd1; background: #f0f5ff; }
+.file { display: none; }
+.add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 112px; padding: 0; border: none; background: none; font: inherit; color: #5b6470; cursor: pointer; }
+.addt { margin-top: 4px; font-size: 13px; font-weight: 600; color: #1d5fd1; }
+.adds { font-size: 11px; }
+.replace { position: absolute; right: 8px; bottom: 8px; padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, .6); background: rgba(0, 0, 0, .55); color: #fff; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.perr { margin-top: 4px; font-size: 11px; color: #b42318; text-align: center; }
+.photo.has .perr { position: absolute; left: 8px; top: 8px; margin: 0; padding: 2px 6px; border-radius: 4px; background: #fff; }
 .photo img { display: block; width: 100%; max-height: 240px; object-fit: cover; border-radius: 8px; }
 .ptext { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .plabel { font-size: 13px; font-weight: 600; color: #5b6470; }
