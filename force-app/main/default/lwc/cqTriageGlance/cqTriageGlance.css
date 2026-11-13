@@ -16,7 +16,7 @@
 .perr { margin-top: 4px; font-size: 11px; color: #b42318; text-align: center; }
 .photo.has .perr { position: absolute; left: 8px; top: 8px; margin: 0; padding: 2px 6px; border-radius: 4px; background: #fff; }
 .photo img { display: block; width: 100%; max-height: 240px; object-fit: cover; border-radius: 8px; }
-.ptext { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.ptext { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 .plabel { font-size: 13px; font-weight: 600; color: #5b6470; }
 .quote { font-size: 15px; line-height: 1.45; white-space: pre-line; }
 .tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
@@ -40,7 +40,7 @@
 .fv { flex: 1 1 auto; min-width: 0; font-weight: 600; }
 .grow { flex: 1 1 auto; min-height: 14px; }
 .more { width: 100%; text-align: left; min-height: 36px; padding: 10px 0 0; border: none; border-top: 1px solid #dcd3ff; background: none; color: #1d5fd1; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: auto; padding-top: 10px; }
+.actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 12px; margin-top: 6px; }
 .btn { min-height: 40px; padding: 0 14px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn.primary { border-color: #1d5fd1; background: #1d5fd1; color: #fff; padding: 0 16px; }
 .btn.outline { border-color: #1d5fd1; color: #1d5fd1; padding: 0 16px; }
