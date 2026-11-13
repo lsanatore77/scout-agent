@@ -1,7 +1,7 @@
 /**
  * CqTriageAssistant: reads and saves the outcome of the Triage Assistant on a Nonconformance.
- * The outcome is kept in our own Triage_* fields. CQ's own Required flags are set as a second,
- * separate update so a CQ rule that rejects them does not lose the triage.
+ * The outcome is kept in our own Triage_* fields. CQ containment records and CQ's own Required
+ * flags are written as separate steps, so a CQ rule that rejects them does not lose the triage.
  */
 public with sharing class CqTriageAssistant {
     public static final Set<String> RISKS = new Set<String>{ 'Low', 'Medium', 'High' };
@@ -10,7 +10,8 @@ public with sharing class CqTriageAssistant {
     public class Triage {
         @AuraEnabled public String risk; @AuraEnabled public String path; @AuraEnabled public String notes;
         @AuraEnabled public String setBy; @AuraEnabled public Datetime setOn;
-        @AuraEnabled public String warning;   // set when CQ would not accept its own flags
+        @AuraEnabled public List<String> created = new List<String>();   // containment numbers created by this save
+        @AuraEnabled public String warning;                              // set when CQ would not accept something
     }
 
     @AuraEnabled
@@ -25,7 +26,8 @@ public with sharing class CqTriageAssistant {
     }
 
     @AuraEnabled
-    public static Triage saveTriage(Id recordId, String risk, String path, String notes, Boolean containment, Boolean investigate) {
+    public static Triage saveTriage(Id recordId, String risk, String path, String notes, Boolean containment, Boolean investigate,
+                                    List<String> containmentTitles, String dueDate) {
         if (!RISKS.contains(risk)) { throw new AuraHandledException('Choose a risk.'); }
         if (!PATHS.contains(path)) { throw new AuraHandledException('Choose a path.'); }
         compliancequest__SQX_Nonconformance__c nc = new compliancequest__SQX_Nonconformance__c(Id = recordId);
@@ -33,7 +35,36 @@ public with sharing class CqTriageAssistant {
         nc.Triage_By__c = UserInfo.getUserId(); nc.Triage_On__c = Datetime.now();
         update nc;
 
-        String warning;
+        List<String> warnings = new List<String>();
+        List<String> created = new List<String>();
+
+        // One CQ containment per action chosen at triage, assigned to the triager.
+        if (containmentTitles != null && !containmentTitles.isEmpty()) {
+            Savepoint sp = Database.setSavepoint();
+            try {
+                Date due = String.isBlank(dueDate) ? Date.today().addDays(1) : Date.valueOf(dueDate);
+                String ncName = [SELECT Name FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId].Name;
+                List<compliancequest__SQX_Containment__c> rows = new List<compliancequest__SQX_Containment__c>();
+                for (String title : containmentTitles) {
+                    if (String.isBlank(title)) { continue; }
+                    rows.add(new compliancequest__SQX_Containment__c(
+                        compliancequest__SQX_Nonconformance__c = recordId,
+                        compliancequest__Title__c = title.trim().left(255),
+                        compliancequest__Description__c = 'Raised at triage of ' + ncName + '.',
+                        compliancequest__Due_Date__c = due,
+                        compliancequest__SQX_User__c = UserInfo.getUserId()));
+                }
+                insert rows;
+                for (compliancequest__SQX_Containment__c c : [SELECT Name FROM compliancequest__SQX_Containment__c WHERE Id IN :rows ORDER BY Name]) {
+                    created.add(c.Name);
+                }
+            } catch (Exception e) {
+                Database.rollback(sp);
+                created.clear();
+                warnings.add('CQ did not accept the containment records: ' + e.getMessage());
+            }
+        }
+
         try {
             compliancequest__SQX_Nonconformance__c flags = new compliancequest__SQX_Nonconformance__c(Id = recordId);
             flags.compliancequest__Containment_Required__c = containment == true;
@@ -41,10 +72,12 @@ public with sharing class CqTriageAssistant {
             flags.compliancequest__Disposition_Required__c = investigate != true;
             update flags;
         } catch (Exception e) {
-            warning = 'Triage saved, but CQ did not accept its Containment / Investigation / Disposition Required flags: ' + e.getMessage();
+            warnings.add('CQ did not accept its Containment / Investigation / Disposition Required flags: ' + e.getMessage());
         }
+
         Triage t = getTriage(recordId);
-        t.warning = warning;
+        t.created = created;
+        t.warning = warnings.isEmpty() ? null : 'Triage saved. ' + String.join(warnings, ' ');
         return t;
     }
 }

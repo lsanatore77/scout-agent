@@ -20,6 +20,9 @@ export default class CqTriageAssistant extends LightningElement {
     warning;
     acts = {};
     noActionWhy = '';
+    custom = [];
+    newAct = '';
+    due;
     data = '';
     asks = {};
     askNote = '';
@@ -30,7 +33,12 @@ export default class CqTriageAssistant extends LightningElement {
     logWhy = '';
     summary = [];
 
-    connectedCallback() { this.risk = this.suggestedRisk; }
+    connectedCallback() {
+        this.risk = this.suggestedRisk;
+        const d = new Date(Date.now() + 86400000);
+        const p = (n) => String(n).padStart(2, '0');
+        this.due = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
 
     // ---- facts from the glance
     get g() { return this.glance || {}; }
@@ -47,14 +55,21 @@ export default class CqTriageAssistant extends LightningElement {
     }
     get suggestedPath() { return this.invName ? 'join' : this.invHeadline === 'Open new' ? 'new' : 'log'; }
 
-    // ---- step rail
+    // ---- step rail (same pattern as the PHR workspace)
     get steps() {
+        const subs = [
+            this.noAction ? 'No action' : this.chosenActs.length ? this.chosenActs.length + ' action' + (this.chosenActs.length > 1 ? 's' : '') + ' chosen' : 'Not decided',
+            this.data === 'ok' ? 'Good enough' : this.data === 'ask' ? 'More information requested' : 'Not checked',
+            this.maxStep > 2 || this.done ? this.risk + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
+            this.path === 'join' ? this.joinLabel : this.path === 'new' ? 'New investigation' : this.path === 'log' ? 'Log only' : 'Not chosen'
+        ];
         return STEPS.map((label, i) => {
-            const cur = !this.done && i === this.step;
-            const past = this.done || i < this.step;
-            return { i, label, mark: past ? '✓' : String(i + 1), cls: 'step' + (cur ? ' cur' : past ? ' past' : ''), locked: this.done || i > this.maxStep };
+            const stepDone = this.done || i < this.maxStep;
+            return { i, n: i + 1, label, sub: subs[i], done: stepDone, notDone: !stepDone,
+                cls: 'step' + (!this.done && i === this.step ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done || i > this.maxStep };
         });
     }
+    get progress() { return this.steps.filter((x) => x.done).length + ' of ' + STEPS.length + ' steps complete'; }
     get is0() { return !this.done && this.step === 0; }
     get is1() { return !this.done && this.step === 1; }
     get is2() { return !this.done && this.step === 2; }
@@ -84,18 +99,31 @@ export default class CqTriageAssistant extends LightningElement {
             ['stop', 'Stop', 'Stop the process until the cause is known', false],
             ['none', 'No action', 'It is already under control', this.contained]
         ];
-        return defs.map(([id, label, why, cq]) => ({
-            id, label, why, cq, on: !!this.acts[id], pressed: this.acts[id] ? 'true' : 'false', tick: this.acts[id] ? '✓' : '',
-            cls: 'act' + (this.acts[id] ? ' on' : cq ? ' sug' : '')
-        }));
+        this.custom.forEach((t, i) => defs.splice(defs.length - 1, 0, ['own' + i, t, 'Your own action. Click to remove.', false, true]));
+        return defs.map(([id, label, why, cq, mine]) => {
+            const on = mine || !!this.acts[id];
+            return { id, label, why, cq, mine, on, pressed: on ? 'true' : 'false', tick: on ? '✓' : '', cls: 'act' + (on ? ' on' : cq ? ' sug' : '') };
+        });
     }
     get noAction() { return !!this.acts.none; }
-    get chosenActs() { return this.actions.filter((a) => a.on && a.id !== 'none').map((a) => a.why); }
+    get chosenActs() { return this.actions.filter((a) => a.on && a.id !== 'none').map((a) => (a.mine ? a.label : a.why)); }
+    get hasActs() { return this.chosenActs.length > 0; }
+    get cantAdd() { return !this.newAct.trim(); }
     handleAct(event) {
         const id = event.currentTarget.dataset.id;
+        if (id.startsWith('own')) { this.custom = this.custom.filter((t, i) => 'own' + i !== id); return; }
         const on = !this.acts[id];
-        this.acts = id === 'none' ? { none: on } : { ...this.acts, none: false, [id]: on };
+        if (id === 'none') { this.acts = { none: on }; if (on) { this.custom = []; } return; }
+        this.acts = { ...this.acts, none: false, [id]: on };
     }
+    handleAddAct() {
+        const t = this.newAct.trim();
+        if (!t) { return; }
+        this.custom = [...this.custom, t];
+        this.acts = { ...this.acts, none: false };
+        this.newAct = '';
+    }
+    handleAddKey(event) { if (event.key === 'Enter') { this.newAct = event.target.value; this.handleAddAct(); } }
 
     // ---- step 2: data check
     get dataRows() {
@@ -146,7 +174,8 @@ export default class CqTriageAssistant extends LightningElement {
     // ---- navigation
     get blocker() {
         if (this.step === 0) {
-            if (!Object.values(this.acts).some(Boolean)) { return 'Choose an action, or No action'; }
+            if (!this.hasActs && !this.noAction) { return 'Choose an action, or No action'; }
+            if (this.hasActs && !this.due) { return 'Set a due date'; }
             if (this.noAction && !this.noActionWhy.trim()) { return 'Say why no action is needed'; }
         }
         if (this.step === 1) {
@@ -196,8 +225,11 @@ export default class CqTriageAssistant extends LightningElement {
                 path: this.path === 'join' ? 'Join Investigation' : this.path === 'new' ? 'New Investigation' : 'Log Only',
                 notes: rows.map((r) => r.k + ': ' + r.v).join('\n'),
                 containment: !this.noAction,
-                investigate: this.path !== 'log'
+                investigate: this.path !== 'log',
+                containmentTitles: this.noAction ? [] : this.chosenActs,
+                dueDate: this.due
             });
+            if (t && t.created && t.created.length) { rows.push({ k: 'Created', v: 'Containment ' + t.created.join(', ') }); }
             this.summary = rows.map((r) => ({ ...r, key: r.k }));
             this.warning = t && t.warning;
             this.done = true;

@@ -6,10 +6,21 @@
                 <button class="x" onclick={handleClose} aria-label="Close">&times;</button>
             </header>
             <div class="body">
-                <nav class="steps" aria-label="Steps">
+                <nav class="steps" aria-label="Triage steps">
+                    <div class="steps-title">Triage steps</div>
                     <template for:each={steps} for:item="s">
-                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}><span class="dot">{s.mark}</span>{s.label}</button>
+                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}>
+                            <span class="mark">
+                                <template if:true={s.done}>&#10003;</template>
+                                <template if:true={s.notDone}>{s.n}</template>
+                            </span>
+                            <span class="txt">
+                                <span class="lbl">{s.label}</span>
+                                <span class="ssub">{s.sub}</span>
+                            </span>
+                        </button>
                     </template>
+                    <div class="progress">{progress}</div>
                 </nav>
                 <div class="main">
                     <template if:true={is0}>
@@ -23,6 +34,16 @@
                                         <span class="rt"><span class="rv">{a.label}</span><span class="rk">{a.why}</span></span>
                                         <template if:true={a.cq}><span class="star" title="CQ.AI Suggestion">&#10022;</span></template>
                                     </button>
+                                </template>
+                                <div class="addrow">
+                                    <input class="ta" type="text" placeholder="Add another action" data-f="newAct" value={newAct} oninput={handleInput} onkeydown={handleAddKey} />
+                                    <button class="btn" onclick={handleAddAct} disabled={cantAdd}>Add</button>
+                                </div>
+                                <template if:true={hasActs}>
+                                    <label class="fl">Due date for these actions *
+                                        <input class="ta date" type="date" data-f="due" value={due} onchange={handleInput} />
+                                    </label>
+                                    <p class="note">On Complete triage, each action is created as a CQ containment on this NC, assigned to you.</p>
                                 </template>
                                 <template if:true={noAction}>
                                     <label class="fl">Why is no action needed? *
