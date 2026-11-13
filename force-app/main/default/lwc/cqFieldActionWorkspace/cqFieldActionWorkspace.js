@@ -79,7 +79,23 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
 
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     get ready() { return !!this.v; }
-    get heading() { return (this.v.name || '') + (this.v.title ? ' · ' + this.v.title : ''); }
+    // ---- header (same layout as the PHR workspace header)
+    dash(x) { return x === undefined || x === null || x === '' ? '—' : String(x); }
+    get dueText() {
+        const p = String(this.v.due || '').split('-');
+        return p.length === 3 ? new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])).toLocaleDateString() : '—';
+    }
+    get partText() { return this.dash(this.v.partName); }
+    get lotText() { return this.dash(this.v.lot); }
+    get reviewerText() { return this.dash(this.v.reviewer); }
+    get statusText() { return this.dash(this.v.status); }
+    handleEdit() {
+        this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: this.recordId, objectApiName: 'Field_Action_Review__c', actionName: 'edit' } });
+    }
+    async handleRefresh() {
+        try { this.apply(await getView({ recordId: this.recordId }), false); this.error = undefined; }
+        catch (e) { this.error = this.msg(e, 'Could not refresh this review.'); }
+    }
     get live() { return this.ready && !this.done; }
     get is0() { return this.ready && ((!this.done && this.step === 0) || (this.done && !this.showSummary)); }
     get is1() { return this.live && this.step === SIGNALS; }   // the Signals and Evidence block in the template
@@ -124,7 +140,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const n = (x) => (x === undefined || x === null || x === '' ? '—' : String(x));
         return [
             ['Part', n(v.partName)], ['Lot', n(v.lot)], ['Affected', n(v.qtyAffected)], ['Shipped', n(v.qtyShipped)],
-            ['Due', n(v.due)], ['Requested by', n(v.requestedBy)], ['Reviewer', n(v.reviewer)]
+            ['Due', this.dueText], ['Requested by', n(v.requestedBy)], ['Reviewer', n(v.reviewer)]
         ].map(([label, value]) => ({ key: label, label, value }));
     }
     get decidedLine() {

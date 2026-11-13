@@ -2,15 +2,31 @@
     <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="box">
-            <header class="top">
-                <div class="tt"><div class="h"><span class="star">&#10022;</span> CQ.AI Field Action Review</div><div class="sub">{heading}</div></div>
-                <template if:true={live}>
-                    <div class="topnav">
-                        <span class="blocker">{blocker}</span>
-                        <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
-                        <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+            <header class="hl">
+                <div class="hl-top">
+                    <div class="hl-who">
+                        <span class="hl-icon"><lightning-icon icon-name="custom:custom83" size="medium" alternative-text="Field Action Review"></lightning-icon></span>
+                        <div class="hl-name">
+                            <span class="hl-obj">Field Action Review</span>
+                            <span class="hl-title">{v.name}</span>
+                        </div>
                     </div>
-                </template>
+                    <div class="hl-actions">
+                        <lightning-button label="Edit" onclick={handleEdit}></lightning-button>
+                        <lightning-button-icon icon-name="utility:refresh" variant="border" alternative-text="Refresh" onclick={handleRefresh}></lightning-button-icon>
+                    </div>
+                </div>
+                <div class="hl-fields">
+                    <div class="f"><span class="k">Source</span>
+                        <template if:true={hasSource}><button class="v link" data-id={v.sourceId} onclick={handleOpen}>{v.sourceName}</button></template>
+                        <template if:false={hasSource}><span class="v">&mdash;</span></template>
+                    </div>
+                    <div class="f"><span class="k">Part</span><span class="v">{partText}</span></div>
+                    <div class="f"><span class="k">Lot</span><span class="v">{lotText}</span></div>
+                    <div class="f"><span class="k">Reviewer</span><span class="v">{reviewerText}</span></div>
+                    <div class="f"><span class="k">Status</span><span class="v">{statusText}</span></div>
+                    <div class="f"><span class="k">Due</span><span class="v">{dueText}</span></div>
+                </div>
             </header>
             <div class="body">
                 <nav class="steps" aria-label="Review steps">
@@ -195,6 +211,13 @@
                         </div>
                     </template>
                     <template if:true={error}><div class="errbox">{error}</div></template>
+                    <template if:true={live}>
+                        <div class="foot">
+                            <span class="blocker">{blocker}</span>
+                            <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
+                            <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+                        </div>
+                    </template>
                 </div>
             </div>
         </div>

@@ -1,11 +1,20 @@
 :host { display: block; color: #1a1d21; font-size: 13px; }
 .box { display: flex; flex-direction: column; border-radius: 12px; background: #fff; border: 1px solid #dde1e6; }
-.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #dde1e6; }
-.tt { min-width: 0; }
-.h { font-size: 17px; font-weight: 700; }
-.sub { color: #5b6470; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* header: same layout as the PHR workspace highlights panel */
+.hl { padding: 14px 20px 12px; background: #f3f3f3; border-bottom: 1px solid #e5e5e5; border-radius: 12px 12px 0 0; display: flex; flex-direction: column; gap: 12px; }
+.hl-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.hl-who { display: flex; align-items: center; gap: 12px; }
+.hl-icon { display: inline-flex; }
+.hl-name { display: flex; flex-direction: column; gap: 1px; }
+.hl-obj { font-size: 12px; color: #5c6572; }
+.hl-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.hl-actions { display: flex; align-items: center; gap: 8px; }
+.hl-fields { display: flex; gap: 32px; flex-wrap: wrap; }
+.f { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.k { font-size: 11px; font-weight: 700; color: #5c6572; }
+.v { font-size: 13px; }
 .star { color: #4a2fc0; }
-.topnav { display: flex; align-items: center; gap: 12px; flex: none; }
+.foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: auto; padding-top: 20px; }
 .body { display: flex; min-height: 460px; }
 .steps { width: 200px; flex: none; border-right: 1px solid #eceff2; padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
 .steps-title { font-size: 15px; font-weight: 700; padding: 2px 8px 10px; }
@@ -23,7 +32,7 @@
 .progress { margin-top: auto; padding: 10px 8px 2px; font-size: 11px; color: #8a94a3; }
 .restart { margin: 4px 8px 0; padding: 0; border: none; background: none; color: #1d5fd1; font: inherit; font-size: 12px; text-align: left; cursor: pointer; }
 .resumed { margin: -6px 0 12px; font-size: 12px; color: #5b6470; }
-.main { flex: 1; min-width: 0; padding: 20px; }
+.main { flex: 1; min-width: 0; padding: 20px; display: flex; flex-direction: column; }
 .q { margin: 0 0 14px; font-size: 20px; font-weight: 700; }
 .q.nom { margin: 0; }
 .p { margin: -6px 0 14px; color: #3d4550; }
