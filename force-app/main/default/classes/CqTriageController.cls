@@ -20,6 +20,9 @@ public with sharing class CqTriageController {
         @AuraEnabled public String reason; @AuraEnabled public String setBy; @AuraEnabled public Datetime setOn;
         @AuraEnabled public String suggestion;      // 'Not Needed' or 'Send for Review'
         @AuraEnabled public String suggestionWhy;
+        // the Field Action Review that Send for Review created, and where it has got to
+        @AuraEnabled public Id reviewId; @AuraEnabled public String reviewName; @AuraEnabled public String reviewStatus;
+        @AuraEnabled public String reviewOutcome; @AuraEnabled public Id faId; @AuraEnabled public String faName;
     }
     public class Glance {
         @AuraEnabled public String name; @AuraEnabled public String title; @AuraEnabled public String description;
@@ -132,6 +135,13 @@ public with sharing class CqTriageController {
             fa.suggestion = 'Not Needed';
             fa.suggestionWhy = 'No complaints on ' + (g.lot == null ? 'this part' : 'lot ' + g.lot) + '. Shipment data is not connected, so confirm nothing from this lot has shipped.';
         }
+        List<Field_Action_Review__c> revs = [
+            SELECT Id, Name, Status__c, Outcome__c, Field_Action__c, Field_Action__r.Name
+            FROM Field_Action_Review__c WHERE Nonconformance__c = :nc.Id ORDER BY CreatedDate DESC LIMIT 1];
+        if (!revs.isEmpty()) {
+            fa.reviewId = revs[0].Id; fa.reviewName = revs[0].Name; fa.reviewStatus = revs[0].Status__c; fa.reviewOutcome = revs[0].Outcome__c;
+            fa.faId = revs[0].Field_Action__c; fa.faName = revs[0].Field_Action__r?.Name;
+        }
         g.fieldAction = fa;
         return g;
     }
@@ -146,6 +156,30 @@ public with sharing class CqTriageController {
         nc.Field_Action_Review_By__c = decision == null ? null : UserInfo.getUserId();
         nc.Field_Action_Review_On__c = decision == null ? null : Datetime.now();
         update nc;
+
+        // Send for Review opens a Field Action Review for this NC. Any other choice withdraws one that is still open.
+        List<Field_Action_Review__c> open = [SELECT Id FROM Field_Action_Review__c
+                                             WHERE Nonconformance__c = :recordId AND Status__c IN ('New', 'In Review')];
+        if (decision == 'Sent for Review') {
+            if (open.isEmpty()) {
+                compliancequest__SQX_Nonconformance__c src = [
+                    SELECT Name, compliancequest__NC_Title__c, compliancequest__SQX_Part__c, compliancequest__Lot_Number__c,
+                           compliancequest__Defective_Quantity__c, Triage_Risk__c
+                    FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+                insert new Field_Action_Review__c(
+                    Title__c = ('Review: ' + src.Name + (src.compliancequest__NC_Title__c == null ? '' : ' ' + src.compliancequest__NC_Title__c)).left(255),
+                    Status__c = 'New', Nonconformance__c = recordId, Reason_for_Review__c = reason,
+                    Requested_By__c = UserInfo.getUserId(), Requested_On__c = Datetime.now(), Due_Date__c = Date.today().addDays(5),
+                    Part__c = src.compliancequest__SQX_Part__c, Lot_Number__c = src.compliancequest__Lot_Number__c,
+                    Quantity_Affected__c = src.compliancequest__Defective_Quantity__c, Risk_Level__c = src.Triage_Risk__c);
+            } else {
+                open[0].Reason_for_Review__c = reason;
+                update open[0];
+            }
+        } else if (!open.isEmpty()) {
+            for (Field_Action_Review__c r : open) { r.Status__c = 'Closed'; r.Outcome_Rationale__c = 'Withdrawn from the nonconformance before a decision.'; }
+            update open;
+        }
         return getGlance(recordId).fieldAction;
     }
 

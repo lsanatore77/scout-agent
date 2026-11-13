@@ -21,3 +21,5 @@
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .link { min-height: 36px; padding: 0 6px; border: none; background: none; color: #1d5fd1; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .link.grey { color: #5b6470; }
+.rev { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; font-size: 13px; }
+.revs { font-weight: 600; color: #3d4550; }

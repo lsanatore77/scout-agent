@@ -14,6 +14,13 @@
                 <textarea id="why" class="ta" rows="2" oninput={handleReason} placeholder="For example: this lot may have shipped before the hold"></textarea>
             </template>
             <template if:true={doneNote}><div class={noteClass}>{doneNote}</div></template>
+            <template if:true={hasReview}>
+                <div class="rev">
+                    <button class="link" data-id={fa.reviewId} onclick={handleOpen}>{fa.reviewName}</button>
+                    <span class="revs">{reviewLine}</span>
+                    <template if:true={hasFa}><button class="link" data-id={fa.faId} onclick={handleOpen}>{fa.faName}</button></template>
+                </div>
+            </template>
             <template if:true={error}><div class="err">{error}</div></template>
         </div>
         <div class="btns">
@@ -23,9 +30,9 @@
             </template>
             <template if:true={asking}>
                 <button class="link grey" onclick={handleCancel}>Cancel</button>
-                <button class="btn solid" onclick={handleSend} disabled={cannotSend}>Send to Recall Coordinator</button>
+                <button class="btn solid" onclick={handleSend} disabled={cannotSend}>Send for Review</button>
             </template>
-            <template if:true={isDone}>
+            <template if:true={canChange}>
                 <button class="link" onclick={handleChange} disabled={busy}>Change</button>
             </template>
         </div>

@@ -1,9 +1,10 @@
 import { LightningElement, api } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import getGlance from '@salesforce/apex/CqTriageController.getGlance';
 import setFieldAction from '@salesforce/apex/CqTriageController.setFieldAction';
 
 /** Field Action Review on a Nonconformance: CQ.AI suggests, the triager decides. Saved on the NC. */
-export default class CqFieldActionReview extends LightningElement {
+export default class CqFieldActionReview extends NavigationMixin(LightningElement) {
     @api recordId;
     fa;
     asking = false;
@@ -30,8 +31,20 @@ export default class CqFieldActionReview extends LightningElement {
         if (!this.isDone) { return ''; }
         const who = this.fa.setBy ? ' by ' + this.fa.setBy : '';
         return this.isSent
-            ? 'Sent to the Recall Coordinator' + who + '. Reason: ' + (this.fa.reason || '')
+            ? 'Sent for review' + who + '. Reason: ' + (this.fa.reason || '')
             : 'Set to Not Needed' + who + '.';
+    }
+    // the Field Action Review created by Send for Review
+    get hasReview() { return this.isDone && this.isSent && !!this.fa.reviewId; }
+    get reviewLine() {
+        const f = this.fa;
+        return f.reviewStatus === 'Decided' ? 'Decided: ' + (f.reviewOutcome || '') : f.reviewStatus;
+    }
+    get hasFa() { return this.hasReview && !!this.fa.faId; }
+    get decided() { return !!this.fa && (this.fa.reviewStatus === 'Decided' || (this.fa.reviewStatus === 'Closed' && !!this.fa.reviewOutcome)); }
+    get canChange() { return this.isDone && !(this.isSent && this.decided); }
+    handleOpen(event) {
+        this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: event.currentTarget.dataset.id, actionName: 'view' } });
     }
 
     handleAsk() { this.asking = true; this.reason = ''; }
