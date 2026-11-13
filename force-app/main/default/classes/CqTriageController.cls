@@ -105,7 +105,7 @@ public with sharing class CqTriageController {
         // 4. Investigate
         Card inv = new Card(); inv.id = 'inv'; inv.title = 'Investigate'; inv.isSuggestion = true;
         if (nc.compliancequest__SQX_Investigation__c != null) {
-            inv.headline = 'Linked: ' + nc.compliancequest__SQX_Investigation__r.Name; inv.why = 'This NC already has an investigation.'; inv.isSuggestion = false;
+            inv.headline = 'Linked: ' + nc.compliancequest__SQX_Investigation__r.Name; inv.why = 'This NC already has an investigation. Continue with it.';
         } else if (openInv != null) {
             inv.headline = 'Join ' + openInv; inv.why = 'Already investigating another NC on this part.';
         } else if (!others.isEmpty()) {
