@@ -92,6 +92,7 @@
 .cell.sug { background: #e3dbff; border-color: #b9a8f5; color: #4a2fc0; font-weight: 700; }
 .cell.on { border-color: #1d5fd1; box-shadow: 0 0 0 2px #1d5fd1; }
 .tip { display: none; position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: 230px; padding: 10px 12px; border-radius: 8px; background: #fff; border: 1px solid #c4cad2; box-shadow: 0 6px 20px rgba(0, 0, 0, .18); color: #1a1d21; font-size: 12px; font-weight: 400; line-height: 1.4; text-align: left; flex-direction: column; gap: 2px; pointer-events: none; }
+.heat > .hrow:nth-child(2) .tip, .heat > .hrow:nth-child(3) .tip { bottom: auto; top: calc(100% + 8px); }
 .cell:hover .tip, .cell:focus-visible .tip { display: flex; }
 .tiph { font-size: 13px; font-weight: 700; }
 .tipc { color: #3d4550; }
