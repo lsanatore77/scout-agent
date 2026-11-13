@@ -24,8 +24,8 @@
 .step:disabled { cursor: default; }
 .step:disabled:hover { background: transparent; }
 .step.active:disabled:hover { background: #eef2f7; }
-.mark { flex: none; width: 18px; height: 18px; border-radius: 9px; border: 1px solid #c9d2dc; background: #fff; color: #5c6572; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
-.step.done .mark { background: #2e844a; border-color: #2e844a; color: #fff; font-size: 9px; }
+.mark { flex: none; width: 14px; height: 14px; border-radius: 7px; border: 1px solid #c9d2dc; background: #fff; color: #5c6572; font-size: 8px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 3px; }
+.step.done .mark { background: #2e844a; border-color: #2e844a; color: #fff; font-size: 7px; }
 .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .lbl { font-size: 13px; font-weight: 700; color: #2b2f36; }
 .ssub { font-size: 11px; color: #5c6572; }
@@ -103,8 +103,8 @@
 .newfa { margin-top: 8px; padding: 2px 14px 14px; border-radius: 10px; border: 1px solid #dde1e6; background: #fafbfc; }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.okdot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 28px; height: 28px; border-radius: 999px; background: #12784a; color: #fff; font-weight: 700; }
-.okdot.sm { width: 20px; height: 20px; font-size: 12px; }
+.okdot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; border-radius: 999px; background: #12784a; color: #fff; font-size: 12px; font-weight: 700; }
+.okdot.sm { width: 16px; height: 16px; font-size: 10px; }
 .row { display: flex; gap: 12px; min-height: 44px; align-items: center; box-sizing: border-box; padding: 8px 14px; margin-bottom: 8px; border-radius: 10px; border: 1px solid #dde1e6; }
 .dk { flex: 0 0 110px; color: #5b6470; }
 .dv { flex: 1 1 auto; min-width: 0; font-weight: 600; white-space: pre-line; }

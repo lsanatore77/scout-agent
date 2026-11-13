@@ -15,8 +15,8 @@
 .step.active { background: #eef2f7; }
 .step:disabled { cursor: default; }
 .step:disabled:hover { background: transparent; }
-.mark { flex: none; width: 18px; height: 18px; border-radius: 9px; border: 1px solid #c9d2dc; background: #fff; color: #5c6572; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
-.step.done .mark { background: #2e844a; border-color: #2e844a; color: #fff; font-size: 9px; }
+.mark { flex: none; width: 14px; height: 14px; border-radius: 7px; border: 1px solid #c9d2dc; background: #fff; color: #5c6572; font-size: 8px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 3px; }
+.step.done .mark { background: #2e844a; border-color: #2e844a; color: #fff; font-size: 7px; }
 .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .lbl { font-size: 13px; font-weight: 700; color: #2b2f36; }
 .ssub { font-size: 11px; color: #5c6572; }
@@ -132,7 +132,7 @@
 .addinv { max-width: 360px; margin-top: 14px; }
 .pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: #ece7ff; border: 1px solid #dcd3ff; color: #4a2fc0; font-size: 11px; font-weight: 600; }
 .donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.okdot { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 999px; background: #12784a; color: #fff; font-weight: 700; }
+.okdot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: #12784a; color: #fff; font-size: 12px; font-weight: 700; }
 .warnbox { margin-top: 8px; padding: 10px 14px; border-radius: 8px; background: #fffbf5; border: 1px solid #f2d3a8; color: #7a4100; }
 .errbox { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: #fff8f7; border: 1px solid #f3c7c2; color: #b42318; }
 .foot { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: #fff; border-top: 1px solid #dde1e6; }
