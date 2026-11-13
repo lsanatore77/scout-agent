@@ -46,7 +46,8 @@
 .flist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
 .fline.bad { color: #b42318; font-weight: 600; }
 .fline.muted { color: #5b6470; }
-.fsug { margin-top: 12px; padding-top: 10px; border-top: 1px solid #dde1e6; font-size: 14px; }
+.fsug { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #f8f6ff; border: 1px solid #dcd3ff; font-size: 14px; }
+.rec { color: #4a2fc0; font-weight: 600; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .opt { min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .opt.wide { min-width: 110px; }
