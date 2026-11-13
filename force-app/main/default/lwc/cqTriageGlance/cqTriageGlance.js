@@ -106,7 +106,7 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
     }
 
     get ready() { return !!this.g; }
-    get description() { return (this.g && this.g.description) || 'No description on this nonconformance yet.'; }
+    get description() { return (this.g && (this.g.description || this.g.title)) || 'No description on this nonconformance yet.'; }
     get tiles() {
         const g = this.g || {};
         const n = (v) => (v === undefined || v === null ? '—' : String(v));
