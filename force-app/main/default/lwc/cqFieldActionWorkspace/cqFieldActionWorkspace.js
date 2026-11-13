@@ -68,7 +68,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         this.picks = picks;
         this.hazard = v.hazard || '';
         this.level = v.band;
-        this.checks = v.reachedField ? { left: 'Yes' } : {};
+        this.checks = {};   // the checklist is the reviewer's own answers: nothing is pre-filled
         this.faTitle = (v.title || '').replace(/^Review:\s*/i, '');
         const sug = (v.fieldActions || []).find((f) => f.suggested);
         this.faChoice = sug ? sug.id : (v.fieldActions || []).length ? '' : 'new';
@@ -160,12 +160,11 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     }
     handleLevel(event) { this.level = event.currentTarget.dataset.id; }
 
-    // ---- step 4: reviewer checklist
+    // ---- step 4: reviewer checklist (styled like the PHR checklist)
     get questions() {
         return QUESTIONS.map((q) => ({
             ...q,
-            cq: q.id === 'left' && this.v.reachedField,
-            opts: ANSWERS.map((a) => ({ key: q.id + a, q: q.id, a, cls: 'chip' + (this.checks[q.id] === a ? ' on' : ''), pressed: this.checks[q.id] === a ? 'true' : 'false' }))
+            opts: ANSWERS.map((a) => ({ key: q.id + a, q: q.id, a, cls: 'yn' + (this.checks[q.id] === a ? ' sel' : ''), pressed: this.checks[q.id] === a ? 'true' : 'false' }))
         }));
     }
     get checksDone() { return QUESTIONS.every((q) => !!this.checks[q.id]); }

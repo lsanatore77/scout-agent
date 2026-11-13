@@ -123,16 +123,15 @@
                     <template if:true={is3}>
                         <h3 class="q">Reviewer Checklist</h3>
                         <template for:each={questions} for:item="q">
-                            <div key={q.id} class="qrow">
-                                <span class="qt">{q.text}<template if:true={q.cq}><span class="star" title="CQ.AI Suggestion"> &#10022;</span></template></span>
-                                <span class="chips">
+                            <div key={q.id} class="cq">
+                                <div class="cqt"><span class="question">{q.text}</span></div>
+                                <div class="ynwrap">
                                     <template for:each={q.opts} for:item="o">
                                         <button key={o.key} class={o.cls} data-q={o.q} data-a={o.a} onclick={handleCheck} aria-pressed={o.pressed}>{o.a}</button>
                                     </template>
-                                </span>
+                                </div>
                             </div>
                         </template>
-                        <p class="note">&#10022; marks an answer CQ.AI filled in from the records. Change it if it is wrong.</p>
                     </template>
 
                     <template if:true={is4}>
