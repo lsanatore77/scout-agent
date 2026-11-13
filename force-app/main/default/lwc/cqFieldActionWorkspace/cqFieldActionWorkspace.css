@@ -81,7 +81,7 @@
 .ta { width: 100%; box-sizing: border-box; min-height: 40px; padding: 8px 10px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; font-weight: 400; color: #1a1d21; }
 .cq { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid #eceff2; }
 .cqt { flex: 1; min-width: 0; }
-.question { font-size: 15px; font-weight: 700; color: #2b2f36; }
+.question { font-size: 14px; font-weight: 400; line-height: 32px; color: #1a1d21; }
 .ynwrap { flex: none; display: flex; gap: 6px; }
 .yn { height: 32px; min-width: 64px; padding: 0 14px; border-radius: 2px; border: 1px solid #c9d2dc; background: #fff; font: inherit; font-size: 13px; font-weight: 600; color: #2b2f36; cursor: pointer; }
 .yn:hover { background: #f5f6f8; }

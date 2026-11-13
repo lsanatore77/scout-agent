@@ -6,7 +6,10 @@ import saveDraft from '@salesforce/apex/CqFieldActionReview.saveDraft';
 import submitReview from '@salesforce/apex/CqFieldActionReview.submit';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 
-const STEPS = ['Review at a Glance', 'Signals and Evidence', 'Risk', 'Reviewer Checklist', 'Decision'];
+// Order on screen: glance, risk, signals, checklist, decision. RISK and SIGNALS are the step numbers of those two.
+const STEPS = ['Review at a Glance', 'Risk', 'Signals and Evidence', 'Reviewer Checklist', 'Decision'];
+const RISK = 1;
+const SIGNALS = 2;
 const LEVELS = ['Low', 'Medium', 'High'];
 const ANSWERS = ['Yes', 'No', 'Not known'];
 const QUESTIONS = [
@@ -79,8 +82,8 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get heading() { return (this.v.name || '') + (this.v.title ? ' · ' + this.v.title : ''); }
     get live() { return this.ready && !this.done; }
     get is0() { return this.ready && ((!this.done && this.step === 0) || (this.done && !this.showSummary)); }
-    get is1() { return this.live && this.step === 1; }
-    get is2() { return this.live && this.step === 2; }
+    get is1() { return this.live && this.step === SIGNALS; }   // the Signals and Evidence block in the template
+    get is2() { return this.live && this.step === RISK; }      // the Risk block in the template
     get is3() { return this.live && this.step === 3; }
     get is4() { return this.live && this.step === 4; }
     get showResumed() { return this.resumed && this.live; }
@@ -89,7 +92,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
 
     // ---- step rail
     get valid() {
-        return [this.maxStep > 0, this.maxStep > 1, this.maxStep > 2 && !!this.hazard.trim() && !!this.level, this.checksDone, this.done];
+        return [this.maxStep > 0, this.maxStep > RISK && !!this.hazard.trim() && !!this.level, this.maxStep > SIGNALS, this.checksDone, this.done];
     }
     get steps() {
         const v = this.v || {};
@@ -97,8 +100,8 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const answered = QUESTIONS.filter((q) => this.checks[q.id]).length;
         const subs = [
             this.maxStep > 0 || this.done ? 'Reviewed' : 'Start here',
-            this.maxStep > 1 || this.done ? n + ' record' + (n === 1 ? '' : 's') + ' considered' : this.sameLot.length + ' on the same lot',
-            this.maxStep > 2 || this.done ? (this.level || v.riskLevel || v.band) + ' · score ' + v.score : 'CQ.AI suggests ' + v.band,
+            this.maxStep > RISK || this.done ? (this.level || v.riskLevel || v.band) + ' · score ' + v.score : 'CQ.AI suggests ' + v.band,
+            this.maxStep > SIGNALS || this.done ? n + ' record' + (n === 1 ? '' : 's') + ' considered' : this.sameLot.length + ' on the same lot',
             this.done ? 'Answered' : answered + ' of ' + QUESTIONS.length + ' answered',
             this.done ? v.outcome : this.outcome || 'Not decided'
         ];
@@ -133,7 +136,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: event.currentTarget.dataset.id, actionName: 'view' } });
     }
 
-    // ---- step 2: signals and evidence
+    // ---- signals and evidence (third step)
     get recs() {
         return (this.v.records || []).map((r) => {
             const on = !!this.picks[r.id];
@@ -152,7 +155,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get pickedRecords() { return this.recs.filter((r) => r.on); }
     handleRec(event) { const id = event.currentTarget.dataset.id; this.picks = { ...this.picks, [id]: !this.picks[id] }; }
 
-    // ---- step 3: risk
+    // ---- risk (second step)
     get factors() { return (this.v.factors || []).map((f, i) => ({ ...f, key: 'f' + i, of: f.pts + ' / ' + f.max })); }
     get bandCls() { return 'lvl ' + (this.v.band || '').toLowerCase(); }
     get levels() {
@@ -194,7 +197,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
 
     // ---- navigation
     get blocker() {
-        if (this.step === 2) {
+        if (this.step === RISK) {
             if (!this.hazard.trim()) { return 'Write the health hazard summary'; }
             if (!this.level) { return 'Choose a risk level'; }
         }
