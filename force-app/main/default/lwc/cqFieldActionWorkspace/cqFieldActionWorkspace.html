@@ -216,10 +216,24 @@
                         <p class="note">Shipments, customers and markets are not shown: there is no distribution data connected.</p>
                     </template>
 
-                    <template if:true={is2}>
-                        <h3 class="q">Risk</h3>
-                        <div class="cols">
-                            <div class="card sug">
+                    <template if:true={is3}>
+                        <h3 class="q">Reviewer Assessment</h3>
+                        <p class="p">Your own judgement, now that you have seen the evidence. CQ.AI's view is marked with &#10022;.</p>
+                        <div class="assess">
+                            <div class="card">
+                                <div class="lab">Checklist</div>
+                                <template for:each={questions} for:item="q">
+                                    <div key={q.id} class="cq">
+                                        <div class="cqt"><span class="question">{q.text}</span></div>
+                                        <div class="ynwrap">
+                                            <template for:each={q.opts} for:item="o">
+                                                <button key={o.key} class={o.cls} data-q={o.q} data-a={o.a} onclick={handleCheck} aria-pressed={o.pressed}>{o.a}</button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="card sug riskcard">
                                 <div class="rec">&#10022; CQ.AI Suggests:</div>
                                 <div class="sughead"><span class="score">{v.score}</span><span class="rk">out of 100</span><span class={bandCls}>{v.band}</span></div>
                                 <div class="ftable">
@@ -228,33 +242,19 @@
                                     </template>
                                 </div>
                                 <p class="note">Bands: 0&ndash;39 Low &middot; 40&ndash;69 Medium &middot; 70&ndash;100 High. The score supports the decision; it does not make it.</p>
-                            </div>
-                            <div class="col">
-                                <div class="lab">Risk level *</div>
-                                <div class="opts tight">
-                                    <template for:each={levels} for:item="l">
-                                        <button key={l.id} class={l.cls} data-id={l.id} onclick={handleLevel}><template if:true={l.cq}><span class="star">&#10022;</span>&nbsp;</template>{l.id}</button>
-                                    </template>
+                                <div class="lvlrow">
+                                    <span class="lab dark">Risk Level *</span>
+                                    <div class="seg" role="group" aria-label="Risk level">
+                                        <template for:each={levels} for:item="l">
+                                            <button key={l.id} class={l.cls} data-id={l.id} onclick={handleLevel} aria-pressed={l.pressed}><template if:true={l.cq}><span class="star">&#10022;</span>&nbsp;</template>{l.id}</button>
+                                        </template>
+                                    </div>
                                 </div>
-                                <label class="fl">Health hazard summary *
-                                    <textarea class="ta" rows="7" data-f="hazard" value={hazard} oninput={handleInput} placeholder="What could happen to a patient or user, how likely, and how serious."></textarea>
+                                <label class="fl">Health Hazard Summary *
+                                    <textarea class="ta" rows="3" data-f="hazard" value={hazard} oninput={handleInput} placeholder="What could happen to a patient or user, how likely, and how serious."></textarea>
                                 </label>
                             </div>
                         </div>
-                    </template>
-
-                    <template if:true={is3}>
-                        <h3 class="q">Reviewer Checklist</h3>
-                        <template for:each={questions} for:item="q">
-                            <div key={q.id} class="cq">
-                                <div class="cqt"><span class="question">{q.text}</span></div>
-                                <div class="ynwrap">
-                                    <template for:each={q.opts} for:item="o">
-                                        <button key={o.key} class={o.cls} data-q={o.q} data-a={o.a} onclick={handleCheck} aria-pressed={o.pressed}>{o.a}</button>
-                                    </template>
-                                </div>
-                            </div>
-                        </template>
                     </template>
 
                     <template if:true={is4}>

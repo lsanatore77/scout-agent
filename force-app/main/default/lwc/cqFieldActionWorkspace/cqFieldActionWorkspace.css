@@ -175,3 +175,18 @@
 .lg { display: inline-flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
 @media (max-width: 1100px) { .sigcols { grid-template-columns: 1fr; } }
+.assess { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.assess .cq { padding: 10px 0; }
+.assess .cq:last-child { border-bottom: none; }
+.riskcard { display: flex; flex-direction: column; gap: 10px; }
+.riskcard .ftable { margin-top: 0; }
+.riskcard .note { margin: 0; }
+.riskcard .fl { margin-top: 0; }
+.lvlrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.lab.dark { color: #3d4550; }
+.seg { display: inline-flex; border: 1px solid #c4cad2; border-radius: 8px; overflow: hidden; background: #fff; }
+.segb { min-height: 32px; padding: 0 14px; border: none; background: #fff; color: #1a1d21; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.segb + .segb { border-left: 1px solid #c4cad2; }
+.segb.on { background: #1d5fd1; color: #fff; }
+.segb.on .star { color: #fff; }
+@media (max-width: 1100px) { .assess { grid-template-columns: 1fr; } }
