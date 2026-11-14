@@ -42,6 +42,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     loading = {};        // lot -> genealogy being read
     ticking = {};        // lot -> tick being saved
     edits = {};          // lot row id -> { shipped, onHand, location } being typed
+    editing = '';        // the lot row whose shipped, on hand and location are open for editing
 
     async connectedCallback() {
         try { this.apply(await getView({ recordId: this.recordId })); this.openInScope(); }
@@ -251,9 +252,11 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             pendingAdd, removing,
             suggested: !l.inScope && !removing && !!l.suggested, why: l.why,
             editable: !where && l.inScope && !!l.id, rowId: l.id,
+            isEditing: !!l.id && this.editing === l.id, notEditing: !(l.id && this.editing === l.id),
             shippedVal: e.shipped !== undefined ? e.shipped : l.shipped, onHandVal: e.onHand !== undefined ? e.onHand : l.onHand,
             locVal: e.location !== undefined ? e.location : l.location || '',
-            dirty: !!(l.id && this.edits[l.id])
+            shippedText: this.num(l.shipped), onHandText: this.num(l.onHand), locText: l.location || '—',
+            editLabel: 'Edit shipped, on hand and location for lot ' + l.name
         };
     }
     nodeRow(n, key, depth, hasKids, isOpen, lot, g) {
@@ -334,13 +337,22 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         cur[f] = f === 'location' ? event.target.value : event.target.value === '' ? null : Number(event.target.value);
         this.edits = { ...this.edits, [id]: cur };
     }
+    handleStartEdit(event) {
+        const id = event.currentTarget.dataset.id;
+        if (this.editing && this.editing !== id) { const x = { ...this.edits }; delete x[this.editing]; this.edits = x; }
+        this.editing = id;
+    }
+    handleCancelEdit() {
+        const x = { ...this.edits }; delete x[this.editing]; this.edits = x;
+        this.editing = '';
+    }
     async handleSaveLot(event) {
         const id = event.currentTarget.dataset.id;
         const row = this.lots.find((l) => l.id === id);
         const e = this.edits[id] || {};
         await this.run(() => saveLot({ recordId: this.recordId, rowId: id,
             shipped: e.shipped !== undefined ? e.shipped : row.shipped, onHand: e.onHand !== undefined ? e.onHand : row.onHand,
-            location: e.location !== undefined ? e.location : row.location }), () => { const x = { ...this.edits }; delete x[id]; this.edits = x; });
+            location: e.location !== undefined ? e.location : row.location }), () => { const x = { ...this.edits }; delete x[id]; this.edits = x; this.editing = ''; });
     }
     async run(call, after) {
         if (this.saving) { return; }

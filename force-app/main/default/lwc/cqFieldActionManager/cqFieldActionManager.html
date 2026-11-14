@@ -112,6 +112,13 @@
                                 </div>
                                 <span class="rk">{countLine}</span>
                                 <span class={pendingCls}>{pendingLine}</span>
+                                <template if:true={isPartial}>
+                                    <div class="cact">
+                                        <span class="rk">{confirmHint}</span>
+                                        <button class="btn" onclick={handleDiscard} disabled={cantDiscard}>Discard Changes</button>
+                                        <button class="btn primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
+                                    </div>
+                                </template>
                             </div>
                             <div class="tblwrap tree">
                                 <table class="lottable">
@@ -150,10 +157,18 @@
                                                     <td class="nw mut">{r.supplier}</td>
                                                     <td class="nw"><span class={r.traceCls}>{r.trace}</span></td>
                                                     <template if:true={r.editable}>
-                                                        <td class="num"><input class="ta ni" type="number" min="0" data-id={r.rowId} data-f="shipped" value={r.shippedVal} onchange={handleQty} aria-label="Units shipped" /></td>
-                                                        <td class="num"><input class="ta ni" type="number" min="0" data-id={r.rowId} data-f="onHand" value={r.onHandVal} onchange={handleQty} aria-label="Units on hand" /></td>
-                                                        <td><span class="locwrap"><input class="ta ti" type="text" data-id={r.rowId} data-f="location" value={r.locVal} onchange={handleQty} aria-label="Location" />
-                                                            <template if:true={r.dirty}><button class="btn xs primary" data-id={r.rowId} onclick={handleSaveLot} disabled={saving}>Save</button></template></span></td>
+                                                        <template if:true={r.isEditing}>
+                                                            <td class="num"><input class="ta ni" type="number" min="0" data-id={r.rowId} data-f="shipped" value={r.shippedVal} onchange={handleQty} aria-label="Units shipped" /></td>
+                                                            <td class="num"><input class="ta ni" type="number" min="0" data-id={r.rowId} data-f="onHand" value={r.onHandVal} onchange={handleQty} aria-label="Units on hand" /></td>
+                                                            <td><span class="locwrap"><input class="ta ti" type="text" data-id={r.rowId} data-f="location" value={r.locVal} onchange={handleQty} aria-label="Location" />
+                                                                <button class="btn xs primary" data-id={r.rowId} onclick={handleSaveLot} disabled={saving}>Save</button>
+                                                                <button class="btn xs" onclick={handleCancelEdit}>Cancel</button></span></td>
+                                                        </template>
+                                                        <template if:true={r.notEditing}>
+                                                            <td class="num"><button class="cell num" data-id={r.rowId} onclick={handleStartEdit} title="Click to edit" aria-label={r.editLabel}>{r.shippedText}</button></td>
+                                                            <td class="num"><button class="cell num" data-id={r.rowId} onclick={handleStartEdit} title="Click to edit" aria-label={r.editLabel}>{r.onHandText}</button></td>
+                                                            <td><button class="cell" data-id={r.rowId} onclick={handleStartEdit} title="Click to edit" aria-label={r.editLabel}>{r.locText}<span class="pen" aria-hidden="true">&#9998;</span></button></td>
+                                                        </template>
                                                     </template>
                                                     <template if:false={r.editable}><td></td><td></td><td></td></template>
                                                 </template>
@@ -177,14 +192,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <p class="note">Shipped, on hand and location are entered here: no distribution or inventory data is connected. Sub-assemblies and components come with their lot, so they have no tick box.</p>
-                            <template if:true={isPartial}>
-                                <div class="cfoot">
-                                    <span class="rk">{confirmHint}</span>
-                                    <button class="btn" onclick={handleDiscard} disabled={cantDiscard}>Discard Changes</button>
-                                    <button class="btn primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
-                                </div>
-                            </template>
+                            <p class="note">Click shipped, on hand or location to edit them: no distribution or inventory data is connected. Sub-assemblies and components come with their lot, so they have no tick box.</p>
                         </template>
                         <template if:false={hasLots}><p class="note">No lots of this part were found.</p></template>
 

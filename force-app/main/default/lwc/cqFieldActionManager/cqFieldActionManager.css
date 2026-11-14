@@ -124,4 +124,9 @@
 .tr.warn { color: #8a5a00; }
 .tr.bad { color: #b42318; font-weight: 600; }
 .locwrap { display: inline-flex; align-items: center; gap: 6px; }
-.cfoot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+.cact { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-left: auto; flex-wrap: wrap; }
+.cell { display: inline-flex; align-items: center; justify-content: flex-start; gap: 6px; min-width: 64px; min-height: 28px; box-sizing: border-box; padding: 2px 8px; border: 1px solid transparent; border-radius: 6px; background: none; font: inherit; color: #1a1d21; text-align: left; cursor: pointer; }
+.cell.num { justify-content: flex-end; font-variant-numeric: tabular-nums; }
+.cell:hover, .cell:focus-visible { border-color: #c4cad2; background: #fff; }
+.pen { font-size: 12px; color: #5b6470; opacity: 0; }
+.cell:hover .pen, .cell:focus-visible .pen { opacity: 1; }
