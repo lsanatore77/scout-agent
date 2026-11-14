@@ -51,6 +51,11 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     openInScope() {
         this.lots.filter((l) => l.inScope && l.known).forEach((l) => { if (!this.open[l.name]) { this.toggleLot(l.name, true); } });
     }
+    get anyOpen() { return Object.values(this.open).some(Boolean); }
+    get allChev() { return this.anyOpen ? '▾' : '▸'; }
+    get allLabel() { return this.anyOpen ? 'Collapse all' : 'Expand the lots in scope'; }
+    get allExpanded() { return this.anyOpen ? 'true' : 'false'; }
+    handleAll() { if (this.anyOpen) { this.open = {}; } else { this.openInScope(); } }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     apply(v) { this.v = JSON.parse(JSON.stringify(v)); }
     get ready() { return !!this.v; }
