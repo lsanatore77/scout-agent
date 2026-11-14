@@ -3,14 +3,20 @@ import { NavigationMixin } from 'lightning/navigation';
 import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqFieldActionReview.getView';
 import saveDraft from '@salesforce/apex/CqFieldActionReview.saveDraft';
-import submitReview from '@salesforce/apex/CqFieldActionReview.submit';
+import submitToCommittee from '@salesforce/apex/CqFarCommittee.submitToCommittee';
+import actOnStep from '@salesforce/apex/CqFarCommittee.act';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 
-// Order on screen: glance, risk, signals, checklist, decision. RISK and SIGNALS are the step numbers of those two.
-const STEPS = ['Review at a Glance', 'Risk', 'Signals and Evidence', 'Reviewer Checklist', 'Decision'];
+// Order on screen: glance, risk, signals, checklist, recommendation, committee approval.
+const STEPS = ['Review at a Glance', 'Risk', 'Signals and Evidence', 'Reviewer Checklist', 'Recommendation', 'Committee Approval'];
 const RISK = 1;
 const SIGNALS = 2;
+const CHECKS = 3;
+const REC = 4;
+const COMMITTEE = 5;
+const READ_ONLY = [0, SIGNALS, COMMITTEE];   // steps the committee can open while the review is with them
+const STEP_LABEL = { Open: 'Pending', Approved: 'Approved', Rejected: 'Sent Back', Void: 'Not Required', Skipped: 'Not Required' };
 const PAGE = 5;      // records shown under a signal before "Show more"
 const LEVELS = ['Low', 'Medium', 'High'];
 const ANSWERS = ['Yes', 'No', 'Not known'];
@@ -24,9 +30,10 @@ const QUESTIONS = [
 ];
 const TYPES = ['Correction', 'Removal (Recall)', 'Advisory Notice'];
 const CLASSES = ['Class I', 'Class II', 'Class III'];
-const KEEP = ['step', 'maxStep', 'hazard', 'level', 'checks', 'outcome', 'rationale', 'faChoice', 'faTitle', 'actionType', 'recallClass'];
+const KEEP = ['step', 'maxStep', 'hazard', 'level', 'checks', 'outcome', 'rationale', 'faChoice', 'faTitle', 'actionType', 'recallClass',
+    'team', 'emergency', 'emergencyReason', 'emergencyUser'];
 
-/** Field Action Review workspace: five steps in the page. CQ.AI gathers and suggests, the reviewer decides. */
+/** Field Action Review workspace: six steps in the page. CQ.AI gathers and suggests, the coordinator recommends, a committee approves. */
 export default class CqFieldActionWorkspace extends NavigationMixin(LightningElement) {
     @api recordId;
     v;
@@ -36,6 +43,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     maxStep = 0;
     resumed = false;
     done = false;        // decision is saved
+    waiting = false;     // the recommendation is with the committee
     showSummary = false; // the summary screen straight after submitting
     saving = false;
     showAll = {};        // signal id -> true once the reviewer asks for every record
@@ -48,6 +56,11 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     faTitle = '';
     actionType = '';
     recallClass = '';
+    team = {};           // committee seat (job function id) -> the person chosen for it
+    emergency = false;
+    emergencyReason = '';
+    emergencyUser = '';
+    comment = '';        // a committee member's comment when approving or sending back
 
     async connectedCallback() {
         try {
@@ -61,14 +74,18 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     apply(v, first) {
         this.v = v;
         this.done = v.status === 'Decided' || v.status === 'Closed';
+        this.waiting = v.status === 'With Committee';
         if (!first) { return; }
         let d;
         try { d = v.draft ? JSON.parse(v.draft) : null; } catch (e) { d = null; }
         if (!this.done && d && d.v === 1) {
             KEEP.forEach((k) => { if (d[k] !== undefined) { this[k] = d[k]; } });
-            this.resumed = this.maxStep > 0;
+            this.resumed = this.maxStep > 0 && !this.waiting;
+            if (this.waiting) { this.step = COMMITTEE; this.maxStep = COMMITTEE; }
+            this.fillTeam();
             return;
         }
+        if (this.waiting) { this.step = COMMITTEE; this.maxStep = COMMITTEE; }
         // first visit: pre-fill from the record and CQ.AI's suggestions; the reviewer can change any of it
         this.hazard = v.hazard || '';
         this.level = v.band;
@@ -76,6 +93,20 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         this.faTitle = (v.title || '').replace(/^Review:\s*/i, '');
         const sug = (v.fieldActions || []).find((f) => f.suggested);
         this.faChoice = sug ? sug.id : (v.fieldActions || []).length ? '' : 'new';
+        this.team = {}; this.emergency = false; this.emergencyReason = ''; this.emergencyUser = '';
+        this.fillTeam();
+    }
+    /** A seat with one person who holds the function is filled for the coordinator; they can change any of it. */
+    fillTeam() {
+        const taken = new Set(Object.values(this.team).filter(Boolean));
+        const team = { ...this.team };
+        this.allSeats.forEach((s) => {
+            if (s.emergency) { if (!this.emergencyUser && s.people.length) { this.emergencyUser = s.people[0].id; } return; }
+            if (team[s.functionId]) { return; }
+            const free = s.people.find((p) => !taken.has(p.id));
+            if (free) { team[s.functionId] = free.id; taken.add(free.id); }
+        });
+        this.team = team;
     }
 
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
@@ -97,19 +128,22 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         try { this.apply(await getView({ recordId: this.recordId }), false); this.error = undefined; }
         catch (e) { this.error = this.msg(e, 'Could not refresh this review.'); }
     }
-    get live() { return this.ready && !this.done; }
-    get is0() { return this.ready && ((!this.done && this.step === 0) || (this.done && !this.showSummary)); }
-    get is1() { return this.live && this.step === SIGNALS; }   // the Signals and Evidence block in the template
+    get open() { return this.ready && !this.done; }                  // not decided yet: being worked on, or with the committee
+    get live() { return this.open && !this.waiting; }                // the coordinator is still working on it
+    get is0() { return this.ready && ((this.open && this.step === 0) || (this.done && !this.showSummary)); }
+    get is1() { return this.open && this.step === SIGNALS; }   // the Signals and Evidence block in the template
     get is2() { return this.live && this.step === RISK; }      // the Risk block in the template
-    get is3() { return this.live && this.step === 3; }
-    get is4() { return this.live && this.step === 4; }
+    get is3() { return this.live && this.step === CHECKS; }
+    get is4() { return this.live && this.step === REC; }
+    get is5() { return this.open && this.step === COMMITTEE; }
     get showResumed() { return this.resumed && this.live; }
     get canRestart() { return this.live && this.maxStep > 0 && !this.saving; }
     get canReopen() { return this.done && !this.saving; }
 
     // ---- step rail
     get valid() {
-        return [this.maxStep > 0, this.maxStep > RISK && !!this.hazard.trim() && !!this.level, this.maxStep > SIGNALS, this.checksDone, this.done];
+        return [this.maxStep > 0, this.maxStep > RISK && !!this.hazard.trim() && !!this.level, this.maxStep > SIGNALS, this.checksDone,
+            this.maxStep > REC && !!this.outcome && !!this.rationale.trim(), this.done];
     }
     get steps() {
         const v = this.v || {};
@@ -119,17 +153,20 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             this.maxStep > 0 || this.done ? 'Reviewed' : 'Start here',
             this.maxStep > RISK || this.done ? (this.level || v.riskLevel || v.band) + ' · score ' + v.score : 'CQ.AI suggests ' + v.band,
             n + ' signal' + (n === 1 ? '' : 's'),
-            this.done ? 'Answered' : answered + ' of ' + QUESTIONS.length + ' answered',
-            this.done ? v.outcome : this.outcome || 'Not decided'
+            this.done || this.waiting ? 'Answered' : answered + ' of ' + QUESTIONS.length + ' answered',
+            this.done ? v.outcome : this.outcome || v.outcome || 'Not decided',
+            this.done ? 'Approved' : this.waiting ? this.approvedCount + ' of ' + this.csteps.length + ' approved' : this.emergency ? 'Emergency' : 'Not submitted'
         ];
         const valid = this.valid;
         return STEPS.map((label, i) => {
-            const ok = this.done || valid[i];
+            const ok = this.done || (this.waiting ? i < COMMITTEE : valid[i]);
             return { i, n: i + 1, label, sub: subs[i], done: ok, notDone: !ok,
                 cls: 'step' + ((!this.done && i === this.step) || (this.done && !this.showSummary && i === 0) ? ' active' : '') + (ok ? ' done' : ''),
-                locked: this.done || i > this.maxStep };
+                locked: !this.canOpen(i) };
         });
     }
+    /** While the review is with the committee only the display-only steps open; nothing can be changed. */
+    canOpen(i) { return !this.done && (this.waiting ? READ_ONLY.includes(i) : i <= this.maxStep); }
     get progress() { return this.steps.filter((s) => s.done).length + ' of ' + STEPS.length + ' steps complete'; }
 
     // ---- step 1: review at a glance
@@ -206,9 +243,9 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get checksDone() { return QUESTIONS.every((q) => !!this.checks[q.id]); }
     handleCheck(event) { const d = event.currentTarget.dataset; this.checks = { ...this.checks, [d.q]: d.a }; }
 
-    // ---- step 5: decision
+    // ---- step 5: recommendation
     get outcomes() {
-        return [['No Field Action', 'Close this review. Nothing further is needed in the field.'],
+        return [['No Field Action', 'Nothing further is needed in the field.'],
                 ['Field Action Needed', 'Start a field action, or join one that already covers this problem.']]
             .map(([id, why]) => ({ id, why, cq: id === this.v.suggestedOutcome, cls: 'pathopt' + (this.outcome === id ? ' on' : id === this.v.suggestedOutcome ? ' sug' : '') }));
     }
@@ -228,14 +265,90 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     handleFa(event) { this.faChoice = event.currentTarget.dataset.id; }
     handleInput(event) { this[event.target.dataset.f] = event.target.value; }
 
+    // ---- step 6: committee approval, on CQ Approvals
+    get committee() { return (this.v && this.v.committee) || {}; }
+    get allSeats() { return this.committee.seats || []; }
+    get seats() {
+        const taken = (id) => Object.entries(this.team).filter(([f, u]) => u && f !== id).map(([, u]) => u);
+        return this.allSeats.filter((s) => !s.emergency).map((s) => {
+            const others = taken(s.functionId);
+            return { ...s, none: !s.people.length,
+                opts: s.people.map((p) => ({ value: p.id, label: p.name + (others.includes(p.id) ? ' (already on the committee)' : ''), selected: this.team[s.functionId] === p.id })) };
+        });
+    }
+    get emergencySeat() { return this.allSeats.find((s) => s.emergency); }
+    get emergencyOpts() {
+        const s = this.emergencySeat;
+        return s ? s.people.map((p) => ({ value: p.id, label: p.name, selected: this.emergencyUser === p.id })) : [];
+    }
+    get normal() { return !this.emergency; }
+    handleSeat(event) { this.team = { ...this.team, [event.target.dataset.id]: event.target.value }; }
+    handleEmergency(event) { this.emergency = event.target.checked; }
+    get members() {
+        if (this.emergency) { const s = this.emergencySeat; return s ? [{ functionId: s.functionId, userId: this.emergencyUser }] : []; }
+        return this.seats.map((s) => ({ functionId: s.functionId, userId: this.team[s.functionId] }));
+    }
+    get csteps() {
+        return (this.committee.steps || []).map((s) => ({
+            ...s, label: STEP_LABEL[s.status] || s.status, cls: 'cpill ' + (s.status || '').toLowerCase(),
+            line: [s.person, s.doneOn ? new Date(s.doneOn).toLocaleString() : '', s.doneBy && s.doneBy !== s.person ? 'recorded by ' + s.doneBy : ''].filter(Boolean).join(' \u00b7 '),
+            quote: s.comment ? '\u201c' + s.comment + '\u201d' : ''
+        }));
+    }
+    get approvedCount() { return this.csteps.filter((s) => s.status === 'Approved').length; }
+    get canActAny() { return this.csteps.some((s) => s.canAct); }
+    get committeeTitle() { return 'Committee' + (this.committee.approvalName ? ' \u00b7 ' + this.committee.approvalName : ''); }
+    get sentBack() { return this.live ? this.committee.sentBack : ''; }
+    /** What the committee is approving: the coordinator's recommendation and what it rests on. */
+    get recRows() {
+        const v = this.v; const c = this.committee;
+        const fa = this.outcomeNow !== 'Field Action Needed' ? '' : this.faChoice === 'new'
+            ? 'Start a new Field Action: ' + [this.faTitle, this.actionType, this.recallClass].filter(Boolean).join(' \u00b7 ')
+            : 'Join ' + (((v.fieldActions || []).find((f) => f.id === this.faChoice) || {}).name || 'an open Field Action');
+        return [
+            ['Recommendation', this.outcomeNow], ['Field Action', fa], ['Rationale', this.rationale || v.rationale],
+            ['Risk', (this.level || v.riskLevel || v.band) + ' \u00b7 score ' + v.score + ' of 100'],
+            ['Health Hazard Summary', this.hazard || v.hazard],
+            ['Checklist', QUESTIONS.filter((q) => this.checks[q.id]).map((q) => q.text + ' ' + this.checks[q.id]).join('\n')],
+            ['Recommended By', [c.recommendedBy, c.recommendedOn ? new Date(c.recommendedOn).toLocaleString() : ''].filter(Boolean).join(' \u00b7 ')],
+            ['Emergency', c.emergency ? c.emergencyReason : '']
+        ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val }));
+    }
+    get outcomeNow() { return this.outcome || this.v.outcome; }
+    async handleAct(event) {
+        const d = event.currentTarget.dataset;
+        if (this.saving) { return; }
+        if (d.a === 'reject' && !this.comment.trim()) { this.error = 'Add a comment saying why you are sending it back.'; return; }
+        this.saving = true; this.error = undefined;
+        try {
+            const v = await actOnStep({ recordId: this.recordId, stepId: d.id, action: d.a, comment: this.comment.trim() });
+            this.comment = '';
+            this.apply(v, false);
+            if (this.done) { this.showSummary = true; }
+            else if (!this.waiting) { this.step = REC; }      // sent back: the coordinator picks it up at the recommendation
+            notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
+        } catch (e) { this.error = this.msg(e, 'Could not record that.'); }
+        this.saving = false;
+    }
+
     // ---- navigation
     get blocker() {
         if (this.step === RISK) {
             if (!this.hazard.trim()) { return 'Write the health hazard summary'; }
             if (!this.level) { return 'Choose a risk level'; }
         }
-        if (this.step === 3 && !this.checksDone) { return 'Answer every question'; }
-        if (this.step === 4) {
+        if (this.step === CHECKS && !this.checksDone) { return 'Answer every question'; }
+        if (this.step === COMMITTEE) {
+            if (this.emergency) {
+                if (!this.emergencyUser) { return 'Choose the emergency approver'; }
+                if (!this.emergencyReason.trim()) { return 'Give the reason for the emergency'; }
+            } else {
+                const m = this.members;
+                if (!m.length || m.some((x) => !x.userId)) { return 'Choose a person for every seat'; }
+                if (new Set(m.map((x) => x.userId)).size !== m.length) { return 'One person can hold only one seat'; }
+            }
+        }
+        if (this.step === REC) {
             if (!this.outcome) { return 'Click an outcome to choose it'; }
             if (!this.rationale.trim()) { return 'Rationale needed'; }
             if (this.needed && !this.faChoice) { return 'Join a field action or start a new one'; }
@@ -245,7 +358,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     }
     get cantNext() { return !!this.blocker || this.saving; }
     get cantBack() { return this.step === 0 || this.saving; }
-    get nextLabel() { return this.saving ? 'Saving…' : this.step === 4 ? 'Submit decision' : 'Next'; }
+    get nextLabel() { return this.saving ? 'Saving…' : this.step === COMMITTEE ? 'Submit to Committee' : 'Next'; }
     persist() {
         if (this.done) { return; }
         const s = { v: 1 };
@@ -255,7 +368,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     handleBack() { if (this.step > 0) { this.step -= 1; this.persist(); } }
     handleStep(event) {
         const i = Number(event.currentTarget.dataset.i);
-        if (!this.done && i <= this.maxStep) { this.step = i; this.persist(); }
+        if (this.canOpen(i)) { this.step = i; if (this.live) { this.persist(); } }
     }
     handleRestart() {
         this.step = 0; this.maxStep = 0; this.resumed = false; this.error = undefined;
@@ -290,15 +403,16 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const v = this.v;
         return [
             ['Outcome', v.outcome], ['Field Action', v.faName || 'None'], ['Risk', (v.riskLevel || '') + ' · score ' + v.score + ' of 100'],
-            ['Rationale', v.rationale], ['Decided by', v.decidedBy]
-        ].map(([k, val]) => ({ key: k, k, v: val }));
+            ['Rationale', v.rationale], ['Committee', this.committee.approvalName ? this.committee.approvalName + ' \u00b7 ' + this.approvedCount + ' of ' + this.csteps.length + ' approved' : ''],
+            ['Approved by', v.decidedBy]
+        ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val }));
     }
     handleFinish() { this.showSummary = false; }
 
     async handleNext() {
         if (this.blocker || this.saving) { return; }
         this.resumed = false;
-        if (this.step < 4) {
+        if (this.step < COMMITTEE) {
             this.step += 1;
             this.maxStep = Math.max(this.maxStep, this.step);
             this.persist();
@@ -307,17 +421,18 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         this.saving = true;
         this.error = undefined;
         try {
-            const join = this.needed && this.faChoice !== 'new';
-            const v = await submitReview({
+            const d = { v: 1 };
+            KEEP.forEach((k) => { d[k] = this[k]; });
+            const v = await submitToCommittee({
                 recordId: this.recordId, hazard: this.hazard.trim(), summary: this.buildSummary(), score: this.v.score, riskLevel: this.level,
-                outcome: this.outcome, rationale: this.rationale.trim(),
-                fieldActionId: join ? this.faChoice : null, faTitle: this.faTitle.trim(), actionType: this.actionType, recallClass: this.recallClass
+                outcome: this.outcome, rationale: this.rationale.trim(), draft: JSON.stringify(d), team: JSON.stringify(this.members),
+                emergency: this.emergency, emergencyReason: this.emergencyReason.trim()
             });
             this.apply(v, false);
-            this.showSummary = true;
+            this.step = COMMITTEE; this.maxStep = COMMITTEE;
             notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
         } catch (e) {
-            this.error = this.msg(e, 'Could not save the decision.');
+            this.error = this.msg(e, 'Could not submit to the committee.');
         }
         this.saving = false;
     }

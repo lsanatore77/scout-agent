@@ -110,6 +110,17 @@
 .spill.escalate { background: #fdecea; color: #b42318; }
 .evt { display: flex; gap: 12px; padding: 8px 14px 8px 36px; border-bottom: 1px solid #eceff2; }
 .evt:last-child { border-bottom: none; }
+.chk { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.rr { padding: 8px 0; border-bottom: 1px solid #eceff2; }
+.rr:last-child { border-bottom: none; padding-bottom: 0; }
+.rv2 { font-size: 14px; line-height: 1.45; white-space: pre-line; }
+.crow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #eceff2; }
+.cpill { flex: none; display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f3f3f3; color: #5b6470; white-space: nowrap; }
+.cpill.approved { background: #ebf7e6; color: #2e844a; }
+.cpill.rejected { background: #fdecea; color: #b42318; }
+.btn.sm { flex: none; min-height: 32px; padding: 0 12px; font-size: 13px; }
+.errbox.back { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; }
+.backtext { white-space: pre-line; }
 .know summary { color: #1d5fd1; font-size: 13px; font-weight: 600; cursor: pointer; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .opts.tight { margin-top: 0; }

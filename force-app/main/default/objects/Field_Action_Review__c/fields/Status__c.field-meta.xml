@@ -18,6 +18,11 @@
                 <label>In Review</label>
             </value>
             <value>
+                <fullName>With Committee</fullName>
+                <default>false</default>
+                <label>With Committee</label>
+            </value>
+            <value>
                 <fullName>Decided</fullName>
                 <default>false</default>
                 <label>Decided</label>

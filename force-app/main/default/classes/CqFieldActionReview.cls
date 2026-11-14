@@ -1,7 +1,7 @@
 /**
  * CqFieldActionReview: data and saves for the Field Action Review workspace.
  * A review covers one Nonconformance or one Complaint. CQ.AI gathers the records on the same part and lot,
- * scores the field action risk out of 100 and suggests an outcome; the reviewer decides.
+ * scores the field action risk out of 100 and suggests an outcome; the reviewer recommends and a committee approves.
  * A review that needs a field action either starts a new Field Action or joins an open one.
  */
 public with sharing class CqFieldActionReview {
@@ -59,6 +59,7 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public List<Know> know = new List<Know>();
         @AuraEnabled public List<Sig> signals = new List<Sig>();        // Assess or Escalate, not dismissed
         @AuraEnabled public List<Sig> moreSignals = new List<Sig>();    // Watch, or dismissed earlier
+        @AuraEnabled public CqFarCommittee.Info committee;             // the committee approval stage, on CQ Approvals
         @AuraEnabled public String draft;
     }
 
@@ -69,6 +70,7 @@ public with sharing class CqFieldActionReview {
                        Part__c, Part__r.Name, Part__r.compliancequest__Part_Number__c, Lot_Number__c, Quantity_Affected__c, Quantity_Shipped__c,
                        Risk_Level__c, Health_Hazard_Summary__c, Outcome__c, Outcome_Rationale__c, Decided_By__r.Name, Decided_On__c,
                        Field_Action__c, Field_Action__r.Name, Review_Summary__c, Review_Draft__c,
+                       Committee_Approval__c, Emergency__c, Emergency_Reason__c, Recommended_By__r.Name, Recommended_On__c,
                        Nonconformance__c, Nonconformance__r.Name, Nonconformance__r.compliancequest__NC_Title__c, Nonconformance__r.compliancequest__Description__c,
                        Nonconformance__r.compliancequest__Description_RT__c,
                        Nonconformance__r.compliancequest__Lot_Number__c, Nonconformance__r.compliancequest__SQX_Part__c, Nonconformance__r.Triage_Risk__c,
@@ -218,6 +220,7 @@ public with sharing class CqFieldActionReview {
         v.know.add(new Know('What did triage set the risk at?', sourceRisk,
             sourceRisk != null ? 'NC triage of ' + v.sourceName : isComplaint ? 'Complaints are not triaged here' : 'Not triaged yet'));
         v.know.add(new Know('When did we become aware?', ev?.Aware_Date__c == null ? null : ev.Aware_Date__c.format('MMM d, yyyy h:mm a'), evSrc));
+        v.committee = CqFarCommittee.info(r);
         return v;
     }
 
@@ -314,7 +317,7 @@ public with sharing class CqFieldActionReview {
         return getView(recordId);
     }
 
-    @AuraEnabled
+    /** Decides the review. Called when the committee's CQ Approval is approved (see CqFarCommittee), never straight from the screen. */
     public static View submit(Id recordId, String hazard, String summary, Integer score, String riskLevel, String outcome, String rationale,
                               Id fieldActionId, String faTitle, String actionType, String recallClass) {
         if (outcome != 'No Field Action' && outcome != 'Field Action Needed') { throw new AuraHandledException('Choose an outcome.'); }

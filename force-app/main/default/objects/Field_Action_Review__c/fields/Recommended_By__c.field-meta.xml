@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Recommended_By__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <label>Recommended By</label>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Field Action Reviews Recommended</relationshipLabel>
+    <relationshipName>Field_Action_Reviews_Recommended</relationshipName>
+    <type>Lookup</type>
+</CustomField>

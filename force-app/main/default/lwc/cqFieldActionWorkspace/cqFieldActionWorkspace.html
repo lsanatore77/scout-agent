@@ -47,6 +47,9 @@
                 </nav>
                 <div class="main">
                     <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
+                    <template if:true={sentBack}>
+                        <div class="errbox back"><span class="fname">The committee sent this back.</span><span class="backtext">{sentBack}</span></div>
+                    </template>
 
                     <template if:true={is0}>
                         <template if:true={done}>
@@ -205,8 +208,8 @@
                     </template>
 
                     <template if:true={is4}>
-                        <h3 class="q">Decision</h3>
-                        <p class="p">Please make your selection below.</p>
+                        <h3 class="q">Recommendation</h3>
+                        <p class="p">Choose what you recommend. The committee approves it in the next step.</p>
                         <div class="paths">
                             <template for:each={outcomes} for:item="o">
                                 <button key={o.id} class={o.cls} data-id={o.id} onclick={handleOutcome}>
@@ -252,6 +255,78 @@
                         <label class="fl">Rationale *
                             <textarea class="ta" rows="3" data-f="rationale" value={rationale} oninput={handleInput}></textarea>
                         </label>
+                    </template>
+
+                    <template if:true={is5}>
+                        <h3 class="q">Committee Approval</h3>
+                        <template if:true={live}>
+                            <p class="p">Build the committee by functional role, then submit your recommendation for approval.</p>
+                            <div class="cols">
+                                <div class="card">
+                                    <div class="lab">Committee</div>
+                                    <template if:true={normal}>
+                                        <template for:each={seats} for:item="s">
+                                            <label key={s.functionId} class="fl">{s.name}
+                                                <select class="ta" data-id={s.functionId} onchange={handleSeat}>
+                                                    <option value="">Choose</option>
+                                                    <template for:each={s.opts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
+                                                </select>
+                                                <template if:true={s.none}><span class="rk">No one holds this function yet.</span></template>
+                                            </label>
+                                        </template>
+                                    </template>
+                                    <template if:true={emergency}>
+                                        <label class="fl">Emergency Approver
+                                            <select class="ta" data-f="emergencyUser" onchange={handleInput}>
+                                                <option value="">Choose</option>
+                                                <template for:each={emergencyOpts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
+                                            </select>
+                                        </label>
+                                        <label class="fl">Reason for Emergency *
+                                            <textarea class="ta" rows="4" data-f="emergencyReason" value={emergencyReason} oninput={handleInput} placeholder="Why this cannot wait for the full committee."></textarea>
+                                        </label>
+                                    </template>
+                                </div>
+                                <div class="col">
+                                    <label class="chk"><input type="checkbox" checked={emergency} onchange={handleEmergency} />Escalate to Emergency Approval</label>
+                                    <p class="note">For emergencies only. One emergency approver signs off, so the decision does not wait for every function.</p>
+                                    <div class="card sug">
+                                        <div class="lab">Your Recommendation</div>
+                                        <div class="sughead"><span class="big">{outcomeNow}</span></div>
+                                        <div class="para">{rationale}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                        <template if:true={waiting}>
+                            <div class="cols">
+                                <div class="card">
+                                    <div class="lab">Recommendation</div>
+                                    <template for:each={recRows} for:item="r">
+                                        <div key={r.key} class="rr"><div class="rk">{r.k}</div><div class="rv2">{r.v}</div></div>
+                                    </template>
+                                </div>
+                                <div class="card">
+                                    <div class="lab">{committeeTitle}</div>
+                                    <template for:each={csteps} for:item="s">
+                                        <div key={s.id} class="crow">
+                                            <span class="fn"><span class="fname">{s.seat}</span><span class="rk">{s.line}</span><template if:true={s.quote}><span class="rk">{s.quote}</span></template></span>
+                                            <span class={s.cls}>{s.label}</span>
+                                            <template if:true={s.canAct}>
+                                                <button class="btn sm primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
+                                                <button class="btn sm" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template if:true={canActAny}>
+                                        <label class="fl">Comment
+                                            <textarea class="ta" rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder="Required when you send it back."></textarea>
+                                        </label>
+                                    </template>
+                                    <p class="note">Approvals run on CQ Approvals. The Field Action starts when every member has approved.</p>
+                                </div>
+                            </div>
+                        </template>
                     </template>
 
                     <template if:true={showSummary}>

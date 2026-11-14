@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Committee_Approval__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The CQ Approval the committee is working through, or the last one it completed.</description>
+    <label>Committee Approval</label>
+    <referenceTo>cqext__CQAPR_Approval__c</referenceTo>
+    <relationshipLabel>Field Action Reviews</relationshipLabel>
+    <relationshipName>Field_Action_Reviews</relationshipName>
+    <type>Lookup</type>
+</CustomField>
