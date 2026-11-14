@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Lot Shipment object records units of one lot shipped to one customer: Lot, Lot Number, Customer, Units and Ship Date, with ship-to, contact and order number. Loaded from the ERP. Field actions use it to list the customers that received the lots in scope.</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Lot Shipment</label>
+    <nameField>
+        <displayFormat>SHP-{00000}</displayFormat>
+        <label>Lot Shipment Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Lot Shipments</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

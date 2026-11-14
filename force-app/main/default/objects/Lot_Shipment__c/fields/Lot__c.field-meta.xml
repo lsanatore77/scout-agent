@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lot__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The CQ lot record shipped, when there is one.</description>
+    <label>Lot</label>
+    <referenceTo>compliancequest__SQX_Lot_Info__c</referenceTo>
+    <relationshipLabel>Shipments</relationshipLabel>
+    <relationshipName>Lot_Shipments</relationshipName>
+    <type>Lookup</type>
+</CustomField>

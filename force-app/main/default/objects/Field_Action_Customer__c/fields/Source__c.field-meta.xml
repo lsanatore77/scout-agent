@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Source__c</fullName>
+    <description>Where the customer came from: the lot shipments, or added by hand.</description>
+    <label>Source</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Shipment</fullName>
+                <default>false</default>
+                <label>Shipment</label>
+            </value>
+            <value>
+                <fullName>Added by hand</fullName>
+                <default>false</default>
+                <label>Added by hand</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

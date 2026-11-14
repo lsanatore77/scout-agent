@@ -44,7 +44,7 @@
                         </tbody>
                     </table>
                 </div>
-                <span class="hint">Click a number to edit it. Shipped comes from the Scope step.</span>
+                <span class="hint">Shipped comes from the lot shipments. Click Returned, Destroyed or Corrected to edit them.</span>
             </section>
 
             <div class="grid">
@@ -58,7 +58,8 @@
                                     <span class="fn"><span class="b">{c.name}</span><span class="rk">{c.detail}</span></span>
                                     <button class={c.pillCls} data-id={c.id} onclick={handleStatus} disabled={locked} title="Click to change" aria-label={c.statusLabel}>{c.status}</button>
                                     <button class="btn xs" data-id={c.id} onclick={handleFollowUp} disabled={locked} aria-label={c.followLabel}>+ Follow-up</button>
-                                    <button class="x" data-id={c.id} onclick={handleRemove} disabled={locked} aria-label={c.removeLabel} title="Remove">&#215;</button>
+                                    <template if:true={c.canRemove}><button class="x" data-id={c.id} onclick={handleRemove} disabled={locked} aria-label={c.removeLabel} title="Remove">&#215;</button></template>
+                                    <template if:false={c.canRemove}><span class="x0"></span></template>
                                 </div>
                             </template>
                         </div>
@@ -69,7 +70,7 @@
                         <input class="ta in w140" type="text" placeholder="Lots" data-f="newLots" value={newLots} oninput={handleNew} disabled={locked} aria-label="Lots received" />
                         <button class="btn sm" onclick={handleAddCustomer} disabled={cantAddCustomer}>Add</button>
                     </div>
-                    <span class="hint">Click a status to change it. Customers are added here until the Notifications step is built.</span>
+                    <span class="hint">Customers come from the lot shipments of the lots in scope; add any others by hand. Click a status to change it.</span>
                 </section>
 
                 <section class="card">

@@ -78,3 +78,4 @@
 .btn.primary { border-color: #1d5fd1; background: #1d5fd1; color: #fff; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .errbox { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: #fff8f7; border: 1px solid #f3c7c2; color: #b42318; }
+.x0 { flex: none; width: 24px; }

@@ -4,7 +4,8 @@
  * Recovery and Effectiveness (step 6), open once the strategy is confirmed:
  *  1. Recovery by lot: units returned, destroyed and corrected against units shipped, per lot in scope.
  *  2. Customer responses: the customers that received the lots and whether each has acknowledged, measured against
- *     the check level from the strategy. Typed in here until the Notifications step is built.
+ *     the check level from the strategy. Filled from the Lot Shipment records of the lots in scope while recovery is
+ *     in progress; customers can also be added by hand.
  *  3. Held stock: a disposition for each lot held in the strategy.
  *  4. Effectiveness verdict: Effective, or Not Effective with what happens next. Confirm Verdict records it.
  *
@@ -23,6 +24,7 @@ public with sharing class CqFieldActionRecovery {
     public class Cust {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public Decimal units; @AuraEnabled public String lots;
         @AuraEnabled public String status; @AuraEnabled public Decimal followUps; @AuraEnabled public Date respondedOn;
+        @AuraEnabled public String source;
     }
     public class HoldDisp {
         @AuraEnabled public Id id; @AuraEnabled public String lot; @AuraEnabled public String kind; @AuraEnabled public String item;
@@ -107,6 +109,10 @@ public with sharing class CqFieldActionRecovery {
         v.action = fa.Action_Type__c; v.depth = fa.Depth__c; v.level = fa.Check_Level__c; v.target = targetOf(fa); v.checkBy = fa.Check_By__c;
         v.summary = fa.Closure_Summary__c; v.capaId = fa.CAPA__c; v.capaName = fa.CAPA__r?.Name; v.otherRecords = fa.Other_Records__c;
         v.closedBy = fa.Closed_By__r?.Name; v.closedOn = fa.Closed_On__c;
+        if (!v.closed && v.strategyConfirmed) {
+            CqLotShipments.fillShipped(recordId);
+            if (fa.Recovery_Status__c != 'Confirmed') { syncCustomers(recordId); }
+        }
 
         // 1. recovery by lot
         List<String> lotNames = new List<String>();
@@ -127,11 +133,11 @@ public with sharing class CqFieldActionRecovery {
         }
 
         // 2. customers
-        for (Field_Action_Customer__c c : [SELECT Id, Customer_Name__c, Units__c, Lots__c, Status__c, Follow_Ups__c, Responded_On__c
-                                           FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY CreatedDate]) {
+        for (Field_Action_Customer__c c : [SELECT Id, Customer_Name__c, Units__c, Lots__c, Status__c, Follow_Ups__c, Responded_On__c, Source__c
+                                           FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY Source__c DESC NULLS LAST, Customer_Name__c]) {
             Cust x = new Cust();
             x.id = c.Id; x.name = c.Customer_Name__c; x.units = c.Units__c; x.lots = c.Lots__c; x.status = c.Status__c == null ? 'Sent' : c.Status__c;
-            x.followUps = c.Follow_Ups__c; x.respondedOn = c.Responded_On__c;
+            x.followUps = c.Follow_Ups__c; x.respondedOn = c.Responded_On__c; x.source = c.Source__c;
             v.customers.add(x); v.total++;
             if (x.status == 'Acknowledged') { v.acked++; }
         }
@@ -263,6 +269,35 @@ public with sharing class CqFieldActionRecovery {
         Check c = new Check(); c.key = key; c.text = text; c.detail = detail; c.state = state; c.blocks = blocks; v.checks.add(c);
     }
 
+    /** Adds the customers that received the lots in scope, from the Lot Shipment records, and keeps their units and lots current. */
+    private static void syncCustomers(Id recordId) {
+        Set<String> lots = new Set<String>();
+        for (Field_Action_Lot__c l : [SELECT Lot_Number__c FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId AND Approved_In_Scope__c = true]) {
+            lots.add(l.Lot_Number__c);
+        }
+        List<CqLotShipments.Consignee> found = CqLotShipments.customers(lots);
+        if (found.isEmpty()) { return; }
+        Map<Id, Field_Action_Customer__c> have = new Map<Id, Field_Action_Customer__c>();
+        for (Field_Action_Customer__c c : [SELECT Id, Customer__c, Units__c, Lots__c, Source__c FROM Field_Action_Customer__c
+                                           WHERE Field_Action__c = :recordId AND Customer__c != null]) {
+            have.put(c.Customer__c, c);
+        }
+        List<Field_Action_Customer__c> adds = new List<Field_Action_Customer__c>();
+        List<Field_Action_Customer__c> ups = new List<Field_Action_Customer__c>();
+        for (CqLotShipments.Consignee k : found) {
+            String lotText = String.join(k.lots, ', ').left(255);
+            Field_Action_Customer__c c = have.get(k.accountId);
+            if (c == null) {
+                adds.add(new Field_Action_Customer__c(Field_Action__c = recordId, Customer__c = k.accountId, Customer_Name__c = k.name,
+                    Units__c = k.units, Lots__c = lotText, Status__c = 'Sent', Follow_Ups__c = 0, Source__c = 'Shipment'));
+            } else if (c.Source__c == 'Shipment' && (c.Units__c != k.units || c.Lots__c != lotText)) {
+                ups.add(new Field_Action_Customer__c(Id = c.Id, Units__c = k.units, Lots__c = lotText));
+            }
+        }
+        if (!adds.isEmpty()) { insert adds; }
+        if (!ups.isEmpty()) { update ups; }
+    }
+
     // ---------------------------------------------------------------- recovery saves
 
     /** Units returned, destroyed and corrected for one lot in scope. */
@@ -287,7 +322,7 @@ public with sharing class CqFieldActionRecovery {
         openForChange(fa);
         if (String.isBlank(name)) { throw new AuraHandledException('Enter the customer name.'); }
         insert new Field_Action_Customer__c(Field_Action__c = recordId, Customer_Name__c = name.trim().left(255), Units__c = units,
-            Lots__c = String.isBlank(lots) ? null : lots.left(255), Status__c = 'Sent', Follow_Ups__c = 0);
+            Lots__c = String.isBlank(lots) ? null : lots.left(255), Status__c = 'Sent', Follow_Ups__c = 0, Source__c = 'Added by hand');
         reopen(fa);
         return getView(recordId);
     }

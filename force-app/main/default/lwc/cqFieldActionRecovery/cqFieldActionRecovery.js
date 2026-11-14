@@ -117,7 +117,9 @@ export default class CqFieldActionRecovery extends LightningElement {
     get custRows() {
         return this.v.customers.map((c) => ({ ...c,
             detail: [c.units !== undefined && c.units !== null ? c.units + ' units' : '', c.lots || '',
-                c.followUps ? c.followUps + ' follow-up' + (c.followUps === 1 ? '' : 's') : ''].filter(Boolean).join(' · '),
+                c.followUps ? c.followUps + ' follow-up' + (c.followUps === 1 ? '' : 's') : '',
+                c.source === 'Shipment' ? 'from lot shipments' : 'added by hand'].filter(Boolean).join(' · '),
+            canRemove: c.source !== 'Shipment',
             pillCls: 'pillbtn ' + (c.status === 'Acknowledged' ? 'ok' : c.status === 'No reply' ? 'bad' : ''),
             statusLabel: 'Status for ' + c.name + ': ' + c.status + '. Click to change.',
             followLabel: 'Add a follow-up for ' + c.name, removeLabel: 'Remove ' + c.name }));

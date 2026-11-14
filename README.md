@@ -49,6 +49,8 @@ workspace's own header strip is `#F3F3F3` to match the native highlights panel. 
 - Scout never changes a record without the user confirming in the conversation.
 
 ## Metadata in this package
+**Every object and field, including fields added to CQ and standard objects, is listed in [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)**, with a change log. Record each change in `docs/data_model_log.md` and run `python3 tools/data_model.py`.
+
 - Apex classes and tests (`force-app/main/default/classes`)
 - LWCs and Lightning types for agent output (`lwc`, `lightningTypes`)
 - Custom object `PHR_Lead__c` and its permission set `PHR_Lead_Access`
