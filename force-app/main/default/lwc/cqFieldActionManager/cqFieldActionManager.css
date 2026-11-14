@@ -130,3 +130,4 @@
 .cell:hover, .cell:focus-visible { border-color: #c4cad2; background: #fff; }
 .pen { font-size: 12px; color: #5b6470; opacity: 0; }
 .cell:hover .pen, .cell:focus-visible .pen { opacity: 1; }
+.fblock { color: #7a4100; font-weight: 600; }

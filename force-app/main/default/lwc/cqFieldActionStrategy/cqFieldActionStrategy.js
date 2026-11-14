@@ -43,6 +43,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     error;
     saving = 0;
     addLot = '';
+    footSig;
 
     async connectedCallback() {
         try { this.apply(await getView({ recordId: this.recordId })); }
@@ -54,6 +55,14 @@ export default class CqFieldActionStrategy extends LightningElement {
         this.dispatchEvent(new CustomEvent('strategychange', { detail: { status: this.v.status, action: this.v.action } }));
     }
     get ready() { return !!this.v; }
+    /** The workspace footer shows Confirm Strategy beside Back and Next, so it is told whenever the button changes. */
+    renderedCallback() {
+        if (!this.v) { return; }
+        const detail = { show: this.showStep, label: this.confirmLabel, disabled: this.cantConfirm, blocker: this.showStep ? this.blocker : '' };
+        const sig = JSON.stringify(detail);
+        if (sig !== this.footSig) { this.footSig = sig; this.dispatchEvent(new CustomEvent('footchange', { detail })); }
+    }
+    @api confirm() { return this.handleConfirm(); }
     get busy() { return this.saving > 0; }
     get open() { return this.v.scopeConfirmed && !this.v.closed; }
     get needsScope() { return this.ready && !this.v.scopeConfirmed; }

@@ -208,13 +208,17 @@
                     </template>
 
                     <template if:true={is2}>
-                        <c-cq-field-action-strategy record-id={recordId} onstrategychange={handleStrategyChange}></c-cq-field-action-strategy>
+                        <c-cq-field-action-strategy record-id={recordId} onstrategychange={handleStrategyChange} onfootchange={handleFootChange}></c-cq-field-action-strategy>
                     </template>
 
                     <template if:true={error}><div class="errbox">{error}</div></template>
                     <div class="foot">
+                        <template if:true={showStepAction}>
+                            <span class="fblock">{foot.blocker}</span>
+                            <button class="btn primary" onclick={handleStepAction} disabled={foot.disabled}>{foot.label}</button>
+                        </template>
                         <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
-                        <button class="btn primary" onclick={handleNext} disabled={cantNext}>Next</button>
+                        <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
                     </div>
                 </div>
             </div>

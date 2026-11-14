@@ -121,6 +121,15 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get cantNext() { return this.step >= STRATEGY || (this.step === SCOPE && !this.scopeConfirmed); }
     handleBack() { if (this.step > 0) { this.step -= 1; } }
     handleNext() { if (!this.cantNext) { this.step += 1; } }
+    // Confirm Strategy lives in the footer beside Back and Next; the Strategy step says how it should look
+    foot = { show: false, label: 'Confirm Strategy', disabled: true, blocker: '' };
+    handleFootChange(event) { this.foot = event.detail; }
+    get showStepAction() { return this.is2 && this.foot.show; }
+    get nextCls() { return this.showStepAction ? 'btn' : 'btn primary'; }
+    handleStepAction() {
+        const s = this.template.querySelector('c-cq-field-action-strategy');
+        if (s) { s.confirm(); }
+    }
     /** The Strategy step reports its status and the action, which also shows in the header. */
     handleStrategyChange(event) {
         const { status, action } = event.detail;
