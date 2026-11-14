@@ -12,11 +12,14 @@
         </template>
 
         <template if:true={showStep}>
-            <p class="p">{intro}</p>
-            <div class="grid">
-
-                <section class="card">
-                    <div class="ch"><span class="cn">1</span><span class="ct">Action and Depth</span></div>
+            <section class="tabbox">
+                <div class="tabs" role="tablist" aria-label="Strategy">
+                    <template for:each={tabs} for:item="t">
+                        <button key={t.key} class={t.cls} role="tab" aria-selected={t.sel} data-tab={t.key} onclick={handleTab}><span class={t.numCls}>{t.num}</span>{t.label}</button>
+                    </template>
+                </div>
+                <div class="panel" role="tabpanel">
+                    <template if:true={isAction}>
                     <div class="fld">
                         <span class="fl">Action *</span>
                         <div class="segs" role="group" aria-label="Action">
@@ -38,10 +41,8 @@
                     <template if:true={v.whyAction}>
                         <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyAction}</div>
                     </template>
-                </section>
-
-                <section class="card">
-                    <div class="ch"><span class="cn">2</span><span class="ct">What We Tell Customers</span></div>
+                    </template>
+                    <template if:true={isTell}>
                     <div class="fld">
                         <span class="fl">Instruction *</span>
                         <div class="opts" role="group" aria-label="Instruction">
@@ -58,10 +59,8 @@
                         <textarea class="ta" rows="4" data-field="message" value={message} disabled={locked} onchange={handleText}></textarea>
                         <span class="hint">The Notifications step builds the customer letter from this.</span>
                     </label>
-                </section>
-
-                <section class="card">
-                    <div class="ch"><span class="cn">3</span><span class="ct">Holds on Our Stock and Components</span></div>
+                    </template>
+                    <template if:true={isHolds}>
                     <div class="tblwrap">
                         <table class="ht">
                             <thead><tr><th class="hc">Hold</th><th>Lot</th><th>What</th><th class="num">On Hand</th><th></th></tr></thead>
@@ -92,10 +91,8 @@
                         </div>
                     </template>
                     <span class="hint">{holdLine}</span>
-                </section>
-
-                <section class="card">
-                    <div class="ch"><span class="cn">4</span><span class="ct">Effectiveness Check</span></div>
+                    </template>
+                    <template if:true={isCheck}>
                     <div class="fld">
                         <span class="fl">Check level *</span>
                         <div class="segs" role="group" aria-label="Check level">
@@ -130,8 +127,9 @@
                     <template if:true={v.whyLevel}>
                         <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyLevel}</div>
                     </template>
-                </section>
-            </div>
+                    </template>
+                </div>
+            </section>
 
             <template if:true={error}><div class="errbox">{error}</div></template>
         </template>

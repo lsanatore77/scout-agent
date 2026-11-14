@@ -44,6 +44,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     saving = 0;
     addLot = '';
     footSig;
+    tab = 'action';      // action | tell | holds | check
 
     async connectedCallback() {
         try { this.apply(await getView({ recordId: this.recordId })); }
@@ -88,12 +89,30 @@ export default class CqFieldActionStrategy extends LightningElement {
     // ---- header
     get stateText() { return this.v.status || 'Not started'; }
     get statePill() { return 'spill state' + (this.v.status === 'Confirmed' ? ' ok' : this.v.status ? ' wait' : ''); }
-    get intro() {
-        const n = this.v.lotCount;
-        const units = this.v.built ? ' (' + this.v.built + ' units built)' : '';
-        return 'How this field action will be carried out for the ' + n + ' lot' + (n === 1 ? '' : 's') + ' in scope' + units
-            + '. Each choice saves as a draft; Confirm Strategy makes it the plan Notifications works from. CQ.AI\'s picks are marked with ✦.';
+
+    // ---- tabs: one section, a numbered tab per part; the number is green when that part is done, amber when it needs fixing
+    get tabState() {
+        const p = Number(this.percent);
+        const checkDone = !!this.level && (!this.isLevelB || (p > 10 && p < 100)) && (!this.needsCheck || (!!this.method && !!this.checkBy));
+        return {
+            action: this.action && this.depth ? 'ok' : '',
+            tell: this.instruction && !this.fits ? 'warn' : this.instruction && this.message.trim() ? 'ok' : '',
+            holds: (this.v.holds || []).some((h) => h.hold) ? 'ok' : '',
+            check: checkDone ? 'ok' : ''
+        };
     }
+    get tabs() {
+        const n = (this.v.holds || []).filter((h) => h.hold).length;
+        const st = this.tabState;
+        return [['action', 'Action and Depth'], ['tell', 'What We Tell Customers'], ['holds', 'Holds (' + n + ')'], ['check', 'Effectiveness Check']]
+            .map(([key, label], i) => ({ key, label, num: String(i + 1), sel: this.tab === key ? 'true' : 'false',
+                cls: 'tab' + (this.tab === key ? ' on' : ''), numCls: 'tnum' + (st[key] ? ' ' + st[key] : '') }));
+    }
+    handleTab(event) { this.tab = event.currentTarget.dataset.tab; }
+    get isAction() { return this.tab === 'action'; }
+    get isTell() { return this.tab === 'tell'; }
+    get isHolds() { return this.tab === 'holds'; }
+    get isCheck() { return this.tab === 'check'; }
     get confirmedLine() {
         if (this.v.status !== 'Confirmed') { return ''; }
         return 'Confirmed' + (this.v.confirmedBy ? ' by ' + this.v.confirmedBy : '') + (this.v.confirmedOn ? ' · ' + new Date(this.v.confirmedOn).toLocaleString() : '');
