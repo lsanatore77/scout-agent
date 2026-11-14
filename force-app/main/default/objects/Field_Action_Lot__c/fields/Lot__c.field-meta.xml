@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lot__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The CQ lot record, when one exists for the lot number.</description>
+    <label>Lot</label>
+    <referenceTo>compliancequest__SQX_Lot_Info__c</referenceTo>
+    <relationshipLabel>Field Action Lots</relationshipLabel>
+    <relationshipName>Field_Action_Lots</relationshipName>
+    <type>Lookup</type>
+</CustomField>

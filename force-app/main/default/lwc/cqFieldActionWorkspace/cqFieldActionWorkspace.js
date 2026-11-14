@@ -3,7 +3,8 @@ import { NavigationMixin } from 'lightning/navigation';
 import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqFieldActionReview.getView';
 import saveDraft from '@salesforce/apex/CqFieldActionReview.saveDraft';
-import submitToCommittee from '@salesforce/apex/CqFarCommittee.submitToCommittee';
+import getScope from '@salesforce/apex/CqFieldActionLots.getScope';
+import submitToCommittee from '@salesforce/apex/CqFieldActionLots.submitToCommittee';
 import actOnStep from '@salesforce/apex/CqFarCommittee.act';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
@@ -30,13 +31,15 @@ const QUESTIONS = [
 ];
 const TYPES = ['Correction', 'Removal (Recall)', 'Advisory Notice'];
 const CLASSES = ['Class I', 'Class II', 'Class III'];
-const KEEP = ['step', 'maxStep', 'hazard', 'level', 'checks', 'outcome', 'rationale', 'faChoice', 'faTitle', 'actionType', 'recallClass',
+const SCOPES = ['Full', 'Partial'];
+const KEEP = ['step', 'maxStep', 'hazard', 'level', 'checks', 'outcome', 'rationale', 'faChoice', 'faTitle', 'actionType', 'recallClass', 'scope', 'lots',
     'team', 'emergency', 'emergencyReason', 'emergencyUser'];
 
 /** Field Action Review workspace: six steps in the page. CQ.AI gathers and suggests, the coordinator recommends, a committee approves. */
 export default class CqFieldActionWorkspace extends NavigationMixin(LightningElement) {
     @api recordId;
     v;
+    sc;                  // the lots of the part, CQ.AI's suggested scope, and the scope as last recommended
     photoId;
     error;
     step = 0;
@@ -56,6 +59,9 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     faTitle = '';
     actionType = '';
     recallClass = '';
+    scope = '';          // Full or Partial, for a new field action
+    lots = [];           // lot numbers in scope when Partial
+    moreLots = false;    // also list lot numbers that appear on records but have no CQ lot record
     team = {};           // committee seat (job function id) -> the person chosen for it
     emergency = false;
     emergencyReason = '';
@@ -64,7 +70,9 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
 
     async connectedCallback() {
         try {
-            this.apply(await getView({ recordId: this.recordId }), true);
+            const [v, sc] = await Promise.all([getView({ recordId: this.recordId }), getScope({ recordId: this.recordId })]);
+            this.sc = sc;
+            this.apply(v, true);
             this.loadPhoto();
         } catch (e) {
             this.error = this.msg(e, 'Could not read this review.');
@@ -80,6 +88,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         try { d = v.draft ? JSON.parse(v.draft) : null; } catch (e) { d = null; }
         if (!this.done && d && d.v === 1) {
             KEEP.forEach((k) => { if (d[k] !== undefined) { this[k] = d[k]; } });
+            if (!Array.isArray(d.lots)) { this.lots = v.lot ? [v.lot] : []; }     // a draft from before scope was added
             this.resumed = this.maxStep > 0 && !this.waiting;
             if (this.waiting) { this.step = COMMITTEE; this.maxStep = COMMITTEE; }
             this.fillTeam();
@@ -93,6 +102,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         this.faTitle = (v.title || '').replace(/^Review:\s*/i, '');
         const sug = (v.fieldActions || []).find((f) => f.suggested);
         this.faChoice = sug ? sug.id : (v.fieldActions || []).length ? '' : 'new';
+        this.scope = ''; this.lots = v.lot ? [v.lot] : [];   // the review's own lot is ticked to start
         this.team = {}; this.emergency = false; this.emergencyReason = ''; this.emergencyUser = '';
         this.fillTeam();
     }
@@ -125,7 +135,10 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: this.recordId, objectApiName: 'Field_Action_Review__c', actionName: 'edit' } });
     }
     async handleRefresh() {
-        try { this.apply(await getView({ recordId: this.recordId }), false); this.error = undefined; }
+        try {
+            const [v, sc] = await Promise.all([getView({ recordId: this.recordId }), getScope({ recordId: this.recordId })]);
+            this.sc = sc; this.apply(v, false); this.error = undefined;
+        }
         catch (e) { this.error = this.msg(e, 'Could not refresh this review.'); }
     }
     get open() { return this.ready && !this.done; }                  // not decided yet: being worked on, or with the committee
@@ -261,6 +274,50 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get isNew() { return this.needed && this.faChoice === 'new'; }
     get typeOpts() { return TYPES.map((t) => ({ value: t, selected: this.actionType === t })); }
     get classOpts() { return CLASSES.map((t) => ({ value: t, selected: this.recallClass === t })); }
+    // scope of a new field action: Full is every lot of the part, Partial the lots ticked
+    get scopeData() { return this.sc || {}; }
+    get scopeOpts() {
+        const sug = this.scopeData.suggested;
+        return SCOPES.map((id) => ({ id, cq: id === sug, cls: 'opt' + (this.scope === id ? ' on' : id === sug ? ' sug' : '') }));
+    }
+    get scopeSuggests() { return this.scopeData.suggested ? 'CQ.AI Suggests ' + this.scopeData.suggested + '. ' + (this.scopeData.why || '') : ''; }
+    get isPartial() { return this.scope === 'Partial'; }
+    get isFull() { return this.scope === 'Full'; }
+    /** Full covers the lots on record in CQ, and the review's own lot. */
+    get allLots() { return (this.scopeData.lots || []).filter((l) => l.known || l.thisLot).map((l) => l.name); }
+    get lotOpts() {
+        const day = (d) => { const p = String(d || '').split('-'); return p.length === 3 ? new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])).toLocaleDateString() : ''; };
+        const n = (x, word) => x + ' ' + word + (x === 1 ? '' : 's');
+        return (this.scopeData.lots || []).filter((l) => this.moreLots || l.known || l.thisLot || l.suggested || this.lots.includes(l.name)).map((l) => {
+            const on = this.lots.includes(l.name);
+            return { ...l, cls: 'act' + (on ? ' on' : l.suggested ? ' sug' : ''), tick: on ? '✓' : '', pressed: on ? 'true' : 'false',
+                meta: [l.built !== undefined && l.built !== null ? l.built + ' built' : '', l.made ? 'made ' + day(l.made) : '',
+                    n(l.records, 'record'), n(l.signals, 'signal'), l.why].filter(Boolean).join(' · ') };
+        });
+    }
+    get hiddenLots() { return this.moreLots ? 0 : (this.scopeData.lots || []).length - this.lotOpts.length; }
+    get hasHiddenLots() { return this.hiddenLots > 0; }
+    get moreLotsLabel() { const n = this.hiddenLots; return 'Show ' + n + ' more lot number' + (n === 1 ? '' : 's') + ' found on records'; }
+    handleMoreLots() { this.moreLots = true; }
+    get fullLine() {
+        const all = this.allLots;
+        return 'Every lot of ' + this.partText + ' on record in CQ (' + all.length + ')' + (all.length ? ': ' + all.join(', ') : '') + '.';
+    }
+    /** The scope as one line, for the committee's card and the summary. */
+    get scopeLine() {
+        const sc = this.scopeData;
+        if (this.outcomeNow !== 'Field Action Needed') { return ''; }
+        const scope = this.done ? sc.scope : this.isNew ? this.scope : '';     // a review that joins a field action has no scope of its own
+        const saved = sc.chosen || [];
+        if (!scope) { const lot = saved.length ? saved.join(', ') : this.v.lot; return lot ? 'Adds lot ' + lot + ' to the field action' : ''; }
+        const lots = scope === 'Full' ? (saved.length ? saved : this.allLots) : (this.live || !saved.length ? this.lots : saved);
+        return scope + ' · ' + (scope === 'Full' ? 'all ' + lots.length + ' lot' + (lots.length === 1 ? '' : 's') + ' of the part: ' : 'lot' + (lots.length === 1 ? ' ' : 's ')) + lots.join(', ');
+    }
+    handleScope(event) { this.scope = event.currentTarget.dataset.id; }
+    handleLot(event) {
+        const id = event.currentTarget.dataset.id;
+        this.lots = this.lots.includes(id) ? this.lots.filter((x) => x !== id) : [...this.lots, id];
+    }
     handleOutcome(event) { this.outcome = event.currentTarget.dataset.id; }
     handleFa(event) { this.faChoice = event.currentTarget.dataset.id; }
     handleInput(event) { this[event.target.dataset.f] = event.target.value; }
@@ -306,7 +363,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             ? 'Start a new Field Action: ' + [this.faTitle, this.actionType, this.recallClass].filter(Boolean).join(' \u00b7 ')
             : 'Join ' + (((v.fieldActions || []).find((f) => f.id === this.faChoice) || {}).name || 'an open Field Action');
         return [
-            ['Recommendation', this.outcomeNow], ['Field Action', fa], ['Rationale', this.rationale || v.rationale],
+            ['Outcome', this.outcomeNow], ['Field Action', fa], ['Scope', this.scopeLine], ['Rationale', this.rationale || v.rationale],
             ['Risk', (this.level || v.riskLevel || v.band) + ' \u00b7 score ' + v.score + ' of 100'],
             ['Health Hazard Summary', this.hazard || v.hazard],
             ['Checklist', QUESTIONS.filter((q) => this.checks[q.id]).map((q) => q.text + ' ' + this.checks[q.id]).join('\n')],
@@ -353,6 +410,8 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             if (!this.rationale.trim()) { return 'Rationale needed'; }
             if (this.needed && !this.faChoice) { return 'Join a field action or start a new one'; }
             if (this.isNew && (!this.faTitle.trim() || !this.actionType)) { return 'Title and action type needed'; }
+            if (this.isNew && !this.scope) { return 'Choose Full or Partial'; }
+            if (this.isNew && this.isPartial && !this.lots.length) { return 'Choose at least one lot'; }
         }
         return '';
     }
@@ -396,13 +455,14 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             'Risk score: ' + v.score + ' of 100 (' + v.band + '). ' + (v.factors || []).map((f) => f.name + ' ' + f.pts + '/' + f.max).join('; '),
             'Risk level: ' + this.level + (this.level === v.band ? ' (as CQ.AI suggested)' : ' (CQ.AI suggested ' + v.band + ')'),
             'Checklist: ' + QUESTIONS.map((q) => q.text + ' ' + this.checks[q.id]).join(' | '),
-            'Outcome: ' + this.outcome + (this.outcome === v.suggestedOutcome ? ' (as CQ.AI suggested)' : ' (CQ.AI suggested ' + v.suggestedOutcome + ')')
-        ].join('\n');
+            'Outcome: ' + this.outcome + (this.outcome === v.suggestedOutcome ? ' (as CQ.AI suggested)' : ' (CQ.AI suggested ' + v.suggestedOutcome + ')'),
+            this.isNew ? 'Scope: ' + this.scopeLine + (this.scope === this.scopeData.suggested ? ' (as CQ.AI suggested)' : ' (CQ.AI suggested ' + this.scopeData.suggested + ')') : ''
+        ].filter(Boolean).join('\n');
     }
     get summaryRows() {
         const v = this.v;
         return [
-            ['Outcome', v.outcome], ['Field Action', v.faName || 'None'], ['Risk', (v.riskLevel || '') + ' · score ' + v.score + ' of 100'],
+            ['Outcome', v.outcome], ['Field Action', v.faName || 'None'], ['Scope', this.scopeLine], ['Risk', (v.riskLevel || '') + ' · score ' + v.score + ' of 100'],
             ['Rationale', v.rationale], ['Committee', this.committee.approvalName ? this.committee.approvalName + ' \u00b7 ' + this.approvedCount + ' of ' + this.csteps.length + ' approved' : ''],
             ['Approved by', v.decidedBy]
         ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val }));
@@ -426,9 +486,11 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             const v = await submitToCommittee({
                 recordId: this.recordId, hazard: this.hazard.trim(), summary: this.buildSummary(), score: this.v.score, riskLevel: this.level,
                 outcome: this.outcome, rationale: this.rationale.trim(), draft: JSON.stringify(d), team: JSON.stringify(this.members),
-                emergency: this.emergency, emergencyReason: this.emergencyReason.trim()
+                emergency: this.emergency, emergencyReason: this.emergencyReason.trim(),
+                scope: this.isNew ? this.scope : '', lots: this.isNew && this.isPartial ? this.lots : []
             });
             this.apply(v, false);
+            try { this.sc = await getScope({ recordId: this.recordId }); } catch (e) { /* the scope shown stays as recommended */ }
             this.step = COMMITTEE; this.maxStep = COMMITTEE;
             notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
         } catch (e) {

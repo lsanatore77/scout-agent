@@ -249,6 +249,29 @@
                                             </select>
                                         </label>
                                     </div>
+                                    <div class="lab top14">Scope *</div>
+                                    <div class="opts tight">
+                                        <template for:each={scopeOpts} for:item="o">
+                                            <button key={o.id} class={o.cls} data-id={o.id} onclick={handleScope}><template if:true={o.cq}><span class="star">&#10022;</span>&nbsp;</template>{o.id}</button>
+                                        </template>
+                                    </div>
+                                    <p class="note">Full covers every lot of the part on record in CQ. Partial covers the lots you choose.</p>
+                                    <template if:true={scopeSuggests}><p class="note"><span class="star">&#10022;</span> {scopeSuggests}</p></template>
+                                    <template if:true={isFull}><p class="note">{fullLine}</p></template>
+                                    <template if:true={isPartial}>
+                                        <div class="lab top14">Lots in Scope *</div>
+                                        <div class="list">
+                                            <template for:each={lotOpts} for:item="l">
+                                                <button key={l.name} class={l.cls} data-id={l.name} onclick={handleLot} aria-pressed={l.pressed}>
+                                                    <span class="tick">{l.tick}</span>
+                                                    <span class="rt"><span class="rv">{l.name}</span><span class="rk">{l.meta}</span></span>
+                                                    <template if:true={l.thisLot}><span class="lot">This Lot</span></template>
+                                                    <template if:true={l.suggested}><span class="pill">&#10022; CQ.AI Suggests</span></template>
+                                                </button>
+                                            </template>
+                                        </div>
+                                        <template if:true={hasHiddenLots}><p class="note"><button class="link" onclick={handleMoreLots}>{moreLotsLabel}</button></p></template>
+                                    </template>
                                 </div>
                             </template>
                         </template>

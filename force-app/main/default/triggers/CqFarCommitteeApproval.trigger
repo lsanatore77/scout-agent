@@ -11,5 +11,8 @@ trigger CqFarCommitteeApproval on cqext__CQAPR_Approval__c (after update) {
             closed.put(a.Id, a.cqext__Approval_Status__c);
         }
     }
-    if (!closed.isEmpty()) { CqFarCommittee.onClosed(closed); }
+    if (!closed.isEmpty()) {
+        CqFarCommittee.onClosed(closed);        // decides the review
+        CqFieldActionLots.onClosed(closed);     // then moves its lots in scope onto the Field Action
+    }
 }

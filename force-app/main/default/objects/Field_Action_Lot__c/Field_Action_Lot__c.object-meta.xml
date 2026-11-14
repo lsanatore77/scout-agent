@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Field Action Lot object records one lot in the scope of a field action. It holds the Lot, Lot Number and Units Built. A row is created when a Field Action Review is sent to the committee and is linked to the Field Action once the committee approves.</description>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Field Action Lot</label>
+    <nameField>
+        <displayFormat>FAL-{0000}</displayFormat>
+        <label>Field Action Lot Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Field Action Lots</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>
