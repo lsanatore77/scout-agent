@@ -56,7 +56,8 @@
 .decided { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 12px; border-radius: 8px; background: #e6f4ec; color: #12784a; font-weight: 600; }
 .decided .link { margin-left: auto; }
 .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-.cols.wide { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.cols.wide { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.col.lead { gap: 14px; }
 .col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .ktable { margin-top: 6px; }
 .krow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eceff2; }
