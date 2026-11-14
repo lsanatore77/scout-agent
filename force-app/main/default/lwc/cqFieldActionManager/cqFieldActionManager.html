@@ -158,7 +158,7 @@
                                                     <template if:false={r.editable}><td></td><td></td><td></td></template>
                                                 </template>
                                                 <template if:true={r.isNode}>
-                                                    <td class="cscope"><template if:true={r.covered}><span class="spill covered" title={r.coveredTitle}>Covered</span></template></td>
+                                                    <td class="cscope"></td>
                                                     <td class="nw">
                                                         <span class="ind" style={r.indentStyle}></span>
                                                         <template if:true={r.hasKids}><button class="chev" data-key={r.key} onclick={handleToggle} aria-label={r.toggleLabel} aria-expanded={r.openText}>{r.chev}</button></template>

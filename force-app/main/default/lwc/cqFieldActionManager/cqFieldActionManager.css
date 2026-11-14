@@ -115,16 +115,10 @@
 .it.lot { font-weight: 700; }
 .it.sub { font-weight: 600; }
 .it.wu { font-style: italic; }
-.r0.in td { background: #f7fbf5; }
-.r0.sug td { background: #f8f6ff; }
-.r0.wu td { background: #fff8e1; }
-.r1 td { background: #fafbfa; }
-.rnote td { background: #fff; }
 .pill.ai { margin-left: 8px; }
 .spill.added { background: #ebf7e6; color: #2e844a; }
 .spill.notconf { margin-left: 8px; background: #fff6cc; color: #6b5300; }
 .spill.removing { background: #fdecea; color: #b42318; }
-.spill.covered { background: #f3f3f3; color: #5b6470; }
 .tr { font-size: 12px; }
 .tr.ok { color: #2e844a; }
 .tr.warn { color: #8a5a00; }
