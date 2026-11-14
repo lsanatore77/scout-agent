@@ -152,6 +152,9 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             ['Affected', n(v.qtyAffected)], ['Shipped', n(v.qtyShipped)], ['Requested by', n(v.requestedBy)]
         ].map(([label, value]) => ({ key: label, label, value }));
     }
+    /** When CQ.AI suggests no field action, show why a person still sent it for review. */
+    get showReason() { return this.v.suggestedOutcome === 'No Field Action' && !!this.v.reason; }
+    get reasonLabel() { return 'Sent for Review' + (this.v.requestedBy ? ' by ' + this.v.requestedBy : ''); }
     get decidedLine() {
         const v = this.v;
         return 'Decided' + (v.decidedBy ? ' by ' + v.decidedBy : '') + ' · ' + v.outcome + (v.faName ? ' · ' + v.faName : '');

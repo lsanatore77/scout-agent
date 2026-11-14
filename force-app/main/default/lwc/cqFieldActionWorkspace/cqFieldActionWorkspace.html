@@ -80,6 +80,12 @@
                                     <div class="rec">&#10022; CQ.AI Suggests:</div>
                                     <div class="sughead"><span class="big">{v.suggestedOutcome}</span></div>
                                     <div class="para">{v.suggestedWhy}</div>
+                                    <template if:true={showReason}>
+                                        <div class="ftable">
+                                            <div class="lab top14">{reasonLabel}</div>
+                                            <div class="para">{v.reason}</div>
+                                        </div>
+                                    </template>
                                 </div>
                             </div>
                             <div class="card">
