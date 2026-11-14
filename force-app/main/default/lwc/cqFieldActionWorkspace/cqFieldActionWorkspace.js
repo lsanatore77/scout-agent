@@ -175,7 +175,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const rest = this.showAll[s.id] ? 0 : Math.max(0, n - PAGE);
         return { ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(),
             meta: [s.name, s.trend, seen ? 'first seen ' + seen : '', !s.lot ? 'whole part' : s.lot === this.v.lot ? 'this lot' : 'lot ' + s.lot,
-                s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' \u00b7 '),
+                s.raisedBy ? 'raised by ' + s.raisedBy : '', s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' \u00b7 '),
             count: n + ' record' + (n === 1 ? '' : 's'),
             records: rest ? all.slice(0, PAGE) : all, hasRest: rest > 0, restLabel: 'Show ' + rest + ' more' };
     }

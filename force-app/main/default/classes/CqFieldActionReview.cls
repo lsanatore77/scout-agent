@@ -26,6 +26,7 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public String label; @AuraEnabled public String strength; @AuraEnabled public Decimal score; @AuraEnabled public String trend;
         @AuraEnabled public String status; @AuraEnabled public String lot; @AuraEnabled public Datetime firstSeen;
         @AuraEnabled public Boolean thisLot = false; @AuraEnabled public Boolean counts = false;
+        @AuraEnabled public String raisedBy;   // set on a signal a person raised by hand
         @AuraEnabled public List<Rec> records = new List<Rec>();
     }
     /** One line of "What We Know": a question, its answer, and where the answer came from. */
@@ -226,7 +227,7 @@ public with sharing class CqFieldActionReview {
         List<Sig> here = new List<Sig>(); List<Sig> elsewhere = new List<Sig>();
         for (Signal__c s : [
                 SELECT Id, Name, Rule__r.Name, Rule__r.Code__c, Summary__c, Value_Label__c, Strength__c, Score__c, Trend__c, Status__c,
-                       Lot_Number__c, First_Seen__c,
+                       Lot_Number__c, First_Seen__c, Rule__c, CreatedBy.Name, CreatedDate,
                        (SELECT Complaint__c, Complaint__r.Name, Complaint__r.compliancequest__Complaint_Title__c,
                                Complaint__r.compliancequest__Status__c, Complaint__r.compliancequest__Lot_Number__c,
                                Nonconformance__c, Nonconformance__r.Name, Nonconformance__r.compliancequest__NC_Title__c,
@@ -237,9 +238,13 @@ public with sharing class CqFieldActionReview {
                 FROM Signal__c WHERE Part__c = :partId AND Status__c != 'Closed'
                 ORDER BY Score__c DESC NULLS LAST, First_Seen__c LIMIT 50]) {
             Sig g = new Sig();
-            g.id = s.Id; g.name = s.Name; g.rule = s.Rule__r?.Name; g.summary = s.Summary__c; g.label = s.Value_Label__c;
-            g.strength = s.Strength__c; g.score = s.Score__c; g.trend = s.Trend__c; g.status = s.Status__c; g.lot = s.Lot_Number__c;
-            g.firstSeen = s.First_Seen__c;
+            Boolean manual = s.Rule__c == null;
+            g.id = s.Id; g.name = s.Name; g.rule = manual ? 'Manual' : s.Rule__r.Name; g.summary = s.Summary__c;
+            g.label = s.Value_Label__c != null ? s.Value_Label__c : s.Summary__c;
+            g.strength = s.Strength__c == null ? 'Watch' : s.Strength__c; g.trend = s.Trend__c; g.status = s.Status__c; g.lot = s.Lot_Number__c;
+            g.score = s.Score__c != null ? s.Score__c : g.strength == 'Escalate' ? 1 : g.strength == 'Assess' ? 0.60 : 0.20;
+            g.firstSeen = s.First_Seen__c != null ? s.First_Seen__c : s.CreatedDate;
+            if (manual) { g.raisedBy = s.CreatedBy.Name; }
             List<Rec> same = new List<Rec>(); List<Rec> rest = new List<Rec>();
             for (Signal_Event__c e : s.Signal_Events__r) {
                 Rec x = new Rec();
@@ -260,7 +265,7 @@ public with sharing class CqFieldActionReview {
             if (lot != null && g.lot == lot) { g.thisLot = true; }
             // counts toward the score when it is about the part as a whole, or touches this review's lot
             Boolean dismissed = g.status == 'Dismissed';
-            g.counts = !dismissed && (g.thisLot || s.Rule__r?.Code__c == 'CLUSTER' || s.Rule__r?.Code__c == 'SPREAD' || s.Rule__r?.Code__c == 'REPEAT_REVIEWS');
+            g.counts = !dismissed && (g.thisLot || g.lot == null);
             if (g.counts && (top == null || (g.score != null && (top.score == null || g.score > top.score)))) { top = g; }
             if (dismissed || g.strength == 'Watch') { v.moreSignals.add(g); }
             else if (g.thisLot) { here.add(g); } else { elsewhere.add(g); }

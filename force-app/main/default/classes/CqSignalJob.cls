@@ -8,6 +8,8 @@
  * Escalate thresholds. A rule in Baseline mode uses the average and standard deviation of monthly counts
  * over its lookback, with limits at 1, 2 and 3 standard deviations.
  *
+ * A signal a person raises by hand has no Rule and no Group Key. The job never changes or closes those.
+ *
  * Runs on a schedule, or on demand through run() or POST /services/apexrest/cqsignals/run.
  */
 @RestResource(urlMapping='/cqsignals/run')
@@ -39,6 +41,10 @@ global with sharing class CqSignalJob implements Schedulable {
         if (rules.containsKey('CROSS_SOURCE')) { found.addAll(crossSource()); }
         if (rules.containsKey('CLUSTER')) { found.addAll(cluster(rules.get('CLUSTER'))); }
         if (rules.containsKey('SHARED_COMPONENT_LOT')) { found.addAll(sharedComponentLot(rules.get('SHARED_COMPONENT_LOT'))); }
+        if (rules.containsKey('SPREAD')) { found.addAll(spread(rules.get('SPREAD'))); }
+        if (rules.containsKey('REPEAT_REVIEWS')) { found.addAll(repeatReviews(rules.get('REPEAT_REVIEWS'))); }
+        if (rules.containsKey('RECURRENCE')) { found.addAll(recurrence()); }
+        if (rules.containsKey('RATE_PER_UNITS_BUILT')) { found.addAll(ratePerUnitsBuilt()); }
         return save(found, rules);
     }
 
@@ -196,6 +202,168 @@ global with sharing class CqSignalJob implements Schedulable {
         return out;
     }
 
+    // ---- Spread: the same failure code on more than one lot of a part within the window
+    private static List<Finding> spread(Signal_Rule__c rule) {
+        Integer window = days(rule, 90);
+        Datetime since = Datetime.now().addDays(-window);
+        Map<String, Finding> byCode = new Map<String, Finding>();       // part and failure code -> the records
+        Map<String, Set<String>> lots = new Map<String, Set<String>>();
+        Map<String, String> codeName = new Map<String, String>();
+        for (compliancequest__SQX_Nonconformance__c n : [
+                SELECT Id, Name, compliancequest__Lot_Number__c, compliancequest__SQX_Part__c, compliancequest__Status__c,
+                       compliancequest__SQX_Defect_Code__c, compliancequest__SQX_Defect_Code__r.Name
+                FROM compliancequest__SQX_Nonconformance__c
+                WHERE compliancequest__SQX_Part__c != null AND compliancequest__SQX_Defect_Code__c != null
+                  AND compliancequest__Lot_Number__c != null AND CreatedDate >= :since LIMIT 5000]) {
+            if (!alive(n.compliancequest__Status__c)) { continue; }
+            String k = n.compliancequest__SQX_Part__c + '|' + n.compliancequest__SQX_Defect_Code__c;
+            Finding f = forCode(byCode, lots, k, n.compliancequest__SQX_Part__c, n.compliancequest__Lot_Number__c);
+            codeName.put(k, n.compliancequest__SQX_Defect_Code__r.Name);
+            f.ncs.add(n.Id); f.numbers.put(n.Id, n.Name);
+        }
+        for (compliancequest__SQX_Complaint__c c : [
+                SELECT Id, Name, compliancequest__Lot_Number__c, compliancequest__SQX_Part__c, compliancequest__Status__c,
+                       compliancequest__SQX_Complaint_Code__c, compliancequest__SQX_Complaint_Code__r.Name
+                FROM compliancequest__SQX_Complaint__c
+                WHERE compliancequest__SQX_Part__c != null AND compliancequest__SQX_Complaint_Code__c != null
+                  AND compliancequest__Lot_Number__c != null AND CreatedDate >= :since LIMIT 5000]) {
+            if (!alive(c.compliancequest__Status__c)) { continue; }
+            String k = c.compliancequest__SQX_Part__c + '|' + c.compliancequest__SQX_Complaint_Code__c;
+            Finding f = forCode(byCode, lots, k, c.compliancequest__SQX_Part__c, c.compliancequest__Lot_Number__c);
+            codeName.put(k, c.compliancequest__SQX_Complaint_Code__r.Name);
+            f.complaints.add(c.Id); f.numbers.put(c.Id, c.Name);
+        }
+        List<Finding> out = new List<Finding>();
+        for (String k : byCode.keySet()) {
+            List<String> hit = new List<String>(lots.get(k));
+            if (hit.size() < 2) { continue; }     // one lot is not a spread
+            hit.sort();
+            Finding f = byCode.get(k);
+            f.code = 'SPREAD'; f.key = 'SPREAD|' + k; f.value = hit.size();
+            f.summary = 'The same failure is appearing on more than one lot of this part';
+            f.label = codeName.get(k) + ' on ' + hit.size() + ' lots in ' + window + ' days: ' + String.join(hit, ', ');
+            out.add(f);
+        }
+        return out;
+    }
+    private static Finding forCode(Map<String, Finding> byCode, Map<String, Set<String>> lots, String k, Id partId, String lot) {
+        Finding f = byCode.get(k);
+        if (f == null) { f = new Finding(); f.partId = partId; byCode.put(k, f); lots.put(k, new Set<String>()); }
+        lots.get(k).add(lot);
+        return f;
+    }
+
+    // ---- Repeat Reviews: a part keeps being sent for Field Action Review within the window
+    private static List<Finding> repeatReviews(Signal_Rule__c rule) {
+        Integer window = days(rule, 180);
+        Datetime since = Datetime.now().addDays(-window);
+        Map<Id, Finding> byPart = new Map<Id, Finding>();
+        for (Field_Action_Review__c r : [
+                SELECT Id, Name, Status__c, Part__c, Nonconformance__r.compliancequest__SQX_Part__c, Complaint__r.compliancequest__SQX_Part__c
+                FROM Field_Action_Review__c WHERE CreatedDate >= :since LIMIT 5000]) {
+            if (!alive(r.Status__c)) { continue; }
+            Id partId = r.Part__c != null ? r.Part__c
+                : r.Nonconformance__r != null ? r.Nonconformance__r.compliancequest__SQX_Part__c
+                : r.Complaint__r != null ? r.Complaint__r.compliancequest__SQX_Part__c : null;
+            if (partId == null) { continue; }
+            Finding f = byPart.get(partId);
+            if (f == null) {
+                f = new Finding(); f.code = 'REPEAT_REVIEWS'; f.partId = partId; f.key = 'REPEAT_REVIEWS|' + partId;
+                byPart.put(partId, f);
+            }
+            f.reviews.add(r.Id); f.numbers.put(r.Id, r.Name);
+        }
+        List<Finding> out = new List<Finding>();
+        for (Finding f : byPart.values()) {
+            if (f.reviews.size() < 2) { continue; }     // one review is not a repeat
+            f.value = f.reviews.size();
+            f.summary = 'This part keeps being sent for Field Action Review';
+            f.label = plural(f.reviews.size(), 'review') + ' on this part in ' + window + ' days';
+            out.add(f);
+        }
+        return out;
+    }
+
+    // ---- Recurrence: new complaints or nonconformances on a lot after a review ended in No Field Action
+    private static List<Finding> recurrence() {
+        Map<String, Field_Action_Review__c> lastByLot = new Map<String, Field_Action_Review__c>();
+        Map<String, Id> partByLot = new Map<String, Id>();
+        for (Field_Action_Review__c r : [
+                SELECT Id, Name, Decided_On__c, Part__c, Lot_Number__c,
+                       Nonconformance__r.compliancequest__Lot_Number__c, Nonconformance__r.compliancequest__SQX_Part__c,
+                       Complaint__r.compliancequest__Lot_Number__c, Complaint__r.compliancequest__SQX_Part__c
+                FROM Field_Action_Review__c
+                WHERE Outcome__c = 'No Field Action' AND Status__c IN ('Decided', 'Closed') AND Decided_On__c != null
+                ORDER BY Decided_On__c LIMIT 5000]) {
+            String lot = r.Lot_Number__c != null ? r.Lot_Number__c
+                : r.Nonconformance__r != null ? r.Nonconformance__r.compliancequest__Lot_Number__c
+                : r.Complaint__r != null ? r.Complaint__r.compliancequest__Lot_Number__c : null;
+            if (lot == null) { continue; }
+            lastByLot.put(lot, r);      // ordered by decision date, so the latest decision wins
+            partByLot.put(lot, r.Part__c != null ? r.Part__c
+                : r.Nonconformance__r != null ? r.Nonconformance__r.compliancequest__SQX_Part__c
+                : r.Complaint__r != null ? r.Complaint__r.compliancequest__SQX_Part__c : null);
+        }
+        List<Finding> out = new List<Finding>();
+        if (lastByLot.isEmpty()) { return out; }
+        Map<String, Finding> byLot = new Map<String, Finding>();
+        for (compliancequest__SQX_Complaint__c c : [
+                SELECT Id, Name, compliancequest__Lot_Number__c, compliancequest__Status__c, CreatedDate
+                FROM compliancequest__SQX_Complaint__c WHERE compliancequest__Lot_Number__c IN :lastByLot.keySet() LIMIT 5000]) {
+            if (!alive(c.compliancequest__Status__c) || c.CreatedDate <= lastByLot.get(c.compliancequest__Lot_Number__c).Decided_On__c) { continue; }
+            Finding f = forLot(byLot, c.compliancequest__Lot_Number__c, null);
+            f.complaints.add(c.Id); f.numbers.put(c.Id, c.Name);
+        }
+        for (compliancequest__SQX_Nonconformance__c n : [
+                SELECT Id, Name, compliancequest__Lot_Number__c, compliancequest__Status__c, CreatedDate
+                FROM compliancequest__SQX_Nonconformance__c WHERE compliancequest__Lot_Number__c IN :lastByLot.keySet() LIMIT 5000]) {
+            if (!alive(n.compliancequest__Status__c) || n.CreatedDate <= lastByLot.get(n.compliancequest__Lot_Number__c).Decided_On__c) { continue; }
+            Finding f = forLot(byLot, n.compliancequest__Lot_Number__c, null);
+            f.ncs.add(n.Id); f.numbers.put(n.Id, n.Name);
+        }
+        for (Finding f : byLot.values()) {
+            Field_Action_Review__c r = lastByLot.get(f.lot);
+            Integer n = f.complaints.size() + f.ncs.size();
+            f.code = 'RECURRENCE'; f.key = 'RECURRENCE|' + f.lot; f.partId = partByLot.get(f.lot); f.value = n;
+            f.reviews.add(r.Id); f.numbers.put(r.Id, r.Name);
+            f.summary = 'The problem has come back on lot ' + f.lot + ' after a review ended in No Field Action';
+            f.label = plural(n, 'new record') + ' on lot ' + f.lot + ' since ' + r.Name + ' ended in No Field Action';
+            out.add(f);
+        }
+        return out;
+    }
+
+    // ---- Rate per Units Built: complaints on a lot as a percentage of the units its batch built
+    private static List<Finding> ratePerUnitsBuilt() {
+        Map<String, Decimal> built = new Map<String, Decimal>();
+        for (compliancequest__SQX_Lot_Info__c l : [
+                SELECT Name, Batch__r.cqext__Quantity__c, Batch__r.cqext__Actual_Yield__c
+                FROM compliancequest__SQX_Lot_Info__c WHERE Batch__c != null LIMIT 5000]) {
+            Decimal units = l.Batch__r.cqext__Actual_Yield__c != null && l.Batch__r.cqext__Actual_Yield__c > 0
+                ? l.Batch__r.cqext__Actual_Yield__c : l.Batch__r.cqext__Quantity__c;
+            if (units != null && units > 0) { built.put(l.Name, units); }
+        }
+        List<Finding> out = new List<Finding>();
+        if (built.isEmpty()) { return out; }
+        Map<String, Finding> byLot = new Map<String, Finding>();
+        for (compliancequest__SQX_Complaint__c c : [
+                SELECT Id, Name, compliancequest__Lot_Number__c, compliancequest__SQX_Part__c, compliancequest__Status__c
+                FROM compliancequest__SQX_Complaint__c WHERE compliancequest__Lot_Number__c IN :built.keySet() LIMIT 5000]) {
+            if (!alive(c.compliancequest__Status__c)) { continue; }
+            Finding f = forLot(byLot, c.compliancequest__Lot_Number__c, c.compliancequest__SQX_Part__c);
+            f.complaints.add(c.Id); f.numbers.put(c.Id, c.Name);
+        }
+        for (Finding f : byLot.values()) {
+            Decimal units = built.get(f.lot);
+            f.code = 'RATE_PER_UNITS_BUILT'; f.key = 'RATE_PER_UNITS_BUILT|' + f.lot;
+            f.value = (f.complaints.size() * 100 / units).setScale(1);
+            f.summary = 'Complaints on lot ' + f.lot + ' are high for the number of units built';
+            f.label = plural(f.complaints.size(), 'complaint') + ' against ' + units.setScale(0).format() + ' units built on lot ' + f.lot + ' (' + f.value + '%)';
+            out.add(f);
+        }
+        return out;
+    }
+
     // ---- strength and score
     private static void grade(Finding f, Signal_Rule__c r) {
         if (r.Threshold_Mode__c == 'Baseline' && f.sd != null && f.sd > 0) {
@@ -220,7 +388,7 @@ global with sharing class CqSignalJob implements Schedulable {
     // ---- create or update the signals, let old ones fade, link the records behind each
     private static String save(List<Finding> found, Map<String, Signal_Rule__c> rules) {
         Map<String, Signal__c> existing = new Map<String, Signal__c>();
-        for (Signal__c s : [SELECT Id, Group_Key__c, Value__c, Strength__c, Status__c, Trend__c FROM Signal__c WHERE Status__c != 'Closed' LIMIT 5000]) {
+        for (Signal__c s : [SELECT Id, Group_Key__c, Value__c, Strength__c, Status__c, Trend__c FROM Signal__c WHERE Status__c != 'Closed' AND Group_Key__c != null LIMIT 5000]) {   // manual signals have no key: the job leaves them alone
             existing.put(s.Group_Key__c, s);
         }
         List<Finding> graded = new List<Finding>();
