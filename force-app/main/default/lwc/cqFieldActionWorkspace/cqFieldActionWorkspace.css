@@ -70,7 +70,7 @@
 .rec { color: #4a2fc0; font-weight: 600; }
 .sughead { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
 .big { font-size: 20px; font-weight: 700; }
-.score { font-size: 34px; font-weight: 700; line-height: 1.1; }
+.score { font-size: 68px; font-weight: 700; line-height: 1; }
 .rk { font-size: 12px; font-weight: 400; color: #5b6470; }
 .lvl { font-weight: 700; font-size: 16px; }
 .lvl.low { color: #12784a; }
