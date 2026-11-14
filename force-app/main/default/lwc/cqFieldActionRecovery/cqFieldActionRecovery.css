@@ -18,6 +18,7 @@
 @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
 .card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: 10px; border: 1px solid #dde1e6; background: #fff; }
 .grid + .card, .card + .card { margin-top: 16px; }
+.grid > .card + .card { margin-top: 0; }
 .ch { display: flex; align-items: baseline; gap: 8px; }
 .cn { font-size: 12px; font-weight: 700; color: #5b6470; }
 .ct { font-size: 15px; font-weight: 700; }
