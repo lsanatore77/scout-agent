@@ -182,13 +182,6 @@ public with sharing class CqFieldActionReview {
             if (!evs.isEmpty()) { ev = evs[0]; }
         }
         String evSrc = ev == null ? 'No event recorded' : 'Reported at intake, ' + ev.Name;
-        v.know.add(new Know('Was anyone injured?', ev?.Injury__c, evSrc));
-        v.know.add(new Know('Is there a safety risk?', ev?.Safety_Risk__c, evSrc));
-        v.know.add(new Know('Where was it found?', ev?.Where_Found__c, evSrc));
-        v.know.add(new Know('When did we become aware?', ev?.Aware_Date__c == null ? null : ev.Aware_Date__c.format('MMM d, yyyy h:mm a'), evSrc));
-        v.know.add(new Know('Has product shipped?',
-            v.qtyShipped == null ? null : shipped ? 'Yes, ' + v.qtyShipped.format() + ' units' : 'No, none recorded',
-            v.qtyShipped == null ? 'No shipment data connected' : 'Quantity Shipped on this review'));
         String contained; String containedSrc = 'Not tracked for complaints';
         if (r.Nonconformance__c != null) {
             Integer total = 0; Integer stillOpen = 0;
@@ -197,14 +190,22 @@ public with sharing class CqFieldActionReview {
                     WHERE compliancequest__SQX_Nonconformance__c = :r.Nonconformance__c AND compliancequest__Status__c != 'Void' LIMIT 50]) {
                 total++; if (c.compliancequest__Is_Complete__c != true) { stillOpen++; }
             }
-            contained = total == 0 ? 'No, none recorded'  : stillOpen == 0 ? 'Yes, containment complete' : 'In progress, ' + stillOpen + ' not yet complete';
+            contained = total == 0 ? 'No, none recorded' : stillOpen == 0 ? 'Yes, containment complete' : 'In progress, ' + stillOpen + ' not yet complete';
             containedSrc = 'Containment records on ' + v.sourceName;
         }
-        v.know.add(new Know('Is the lot contained?', contained, containedSrc));
+        // Order: the three that carry most weight in a field action decision first, then the rest.
+        v.know.add(new Know('Was anyone injured?', ev?.Injury__c, evSrc));
+        v.know.add(new Know('Is there a safety risk?', ev?.Safety_Risk__c, evSrc));
+        v.know.add(new Know('Has product shipped?',
+            v.qtyShipped == null ? null : shipped ? 'Yes, ' + v.qtyShipped.format() + ' units' : 'No, none recorded',
+            v.qtyShipped == null ? 'No shipment data connected' : 'Quantity Shipped on this review'));
         v.know.add(new Know('Are there complaints on this lot?', lot == null ? null : lotComplaints == 0 ? 'None' : String.valueOf(lotComplaints),
             lot == null ? 'No lot recorded' : 'Complaints in CQ on lot ' + lot));
+        v.know.add(new Know('Is the lot contained?', contained, containedSrc));
+        v.know.add(new Know('Where was it found?', ev?.Where_Found__c, evSrc));
         v.know.add(new Know('What did triage set the risk at?', sourceRisk,
             sourceRisk != null ? 'NC triage of ' + v.sourceName : isComplaint ? 'Complaints are not triaged here' : 'Not triaged yet'));
+        v.know.add(new Know('When did we become aware?', ev?.Aware_Date__c == null ? null : ev.Aware_Date__c.format('MMM d, yyyy h:mm a'), evSrc));
         return v;
     }
 
