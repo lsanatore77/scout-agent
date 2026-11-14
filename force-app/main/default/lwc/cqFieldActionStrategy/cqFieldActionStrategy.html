@@ -1,0 +1,143 @@
+<template>
+    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:true={ready}>
+        <div class="sechead">
+            <h3 class="q">Strategy</h3>
+            <span class={statePill}>{stateText}</span>
+            <template if:true={confirmedLine}><span class="rk">{confirmedLine}</span></template>
+        </div>
+
+        <template if:true={needsScope}>
+            <p class="note">Confirm the scope first: the strategy works from the confirmed lot list.</p>
+        </template>
+
+        <template if:true={showStep}>
+            <p class="p">{intro}</p>
+            <div class="grid">
+
+                <section class="card">
+                    <div class="ch"><span class="cn">1</span><span class="ct">Action and Depth</span></div>
+                    <div class="fld">
+                        <span class="fl">Action *</span>
+                        <div class="segs" role="group" aria-label="Action">
+                            <template for:each={actions} for:item="o">
+                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>{o.label}</button>
+                            </template>
+                        </div>
+                        <span class="hint">{actionHint}</span>
+                    </div>
+                    <div class="fld">
+                        <span class="fl">How far it goes *</span>
+                        <div class="segs" role="group" aria-label="How far it goes">
+                            <template for:each={depths} for:item="o">
+                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>{o.label}</button>
+                            </template>
+                        </div>
+                        <span class="hint">{depthHint}</span>
+                    </div>
+                    <template if:true={v.whyAction}>
+                        <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyAction}</div>
+                    </template>
+                </section>
+
+                <section class="card">
+                    <div class="ch"><span class="cn">2</span><span class="ct">What We Tell Customers</span></div>
+                    <div class="fld">
+                        <span class="fl">Instruction *</span>
+                        <div class="opts" role="group" aria-label="Instruction">
+                            <template for:each={instructions} for:item="o">
+                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
+                                    <span class={o.dot}></span><span class="ol">{o.label}</span>
+                                    <template if:true={o.ai}><span class="aitag">&#10022; CQ.AI Suggests</span></template>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                    <label class="fld">
+                        <span class="fl">Key message *</span>
+                        <textarea class="ta" rows="4" data-field="message" value={message} disabled={locked} onchange={handleText}></textarea>
+                        <span class="hint">The Notifications step builds the customer letter from this.</span>
+                    </label>
+                </section>
+
+                <section class="card">
+                    <div class="ch"><span class="cn">3</span><span class="ct">Holds on Our Stock and Components</span></div>
+                    <div class="tblwrap">
+                        <table class="ht">
+                            <thead><tr><th class="hc">Hold</th><th>Lot</th><th>What</th><th class="num">On Hand</th><th></th></tr></thead>
+                            <tbody>
+                                <template for:each={holdRows} for:item="h">
+                                    <tr key={h.key} class={h.rowCls}>
+                                        <template if:true={h.isGroup}><td colspan="5">{h.title}</td></template>
+                                        <template if:false={h.isGroup}>
+                                            <td class="hc"><input class="tick" type="checkbox" data-id={h.id} checked={h.hold} disabled={locked} onchange={handleHold} aria-label={h.label} /></td>
+                                            <td class="nw b">{h.lot}</td>
+                                            <td><span class="what">{h.item} <template if:true={h.ai}><span class="aitag">&#10022; Suggested</span></template></span><span class="rk">{h.why}</span></td>
+                                            <td class="num">{h.onHand}</td>
+                                            <td class="nw"><template if:true={h.hasState}><span class={h.stateCls}>{h.stateText}</span></template></td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <template if:true={hasComps}>
+                        <div class="addrow">
+                            <select class="sel" aria-label="Add a component lot" disabled={locked} onchange={handleAddPick}>
+                                <template for:each={compOptions} for:item="o">
+                                    <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                </template>
+                            </select>
+                            <button class="btn sm" onclick={handleAdd} disabled={cantAdd}>Add Hold</button>
+                        </div>
+                    </template>
+                    <span class="hint">{holdLine}</span>
+                </section>
+
+                <section class="card">
+                    <div class="ch"><span class="cn">4</span><span class="ct">Effectiveness Check</span></div>
+                    <div class="fld">
+                        <span class="fl">Check level *</span>
+                        <div class="segs" role="group" aria-label="Check level">
+                            <template for:each={levels} for:item="o">
+                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>{o.label}</button>
+                            </template>
+                        </div>
+                        <span class="hint">{levelHint}</span>
+                    </div>
+                    <template if:true={isLevelB}>
+                        <label class="fld short">
+                            <span class="fl">Share of customers checked (%) *</span>
+                            <input class="ta in" type="number" min="11" max="99" data-field="percent" value={percent} disabled={locked} onchange={handleText} />
+                        </label>
+                    </template>
+                    <template if:true={needsCheck}>
+                        <div class="two">
+                            <label class="fld">
+                                <span class="fl">How we check *</span>
+                                <select class="sel" data-field="method" disabled={locked} onchange={handleText}>
+                                    <template for:each={methods} for:item="m">
+                                        <option key={m.value} value={m.value} selected={m.selected}>{m.label}</option>
+                                    </template>
+                                </select>
+                            </label>
+                            <label class="fld">
+                                <span class="fl">Check by *</span>
+                                <input class="ta in" type="date" data-field="checkBy" value={checkBy} disabled={locked} onchange={handleText} />
+                            </label>
+                        </div>
+                    </template>
+                    <template if:true={v.whyLevel}>
+                        <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyLevel}</div>
+                    </template>
+                </section>
+            </div>
+
+            <template if:true={error}><div class="errbox">{error}</div></template>
+            <div class="cfoot">
+                <span class="block">{blocker}</span>
+                <button class="btn primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
+            </div>
+        </template>
+    </template>
+</template>

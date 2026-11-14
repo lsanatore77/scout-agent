@@ -8,17 +8,18 @@ import confirmScope from '@salesforce/apex/CqFieldActionScope.confirmScope';
 import discardChanges from '@salesforce/apex/CqFieldActionScope.discardChanges';
 import saveLot from '@salesforce/apex/CqFieldActionScope.saveLot';
 
-// The seven steps of a field action. This batch builds the first two; the rest open in later batches.
+// The seven steps of a field action. The first three are built; the rest open in later batches.
 const STEPS = [
     { label: 'Field Action at a Glance', ready: true },
     { label: 'Scope', ready: true },
-    { label: 'Strategy', ready: false },
+    { label: 'Strategy', ready: true, needsScope: true },
     { label: 'Notifications', ready: false, needsScope: true },
     { label: 'Regulatory Report', ready: false, needsScope: true },
     { label: 'Recovery and Effectiveness', ready: false },
     { label: 'Closure', ready: false }
 ];
 const SCOPE = 1;
+const STRATEGY = 2;
 const TRACE = {
     Verified: { mark: '✔ ', cls: 'tr ok' },
     NC: { mark: '✖ ', cls: 'tr bad' },
@@ -101,21 +102,32 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             this.v.actionType ? this.v.actionType + (this.v.recallClass ? ' · ' + this.v.recallClass : '') : 'Decided',
             this.v.scope ? this.stateText + ' · ' + lotsText : 'Scope not set'
         ];
+        const strategyDone = this.scopeConfirmed && this.v.strategyStatus === 'Confirmed';
         return STEPS.map((s, i) => {
-            const done = i === 0 || (i === SCOPE && this.scopeConfirmed);
-            const sub = i < 2 ? subs[i] : s.needsScope && !this.scopeConfirmed ? 'Needs confirmed scope' : 'Next batch';
-            return { i, n: i + 1, label: s.label, sub, done, notDone: !done, locked: !s.ready,
+            const done = i === 0 || (i === SCOPE && this.scopeConfirmed) || (i === STRATEGY && strategyDone);
+            const sub = i < 2 ? subs[i]
+                : s.needsScope && !this.scopeConfirmed ? 'Needs confirmed scope'
+                : i === STRATEGY ? this.v.strategyStatus || 'Not started' : 'Next batch';
+            return { i, n: i + 1, label: s.label, sub, done, notDone: !done, locked: !s.ready || (i === STRATEGY && !this.scopeConfirmed),
                 cls: 'step' + (i === this.step ? ' active' : '') + (done ? ' done' : '') };
         });
     }
     get progress() { return this.steps.filter((s) => s.done).length + ' of ' + STEPS.length + ' steps complete'; }
-    handleStep(event) { const i = Number(event.currentTarget.dataset.i); if (STEPS[i].ready) { this.step = i; this.error = undefined; } }
+    handleStep(event) { const i = Number(event.currentTarget.dataset.i); if (STEPS[i].ready && !(i === STRATEGY && !this.scopeConfirmed)) { this.step = i; this.error = undefined; } }
     get is0() { return this.ready && this.step === 0; }
     get is1() { return this.ready && this.step === SCOPE; }
+    get is2() { return this.ready && this.step === STRATEGY; }
     get cantBack() { return this.step === 0; }
-    get cantNext() { return this.step >= SCOPE; }
+    get cantNext() { return this.step >= STRATEGY || (this.step === SCOPE && !this.scopeConfirmed); }
     handleBack() { if (this.step > 0) { this.step -= 1; } }
-    handleNext() { if (this.step < SCOPE) { this.step += 1; } }
+    handleNext() { if (!this.cantNext) { this.step += 1; } }
+    /** The Strategy step reports its status and the action, which also shows in the header. */
+    handleStrategyChange(event) {
+        const { status, action } = event.detail;
+        if (this.v.strategyStatus !== status || (action && this.v.actionType !== action)) {
+            this.v = { ...this.v, strategyStatus: status, actionType: action || this.v.actionType };
+        }
+    }
 
     // ---- step 1: at a glance
     get tiles() {
@@ -182,8 +194,8 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get cantDiscard() { return this.busy || this.pending === 0; }
     get confirmLabel() { return this.saving ? 'Saving…' : this.scopeConfirmed ? 'Scope Confirmed' : 'Confirm Scope'; }
     get confirmHint() {
-        if (this.scopeConfirmed) { return 'Notifications and the Regulatory Report can use this lot list.'; }
-        return this.draftLots.length ? 'Confirming the lot list opens Notifications and the Regulatory Report.' : 'Tick at least one lot.';
+        if (this.scopeConfirmed) { return 'Strategy and the steps after it work from this lot list.'; }
+        return this.draftLots.length ? 'Confirming the lot list opens Strategy.' : 'Tick at least one lot.';
     }
 
     /** The nested table: each lot, and when expanded what it was built from, level by level, with where-used rows. */

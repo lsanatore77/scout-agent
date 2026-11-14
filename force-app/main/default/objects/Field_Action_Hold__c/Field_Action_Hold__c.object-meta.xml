@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Field Action Hold object records a hold on one lot for a field action: a finished lot in scope, or a component lot used in one. Ticks on the Strategy step are a draft (Hold); Confirm Strategy places the hold (Held, Held On).</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Field Action Hold</label>
+    <nameField>
+        <displayFormat>FAH-{0000}</displayFormat>
+        <label>Field Action Hold Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Field Action Holds</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

@@ -50,6 +50,7 @@ public with sharing class CqFieldActionScope {
         @AuraEnabled public Decimal qtyAffected; @AuraEnabled public Decimal qtyShipped;
         @AuraEnabled public String scope; @AuraEnabled public String scopeStatus;
         @AuraEnabled public String scopeConfirmedBy; @AuraEnabled public Datetime scopeConfirmedOn;
+        @AuraEnabled public String strategyStatus;
         @AuraEnabled public Integer pendingAdds = 0; @AuraEnabled public Integer pendingRemoves = 0;
         @AuraEnabled public List<Review> reviews = new List<Review>();
         @AuraEnabled public Integer score; @AuraEnabled public String riskLevel; @AuraEnabled public String hazard;
@@ -74,7 +75,7 @@ public with sharing class CqFieldActionScope {
         return [SELECT Id, Name, Title__c, Status__c, Action_Type__c, Recall_Class__c, Description__c, Decision_Rationale__c,
                        Decided_By__r.Name, Decided_On__c, Part__c, Part__r.Name, Part__r.compliancequest__Part_Number__c,
                        Quantity_Affected__c, Quantity_Shipped__c, Lot_Numbers__c,
-                       Scope__c, Scope_Status__c, Scope_Confirmed_By__r.Name, Scope_Confirmed_On__c
+                       Scope__c, Scope_Status__c, Scope_Confirmed_By__r.Name, Scope_Confirmed_On__c, Strategy_Status__c
                 FROM Field_Action__c WHERE Id = :recordId];
     }
 
@@ -177,6 +178,7 @@ public with sharing class CqFieldActionScope {
         v.qtyAffected = fa.Quantity_Affected__c; v.qtyShipped = fa.Quantity_Shipped__c;
         v.scope = fa.Scope__c; v.scopeStatus = fa.Scope_Status__c;
         v.scopeConfirmedBy = fa.Scope_Confirmed_By__r?.Name; v.scopeConfirmedOn = fa.Scope_Confirmed_On__c;
+        v.strategyStatus = fa.Strategy_Status__c;
 
         // the reviews that led here, with the committee approvals behind them
         Set<Id> approvals = new Set<Id>();
@@ -411,7 +413,7 @@ public with sharing class CqFieldActionScope {
             if (row == null) {
                 LotRow x = lotsOfPart(fa.Part__c, fa.Part__r?.compliancequest__Part_Number__c).get(lot);
                 row = new Field_Action_Lot__c(Field_Action__c = recordId, Lot_Number__c = lot, Lot__c = x?.lotId, Units_Built__c = x?.built,
-                    In_Scope__c = true, Approved_In_Scope__c = false, Added_How__c = 'Coordinator');
+                    In_Scope__c = true, Approved_In_Scope__c = false, Added_How__c = 'Coordinator', Reason__c = signalReason(fa.Part__c, lot));
                 insert row;
             } else {
                 update new Field_Action_Lot__c(Id = row.Id, In_Scope__c = true);
@@ -429,12 +431,26 @@ public with sharing class CqFieldActionScope {
         return out;
     }
 
+    /** The signals behind a lot, as the reason it was ticked: 'Cross-Source at Escalate; Rate per Units Built at Escalate'. */
+    private static String signalReason(Id partId, String lot) {
+        if (partId == null) { return null; }
+        List<String> why = new List<String>();
+        for (Signal__c s : [SELECT Rule__r.Name, Strength__c, Rule__r.Code__c FROM Signal__c
+                            WHERE Part__c = :partId AND Lot_Number__c = :lot AND Status__c NOT IN ('Closed', 'Dismissed')
+                              AND Strength__c IN ('Assess', 'Escalate') ORDER BY Score__c DESC NULLS LAST, Name LIMIT 5]) {
+            if (s.Rule__r?.Code__c == 'SHARED_COMPONENT_LOT') { continue; }
+            why.add((s.Rule__r == null ? 'Manual' : s.Rule__r.Name) + ' at ' + s.Strength__c);
+            if (why.size() == 2) { break; }
+        }
+        return why.isEmpty() ? null : String.join(why, '; ').left(255);
+    }
+
     /** Confirm Scope: the draft becomes the scope. Each lot added or removed since the last confirm is logged. */
     @AuraEnabled
     public static View confirmScope(Id recordId) {
         Field_Action__c fa = load(recordId);
         openForChange(fa);
-        List<Field_Action_Lot__c> rows = [SELECT Id, Lot_Number__c, In_Scope__c, Approved_In_Scope__c, Added_How__c FROM Field_Action_Lot__c
+        List<Field_Action_Lot__c> rows = [SELECT Id, Lot_Number__c, In_Scope__c, Approved_In_Scope__c, Added_How__c, Reason__c FROM Field_Action_Lot__c
                                           WHERE Field_Action__c = :recordId ORDER BY Lot_Number__c];
         List<Field_Action_Lot__c> ups = new List<Field_Action_Lot__c>();
         List<Field_Action_Scope_Change__c> logs = new List<Field_Action_Scope_Change__c>();
@@ -442,13 +458,16 @@ public with sharing class CqFieldActionScope {
         for (Field_Action_Lot__c l : rows) {
             if (l.In_Scope__c) { inNow++; }
             if (l.In_Scope__c == l.Approved_In_Scope__c) { continue; }
-            log(logs, recordId, l.Lot_Number__c, l.In_Scope__c ? 'Added' : 'Removed', 'Coordinator', null);
+            log(logs, recordId, l.Lot_Number__c, l.In_Scope__c ? 'Added' : 'Removed', 'Coordinator', l.In_Scope__c ? l.Reason__c : null);
             ups.add(new Field_Action_Lot__c(Id = l.Id, Approved_In_Scope__c = l.In_Scope__c));
         }
         if (inNow == 0) { throw new AuraHandledException('Put at least one lot in scope.'); }
         if (ups.isEmpty() && fa.Scope_Status__c == 'Confirmed') { throw new AuraHandledException('Nothing has changed since the scope was confirmed.'); }
         update ups; insert logs;
-        update new Field_Action__c(Id = recordId, Scope_Status__c = 'Confirmed', Scope_Confirmed_By__c = UserInfo.getUserId(), Scope_Confirmed_On__c = Datetime.now());
+        // a changed lot list sends a confirmed strategy back for another look: its holds follow the lots
+        String strategy = !ups.isEmpty() && fa.Strategy_Status__c == 'Confirmed' ? 'Being Defined' : fa.Strategy_Status__c;
+        update new Field_Action__c(Id = recordId, Scope_Status__c = 'Confirmed', Scope_Confirmed_By__c = UserInfo.getUserId(), Scope_Confirmed_On__c = Datetime.now(),
+            Strategy_Status__c = strategy);
         syncText(new Set<Id>{ recordId });
         return getView(recordId);
     }

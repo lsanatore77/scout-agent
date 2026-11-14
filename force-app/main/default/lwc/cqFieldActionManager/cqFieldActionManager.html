@@ -207,6 +207,10 @@
                         </div>
                     </template>
 
+                    <template if:true={is2}>
+                        <c-cq-field-action-strategy record-id={recordId} onstrategychange={handleStrategyChange}></c-cq-field-action-strategy>
+                    </template>
+
                     <template if:true={error}><div class="errbox">{error}</div></template>
                     <div class="foot">
                         <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Check_Level__c</fullName>
+    <description>Effectiveness check level: A every customer, B a share set by the coordinator, C 10%, D 2%, E no check.</description>
+    <label>Check Level</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Level A</fullName>
+                <default>false</default>
+                <label>Level A</label>
+            </value>
+            <value>
+                <fullName>Level B</fullName>
+                <default>false</default>
+                <label>Level B</label>
+            </value>
+            <value>
+                <fullName>Level C</fullName>
+                <default>false</default>
+                <label>Level C</label>
+            </value>
+            <value>
+                <fullName>Level D</fullName>
+                <default>false</default>
+                <label>Level D</label>
+            </value>
+            <value>
+                <fullName>Level E</fullName>
+                <default>false</default>
+                <label>Level E</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

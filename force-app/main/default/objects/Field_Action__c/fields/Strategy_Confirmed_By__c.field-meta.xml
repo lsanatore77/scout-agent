@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Strategy_Confirmed_By__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Who last confirmed the strategy.</description>
+    <label>Strategy Confirmed By</label>
+    <referenceTo>User</referenceTo>
+    <relationshipName>Strategy_Confirmed_Field_Actions</relationshipName>
+    <type>Lookup</type>
+</CustomField>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Customer_Instruction__c</fullName>
+    <description>What customers are told to do with the product.</description>
+    <label>Customer Instruction</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Stop use, quarantine and return</fullName>
+                <default>false</default>
+                <label>Stop use, quarantine and return</label>
+            </value>
+            <value>
+                <fullName>Stop use and destroy on site</fullName>
+                <default>false</default>
+                <label>Stop use and destroy on site</label>
+            </value>
+            <value>
+                <fullName>Hold for our technician to correct on site</fullName>
+                <default>false</default>
+                <label>Hold for our technician to correct on site</label>
+            </value>
+            <value>
+                <fullName>Continue use with the added warning</fullName>
+                <default>false</default>
+                <label>Continue use with the added warning</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

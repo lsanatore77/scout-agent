@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Action__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The field action this hold belongs to.</description>
+    <label>Field Action</label>
+    <referenceTo>Field_Action__c</referenceTo>
+    <relationshipLabel>Holds</relationshipLabel>
+    <relationshipName>Holds</relationshipName>
+    <type>Lookup</type>
+</CustomField>
