@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Verdict_By__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>Who confirmed the verdict.</description>
+    <label>Verdict By</label>
+    <referenceTo>User</referenceTo>
+    <relationshipName>Verdict_Field_Actions</relationshipName>
+    <type>Lookup</type>
+</CustomField>

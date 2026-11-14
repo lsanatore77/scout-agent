@@ -1,0 +1,51 @@
+<template>
+    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:true={ready}>
+        <div class="sechead">
+            <h3 class="q">Closure</h3>
+            <span class={statePill}>{stateText}</span>
+            <template if:true={closedLine}><span class="rk in">{closedLine}</span></template>
+        </div>
+        <p class="p">{intro}</p>
+
+        <div class="grid">
+            <section class="card">
+                <div class="ch"><span class="cn">1</span><span class="ct">Closure Checklist</span><span class="grow"></span><span class="tot">{checkLine}</span></div>
+                <div class="list">
+                    <template for:each={checks} for:item="c">
+                        <div key={c.key} class="lrow">
+                            <span class={c.markCls} aria-hidden="true">{c.mark}</span>
+                            <span class="fn"><span class="b">{c.text}</span><span class="rk">{c.detail}</span></span>
+                        </div>
+                    </template>
+                </div>
+                <span class="hint">Ticked automatically from the earlier steps. Skipped steps show as Not Applicable and do not block closing; units still in the field are flagged but do not block.</span>
+            </section>
+
+            <div class="col">
+                <section class="card">
+                    <div class="ch"><span class="cn">2</span><span class="ct">Closure Summary</span><span class="grow"></span>
+                        <template if:true={isDraft}><span class="aitag">&#10022; Drafted by CQ.AI</span></template></div>
+                    <textarea class="ta" rows="9" value={summaryText} disabled={locked} oninput={handleSummaryInput} onchange={handleSummary} aria-label="Closure summary"></textarea>
+                </section>
+                <section class="card">
+                    <div class="ch"><span class="cn">3</span><span class="ct">What Follows</span></div>
+                    <label class="fld">
+                        <span class="fl">CAPA *</span>
+                        <select class="sel" onchange={handleCapa} disabled={locked}>
+                            <template for:each={capaOpts} for:item="o">
+                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                            </template>
+                        </select>
+                    </label>
+                    <label class="fld">
+                        <span class="fl">Other records</span>
+                        <input class="ta in" type="text" value={otherText} disabled={locked} onchange={handleOther} />
+                        <span class="hint">Filled from the records behind the reviews and the held component lots.</span>
+                    </label>
+                </section>
+            </div>
+        </div>
+        <template if:true={error}><div class="errbox">{error}</div></template>
+    </template>
+</template>

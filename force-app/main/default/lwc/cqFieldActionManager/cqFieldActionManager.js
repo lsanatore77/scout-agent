@@ -7,19 +7,22 @@ import setLot from '@salesforce/apex/CqFieldActionScope.setLot';
 import confirmScope from '@salesforce/apex/CqFieldActionScope.confirmScope';
 import discardChanges from '@salesforce/apex/CqFieldActionScope.discardChanges';
 import saveLot from '@salesforce/apex/CqFieldActionScope.saveLot';
+import railStatus from '@salesforce/apex/CqFieldActionRecovery.railStatus';
 
-// The seven steps of a field action. The first three are built; the rest open in later batches.
+// The seven steps of a field action. Notifications and Regulatory Report are set aside for later and do not block.
 const STEPS = [
     { label: 'Field Action at a Glance', ready: true },
     { label: 'Scope', ready: true },
     { label: 'Strategy', ready: true, needsScope: true },
-    { label: 'Notifications', ready: false, needsScope: true },
-    { label: 'Regulatory Report', ready: false, needsScope: true },
-    { label: 'Recovery and Effectiveness', ready: false },
-    { label: 'Closure', ready: false }
+    { label: 'Notifications', ready: false, later: true },
+    { label: 'Regulatory Report', ready: false, later: true },
+    { label: 'Recovery and Effectiveness', ready: true },
+    { label: 'Closure', ready: true }
 ];
 const SCOPE = 1;
 const STRATEGY = 2;
+const RECOVERY = 5;
+const CLOSURE = 6;
 const TRACE = {
     Verified: { mark: '✔ ', cls: 'tr ok' },
     NC: { mark: '✖ ', cls: 'tr bad' },
@@ -45,9 +48,15 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     edits = {};          // lot row id -> { shipped, onHand, location } being typed
     editing = '';        // the lot row whose shipped, on hand and location are open for editing
 
+    rail = {};           // strategy, recovery, verdict and status for the later steps
+
     async connectedCallback() {
         try { this.apply(await getView({ recordId: this.recordId })); this.openInScope(); }
         catch (e) { this.error = this.msg(e, 'Could not read this field action.'); }
+        await this.loadRail();
+    }
+    async loadRail() {
+        try { this.rail = await railStatus({ recordId: this.recordId }); } catch (e) { /* the rail falls back to what is known */ }
     }
     /** The lots in scope open straight away, so what they were built from shows without a click. */
     openInScope() {
@@ -76,6 +85,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     async handleRefresh() {
         try { this.apply(await getView({ recordId: this.recordId })); this.error = undefined; this.gens = {}; this.edits = {}; this.open = {}; this.openInScope(); }
         catch (e) { this.error = this.msg(e, 'Could not refresh this field action.'); }
+        await this.loadRail();
     }
     handleOpen(event) {
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: event.currentTarget.dataset.id, actionName: 'view' } });
@@ -102,32 +112,65 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             this.v.actionType ? this.v.actionType + (this.v.recallClass ? ' · ' + this.v.recallClass : '') : 'Decided',
             this.v.scope ? this.stateText + ' · ' + lotsText : 'Scope not set'
         ];
-        const strategyDone = this.scopeConfirmed && this.v.strategyStatus === 'Confirmed';
         return STEPS.map((s, i) => {
-            const done = i === 0 || (i === SCOPE && this.scopeConfirmed) || (i === STRATEGY && strategyDone);
-            const sub = i < 2 ? subs[i]
-                : s.needsScope && !this.scopeConfirmed ? 'Needs confirmed scope'
-                : i === STRATEGY ? this.v.strategyStatus || 'Not started' : 'Next batch';
-            return { i, n: i + 1, label: s.label, sub, done, notDone: !done, locked: !s.ready || (i === STRATEGY && !this.scopeConfirmed),
-                cls: 'step' + (i === this.step ? ' active' : '') + (done ? ' done' : '') };
+            const done = !s.later && this.isDone(i);
+            const sub = i < 2 ? subs[i] : s.later ? 'Later' : this.subOf(i);
+            return { i, n: s.later ? '–' : i + 1, label: s.label, sub, done, notDone: !done, locked: this.isLocked(i),
+                cls: 'step' + (i === this.step ? ' active' : '') + (done ? ' done' : '') + (s.later ? ' later' : '') };
         });
     }
+    get strategyDone() { return this.scopeConfirmed && this.v.strategyStatus === 'Confirmed'; }
+    get recoveryDone() { return this.strategyDone && this.rail.recovery === 'Confirmed'; }
+    get isClosed() { return this.v.status === 'Closed'; }
+    isDone(i) {
+        if (i === 0) { return true; }
+        if (i === SCOPE) { return this.scopeConfirmed; }
+        if (i === STRATEGY) { return this.strategyDone; }
+        if (i === RECOVERY) { return this.recoveryDone; }
+        if (i === CLOSURE) { return this.isClosed; }
+        return false;
+    }
+    subOf(i) {
+        if (i === STRATEGY) { return !this.scopeConfirmed ? 'Needs confirmed scope' : this.v.strategyStatus || 'Not started'; }
+        if (i === RECOVERY) {
+            if (!this.strategyDone) { return 'Needs confirmed strategy'; }
+            return this.rail.recovery === 'Confirmed' ? 'Effective' : this.rail.verdict === 'Not Effective' ? 'Not Effective' : 'In progress';
+        }
+        if (i === CLOSURE) { return this.isClosed ? 'Closed' : this.recoveryDone ? 'Ready to close' : 'Needs an effective verdict'; }
+        return '';
+    }
+    isLocked(i) {
+        const s = STEPS[i];
+        if (!s.ready || s.later) { return true; }
+        if (i === STRATEGY) { return !this.scopeConfirmed; }
+        if (i === RECOVERY) { return !this.strategyDone; }
+        if (i === CLOSURE) { return !this.recoveryDone && !this.isClosed; }
+        return false;
+    }
+    /** The next or previous step that is not set aside for later. */
+    near(dir) {
+        for (let i = this.step + dir; i >= 0 && i < STEPS.length; i += dir) { if (!STEPS[i].later) { return i; } }
+        return -1;
+    }
     get progress() { return this.steps.filter((s) => s.done).length + ' of ' + STEPS.length + ' steps complete'; }
-    handleStep(event) { const i = Number(event.currentTarget.dataset.i); if (STEPS[i].ready && !(i === STRATEGY && !this.scopeConfirmed)) { this.step = i; this.error = undefined; } }
+    handleStep(event) { const i = Number(event.currentTarget.dataset.i); if (!this.isLocked(i)) { this.go(i); } }
+    go(i) { this.step = i; this.error = undefined; this.foot = { show: false, label: '', disabled: true, blocker: '' }; }
     get is0() { return this.ready && this.step === 0; }
     get is1() { return this.ready && this.step === SCOPE; }
     get is2() { return this.ready && this.step === STRATEGY; }
-    get cantBack() { return this.step === 0; }
-    get cantNext() { return this.step >= STRATEGY || (this.step === SCOPE && !this.scopeConfirmed); }
-    handleBack() { if (this.step > 0) { this.step -= 1; } }
-    handleNext() { if (!this.cantNext) { this.step += 1; } }
-    // Confirm Strategy lives in the footer beside Back and Next; the Strategy step says how it should look
-    foot = { show: false, label: 'Confirm Strategy', disabled: true, blocker: '' };
+    get is5() { return this.ready && this.step === RECOVERY; }
+    get is6() { return this.ready && this.step === CLOSURE; }
+    get cantBack() { return this.near(-1) < 0; }
+    get cantNext() { const i = this.near(1); return i < 0 || this.isLocked(i); }
+    handleBack() { const i = this.near(-1); if (i >= 0) { this.go(i); } }
+    handleNext() { if (!this.cantNext) { this.go(this.near(1)); } }
+    // A step's own confirm button (Confirm Strategy, Confirm Verdict, Close Field Action) lives in the footer before Back and Next
+    foot = { show: false, label: '', disabled: true, blocker: '' };
     handleFootChange(event) { this.foot = event.detail; }
-    get showStepAction() { return this.is2 && this.foot.show; }
+    get showStepAction() { return (this.is2 || this.is5 || this.is6) && this.foot.show; }
     get nextCls() { return this.showStepAction ? 'btn' : 'btn primary'; }
     handleStepAction() {
-        const s = this.template.querySelector('c-cq-field-action-strategy');
+        const s = this.template.querySelector('[data-step]');
         if (s) { s.confirm(); }
     }
     /** The Strategy step reports its status and the action, which also shows in the header. */
@@ -136,6 +179,12 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         if (this.v.strategyStatus !== status || (action && this.v.actionType !== action)) {
             this.v = { ...this.v, strategyStatus: status, actionType: action || this.v.actionType };
         }
+    }
+    /** Recovery and Closure report the verdict and the field action's status for the rail and the header. */
+    handleRailChange(event) {
+        const { recovery, verdict, status } = event.detail;
+        this.rail = { ...this.rail, recovery, verdict, status };
+        if (status && this.v.status !== status) { this.v = { ...this.v, status }; }
     }
 
     // ---- step 1: at a glance

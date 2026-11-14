@@ -208,7 +208,13 @@
                     </template>
 
                     <template if:true={is2}>
-                        <c-cq-field-action-strategy record-id={recordId} onstrategychange={handleStrategyChange} onfootchange={handleFootChange}></c-cq-field-action-strategy>
+                        <c-cq-field-action-strategy data-step="strategy" record-id={recordId} onstrategychange={handleStrategyChange} onfootchange={handleFootChange}></c-cq-field-action-strategy>
+                    </template>
+                    <template if:true={is5}>
+                        <c-cq-field-action-recovery data-step="recovery" record-id={recordId} onrailchange={handleRailChange} onfootchange={handleFootChange}></c-cq-field-action-recovery>
+                    </template>
+                    <template if:true={is6}>
+                        <c-cq-field-action-closure data-step="closure" record-id={recordId} onrailchange={handleRailChange} onfootchange={handleFootChange}></c-cq-field-action-closure>
                     </template>
 
                     <template if:true={error}><div class="errbox">{error}</div></template>

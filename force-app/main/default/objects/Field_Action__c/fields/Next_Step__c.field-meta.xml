@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Next_Step__c</fullName>
+    <description>What happens when the field action was not effective.</description>
+    <label>Next Step</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Widen the scope</fullName>
+                <default>false</default>
+                <label>Widen the scope</label>
+            </value>
+            <value>
+                <fullName>A further action to customers</fullName>
+                <default>false</default>
+                <label>A further action to customers</label>
+            </value>
+            <value>
+                <fullName>Extend the check by 30 days</fullName>
+                <default>false</default>
+                <label>Extend the check by 30 days</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

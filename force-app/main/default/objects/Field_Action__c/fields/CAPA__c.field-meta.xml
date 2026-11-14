@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CAPA__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The CAPA that root cause and prevention continue in.</description>
+    <label>CAPA</label>
+    <referenceTo>compliancequest__SQX_CAPA__c</referenceTo>
+    <relationshipName>Field_Actions</relationshipName>
+    <type>Lookup</type>
+</CustomField>

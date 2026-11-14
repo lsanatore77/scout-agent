@@ -1,0 +1,124 @@
+<template>
+    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:true={ready}>
+        <div class="sechead">
+            <h3 class="q">Recovery and Effectiveness</h3>
+            <span class={statePill}>{stateText}</span>
+            <template if:true={verdictLine}><span class="rk in">{verdictLine}</span></template>
+        </div>
+        <template if:true={needsStrategy}><p class="note">Confirm the strategy first: recovery is measured against it.</p></template>
+
+        <template if:true={showStep}>
+            <p class="p">{intro}</p>
+
+            <section class="card">
+                <div class="ch"><span class="cn">1</span><span class="ct">Recovery by Lot</span><span class="grow"></span><span class="tot">{recoveryLine}</span></div>
+                <div class="tblwrap">
+                    <table class="ht">
+                        <thead><tr>
+                            <th>Lot</th><th class="num">Shipped</th><th class="num">Returned</th><th class="num">Destroyed</th><th class="num">Corrected</th>
+                            <th class="num">Still in Field</th><th class="barcol">Recovered</th>
+                        </tr></thead>
+                        <tbody>
+                            <template for:each={lotRows} for:item="l">
+                                <tr key={l.id}>
+                                    <td class="b nw">{l.lot}</td>
+                                    <td class="num">{l.shippedText}</td>
+                                    <template if:true={l.isEditing}>
+                                        <td class="num"><input class="ta ni" type="number" min="0" data-f="returned" value={l.returnedVal} onchange={handleQty} aria-label="Units returned" /></td>
+                                        <td class="num"><input class="ta ni" type="number" min="0" data-f="destroyed" value={l.destroyedVal} onchange={handleQty} aria-label="Units destroyed" /></td>
+                                        <td class="num"><input class="ta ni" type="number" min="0" data-f="corrected" value={l.correctedVal} onchange={handleQty} aria-label="Units corrected" /></td>
+                                        <td class="num" colspan="2"><span class="locwrap">
+                                            <button class="btn xs primary" data-id={l.id} onclick={handleSaveLot} disabled={busy}>Save</button>
+                                            <button class="btn xs" onclick={handleCancelEdit}>Cancel</button></span></td>
+                                    </template>
+                                    <template if:true={l.notEditing}>
+                                        <td class="num"><button class="cell num" data-id={l.id} onclick={handleStartEdit} disabled={locked} title="Click to edit" aria-label={l.editLabel}>{l.returnedText}</button></td>
+                                        <td class="num"><button class="cell num" data-id={l.id} onclick={handleStartEdit} disabled={locked} title="Click to edit" aria-label={l.editLabel}>{l.destroyedText}</button></td>
+                                        <td class="num"><button class="cell num" data-id={l.id} onclick={handleStartEdit} disabled={locked} title="Click to edit" aria-label={l.editLabel}>{l.correctedText}</button></td>
+                                        <td class={l.fieldCls}>{l.fieldText}</td>
+                                        <td class="barcol"><template if:true={l.hasPct}><span class="barrow"><span class="track"><span class="fill" style={l.barStyle}></span></span><span class="pct">{l.pctText}</span></span></template></td>
+                                    </template>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <span class="hint">Click a number to edit it. Shipped comes from the Scope step.</span>
+            </section>
+
+            <div class="grid">
+                <section class="card">
+                    <div class="ch"><span class="cn">2</span><span class="ct">Customer Responses</span><span class="grow"></span><span class="tot">{respLine}</span></div>
+                    <span class="barrow"><span class="track"><span class="fill" style={respBar}></span></span><span class="hint">{targetText}</span></span>
+                    <template if:true={hasCustomers}>
+                        <div class="list">
+                            <template for:each={custRows} for:item="c">
+                                <div key={c.id} class="lrow">
+                                    <span class="fn"><span class="b">{c.name}</span><span class="rk">{c.detail}</span></span>
+                                    <button class={c.pillCls} data-id={c.id} onclick={handleStatus} disabled={locked} title="Click to change" aria-label={c.statusLabel}>{c.status}</button>
+                                    <button class="btn xs" data-id={c.id} onclick={handleFollowUp} disabled={locked} aria-label={c.followLabel}>+ Follow-up</button>
+                                    <button class="x" data-id={c.id} onclick={handleRemove} disabled={locked} aria-label={c.removeLabel} title="Remove">&#215;</button>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <div class="addc">
+                        <input class="ta in grow2" type="text" placeholder="Customer name" data-f="newName" value={newName} oninput={handleNew} disabled={locked} aria-label="Customer name" />
+                        <input class="ta in w80" type="number" min="0" placeholder="Units" data-f="newUnits" value={newUnits} oninput={handleNew} disabled={locked} aria-label="Units received" />
+                        <input class="ta in w140" type="text" placeholder="Lots" data-f="newLots" value={newLots} oninput={handleNew} disabled={locked} aria-label="Lots received" />
+                        <button class="btn sm" onclick={handleAddCustomer} disabled={cantAddCustomer}>Add</button>
+                    </div>
+                    <span class="hint">Click a status to change it. Customers are added here until the Notifications step is built.</span>
+                </section>
+
+                <section class="card">
+                    <div class="ch"><span class="cn">3</span><span class="ct">Held Stock</span><span class="grow"></span><span class="tot">{dispLine}</span></div>
+                    <template if:true={hasHolds}>
+                        <div class="list">
+                            <template for:each={holdRows} for:item="h">
+                                <div key={h.id} class="lrow">
+                                    <span class="fn"><span class="b">{h.lot}</span><span class="rk">{h.what}</span></span>
+                                    <select class="sel" data-id={h.id} onchange={handleDisposition} disabled={locked} aria-label={h.label}>
+                                        <template for:each={h.opts} for:item="o">
+                                            <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                        </template>
+                                    </select>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                    <template if:false={hasHolds}><p class="note">No stock was held in the strategy.</p></template>
+                    <span class="hint">&#10022; marks CQ.AI's suggestion. Dispositions are fixed when the verdict is confirmed.</span>
+                </section>
+            </div>
+
+            <section class="card">
+                <div class="ch"><span class="cn">4</span><span class="ct">Effectiveness Verdict</span></div>
+                <div class="vrow">
+                    <div class="fld">
+                        <span class="fl">Verdict *</span>
+                        <div class="segs" role="group" aria-label="Verdict">
+                            <template for:each={verdicts} for:item="o">
+                                <button key={o.key} class={o.cls} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handleVerdict}>{o.label}</button>
+                            </template>
+                        </div>
+                    </div>
+                    <template if:true={notEffective}>
+                        <label class="fld">
+                            <span class="fl">What happens next *</span>
+                            <select class="sel" onchange={handleNext} disabled={locked}>
+                                <template for:each={nextOpts} for:item="o">
+                                    <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                </template>
+                            </select>
+                        </label>
+                    </template>
+                    <div class="ai grow"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.aiLine}</div>
+                </div>
+            </section>
+
+            <template if:true={error}><div class="errbox">{error}</div></template>
+        </template>
+    </template>
+</template>
