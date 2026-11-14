@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Action_Customer__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>For tasks on a Field Action: the customer the task is about.</description>
+    <label>Field Action Customer</label>
+    <referenceTo>Field_Action_Customer__c</referenceTo>
+    <relationshipName>Recall_Tasks</relationshipName>
+    <type>Lookup</type>
+</CustomField>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Units__c</fullName>
+    <description>For return, destruction and correction tasks on a Field Action: units returned, destroyed or corrected so far. Adds up to the lot's recovery figures.</description>
+    <label>Units</label>
+    <precision>9</precision>
+    <scale>0</scale>
+    <type>Number</type>
+</CustomField>

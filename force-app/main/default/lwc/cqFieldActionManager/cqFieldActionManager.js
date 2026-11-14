@@ -115,13 +115,16 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         return STEPS.map((s, i) => {
             const done = !s.later && this.isDone(i);
             const sub = i < 2 ? subs[i] : s.later ? 'Later' : this.subOf(i);
+            const alert = i === RECOVERY && this.strategyDone && !this.isClosed && this.overdueTasks > 0;
             return { i, n: s.later ? '–' : i + 1, label: s.label, sub, done, notDone: !done, locked: this.isLocked(i),
+                subCls: 'ssub' + (alert ? ' alert' : ''),
                 cls: 'step' + (i === this.step ? ' active' : '') + (done ? ' done' : '') + (s.later ? ' later' : '') };
         });
     }
     get strategyDone() { return this.scopeConfirmed && this.v.strategyStatus === 'Confirmed'; }
     get recoveryDone() { return this.strategyDone && this.rail.recovery === 'Confirmed'; }
     get isClosed() { return this.v.status === 'Closed'; }
+    get overdueTasks() { return Number(this.rail.overdue || 0); }
     isDone(i) {
         if (i === 0) { return true; }
         if (i === SCOPE) { return this.scopeConfirmed; }
@@ -134,6 +137,8 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         if (i === STRATEGY) { return !this.scopeConfirmed ? 'Needs confirmed scope' : this.v.strategyStatus || 'Not started'; }
         if (i === RECOVERY) {
             if (!this.strategyDone) { return 'Needs confirmed strategy'; }
+            const over = this.overdueTasks;
+            if (over > 0 && !this.isClosed) { return over + ' overdue task' + (over === 1 ? '' : 's'); }
             return this.rail.recovery === 'Confirmed' ? 'Effective' : this.rail.verdict === 'Not Effective' ? 'Not Effective' : 'In progress';
         }
         if (i === CLOSURE) { return this.isClosed ? 'Closed' : this.recoveryDone ? 'Ready to close' : 'Needs an effective verdict'; }
@@ -182,8 +187,8 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     }
     /** Recovery and Closure report the verdict and the field action's status for the rail and the header. */
     handleRailChange(event) {
-        const { recovery, verdict, status } = event.detail;
-        this.rail = { ...this.rail, recovery, verdict, status };
+        const { recovery, verdict, status, overdue } = event.detail;
+        this.rail = { ...this.rail, recovery, verdict, status, overdue: overdue === undefined ? this.rail.overdue : String(overdue) };
         if (status && this.v.status !== status) { this.v = { ...this.v, status }; }
     }
 

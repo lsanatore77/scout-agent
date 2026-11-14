@@ -3,9 +3,9 @@
  *
  * Recovery and Effectiveness (step 6), open once the strategy is confirmed:
  *  1. Recovery by lot: units returned, destroyed and corrected against units shipped, per lot in scope.
- *  2. Customer responses: the customers that received the lots and whether each has acknowledged, measured against
- *     the check level from the strategy. Filled from the Lot Shipment records of the lots in scope while recovery is
- *     in progress; customers can also be added by hand.
+ *  2. Customers and tasks: the customers that received the lots (from the Lot Shipment records of the lots in scope,
+ *     or added by hand) and the recall tasks for each (CqFieldActionTasks). A customer's acknowledgement follows its
+ *     Collect response task and is measured against the check level from the strategy; return tasks add up per lot.
  *  3. Held stock: a disposition for each lot held in the strategy.
  *  4. Effectiveness verdict: Effective, or Not Effective with what happens next. Confirm Verdict records it.
  *
@@ -57,6 +57,8 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public List<Capa> capas = new List<Capa>();
         @AuraEnabled public String otherRecords; @AuraEnabled public String sOther;
         @AuraEnabled public String closedBy; @AuraEnabled public Datetime closedOn;
+        // recall tasks
+        @AuraEnabled public CqFieldActionTasks.Board tasks;
     }
 
     private static Field_Action__c load(Id recordId) {
@@ -93,7 +95,8 @@ public with sharing class CqFieldActionRecovery {
     public static Map<String, String> railStatus(Id recordId) {
         Field_Action__c fa = [SELECT Status__c, Strategy_Status__c, Recovery_Status__c, Verdict__c FROM Field_Action__c WHERE Id = :recordId];
         return new Map<String, String>{ 'strategy' => fa.Strategy_Status__c, 'recovery' => fa.Recovery_Status__c,
-            'verdict' => fa.Verdict__c, 'status' => fa.Status__c };
+            'verdict' => fa.Verdict__c, 'status' => fa.Status__c,
+            'overdue' => String.valueOf([SELECT COUNT() FROM Task WHERE WhatId = :recordId AND IsClosed = false AND ActivityDate < TODAY]) };
     }
 
     // ---------------------------------------------------------------- read
@@ -111,8 +114,9 @@ public with sharing class CqFieldActionRecovery {
         v.closedBy = fa.Closed_By__r?.Name; v.closedOn = fa.Closed_On__c;
         if (!v.closed && v.strategyConfirmed) {
             CqLotShipments.fillShipped(recordId);
-            if (fa.Recovery_Status__c != 'Confirmed') { syncCustomers(recordId); }
+            if (fa.Recovery_Status__c != 'Confirmed') { syncCustomers(recordId); CqFieldActionTasks.sync(recordId); }
         }
+        v.tasks = CqFieldActionTasks.board(recordId, fa, v.closed);
 
         // 1. recovery by lot
         List<String> lotNames = new List<String>();
@@ -167,6 +171,7 @@ public with sharing class CqFieldActionRecovery {
             gaps.add(left + ' customer' + (left == 1 ? ' has' : 's have') + ' not acknowledged');
         }
         if (v.shippedKnown && inField > 0) { gaps.add(inField.intValue() + ' unit' + (inField == 1 ? ' is' : 's are') + ' still in the field'); }
+        if (v.tasks.overdue > 0) { gaps.add(v.tasks.overdue + ' task' + (v.tasks.overdue == 1 ? ' is' : 's are') + ' overdue'); }
         if (v.decided < v.holds.size()) { gaps.add((v.holds.size() - v.decided) + ' held lot' + (v.holds.size() - v.decided == 1 ? ' has' : 's have') + ' no disposition'); }
         if (gaps.isEmpty()) {
             v.aiVerdict = EFFECTIVE;
@@ -205,6 +210,9 @@ public with sharing class CqFieldActionRecovery {
         add(v, 'customers', 'Customers confirmed', v.total == 0 ? 'No customers listed'
             : v.acked + ' of ' + v.total + ' acknowledged' + (v.targetMet ? ' · ' + (v.level == null ? 'target' : v.level) + ' met' : ' · ' + (v.level == null ? 'target' : v.level) + ' needs ' + v.target.intValue() + '%'),
             v.targetMet ? 'ok' : 'open', true);
+        Integer allTasks = v.tasks.open + v.tasks.completed;
+        add(v, 'tasks', 'Recall tasks completed', allTasks == 0 ? 'No recall tasks were created' : v.tasks.completed + ' of ' + allTasks + ' completed'
+            + (v.tasks.overdue > 0 ? ' · ' + v.tasks.overdue + ' overdue' : ''), v.tasks.open == 0 ? 'ok' : 'open', false);
         add(v, 'holds', 'Held stock decided', v.holds.isEmpty() ? 'No stock was held' : v.decided + ' of ' + v.holds.size() + ' lots' + dispSummary(v),
             v.decided == v.holds.size() ? 'ok' : 'open', true);
         Boolean verdictOk = fa.Recovery_Status__c == 'Confirmed' && fa.Verdict__c == EFFECTIVE;

@@ -27,6 +27,7 @@
 .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .lbl { font-size: 13px; font-weight: 700; color: #2b2f36; }
 .ssub { font-size: 11px; color: #5c6572; }
+.ssub.alert { color: #b42318; font-weight: 600; }
 .progress { margin-top: auto; padding: 10px 8px 2px; font-size: 11px; color: #8a94a3; }
 .main { flex: 1; min-width: 0; padding: 20px; display: flex; flex-direction: column; }
 .q { margin: 0 0 14px; font-size: 20px; font-weight: 700; }

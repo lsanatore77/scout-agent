@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Recall_Task_Type__c</fullName>
+    <description>For tasks on a Field Action: what the task is. Return and destruction tasks carry the units; a completed Collect response marks the customer Acknowledged.</description>
+    <label>Recall Task Type</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Send recall notice</fullName>
+                <default>false</default>
+                <label>Send recall notice</label>
+            </value>
+            <value>
+                <fullName>Collect response</fullName>
+                <default>false</default>
+                <label>Collect response</label>
+            </value>
+            <value>
+                <fullName>Track return</fullName>
+                <default>false</default>
+                <label>Track return</label>
+            </value>
+            <value>
+                <fullName>Confirm destruction</fullName>
+                <default>false</default>
+                <label>Confirm destruction</label>
+            </value>
+            <value>
+                <fullName>Confirm correction</fullName>
+                <default>false</default>
+                <label>Confirm correction</label>
+            </value>
+            <value>
+                <fullName>Other</fullName>
+                <default>false</default>
+                <label>Other</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

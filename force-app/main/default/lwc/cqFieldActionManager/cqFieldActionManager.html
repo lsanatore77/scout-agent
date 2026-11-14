@@ -34,7 +34,7 @@
                                 <template if:true={s.done}>&#10003;</template>
                                 <template if:true={s.notDone}>{s.n}</template>
                             </span>
-                            <span class="txt"><span class="lbl">{s.label}</span><span class="ssub">{s.sub}</span></span>
+                            <span class="txt"><span class="lbl">{s.label}</span><span class={s.subCls}>{s.sub}</span></span>
                         </button>
                     </template>
                     <div class="progress">{progress}</div>
