@@ -133,4 +133,7 @@
 .cell:hover .pen, .cell:focus-visible .pen { opacity: 1; }
 .fblock { color: #7a4100; font-weight: 600; }
 .step.later { opacity: .55; }
-.pager { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 8px; }
+.pager .btn { min-height: 0; padding: 0; border: none; border-radius: 0; background: none; color: #1d5fd1; font-size: 13px; font-weight: 600; }
+.pager .btn:hover { text-decoration: underline; }
+.pager .btn:disabled { opacity: 1; color: #8a94a3; cursor: default; text-decoration: none; }
