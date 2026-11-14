@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Rule__c</fullName>
+    <label>Rule</label>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <referenceTo>Signal_Rule__c</referenceTo>
+    <relationshipLabel>Signals</relationshipLabel>
+    <relationshipName>Signals</relationshipName>
+    <type>Lookup</type>
+</CustomField>

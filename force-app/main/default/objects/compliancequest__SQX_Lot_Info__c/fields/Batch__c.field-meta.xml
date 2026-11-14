@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Batch__c</fullName>
+    <label>Batch</label>
+    <description>The batch record that produced this lot. The firm link between a lot and its batch, used for signal detection and lot genealogy.</description>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <referenceTo>cqext__CQEBR_Batch__c</referenceTo>
+    <relationshipLabel>Lot Info</relationshipLabel>
+    <relationshipName>Lot_Infos</relationshipName>
+    <type>Lookup</type>
+</CustomField>

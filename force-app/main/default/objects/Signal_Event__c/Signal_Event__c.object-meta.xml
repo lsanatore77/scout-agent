@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Links a Signal to one of the records behind it: a complaint, a nonconformance or a Field Action Review. One record can belong to several signals. A person can mark an event as removed so the job does not add it back.</description>
+    <enableActivities>true</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Signal Event</label>
+    <nameField>
+        <displayFormat>SE-{0000}</displayFormat>
+        <label>Signal Event Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Signal Events</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>
