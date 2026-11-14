@@ -20,6 +20,15 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String title; @AuraEnabled public String status;
         @AuraEnabled public String actionType; @AuraEnabled public String lots; @AuraEnabled public Boolean suggested = false; @AuraEnabled public String why;
     }
+    /** One line of "What We Know": a question, its answer, and where the answer came from. */
+    public class Know {
+        @AuraEnabled public String q; @AuraEnabled public String a; @AuraEnabled public String src; @AuraEnabled public Boolean unknown;
+        public Know(String q, String a, String src) {
+            this.q = q; this.src = src;
+            this.unknown = String.isBlank(a) || a == 'Not Known';
+            this.a = this.unknown ? 'Not known' : a;
+        }
+    }
     public class View {
         @AuraEnabled public String name; @AuraEnabled public String title; @AuraEnabled public String status;
         @AuraEnabled public String reason; @AuraEnabled public String requestedBy; @AuraEnabled public Datetime requestedOn;
@@ -37,6 +46,7 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public Boolean reachedField = false;
         @AuraEnabled public String suggestedOutcome; @AuraEnabled public String suggestedWhy;
         @AuraEnabled public List<Fa> fieldActions = new List<Fa>();
+        @AuraEnabled public List<Know> know = new List<Know>();
         @AuraEnabled public String draft;
     }
 
@@ -161,6 +171,40 @@ public with sharing class CqFieldActionReview {
             v.suggestedOutcome = 'No Field Action';
             v.suggestedWhy = 'Score ' + v.score + ' of 100' + (v.reachedField ? '.' : ' and nothing shows the product reached the field.');
         }
+
+        // What We Know: the questions a coordinator needs answered, each with its source. Unknowns are shown, not hidden.
+        Quality_Event__c ev;
+        if (v.sourceId != null) {
+            List<Quality_Event__c> evs = [
+                SELECT Name, Where_Found__c, Injury__c, Safety_Risk__c, Aware_Date__c FROM Quality_Event__c
+                WHERE (Nonconformance__c != null AND Nonconformance__c = :r.Nonconformance__c) OR (Complaint__c != null AND Complaint__c = :r.Complaint__c)
+                ORDER BY CreatedDate LIMIT 1];
+            if (!evs.isEmpty()) { ev = evs[0]; }
+        }
+        String evSrc = ev == null ? 'No event recorded' : 'Reported at intake, ' + ev.Name;
+        v.know.add(new Know('Was anyone injured?', ev?.Injury__c, evSrc));
+        v.know.add(new Know('Is there a safety risk?', ev?.Safety_Risk__c, evSrc));
+        v.know.add(new Know('Where was it found?', ev?.Where_Found__c, evSrc));
+        v.know.add(new Know('When did we become aware?', ev?.Aware_Date__c == null ? null : ev.Aware_Date__c.format('MMM d, yyyy h:mm a'), evSrc));
+        v.know.add(new Know('Has product shipped?',
+            v.qtyShipped == null ? null : shipped ? 'Yes, ' + v.qtyShipped.format() + ' units' : 'No, none recorded',
+            v.qtyShipped == null ? 'No shipment data connected' : 'Quantity Shipped on this review'));
+        String contained; String containedSrc = 'Not tracked for complaints';
+        if (r.Nonconformance__c != null) {
+            Integer total = 0; Integer stillOpen = 0;
+            for (compliancequest__SQX_Containment__c c : [
+                    SELECT compliancequest__Is_Complete__c FROM compliancequest__SQX_Containment__c
+                    WHERE compliancequest__SQX_Nonconformance__c = :r.Nonconformance__c AND compliancequest__Status__c != 'Void' LIMIT 50]) {
+                total++; if (c.compliancequest__Is_Complete__c != true) { stillOpen++; }
+            }
+            contained = total == 0 ? 'No, none recorded'  : stillOpen == 0 ? 'Yes, containment complete' : 'In progress, ' + stillOpen + ' not yet complete';
+            containedSrc = 'Containment records on ' + v.sourceName;
+        }
+        v.know.add(new Know('Is the lot contained?', contained, containedSrc));
+        v.know.add(new Know('Are there complaints on this lot?', lot == null ? null : lotComplaints == 0 ? 'None' : String.valueOf(lotComplaints),
+            lot == null ? 'No lot recorded' : 'Complaints in CQ on lot ' + lot));
+        v.know.add(new Know('What did triage set the risk at?', sourceRisk,
+            sourceRisk != null ? 'NC triage of ' + v.sourceName : isComplaint ? 'Complaints are not triaged here' : 'Not triaged yet'));
         return v;
     }
 

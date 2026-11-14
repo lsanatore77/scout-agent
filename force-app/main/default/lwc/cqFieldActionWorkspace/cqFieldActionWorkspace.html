@@ -74,10 +74,24 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="card sug top14">
-                            <div class="rec">&#10022; CQ.AI Suggests:</div>
-                            <div class="sughead"><span class="big">{v.suggestedOutcome}</span></div>
-                            <div class="para">{v.suggestedWhy}</div>
+                        <div class="cols wide top14">
+                            <div class="card">
+                                <div class="lab">What We Know</div>
+                                <div class="ktable">
+                                    <template for:each={v.know} for:item="k">
+                                        <div key={k.q} class="krow">
+                                            <span class="fn"><span class="kq">{k.q}</span><span class="rk">{k.src}</span></span>
+                                            <template if:true={k.unknown}><span class="ka unk">Not known</span></template>
+                                            <template if:false={k.unknown}><span class="ka">{k.a}</span></template>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="card sug">
+                                <div class="rec">&#10022; CQ.AI Suggests:</div>
+                                <div class="sughead"><span class="big">{v.suggestedOutcome}</span></div>
+                                <div class="para">{v.suggestedWhy}</div>
+                            </div>
                         </div>
                     </template>
 

@@ -56,7 +56,14 @@
 .decided { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 12px; border-radius: 8px; background: #e6f4ec; color: #12784a; font-weight: 600; }
 .decided .link { margin-left: auto; }
 .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.cols.wide { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
 .col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.ktable { margin-top: 6px; }
+.krow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid #eceff2; }
+.krow:last-child { border-bottom: none; padding-bottom: 0; }
+.kq { font-size: 14px; }
+.ka { flex: none; max-width: 50%; font-size: 14px; font-weight: 700; text-align: right; }
+.ka.unk { padding: 2px 10px; border-radius: 999px; background: #fff8e1; border: 1px solid #f2d3a8; color: #7a4100; font-size: 12px; font-weight: 600; }
 .card { padding: 14px; border-radius: 10px; border: 1px solid #dde1e6; background: #fff; }
 .card.sug { border-color: #dcd3ff; background: #f8f6ff; }
 .para { margin-top: 6px; font-size: 14px; line-height: 1.45; white-space: pre-line; }
@@ -118,4 +125,4 @@
 .btn { min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn.primary { border-color: #1d5fd1; background: #1d5fd1; color: #fff; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
-@media (max-width: 760px) { .body { flex-direction: column; } .steps { width: auto; border-right: none; border-bottom: 1px solid #eceff2; } .cols, .paths, .pair, .problem { grid-template-columns: 1fr; } .cq { flex-direction: column; } }
+@media (max-width: 760px) { .body { flex-direction: column; } .steps { width: auto; border-right: none; border-bottom: 1px solid #eceff2; } .cols, .cols.wide, .paths, .pair, .problem { grid-template-columns: 1fr; } .cq { flex-direction: column; } }
