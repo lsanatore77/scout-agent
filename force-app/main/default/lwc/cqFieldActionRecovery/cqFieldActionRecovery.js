@@ -70,7 +70,17 @@ export default class CqFieldActionRecovery extends LightningElement {
         return 'Track the product coming back and the customers confirming, against the strategy: ' + parts.join(', ') + '.';
     }
 
-    // ---- 1. recovery by lot
+    // ---- 1. recovery by lot: the columns follow the action. A removal brings units back or has them destroyed on site;
+    // a correction fixes them where they are (some may still come back); an advisory notice leaves them in use.
+    get isRemoval() { return this.v.action === 'Removal (Recall)'; }
+    get isCorrection() { return this.v.action === 'Correction'; }
+    get isNotice() { return this.v.action === 'Advisory Notice'; }
+    get showRecovery() { return !this.isNotice; }
+    get showDestroyed() { return !this.isCorrection; }
+    get showCorrected() { return this.isCorrection; }
+    get tableHint() {
+        return 'Shipped comes from the lot shipments. Click ' + (this.isCorrection ? 'Corrected or Returned' : 'Returned or Destroyed') + ' to edit them.';
+    }
     get lotRows() {
         return this.v.lots.map((l) => {
             const e = this.edits;

@@ -11,12 +11,17 @@
         <template if:true={showStep}>
             <p class="p">{intro}</p>
 
+            <template if:true={isNotice}><p class="note">An advisory notice leaves the product in use, so there are no units to recover. Effectiveness rests on the customers acknowledging.</p></template>
+            <template if:true={showRecovery}>
             <section class="card">
                 <div class="ch"><span class="cn">1</span><span class="ct">Recovery by Lot</span><span class="grow"></span><span class="tot">{recoveryLine}</span></div>
                 <div class="tblwrap">
                     <table class="ht">
                         <thead><tr>
-                            <th>Lot</th><th class="num">Shipped</th><th class="num">Returned</th><th class="num">Destroyed</th><th class="num">Corrected</th>
+                            <th>Lot</th><th class="num">Shipped</th>
+                            <template if:true={showCorrected}><th class="num">Corrected</th></template>
+                            <th class="num">Returned</th>
+                            <template if:true={showDestroyed}><th class="num">Destroyed</th></template>
                             <th class="num">Still in Field</th><th class="barcol">Recovered</th>
                         </tr></thead>
                         <tbody>
@@ -25,17 +30,17 @@
                                     <td class="b nw">{l.lot}</td>
                                     <td class="num">{l.shippedText}</td>
                                     <template if:true={l.isEditing}>
+                                        <template if:true={showCorrected}><td class="num"><input class="ta ni" type="number" min="0" data-f="corrected" value={l.correctedVal} onchange={handleQty} aria-label="Units corrected" /></td></template>
                                         <td class="num"><input class="ta ni" type="number" min="0" data-f="returned" value={l.returnedVal} onchange={handleQty} aria-label="Units returned" /></td>
-                                        <td class="num"><input class="ta ni" type="number" min="0" data-f="destroyed" value={l.destroyedVal} onchange={handleQty} aria-label="Units destroyed" /></td>
-                                        <td class="num"><input class="ta ni" type="number" min="0" data-f="corrected" value={l.correctedVal} onchange={handleQty} aria-label="Units corrected" /></td>
+                                        <template if:true={showDestroyed}><td class="num"><input class="ta ni" type="number" min="0" data-f="destroyed" value={l.destroyedVal} onchange={handleQty} aria-label="Units destroyed" /></td></template>
                                         <td class="num" colspan="2"><span class="locwrap">
                                             <button class="btn xs primary" data-id={l.id} onclick={handleSaveLot} disabled={busy}>Save</button>
                                             <button class="btn xs" onclick={handleCancelEdit}>Cancel</button></span></td>
                                     </template>
                                     <template if:true={l.notEditing}>
+                                        <template if:true={showCorrected}><td class="num"><button class="cell num" data-id={l.id} onclick={handleStartEdit} disabled={locked} title="Click to edit" aria-label={l.editLabel}>{l.correctedText}</button></td></template>
                                         <td class="num"><button class="cell num" data-id={l.id} onclick={handleStartEdit} disabled={locked} title="Click to edit" aria-label={l.editLabel}>{l.returnedText}</button></td>
-                                        <td class="num"><button class="cell num" data-id={l.id} onclick={handleStartEdit} disabled={locked} title="Click to edit" aria-label={l.editLabel}>{l.destroyedText}</button></td>
-                                        <td class="num"><button class="cell num" data-id={l.id} onclick={handleStartEdit} disabled={locked} title="Click to edit" aria-label={l.editLabel}>{l.correctedText}</button></td>
+                                        <template if:true={showDestroyed}><td class="num"><button class="cell num" data-id={l.id} onclick={handleStartEdit} disabled={locked} title="Click to edit" aria-label={l.editLabel}>{l.destroyedText}</button></td></template>
                                         <td class={l.fieldCls}>{l.fieldText}</td>
                                         <td class="barcol"><template if:true={l.hasPct}><span class="barrow"><span class="track"><span class="fill" style={l.barStyle}></span></span><span class="pct">{l.pctText}</span></span></template></td>
                                     </template>
@@ -44,8 +49,9 @@
                         </tbody>
                     </table>
                 </div>
-                <span class="hint">Shipped comes from the lot shipments. Click Returned, Destroyed or Corrected to edit them.</span>
+                <span class="hint">{tableHint}</span>
             </section>
+            </template>
 
             <div class="grid">
                 <section class="card">
@@ -90,7 +96,7 @@
                         </div>
                     </template>
                     <template if:false={hasHolds}><p class="note">No stock was held in the strategy.</p></template>
-                    <span class="hint">&#10022; marks CQ.AI's suggestion. Dispositions are fixed when the verdict is confirmed.</span>
+                    <span class="hint">Stock still in our control, held in the Strategy step. A finished lot's disposition also covers the units customers send back. &#10022; marks CQ.AI's suggestion; dispositions are fixed when the verdict is confirmed.</span>
                 </section>
             </div>
 
