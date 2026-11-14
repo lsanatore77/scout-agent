@@ -101,180 +101,92 @@
                         <div class="sechead"><h3 class="q nom">Scope</h3>
                             <template if:true={v.scope}><span class={scopePill}>{v.scope}</span></template>
                             <span class={statePill}>{stateText}</span>
-                            <span class="rk">{approvedLine}</span>
                         </div>
                         <p class="p top14">{scopeIntro}</p>
-                        <template if:true={sentBack}>
-                            <div class="errbox back"><span class="fname">The committee sent the scope back.</span><span class="backtext">{sentBack}</span></div>
-                        </template>
 
-                        <div class="lab">Lots in Scope</div>
                         <template if:true={hasLots}>
-                            <div class="tblwrap">
+                            <div class="tbar">
+                                <div class="togs" role="group" aria-label="Which lots to show">
+                                    <button class={allTab} data-v="all" onclick={handleView} aria-pressed={allPressed}>All Lots</button>
+                                    <button class={inTab} data-v="in" onclick={handleView} aria-pressed={inPressed}>In Scope</button>
+                                </div>
+                                <span class="rk">{countLine}</span>
+                                <span class={pendingCls}>{pendingLine}</span>
+                            </div>
+                            <div class="tblwrap tree">
                                 <table class="lottable">
                                     <thead><tr>
-                                        <th>Lot</th><th class="num">Built</th><th>Made</th><th class="num">Shipped</th><th class="num">On Hand</th><th>Location</th><th>How it came in</th><th></th>
+                                        <th class="cscope">Scope</th><th>Level / Item</th><th>Part &middot; Rev</th><th>Lot</th><th class="num">Qty</th><th>Supplier</th><th>Trace</th>
+                                        <th class="num">Shipped</th><th class="num">On Hand</th><th>Location</th>
                                     </tr></thead>
                                     <tbody>
-                                        <template for:each={lotRows} for:item="l">
-                                            <tr key={l.name} class={l.rowCls}>
-                                                <td><span class="lname">{l.name}</span>
-                                                    <template if:true={l.pending}><div><span class="spill pend">{l.pendingText}</span></div></template>
-                                                </td>
-                                                <td class="num">{l.builtText}</td>
-                                                <td>{l.madeText}</td>
-                                                <td class="num"><input class="ta ni" type="number" min="0" data-id={l.id} data-f="shipped" value={l.shippedVal} onchange={handleQty} aria-label="Units shipped" /></td>
-                                                <td class="num"><input class="ta ni" type="number" min="0" data-id={l.id} data-f="onHand" value={l.onHandVal} onchange={handleQty} aria-label="Units on hand" /></td>
-                                                <td><input class="ta ti" type="text" data-id={l.id} data-f="location" value={l.locVal} onchange={handleQty} aria-label="Location" /></td>
-                                                <td><span class="rk">{l.howText}</span></td>
-                                                <td>
-                                                    <div class="rowacts">
-                                                        <template if:true={l.dirty}><button class="btn xs primary" data-id={l.id} onclick={handleSaveLot} disabled={saving}>Save</button></template>
-                                                        <button class="btn xs" data-id={l.name} onclick={handleGenealogy}>Genealogy</button>
-                                                        <template if:true={canChange}><button class="btn xs" data-id={l.name} onclick={handleStartRemove}>Remove</button></template>
-                                                    </div>
-                                                </td>
+                                        <template for:each={rows} for:item="r">
+                                            <tr key={r.key} class={r.rowCls}>
+                                                <template if:true={r.isNote}>
+                                                    <td></td>
+                                                    <td colspan="9"><span class="ind" style={r.indentStyle}></span><span class="chev0"></span><span class="rk">{r.text}</span></td>
+                                                </template>
+                                                <template if:true={r.isLot}>
+                                                    <td class="cscope">
+                                                        <span class="sc">
+                                                            <template if:true={r.showCheck}>
+                                                                <input class="tick" type="checkbox" data-name={r.name} checked={r.checked} disabled={r.checkDisabled} onchange={handleTick} aria-label={r.checkLabel} />
+                                                            </template>
+                                                            <template if:true={r.added}><span class="spill added" title={r.addedTitle}>Added</span></template>
+                                                            <template if:true={r.removing}><span class="spill removing">Removing</span></template>
+                                                        </span>
+                                                    </td>
+                                                    <td class="nw">
+                                                        <span class="ind" style={r.indentStyle}></span>
+                                                        <template if:true={r.hasKids}><button class="chev" data-key={r.key} onclick={handleToggle} aria-label={r.toggleLabel} aria-expanded={r.openText}>{r.chev}</button></template>
+                                                        <template if:true={r.noKids}><span class="chev0"></span></template>
+                                                        <span class={r.itemCls}>{r.item}</span>
+                                                        <template if:true={r.pendingAdd}><span class="spill notconf">Not Confirmed</span></template>
+                                                        <template if:true={r.suggested}><span class="pill ai" title={r.why}>&#10022; CQ.AI Suggests</span></template>
+                                                    </td>
+                                                    <td class="nw mut">{r.partRev}</td>
+                                                    <td class="nw">{r.lot}</td>
+                                                    <td class="num">{r.qty}</td>
+                                                    <td class="nw mut">{r.supplier}</td>
+                                                    <td class="nw"><span class={r.traceCls}>{r.trace}</span></td>
+                                                    <template if:true={r.editable}>
+                                                        <td class="num"><input class="ta ni" type="number" min="0" data-id={r.rowId} data-f="shipped" value={r.shippedVal} onchange={handleQty} aria-label="Units shipped" /></td>
+                                                        <td class="num"><input class="ta ni" type="number" min="0" data-id={r.rowId} data-f="onHand" value={r.onHandVal} onchange={handleQty} aria-label="Units on hand" /></td>
+                                                        <td><span class="locwrap"><input class="ta ti" type="text" data-id={r.rowId} data-f="location" value={r.locVal} onchange={handleQty} aria-label="Location" />
+                                                            <template if:true={r.dirty}><button class="btn xs primary" data-id={r.rowId} onclick={handleSaveLot} disabled={saving}>Save</button></template></span></td>
+                                                    </template>
+                                                    <template if:false={r.editable}><td></td><td></td><td></td></template>
+                                                </template>
+                                                <template if:true={r.isNode}>
+                                                    <td class="cscope"><template if:true={r.covered}><span class="spill covered" title={r.coveredTitle}>Covered</span></template></td>
+                                                    <td class="nw">
+                                                        <span class="ind" style={r.indentStyle}></span>
+                                                        <template if:true={r.hasKids}><button class="chev" data-key={r.key} onclick={handleToggle} aria-label={r.toggleLabel} aria-expanded={r.openText}>{r.chev}</button></template>
+                                                        <template if:true={r.noKids}><span class="chev0"></span></template>
+                                                        <span class={r.itemCls}>{r.item}</span>
+                                                    </td>
+                                                    <td class="nw mut">{r.partRev}</td>
+                                                    <td class="nw">{r.lot}</td>
+                                                    <td class="num">{r.qty}</td>
+                                                    <td class="nw mut">{r.supplier}</td>
+                                                    <td class="nw"><span class={r.traceCls}>{r.trace}</span></td>
+                                                    <td></td><td></td><td></td>
+                                                </template>
                                             </tr>
                                         </template>
                                     </tbody>
                                 </table>
                             </div>
-                            <p class="note">Shipped, on hand and location are entered here: no distribution or inventory data is connected.</p>
+                            <p class="note">Shipped, on hand and location are entered here: no distribution or inventory data is connected. Sub-assemblies and components come with their lot, so they have no tick box.</p>
+                            <template if:true={isPartial}>
+                                <div class="cfoot">
+                                    <span class="rk">{confirmHint}</span>
+                                    <button class="btn" onclick={handleDiscard} disabled={cantDiscard}>Discard Changes</button>
+                                    <button class="btn primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
+                                </div>
+                            </template>
                         </template>
-                        <template if:false={hasLots}><p class="note">No lots are in scope yet.</p></template>
-                        <template if:true={hasRemovedSince}><p class="note">{removedSinceText}</p></template>
-
-                        <template if:true={isRemoving}>
-                            <div class="inline">
-                                <label class="fl">{removeTitle} *
-                                    <input class="ta" type="text" value={reason} oninput={handleReason} placeholder="Why this lot is not affected." />
-                                </label>
-                                <button class="btn" onclick={handleCancel}>Cancel</button>
-                                <button class="btn primary" onclick={handleConfirmRemove} disabled={cantConfirm}>Remove Lot</button>
-                            </div>
-                        </template>
-                        <template if:true={isAdding}>
-                            <div class="inline">
-                                <label class="fl">{addTitle} *
-                                    <input class="ta" type="text" value={reason} oninput={handleReason} placeholder="Why this lot is affected." />
-                                </label>
-                                <button class="btn" onclick={handleCancel}>Cancel</button>
-                                <button class="btn primary" onclick={handleConfirmAdd} disabled={cantConfirm}>Add Lot</button>
-                            </div>
-                        </template>
-
-                        <template if:true={showGen}>
-                            <div class="card gen">
-                                <div class="lab">{genTitle}</div>
-                                <template if:true={genLoading}><p class="note">Reading the batch record&hellip;</p></template>
-                                <template if:true={gen}>
-                                    <template if:true={gen.note}><p class="note">{gen.note}</p></template>
-                                    <template if:true={hasGenComponents}>
-                                        <p class="note">Each component lot this lot was built from, and the other finished lots that used it.</p>
-                                        <template for:each={genComponents} for:item="c">
-                                            <div key={c.lot} class="comp">
-                                                <span class="fname">{c.head}</span>
-                                                <template if:true={c.hasSisters}>
-                                                    <div class="chips">
-                                                        <template for:each={c.sisters} for:item="s">
-                                                            <span key={s.key} class={s.cls}>{s.text}
-                                                                <template if:true={s.inScopeNow}><span class="rk">in scope</span></template>
-                                                                <template if:true={s.canAdd}><button class="btn xs" data-id={s.lot} data-comp={c.lot} onclick={handleAddSister}>Add</button></template>
-                                                            </span>
-                                                        </template>
-                                                    </div>
-                                                </template>
-                                                <template if:false={c.hasSisters}><span class="rk">No other finished lot used this component lot.</span></template>
-                                            </div>
-                                        </template>
-                                    </template>
-                                </template>
-                            </div>
-                        </template>
-
-                        <template if:true={isPartial}>
-                            <div class="sec">
-                                <div class="lab">Lots Left Out</div>
-                                <template if:true={hasOut}>
-                                    <div class="list">
-                                        <template for:each={outRows} for:item="l">
-                                            <div key={l.name} class="act">
-                                                <span class="rt"><span class="rv">{l.name}</span><span class="rk">{l.meta}</span>
-                                                    <template if:true={l.why}><span class="rk">{l.why}</span></template>
-                                                </span>
-                                                <template if:true={l.suggested}><span class="pill">&#10022; CQ.AI Suggests</span></template>
-                                                <template if:true={l.known}><button class="btn xs" data-id={l.name} onclick={handleGenealogy}>Genealogy</button></template>
-                                                <template if:true={canChange}><button class="btn xs" data-id={l.name} onclick={handleStartAdd}>Add</button></template>
-                                            </div>
-                                        </template>
-                                    </div>
-                                </template>
-                                <template if:false={hasOut}><p class="note">Every lot of the part is in scope.</p></template>
-                                <template if:true={hasHiddenOut}><p class="note"><button class="link" onclick={handleShowAllLots}>{hiddenOutLabel}</button></p></template>
-                            </div>
-
-                            <div class="sec">
-                                <div class="lab">{approvalTitle}</div>
-                                <template if:true={canSubmitScope}>
-                                    <div class="cols top14">
-                                        <div class="card">
-                                            <div class="lab">Committee</div>
-                                            <template if:true={normal}>
-                                                <template for:each={seats} for:item="s">
-                                                    <label key={s.functionId} class="fl">{s.name}
-                                                        <select class="ta" data-id={s.functionId} onchange={handleSeat}>
-                                                            <option value="">Choose</option>
-                                                            <template for:each={s.opts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
-                                                        </select>
-                                                        <template if:true={s.none}><span class="rk">No one holds this function yet.</span></template>
-                                                    </label>
-                                                </template>
-                                            </template>
-                                            <template if:true={emergency}>
-                                                <label class="fl">Emergency Approver
-                                                    <select class="ta" data-f="emergencyUser" onchange={handleField}>
-                                                        <option value="">Choose</option>
-                                                        <template for:each={emergencyOpts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
-                                                    </select>
-                                                </label>
-                                                <label class="fl">Reason for Emergency *
-                                                    <textarea class="ta" rows="3" data-f="emergencyReason" value={emergencyReason} oninput={handleField} placeholder="Why the scope cannot wait for the full committee."></textarea>
-                                                </label>
-                                            </template>
-                                        </div>
-                                        <div class="col">
-                                            <label class="chk"><input type="checkbox" checked={emergency} onchange={handleEmergency} />Escalate to Emergency Approval</label>
-                                            <p class="note">The committee starts as the one that approved the decision. In an emergency one emergency approver signs off the scope.</p>
-                                            <div class="foot">
-                                                <span class="blocker">{submitBlocker}</span>
-                                                <button class="btn primary" onclick={handleSubmitScope} disabled={cantSubmit}>{submitLabel}</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </template>
-                                <template if:true={hasSteps}>
-                                    <div class="card top14">
-                                        <template for:each={csteps} for:item="s">
-                                            <div key={s.id} class="crow">
-                                                <span class="fn"><span class="fname">{s.seat}</span><span class="rk">{s.line}</span><template if:true={s.quote}><span class="rk">{s.quote}</span></template></span>
-                                                <span class={s.cls}>{s.label}</span>
-                                                <template if:true={s.canAct}>
-                                                    <button class="btn sm primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
-                                                    <button class="btn sm" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
-                                                </template>
-                                            </div>
-                                        </template>
-                                        <template if:true={canActAny}>
-                                            <label class="fl">Comment
-                                                <textarea class="ta" rows="2" data-f="comment" value={comment} oninput={handleField} placeholder="Required when you send it back."></textarea>
-                                            </label>
-                                        </template>
-                                        <template if:true={showLastApproval}><p class="note">The last scope approval. A new one starts when the lots change.</p></template>
-                                    </div>
-                                </template>
-                                <template if:false={canSubmitScope}><template if:false={hasSteps}><p class="note">Nothing to approve yet: put the lots in scope first.</p></template></template>
-                            </div>
-                        </template>
+                        <template if:false={hasLots}><p class="note">No lots of this part were found.</p></template>
 
                         <div class="sec">
                             <div class="lab">Scope Changes</div>
@@ -283,7 +195,7 @@
                                     <div key={c.key} class="logrow"><span class="logwhen">{c.at}</span><span class="fn"><span>{c.line}</span><span class="rk">{c.by}</span></span></div>
                                 </template>
                             </template>
-                            <template if:false={hasChanges}><p class="note">No changes yet.</p></template>
+                            <template if:false={hasChanges}><p class="note">No confirmed changes yet.</p></template>
                         </div>
                     </template>
 

@@ -3,11 +3,10 @@ import { NavigationMixin } from 'lightning/navigation';
 import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqFieldActionScope.getView';
 import getGenealogy from '@salesforce/apex/CqFieldActionScope.genealogy';
-import addLot from '@salesforce/apex/CqFieldActionScope.addLot';
-import removeLot from '@salesforce/apex/CqFieldActionScope.removeLot';
+import setLot from '@salesforce/apex/CqFieldActionScope.setLot';
+import confirmScope from '@salesforce/apex/CqFieldActionScope.confirmScope';
+import discardChanges from '@salesforce/apex/CqFieldActionScope.discardChanges';
 import saveLot from '@salesforce/apex/CqFieldActionScope.saveLot';
-import submitScope from '@salesforce/apex/CqFieldActionScope.submitScope';
-import actOnStep from '@salesforce/apex/CqFieldActionScope.act';
 
 // The seven steps of a field action. This batch builds the first two; the rest open in later batches.
 const STEPS = [
@@ -20,9 +19,14 @@ const STEPS = [
     { label: 'Closure', ready: false }
 ];
 const SCOPE = 1;
-const STEP_LABEL = { Open: 'Pending', Approved: 'Approved', Rejected: 'Sent Back', Void: 'Not Required', Skipped: 'Not Required' };
-const STATE_LABEL = { 'Full Scope': 'Full Scope', 'Being Defined': 'Being Defined', 'With Committee': 'With Committee', Approved: 'Scope Approved' };
-const PAGE = 8;        // lots left out of scope shown before "Show all"
+const TRACE = {
+    Verified: { mark: '✔ ', cls: 'tr ok' },
+    NC: { mark: '✖ ', cls: 'tr bad' },
+    'No lot recorded': { mark: '⚠ ', cls: 'tr warn' },
+    'No approved supplier': { mark: '⚠ ', cls: 'tr warn' },
+    'CoC missing': { mark: '⚠ ', cls: 'tr warn' },
+    'CoC expired': { mark: '⚠ ', cls: 'tr warn' }
+};
 
 /** Field Action workspace: the coordinator's steps from what was decided through closure. */
 export default class CqFieldActionManager extends NavigationMixin(LightningElement) {
@@ -32,67 +36,34 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     saving = false;
     step = 0;
     // scope step
+    view = 'all';        // all | in
+    open = {};           // row key -> expanded
+    gens = {};           // lot -> genealogy from its batch record
+    loading = {};        // lot -> genealogy being read
+    ticking = {};        // lot -> tick being saved
     edits = {};          // lot row id -> { shipped, onHand, location } being typed
-    adding = '';         // lot being added, waiting for its reason
-    removing = '';       // lot being removed, waiting for its reason
-    reason = '';
-    showAllLots = false;
-    gen;                 // genealogy of the selected lot
-    genLot = '';
-    genLoading = false;
-    // scope approval
-    team = {};
-    emergency = false;
-    emergencyUser = '';
-    emergencyReason = '';
-    comment = '';
 
     async connectedCallback() {
-        try { this.apply(await getView({ recordId: this.recordId }), true); }
+        try { this.apply(await getView({ recordId: this.recordId })); }
         catch (e) { this.error = this.msg(e, 'Could not read this field action.'); }
     }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
-    apply(v, first) {
-        this.v = v;
-        if (first) {
-            this.step = 0;
-            this.fillTeam();
-        }
-    }
-    /** The scope committee starts as the committee that approved the decision; each seat can be changed. */
-    fillTeam() {
-        const team = {};
-        const taken = new Set();
-        (this.v.defaultTeam || []).forEach((m) => {
-            const seat = this.allSeats.find((s) => s.functionId === m.functionId);
-            if (!seat) { return; }
-            if (seat.emergency) { this.emergencyUser = m.userId; return; }
-            if (seat.people.some((p) => p.id === m.userId)) { team[m.functionId] = m.userId; taken.add(m.userId); }
-        });
-        this.allSeats.forEach((s) => {
-            if (s.emergency) { if (!this.emergencyUser && s.people.length) { this.emergencyUser = s.people[0].id; } return; }
-            if (team[s.functionId]) { return; }
-            const free = s.people.find((p) => !taken.has(p.id));
-            if (free) { team[s.functionId] = free.id; taken.add(free.id); }
-        });
-        this.team = team;
-        this.emergency = !!this.v.defaultEmergency;
-    }
+    apply(v) { this.v = JSON.parse(JSON.stringify(v)); }
     get ready() { return !!this.v; }
     dash(x) { return x === undefined || x === null || x === '' ? '—' : String(x); }
     day(d) { return d ? new Date(d).toLocaleDateString() : ''; }
     when(d) { return d ? new Date(d).toLocaleString() : ''; }
-    dateOnly(d) { const p = String(d || '').split('-'); return p.length === 3 ? new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])).toLocaleDateString() : ''; }
+    num(x) { return x === undefined || x === null ? '—' : String(Number(x)); }
 
     // ---- header
     get partText() { return this.dash(this.v.partNumber); }
-    get scopeText() { return this.v.scope ? this.v.scope + ' · ' + (STATE_LABEL[this.v.scopeStatus] || this.v.scopeStatus || 'Not set') : 'Not set'; }
+    get scopeText() { return this.v.scope ? this.v.scope + ' · ' + this.stateText : 'Not set'; }
     get classText() { return this.dash(this.v.recallClass); }
     handleEdit() {
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: this.recordId, objectApiName: 'Field_Action__c', actionName: 'edit' } });
     }
     async handleRefresh() {
-        try { this.apply(await getView({ recordId: this.recordId }), false); this.error = undefined; this.gen = undefined; this.genLot = ''; }
+        try { this.apply(await getView({ recordId: this.recordId })); this.error = undefined; this.gens = {}; this.edits = {}; }
         catch (e) { this.error = this.msg(e, 'Could not refresh this field action.'); }
     }
     handleOpen(event) {
@@ -102,17 +73,28 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     // ---- step rail
     get isFull() { return this.v.scope === 'Full'; }
     get isPartial() { return this.v.scope === 'Partial'; }
-    get scopeApproved() { return this.isFull || this.v.scopeStatus === 'Approved'; }
+    get lots() { return this.v.lots || []; }
+    get confirmedLots() { return this.lots.filter((l) => l.confirmed); }
+    get draftLots() { return this.lots.filter((l) => l.inScope); }
+    get pendingAdds() { return this.lots.filter((l) => l.inScope && !l.confirmed).length; }
+    get pendingRemoves() { return this.lots.filter((l) => !l.inScope && l.confirmed).length; }
+    get pending() { return this.pendingAdds + this.pendingRemoves; }
+    get scopeConfirmed() { return this.isFull || (this.v.scopeStatus === 'Confirmed' && this.pending === 0); }
+    get stateText() {
+        if (this.isFull) { return 'Full Scope'; }
+        return this.scopeConfirmed ? 'Confirmed' : this.v.scope ? 'Being Defined' : 'Not set';
+    }
     get steps() {
-        const n = this.inRows.length;
+        const n = this.isFull ? this.draftLots.length : this.confirmedLots.length;
+        const lotsText = n + ' lot' + (n === 1 ? '' : 's');
         const subs = [
             this.v.actionType ? this.v.actionType + (this.v.recallClass ? ' · ' + this.v.recallClass : '') : 'Decided',
-            this.isFull ? 'Full · ' + n + ' lot' + (n === 1 ? '' : 's') : this.isPartial ? (STATE_LABEL[this.v.scopeStatus] || 'Being Defined') + ' · ' + n + ' lot' + (n === 1 ? '' : 's') : 'Scope not set',
-            'Next batch', this.scopeApproved ? 'Next batch' : 'Needs approved scope', this.scopeApproved ? 'Next batch' : 'Needs approved scope', 'Next batch', 'Next batch'
+            this.v.scope ? this.stateText + ' · ' + lotsText : 'Scope not set'
         ];
         return STEPS.map((s, i) => {
-            const done = i === 0 || (i === SCOPE && this.scopeApproved);
-            return { i, n: i + 1, label: s.label, sub: subs[i], done, notDone: !done, locked: !s.ready,
+            const done = i === 0 || (i === SCOPE && this.scopeConfirmed);
+            const sub = i < 2 ? subs[i] : s.needsScope && !this.scopeConfirmed ? 'Needs confirmed scope' : 'Next batch';
+            return { i, n: i + 1, label: s.label, sub, done, notDone: !done, locked: !s.ready,
                 cls: 'step' + (i === this.step ? ' active' : '') + (done ? ' done' : '') };
         });
     }
@@ -127,11 +109,12 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
 
     // ---- step 1: at a glance
     get tiles() {
-        const sum = (k) => this.inRows.reduce((t, l) => t + (l[k] ? Number(l[k]) : 0), 0);
+        const rows = this.isFull ? this.draftLots : this.confirmedLots;
+        const sum = (k) => rows.reduce((t, l) => t + (l[k] ? Number(l[k]) : 0), 0);
         const shipped = sum('shipped');
         return [
-            ['Lots in scope', String(this.inRows.length)],
-            ['Units built', this.inRows.some((l) => l.built) ? String(sum('built')) : '—'],
+            ['Lots in scope', String(rows.length)],
+            ['Units built', rows.some((l) => l.built) ? String(sum('built')) : '—'],
             ['Units shipped', shipped ? String(shipped) : this.dash(this.v.qtyShipped)],
             ['Risk', this.v.score !== undefined && this.v.score !== null ? (this.v.riskLevel || '') + ' · ' + this.v.score + ' of 100' : this.dash(this.v.riskLevel)]
         ].map(([label, value]) => ({ key: label, label, value }));
@@ -156,55 +139,180 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
 
     // ---- step 2: scope
     get scopePill() { return 'spill ' + (this.isFull ? 'full' : 'partial'); }
-    get statePill() {
-        const s = this.v.scopeStatus;
-        return 'spill state' + (s === 'Approved' || s === 'Full Scope' ? ' ok' : s === 'With Committee' ? ' wait' : '');
-    }
-    get stateText() { return STATE_LABEL[this.v.scopeStatus] || this.v.scopeStatus || 'Not set'; }
+    get statePill() { return 'spill state' + (this.scopeConfirmed ? ' ok' : this.v.scope ? ' wait' : ''); }
     get scopeIntro() {
-        if (this.isFull) { return 'Full scope covers every lot of ' + this.partText + '. Any lot found later is added automatically and logged below. No scope approval is needed.'; }
-        if (this.isPartial) { return 'Choose the lots this field action covers, then send the list for approval. Customer notifications and the regulatory report open once the scope is approved.'; }
+        if (this.isFull) { return 'Full scope covers every lot of ' + this.partText + '. Any lot found later is added automatically and logged below. Expand a lot to see what it was built from.'; }
+        if (this.isPartial) { return 'Tick the lots this field action covers. Each tick is saved as a draft straight away; the scope counts once you confirm it. Expand a lot to see what it was built from and where those component lots were used.'; }
         return 'This field action has no scope set. It was decided before scope was part of the review.';
     }
-    get approvedLine() { return this.v.scopeApprovedOn ? 'Last approved ' + this.when(this.v.scopeApprovedOn) : ''; }
-    get canChange() { return this.isPartial && this.v.scopeStatus !== 'With Committee' && this.v.status !== 'Closed'; }
-    get inRows() { return (this.v.inScope || []); }
-    get lotRows() {
-        return this.inRows.map((l) => {
-            const e = this.edits[l.id] || {};
-            const pending = this.isPartial && !l.approved;
-            return { ...l, sel: l.name === this.genLot,
-                rowCls: l.name === this.genLot ? 'sel' : '',
-                builtText: l.built !== undefined && l.built !== null ? String(l.built) : '—',
-                madeText: this.dateOnly(l.made),
-                howText: [l.how === 'Review' ? 'From review' : l.how === 'Automatic' ? 'Added automatically' : l.how === 'Coordinator' ? 'Added by coordinator' : '', l.reason].filter(Boolean).join(': '),
-                pending, pendingText: pending ? (this.v.scopeApprovedOn ? 'Added since approval' : 'Not yet approved') : '',
-                shippedVal: e.shipped !== undefined ? e.shipped : l.shipped, onHandVal: e.onHand !== undefined ? e.onHand : l.onHand,
-                locVal: e.location !== undefined ? e.location : l.location || '',
-                dirty: !!this.edits[l.id], removing: this.removing === l.name };
+    get canChange() { return this.isPartial && this.v.status !== 'Closed'; }
+    get allTab() { return 'tog' + (this.view === 'all' ? ' on' : ''); }
+    get inTab() { return 'tog' + (this.view === 'in' ? ' on' : ''); }
+    get allPressed() { return this.view === 'all' ? 'true' : 'false'; }
+    get inPressed() { return this.view === 'in' ? 'true' : 'false'; }
+    handleView(event) { this.view = event.currentTarget.dataset.v; }
+    get countLine() {
+        const n = this.draftLots.length;
+        return n + ' lot' + (n === 1 ? '' : 's') + ' in scope';
+    }
+    get pendingLine() {
+        if (!this.isPartial) { return ''; }
+        const parts = [];
+        if (this.pendingAdds) { parts.push(this.pendingAdds + ' added'); }
+        if (this.pendingRemoves) { parts.push(this.pendingRemoves + ' removed'); }
+        if (parts.length) { return parts.join(', ') + ', not confirmed'; }
+        if (this.v.scopeStatus === 'Confirmed') {
+            return 'Confirmed' + (this.v.scopeConfirmedBy ? ' by ' + this.v.scopeConfirmedBy : '') + (this.v.scopeConfirmedOn ? ' · ' + this.when(this.v.scopeConfirmedOn) : '');
+        }
+        return 'Not confirmed yet';
+    }
+    get pendingCls() { return 'pendline' + (this.pending ? ' warn' : ''); }
+    get busy() { return this.saving || Object.keys(this.ticking).length > 0; }
+    get cantConfirm() { return this.busy || this.draftLots.length === 0 || this.scopeConfirmed; }
+    get cantDiscard() { return this.busy || this.pending === 0; }
+    get confirmLabel() { return this.saving ? 'Saving…' : this.scopeConfirmed ? 'Scope Confirmed' : 'Confirm Scope'; }
+    get confirmHint() {
+        if (this.scopeConfirmed) { return 'Notifications and the Regulatory Report can use this lot list.'; }
+        return this.draftLots.length ? 'Confirming the lot list opens Notifications and the Regulatory Report.' : 'Tick at least one lot.';
+    }
+
+    /** The nested table: each lot, and when expanded what it was built from, level by level, with where-used rows. */
+    get rows() {
+        const out = [];
+        const byName = new Map(this.lots.map((l) => [l.name, l]));
+        const shown = this.view === 'in' ? this.lots.filter((l) => l.inScope || l.confirmed) : this.lots;
+        shown.forEach((l) => {
+            const key = l.name;
+            const isOpen = !!this.open[key];
+            out.push(this.lotRow(l, key, 0, isOpen, false));
+            if (!isOpen) { return; }
+            const g = this.gens[l.name];
+            if (this.loading[l.name]) { out.push(this.noteRow(key + '|wait', 1, 'Reading the batch record…')); return; }
+            if (!g) { return; }
+            if (g.note) { out.push(this.noteRow(key + '|note', 1, g.note)); return; }
+            const nodes = g.rows || [];
+            const kids = new Map();
+            nodes.forEach((n) => { const p = n.parentKey || '_'; if (!kids.has(p)) { kids.set(p, []); } kids.get(p).push(n); });
+            const walk = (parent, depth) => {
+                (kids.get(parent) || []).forEach((n) => {
+                    const nk = key + '|' + n.key;
+                    const used = (n.usedIn || []);
+                    const hasKids = kids.has(n.key) || used.length > 0;
+                    const nOpen = !!this.open[nk];
+                    out.push(this.nodeRow(n, nk, depth, hasKids, nOpen, l, g));
+                    if (!nOpen) { return; }
+                    walk(n.key, depth + 1);
+                    used.forEach((u, i) => {
+                        const sister = u.samePart ? byName.get(u.lot) : null;
+                        out.push(sister ? this.lotRow(sister, nk + '|u' + i, depth + 1, false, n.lot)
+                            : this.noteRow(nk + '|u' + i, depth + 1, 'Also used in lot ' + u.lot + (u.part ? ' (' + u.part + ')' : '') + ', a different product'));
+                    });
+                });
+            };
+            walk('_', 1);
+            if (!nodes.length) { out.push(this.noteRow(key + '|none', 1, 'No components recorded.')); }
         });
+        return out;
     }
-    get hasLots() { return this.inRows.length > 0; }
-    get removedSince() {
-        // lots approved in scope and since removed: still need approval of the removal
-        return (this.v.outOfScope || []).filter((l) => l.id && l.approved).map((l) => l.name);
+    indent(depth) { return 'width:' + (depth * 1.25) + 'rem'; }
+    lotRow(l, key, depth, isOpen, sharedLot) {
+        const removing = !l.inScope && l.confirmed;
+        const pendingAdd = this.isPartial && l.inScope && !l.confirmed;
+        const e = (l.id && this.edits[l.id]) || {};
+        const where = sharedLot !== false;
+        const traceText = l.records ? l.records + ' record' + (l.records === 1 ? '' : 's') + (l.signals ? ' · ' + l.signals + ' signal' + (l.signals === 1 ? '' : 's') : '') : 'No records';
+        return {
+            key, isLot: true, isNode: false, isNote: false,
+            rowCls: 'r0' + (where ? ' wu' : l.inScope ? ' in' : l.suggested ? ' sug' : ''),
+            indentStyle: this.indent(depth),
+            hasKids: !where && !!l.known, noKids: where || !l.known, chev: isOpen ? '▾' : '▸', openText: isOpen ? 'true' : 'false',
+            toggleLabel: (isOpen ? 'Collapse lot ' : 'Expand lot ') + l.name,
+            item: where ? 'Where used · Lot ' + l.name : 'Lot ' + l.name, itemCls: where ? 'it wu' : 'it lot',
+            partRev: this.partText + (this.gens[l.name] && this.gens[l.name].revision ? ' · Rev ' + this.gens[l.name].revision : ''),
+            lot: l.name, qty: l.built !== undefined && l.built !== null ? this.num(l.built) + ' built' : '—', supplier: '—',
+            trace: where ? 'Shares ' + sharedLot : (l.records ? '⚠ ' : '✔ ') + traceText,
+            traceCls: where || l.records ? 'tr warn' : 'tr ok',
+            name: l.name,
+            showCheck: this.isPartial, checked: l.inScope, checkDisabled: !this.canChange || l.locked || !!this.ticking[l.name],
+            checkLabel: (l.inScope ? 'Take lot ' : 'Put lot ') + l.name + (l.inScope ? ' out of scope' : ' in scope'),
+            added: l.inScope, addedTitle: l.locked ? (l.reason || 'Came in with the review decision') : l.how === 'Coordinator' ? 'Ticked by the coordinator' : (l.reason || ''),
+            pendingAdd, removing,
+            suggested: !l.inScope && !removing && !!l.suggested, why: l.why,
+            editable: !where && l.inScope && !!l.id, rowId: l.id,
+            shippedVal: e.shipped !== undefined ? e.shipped : l.shipped, onHandVal: e.onHand !== undefined ? e.onHand : l.onHand,
+            locVal: e.location !== undefined ? e.location : l.location || '',
+            dirty: !!(l.id && this.edits[l.id])
+        };
     }
-    get hasRemovedSince() { return this.isPartial && this.removedSince.length > 0; }
-    get removedSinceText() { return 'Removed since approval: ' + this.removedSince.join(', '); }
-    get outRows() {
-        const all = (this.v.outOfScope || []);
-        const shown = this.showAllLots ? all : all.filter((l) => l.suggested || l.known).slice(0, PAGE);
-        const n = (x, w) => x + ' ' + w + (x === 1 ? '' : 's');
-        return shown.map((l) => ({ ...l,
-            meta: [l.built !== undefined && l.built !== null ? l.built + ' built' : '', l.made ? 'made ' + this.dateOnly(l.made) : '',
-                n(l.records || 0, 'record'), l.known ? '' : 'no lot record in CQ'].filter(Boolean).join(' · '),
-            adding: this.adding === l.name }));
+    nodeRow(n, key, depth, hasKids, isOpen, lot, g) {
+        const t = TRACE[n.trace] || { mark: '', cls: 'tr' };
+        const sharedCount = (n.usedIn || []).length;
+        const traceText = n.trace === 'NC' ? 'NC' + (n.ncNumber ? ' · ' + n.ncNumber : '') : n.trace || '—';
+        return {
+            key, isLot: false, isNode: true, isNote: false,
+            rowCls: 'r' + Math.min(depth, 3),
+            indentStyle: this.indent(depth),
+            hasKids, noKids: !hasKids, chev: isOpen ? '▾' : '▸', openText: isOpen ? 'true' : 'false',
+            toggleLabel: (isOpen ? 'Collapse ' : 'Expand ') + (n.name || n.partNumber),
+            item: 'L' + n.level + ' · ' + (n.name || n.partNumber || ''),
+            itemCls: 'it' + (n.itemType === 'Sub-assembly' ? ' sub' : ''),
+            partRev: [n.partNumber, n.revision ? 'Rev ' + n.revision : ''].filter(Boolean).join(' · '),
+            lot: this.dash(n.lot), qty: this.num(n.qtyUsed), supplier: this.dash(n.supplier),
+            trace: t.mark + traceText + (sharedCount ? ' · used in ' + sharedCount + ' other lot' + (sharedCount === 1 ? '' : 's') : ''),
+            traceCls: sharedCount && t.cls === 'tr ok' ? 'tr warn' : t.cls,
+            covered: lot.inScope, coveredTitle: 'Comes with lot ' + lot.name + (g.batch ? ' (batch ' + g.batch + ')' : '')
+        };
     }
-    get hasOut() { return this.outRows.length > 0; }
-    get hiddenOut() { return this.showAllLots ? 0 : (this.v.outOfScope || []).length - this.outRows.length; }
-    get hasHiddenOut() { return this.hiddenOut > 0; }
-    get hiddenOutLabel() { const n = this.hiddenOut; return 'Show all ' + (this.v.outOfScope || []).length + ' lots left out (' + n + ' more)'; }
-    handleShowAllLots() { this.showAllLots = true; }
+    noteRow(key, depth, text) {
+        return { key, isLot: false, isNode: false, isNote: true, rowCls: 'rnote', indentStyle: this.indent(depth), text };
+    }
+
+    async handleToggle(event) {
+        const key = event.currentTarget.dataset.key;
+        const isOpen = !this.open[key];
+        this.open = { ...this.open, [key]: isOpen };
+        if (!isOpen || key.includes('|')) { return; }
+        const lot = key;
+        if (this.gens[lot] || this.loading[lot]) { return; }
+        this.loading = { ...this.loading, [lot]: true };
+        try {
+            const g = await getGenealogy({ recordId: this.recordId, lot });
+            this.gens = { ...this.gens, [lot]: g };
+        } catch (e) { this.error = this.msg(e, 'Could not read the genealogy.'); }
+        const l = { ...this.loading }; delete l[lot]; this.loading = l;
+    }
+
+    /** A tick is saved straight away as a draft. The screen changes first; it goes back if the save fails. */
+    async handleTick(event) {
+        const name = event.target.dataset.name;
+        const add = event.target.checked;
+        const before = this.lots.find((l) => l.name === name);
+        if (!before || this.ticking[name]) { return; }
+        this.error = undefined;
+        this.patchLot(name, { inScope: add });
+        this.ticking = { ...this.ticking, [name]: true };
+        try {
+            const id = await setLot({ recordId: this.recordId, lot: name, add });
+            this.patchLot(name, { id: id || undefined, how: before.how || (add ? 'Coordinator' : before.how) });
+            if (this.v.scopeStatus !== 'Being Defined') { this.v = { ...this.v, scopeStatus: 'Being Defined' }; }
+        } catch (e) {
+            this.patchLot(name, { inScope: before.inScope });
+            this.error = this.msg(e, 'Could not save that tick.');
+        }
+        const t = { ...this.ticking }; delete t[name]; this.ticking = t;
+    }
+    patchLot(name, change) {
+        this.v = { ...this.v, lots: this.lots.map((l) => (l.name === name ? { ...l, ...change } : l)) };
+    }
+
+    async handleConfirm() {
+        if (this.cantConfirm) { return; }
+        await this.run(() => confirmScope({ recordId: this.recordId }));
+    }
+    async handleDiscard() {
+        if (this.cantDiscard) { return; }
+        await this.run(() => discardChanges({ recordId: this.recordId }));
+    }
 
     handleQty(event) {
         const id = event.target.dataset.id; const f = event.target.dataset.f;
@@ -214,71 +322,22 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     }
     async handleSaveLot(event) {
         const id = event.currentTarget.dataset.id;
-        const row = this.inRows.find((l) => l.id === id);
+        const row = this.lots.find((l) => l.id === id);
         const e = this.edits[id] || {};
         await this.run(() => saveLot({ recordId: this.recordId, rowId: id,
             shipped: e.shipped !== undefined ? e.shipped : row.shipped, onHand: e.onHand !== undefined ? e.onHand : row.onHand,
             location: e.location !== undefined ? e.location : row.location }), () => { const x = { ...this.edits }; delete x[id]; this.edits = x; });
     }
-    handleStartAdd(event) {
-        const lot = event.currentTarget.dataset.id;
-        const row = (this.v.outOfScope || []).find((l) => l.name === lot) || {};
-        this.adding = lot; this.removing = ''; this.reason = row.why || '';
-    }
-    handleStartRemove(event) { this.removing = event.currentTarget.dataset.id; this.adding = ''; this.reason = ''; }
-    handleCancel() { this.adding = ''; this.removing = ''; this.reason = ''; }
-    handleReason(event) { this.reason = event.target.value; }
-    get cantConfirm() { return this.saving || !this.reason.trim(); }
-    async handleConfirmAdd() {
-        const lot = this.adding;
-        await this.run(() => addLot({ recordId: this.recordId, lot, reason: this.reason.trim() }), () => { this.adding = ''; this.reason = ''; });
-    }
-    async handleConfirmRemove() {
-        const lot = this.removing;
-        await this.run(() => removeLot({ recordId: this.recordId, lot, reason: this.reason.trim() }), () => { this.removing = ''; this.reason = ''; });
-    }
     async run(call, after) {
         if (this.saving) { return; }
         this.saving = true; this.error = undefined;
         try {
-            this.apply(await call(), false);
+            this.apply(await call());
             if (after) { after(); }
             notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
         } catch (e) { this.error = this.msg(e, 'Could not save that.'); }
         this.saving = false;
     }
-
-    // genealogy
-    async handleGenealogy(event) {
-        const lot = event.currentTarget.dataset.id;
-        if (this.genLot === lot) { this.genLot = ''; this.gen = undefined; return; }
-        this.genLot = lot; this.gen = undefined; this.genLoading = true;
-        try { this.gen = await getGenealogy({ recordId: this.recordId, lot }); }
-        catch (e) { this.error = this.msg(e, 'Could not read the genealogy.'); }
-        this.genLoading = false;
-    }
-    get showGen() { return !!this.genLot; }
-    get genTitle() { return 'Lot Genealogy · ' + this.genLot + (this.gen && this.gen.batch ? ' · batch ' + this.gen.batch : ''); }
-    get genComponents() {
-        const inNames = new Set(this.inRows.map((l) => l.name));
-        return ((this.gen && this.gen.components) || []).map((c) => ({ ...c,
-            head: c.lot + (c.part ? ' · ' + c.part : '') + (c.partName ? ' · ' + c.partName : ''),
-            hasSisters: (c.sisters || []).length > 0,
-            sisters: (c.sisters || []).map((s, i) => ({ ...s, key: c.lot + s.lot + i,
-                inScopeNow: s.samePart && inNames.has(s.lot),
-                canAdd: s.samePart && !inNames.has(s.lot) && this.canChange,
-                cls: 'chip' + (s.samePart && inNames.has(s.lot) ? ' in' : !s.samePart ? ' other' : ''),
-                text: s.lot + (s.samePart ? '' : ' (' + s.part + ')') })) }));
-    }
-    get hasGenComponents() { return this.genComponents.length > 0; }
-    handleAddSister(event) {
-        const lot = event.currentTarget.dataset.id; const comp = event.currentTarget.dataset.comp;
-        this.adding = lot; this.removing = ''; this.reason = 'Shares component lot ' + comp + ' with ' + this.genLot;
-    }
-    get isAdding() { return !!this.adding; }
-    get isRemoving() { return !!this.removing; }
-    get addTitle() { return 'Add lot ' + this.adding + ' to scope'; }
-    get removeTitle() { return 'Remove lot ' + this.removing + ' from scope'; }
 
     // change log
     get changes() {
@@ -286,63 +345,5 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             line: c.change + ' lot ' + c.lot + (c.reason ? ': ' + c.reason : ''), by: c.how === 'Automatic' ? 'Automatic' : c.doneBy }));
     }
     get hasChanges() { return this.changes.length > 0; }
-
-    // ---- scope approval, on CQ Approvals
-    get committee() { return this.v.committee || {}; }
-    get allSeats() { return (this.v && this.v.committee && this.v.committee.seats) || []; }
-    get seats() {
-        const taken = (id) => Object.entries(this.team).filter(([f, u]) => u && f !== id).map(([, u]) => u);
-        return this.allSeats.filter((s) => !s.emergency).map((s) => {
-            const others = taken(s.functionId);
-            return { ...s, none: !s.people.length,
-                opts: s.people.map((p) => ({ value: p.id, label: p.name + (others.includes(p.id) ? ' (already on the committee)' : ''), selected: this.team[s.functionId] === p.id })) };
-        });
-    }
-    get emergencySeat() { return this.allSeats.find((s) => s.emergency); }
-    get emergencyOpts() { const s = this.emergencySeat; return s ? s.people.map((p) => ({ value: p.id, label: p.name, selected: this.emergencyUser === p.id })) : []; }
-    get normal() { return !this.emergency; }
-    handleSeat(event) { this.team = { ...this.team, [event.target.dataset.id]: event.target.value }; }
-    handleEmergency(event) { this.emergency = event.target.checked; }
-    handleField(event) { this[event.target.dataset.f] = event.target.value; }
-    get members() {
-        if (this.emergency) { const s = this.emergencySeat; return s ? [{ functionId: s.functionId, userId: this.emergencyUser }] : []; }
-        return this.seats.map((s) => ({ functionId: s.functionId, userId: this.team[s.functionId] }));
-    }
-    get pendingCount() { return this.lotRows.filter((l) => l.pending).length + (this.hasRemovedSince ? this.removedSince.length : 0); }
-    get canSubmitScope() { return this.isPartial && this.v.scopeStatus === 'Being Defined' && this.hasLots && this.pendingCount > 0; }
-    get scopeWaiting() { return this.isPartial && this.v.scopeStatus === 'With Committee'; }
-    get submitBlocker() {
-        if (!this.hasLots) { return 'Put at least one lot in scope'; }
-        if (this.emergency) {
-            if (!this.emergencyUser) { return 'Choose the emergency approver'; }
-            if (!this.emergencyReason.trim()) { return 'Give the reason for the emergency'; }
-        } else {
-            const m = this.members;
-            if (!m.length || m.some((x) => !x.userId)) { return 'Choose a person for every seat'; }
-            if (new Set(m.map((x) => x.userId)).size !== m.length) { return 'One person can hold only one seat'; }
-        }
-        return '';
-    }
-    get cantSubmit() { return !!this.submitBlocker || this.saving; }
-    get submitLabel() { return this.saving ? 'Saving…' : this.emergency ? 'Send to Emergency Approver' : 'Submit Scope to Committee'; }
-    async handleSubmitScope() {
-        if (this.cantSubmit) { return; }
-        await this.run(() => submitScope({ recordId: this.recordId, team: JSON.stringify(this.members), emergency: this.emergency,
-            emergencyReason: this.emergencyReason.trim() }));
-    }
-    get csteps() {
-        return (this.committee.steps || []).map((s) => ({ ...s, label: STEP_LABEL[s.status] || s.status, cls: 'cpill ' + (s.status || '').toLowerCase(),
-            line: [s.person, s.doneOn ? this.when(s.doneOn) : '', s.doneBy && s.doneBy !== s.person ? 'recorded by ' + s.doneBy : ''].filter(Boolean).join(' · '),
-            quote: s.comment ? '“' + s.comment + '”' : '' }));
-    }
-    get hasSteps() { return this.csteps.length > 0; }
-    get canActAny() { return this.csteps.some((s) => s.canAct); }
-    get approvalTitle() { return 'Scope Approval' + (this.committee.approvalName ? ' · ' + this.committee.approvalName : ''); }
-    get showLastApproval() { return this.hasSteps && !this.scopeWaiting; }
-    async handleAct(event) {
-        const d = event.currentTarget.dataset;
-        if (d.a === 'reject' && !this.comment.trim()) { this.error = 'Add a comment saying why you are sending it back.'; return; }
-        await this.run(() => actOnStep({ recordId: this.recordId, stepId: d.id, action: d.a, comment: this.comment.trim() }), () => { this.comment = ''; });
-    }
-    get sentBack() { return this.isPartial && this.v.scopeStatus === 'Being Defined' ? this.v.sentBack : ''; }
+    get hasLots() { return this.lots.length > 0; }
 }

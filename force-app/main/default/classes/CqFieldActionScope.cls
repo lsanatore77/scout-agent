@@ -4,14 +4,14 @@
  * Step 1, Field Action at a Glance: what was decided and why, the reviews that led here, their committee approvals,
  * the signals and the risk.
  *
- * Step 2, Scope: the lots the field action covers.
- *  - Full covers every lot of the part, including lots that appear later. It needs no scope approval; sync() adds any
- *    new lot automatically each time the workspace opens. syncFull() does the same for every open Full field action,
- *    for a scheduled job to call.
- *  - Partial is chosen by the coordinator, then approved on CQ Approvals by the committee or, in an emergency,
- *    by one emergency approver. A change after approval returns the scope to Being Defined until it is approved again.
- * Every lot added or removed is logged as a Field Action Scope Change. Lot genealogy, from the batch records, shows
- * the component lots a lot was built from and the other finished lots that used them.
+ * Step 2, Scope: the lots the field action covers, in a nested table built from the batch records.
+ *  - Full covers every lot of the part, including lots that appear later. sync() adds any new lot automatically each
+ *    time the workspace opens; syncFull() does the same for every open Full field action, for a scheduled job to call.
+ *  - Partial is chosen by the coordinator. Each tick or untick is saved straight away as a draft (In Scope). The scope
+ *    counts only once the coordinator presses Confirm Scope, which makes the draft the confirmed scope (Confirmed In
+ *    Scope), logs each lot added or removed, and opens the steps that need a confirmed scope. Discard Changes puts the
+ *    draft back to the last confirmed list. A change after confirming returns the scope to Being Defined.
+ * A lot brought in by an approved review comes in confirmed and cannot be unticked here.
  */
 public with sharing class CqFieldActionScope {
     public static final String FULL = 'Full';
@@ -30,7 +30,7 @@ public with sharing class CqFieldActionScope {
     }
     public class LotRow {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public Id lotId; @AuraEnabled public Boolean known = false;
-        @AuraEnabled public Boolean inScope = false; @AuraEnabled public Boolean approved = false;
+        @AuraEnabled public Boolean inScope = false; @AuraEnabled public Boolean confirmed = false; @AuraEnabled public Boolean locked = false;
         @AuraEnabled public String how; @AuraEnabled public String reason;
         @AuraEnabled public Decimal built; @AuraEnabled public Date made;
         @AuraEnabled public Decimal shipped; @AuraEnabled public Decimal onHand; @AuraEnabled public String location;
@@ -48,34 +48,33 @@ public with sharing class CqFieldActionScope {
         @AuraEnabled public String rationale; @AuraEnabled public String decidedBy; @AuraEnabled public Datetime decidedOn;
         @AuraEnabled public Id partId; @AuraEnabled public String partNumber; @AuraEnabled public String partName;
         @AuraEnabled public Decimal qtyAffected; @AuraEnabled public Decimal qtyShipped;
-        @AuraEnabled public String scope; @AuraEnabled public String scopeStatus; @AuraEnabled public Datetime scopeApprovedOn;
-        @AuraEnabled public Boolean scopeEmergency = false; @AuraEnabled public String scopeEmergencyReason;
+        @AuraEnabled public String scope; @AuraEnabled public String scopeStatus;
+        @AuraEnabled public String scopeConfirmedBy; @AuraEnabled public Datetime scopeConfirmedOn;
+        @AuraEnabled public Integer pendingAdds = 0; @AuraEnabled public Integer pendingRemoves = 0;
         @AuraEnabled public List<Review> reviews = new List<Review>();
         @AuraEnabled public Integer score; @AuraEnabled public String riskLevel; @AuraEnabled public String hazard;
         @AuraEnabled public List<Sig> signals = new List<Sig>();
-        @AuraEnabled public List<LotRow> inScope = new List<LotRow>();
-        @AuraEnabled public List<LotRow> outOfScope = new List<LotRow>();   // suggested first
+        @AuraEnabled public List<LotRow> lots = new List<LotRow>();      // in scope, then suggested, then the rest
         @AuraEnabled public List<Change> changes = new List<Change>();
-        @AuraEnabled public CqFarCommittee.Info committee;
-        @AuraEnabled public List<CqFarCommittee.Member> defaultTeam = new List<CqFarCommittee.Member>();
-        @AuraEnabled public Boolean defaultEmergency = false;
-        @AuraEnabled public String sentBack;
     }
-    public class Sister { @AuraEnabled public String lot; @AuraEnabled public String part; @AuraEnabled public Boolean samePart = false; @AuraEnabled public Boolean inScope = false; }
-    public class Component {
-        @AuraEnabled public String lot; @AuraEnabled public String part; @AuraEnabled public String partName;
-        @AuraEnabled public List<Sister> sisters = new List<Sister>();
+    public class UsedIn { @AuraEnabled public String lot; @AuraEnabled public String part; @AuraEnabled public Boolean samePart = false; }
+    public class Node {
+        @AuraEnabled public String key; @AuraEnabled public String parentKey; @AuraEnabled public Integer level;
+        @AuraEnabled public String partNumber; @AuraEnabled public String name; @AuraEnabled public String revision; @AuraEnabled public String itemType;
+        @AuraEnabled public String lot; @AuraEnabled public Decimal qtyUsed; @AuraEnabled public String supplier;
+        @AuraEnabled public String trace; @AuraEnabled public String ncNumber;
+        @AuraEnabled public List<UsedIn> usedIn = new List<UsedIn>();
     }
     public class Genealogy {
-        @AuraEnabled public String lot; @AuraEnabled public String batch; @AuraEnabled public String note;
-        @AuraEnabled public List<Component> components = new List<Component>();
+        @AuraEnabled public String lot; @AuraEnabled public String batch; @AuraEnabled public String revision; @AuraEnabled public String note;
+        @AuraEnabled public List<Node> rows = new List<Node>();
     }
 
     private static Field_Action__c load(Id recordId) {
         return [SELECT Id, Name, Title__c, Status__c, Action_Type__c, Recall_Class__c, Description__c, Decision_Rationale__c,
                        Decided_By__r.Name, Decided_On__c, Part__c, Part__r.Name, Part__r.compliancequest__Part_Number__c,
                        Quantity_Affected__c, Quantity_Shipped__c, Lot_Numbers__c,
-                       Scope__c, Scope_Status__c, Scope_Approval__c, Scope_Emergency__c, Scope_Emergency_Reason__c, Scope_Approved_On__c
+                       Scope__c, Scope_Status__c, Scope_Confirmed_By__r.Name, Scope_Confirmed_On__c
                 FROM Field_Action__c WHERE Id = :recordId];
     }
 
@@ -115,12 +114,12 @@ public with sharing class CqFieldActionScope {
             Reason__c = reason == null ? null : reason.left(255)));
     }
 
-    /** Keeps the Lot Numbers text on the Field Action equal to the lots in scope. */
+    /** Keeps the Lot Numbers text on the Field Action equal to the confirmed lots. */
     private static void syncText(Set<Id> faIds) {
         Map<Id, List<String>> names = new Map<Id, List<String>>();
         for (Id f : faIds) { names.put(f, new List<String>()); }
         for (Field_Action_Lot__c l : [SELECT Field_Action__c, Lot_Number__c FROM Field_Action_Lot__c
-                                      WHERE Field_Action__c IN :faIds AND In_Scope__c = true ORDER BY Lot_Number__c]) {
+                                      WHERE Field_Action__c IN :faIds AND Approved_In_Scope__c = true ORDER BY Lot_Number__c]) {
             names.get(l.Field_Action__c).add(l.Lot_Number__c);
         }
         List<Field_Action__c> ups = new List<Field_Action__c>();
@@ -176,8 +175,8 @@ public with sharing class CqFieldActionScope {
         v.decidedBy = fa.Decided_By__r?.Name; v.decidedOn = fa.Decided_On__c;
         v.partId = fa.Part__c; v.partNumber = fa.Part__r?.compliancequest__Part_Number__c; v.partName = fa.Part__r?.Name;
         v.qtyAffected = fa.Quantity_Affected__c; v.qtyShipped = fa.Quantity_Shipped__c;
-        v.scope = fa.Scope__c; v.scopeStatus = fa.Scope_Status__c; v.scopeApprovedOn = fa.Scope_Approved_On__c;
-        v.scopeEmergency = fa.Scope_Emergency__c == true; v.scopeEmergencyReason = fa.Scope_Emergency_Reason__c;
+        v.scope = fa.Scope__c; v.scopeStatus = fa.Scope_Status__c;
+        v.scopeConfirmedBy = fa.Scope_Confirmed_By__r?.Name; v.scopeConfirmedOn = fa.Scope_Confirmed_On__c;
 
         // the reviews that led here, with the committee approvals behind them
         Set<Id> approvals = new Set<Id>();
@@ -203,8 +202,7 @@ public with sharing class CqFieldActionScope {
             }
             if (v.hazard == null) { v.hazard = r.Health_Hazard_Summary__c; v.riskLevel = r.Risk_Level__c; }
         }
-        // who approved each decision; the latest decision's members are the default committee for the scope
-        Id latest = v.reviews.isEmpty() ? null : v.reviews[v.reviews.size() - 1].approvalId;
+        // who approved each decision
         Map<Id, List<String>> who = new Map<Id, List<String>>();
         for (cqext__CQAPR_Approval_Step__c t : [
                 SELECT cqext__CQAPR_Approval__c, cqext__Status__c, cqext__Assignee_Name__c, cqext__CQAPR_Assignee_User__c,
@@ -216,11 +214,6 @@ public with sharing class CqFieldActionScope {
             if (t.cqext__Status__c == 'Approved') {
                 if (!who.containsKey(t.cqext__CQAPR_Approval__c)) { who.put(t.cqext__CQAPR_Approval__c, new List<String>()); }
                 who.get(t.cqext__CQAPR_Approval__c).add(t.cqext__Assignee_Name__c + ' (' + seat + ')');
-            }
-            if (t.cqext__CQAPR_Approval__c == latest && t.cqext__CQAPR_Job_Function__c != null) {
-                CqFarCommittee.Member m = new CqFarCommittee.Member(); m.functionId = t.cqext__CQAPR_Job_Function__c; m.userId = t.cqext__CQAPR_Assignee_User__c;
-                v.defaultTeam.add(m);
-                if (seat == 'Emergency Approver') { v.defaultEmergency = true; }
             }
         }
         for (Id a : who.keySet()) { byApproval.get(a).approvedBy = String.join(who.get(a), ', '); }
@@ -247,7 +240,10 @@ public with sharing class CqFieldActionScope {
                                              Units_Built__c, Units_Shipped__c, Units_On_Hand__c, Location__c
                                       FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId]) {
             LotRow x = lots.containsKey(l.Lot_Number__c) ? lots.get(l.Lot_Number__c) : new LotRow();
-            x.id = l.Id; x.name = l.Lot_Number__c; x.inScope = l.In_Scope__c; x.approved = l.Approved_In_Scope__c; x.how = l.Added_How__c; x.reason = l.Reason__c;
+            x.id = l.Id; x.name = l.Lot_Number__c; x.inScope = l.In_Scope__c; x.confirmed = l.Approved_In_Scope__c; x.how = l.Added_How__c; x.reason = l.Reason__c;
+            x.locked = l.Added_How__c == 'Review' || l.Added_How__c == 'Automatic';
+            if (l.In_Scope__c && !l.Approved_In_Scope__c) { v.pendingAdds++; }
+            if (!l.In_Scope__c && l.Approved_In_Scope__c) { v.pendingRemoves++; }
             if (x.lotId == null) { x.lotId = l.Lot__c; }
             if (x.built == null) { x.built = l.Units_Built__c; }
             x.shipped = l.Units_Shipped__c; x.onHand = l.Units_On_Hand__c; x.location = l.Location__c;
@@ -258,17 +254,21 @@ public with sharing class CqFieldActionScope {
         for (LotRow x : lots.values()) { if (x.inScope) { inNames.add(x.name); } }
         Map<String, String> sharesWith = sharedComponents(lots, inNames);
         List<String> order = new List<String>(lots.keySet()); order.sort();
-        List<LotRow> picked = new List<LotRow>(); List<LotRow> rest = new List<LotRow>();
+        List<LotRow> inList = new List<LotRow>(); List<LotRow> picked = new List<LotRow>(); List<LotRow> rest = new List<LotRow>();
         for (String n : order) {
             LotRow x = lots.get(n);
             List<String> why = sigByLot.containsKey(n) ? sigByLot.get(n) : new List<String>();
             x.signals = why.size();
-            if (x.inScope) { v.inScope.add(x); continue; }
+            if (x.inScope || x.confirmed) { inList.add(x); if (x.inScope) { continue; } }
             if (sharesWith.containsKey(n)) { why.add(sharesWith.get(n)); }
             x.suggested = !why.isEmpty();
             if (x.suggested) { x.why = String.join(why.size() > 2 ? new List<String>{ why[0], why[1] } : why, '; '); picked.add(x); } else { rest.add(x); }
         }
-        v.outOfScope.addAll(picked); v.outOfScope.addAll(rest);
+        // a lot being removed stays with the lots in scope until it is confirmed
+        Set<String> placed = new Set<String>();
+        for (LotRow x : inList) { v.lots.add(x); placed.add(x.name); }
+        for (LotRow x : picked) { if (!placed.contains(x.name)) { v.lots.add(x); } }
+        for (LotRow x : rest) { if (!placed.contains(x.name)) { v.lots.add(x); } }
 
         for (Field_Action_Scope_Change__c c : [SELECT Lot_Number__c, Change__c, How__c, Reason__c, CreatedBy.Name, CreatedDate
                                                FROM Field_Action_Scope_Change__c WHERE Field_Action__c = :recordId
@@ -278,15 +278,6 @@ public with sharing class CqFieldActionScope {
             v.changes.add(x);
         }
 
-        // the scope approval, on CQ Approvals
-        CqFarCommittee.Info x = new CqFarCommittee.Info();
-        x.seats = CqFarCommittee.seats();
-        x.emergency = v.scopeEmergency; x.emergencyReason = v.scopeEmergencyReason;
-        if (fa.Scope_Approval__c != null) {
-            List<String> back = CqFarCommittee.loadApproval(x, fa.Scope_Approval__c, fa.Scope_Status__c == 'With Committee');
-            if (fa.Scope_Status__c == 'Being Defined' && x.approvalStatus == 'Rejected' && !back.isEmpty()) { v.sentBack = String.join(back, '\n'); }
-        }
-        v.committee = x;
         return v;
     }
 
@@ -331,109 +322,153 @@ public with sharing class CqFieldActionScope {
         return out;
     }
 
-    /** Lot genealogy from the batch records: the component lots a lot was built from, and the other finished lots that used them. */
+    /**
+     * Lot genealogy for the nested scope table: what the lot was built from, level by level, from its batch record
+     * (the same tree as the DT Batch Genealogy table), and for each component lot the other finished lots that used it.
+     */
     @AuraEnabled
     public static Genealogy genealogy(Id recordId, String lot) {
         Genealogy g = new Genealogy(); g.lot = lot;
         Field_Action__c fa = load(recordId);
-        Set<String> inNames = new Set<String>();
-        for (Field_Action_Lot__c l : [SELECT Lot_Number__c FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId AND In_Scope__c = true]) { inNames.add(l.Lot_Number__c); }
+        String partNumber = fa.Part__r?.compliancequest__Part_Number__c;
         List<compliancequest__SQX_Lot_Info__c> mine = [SELECT Batch__c, Batch__r.Name FROM compliancequest__SQX_Lot_Info__c
                                                        WHERE Name = :lot AND Batch__c != null LIMIT 1];
-        if (mine.isEmpty()) { g.note = 'No batch record is linked to lot ' + lot + ', so its components are not known.'; return g; }
+        if (mine.isEmpty()) { g.note = 'No batch record is linked to lot ' + lot + ', so what it was built from is not known.'; return g; }
         g.batch = mine[0].Batch__r.Name;
-        Map<String, Component> comps = new Map<String, Component>();
-        for (cqext__CQEBR_Batch_Sub_Step_Measurement__c m : [
-                SELECT cqext__Lot_Number__c, cqext__CQEBR_Operator_Product__r.compliancequest__Part_Number__c, cqext__CQEBR_Operator_Product__r.Name
-                FROM cqext__CQEBR_Batch_Sub_Step_Measurement__c
-                WHERE cqext__Lot_Number__c != null AND cqext__CQEBR_Batch_Sub_Step__r.cqext__CQEBR_Batch_Step__r.cqext__CQEBR_Batch__c = :mine[0].Batch__c
-                ORDER BY cqext__CQEBR_Operator_Product__r.compliancequest__Part_Number__c LIMIT 500]) {
-            if (comps.containsKey(m.cqext__Lot_Number__c)) { continue; }
-            Component c = new Component(); c.lot = m.cqext__Lot_Number__c;
-            c.part = m.cqext__CQEBR_Operator_Product__r?.compliancequest__Part_Number__c; c.partName = m.cqext__CQEBR_Operator_Product__r?.Name;
-            comps.put(c.lot, c);
+        Map<String, Object> chain = DigitalThreadBatchService.getTraceChain(String.valueOf(mine[0].Batch__c));
+        Map<String, List<Node>> byLot = new Map<String, List<Node>>();
+        for (Object o : (List<Object>) chain.get('rows')) {
+            Map<String, Object> r = (Map<String, Object>) o;
+            Integer level = (Integer) r.get('level');
+            if (level == 0) { g.revision = (String) r.get('revision'); continue; }
+            Node n = new Node();
+            n.key = (String) r.get('key'); n.parentKey = level == 1 ? null : (String) r.get('parentKey'); n.level = level;
+            n.partNumber = (String) r.get('partNumber'); n.name = (String) r.get('name'); n.revision = (String) r.get('revision');
+            n.itemType = (String) r.get('itemType'); n.lot = (String) r.get('lot'); n.qtyUsed = (Decimal) r.get('qtyUsed');
+            n.supplier = (String) r.get('supplier'); n.trace = (String) r.get('trace'); n.ncNumber = (String) r.get('ncNumber');
+            g.rows.add(n);
+            if (String.isNotBlank(n.lot)) {
+                for (String c : n.lot.split(',\\s*')) {
+                    if (String.isBlank(c)) { continue; }
+                    if (!byLot.containsKey(c)) { byLot.put(c, new List<Node>()); }
+                    byLot.get(c).add(n);
+                }
+            }
         }
-        if (comps.isEmpty()) { g.note = 'The batch record for lot ' + lot + ' lists no component lots.'; return g; }
+        if (g.rows.isEmpty()) { g.note = 'The batch record for lot ' + lot + ' has no bill of materials to show.'; return g; }
+        if (byLot.isEmpty()) { return g; }
+        // where used: other batches that consumed the same component lots, and the finished lots they made
         Map<Id, Set<String>> compsByBatch = new Map<Id, Set<String>>();
         for (cqext__CQEBR_Batch_Sub_Step_Measurement__c m : [
                 SELECT cqext__Lot_Number__c, cqext__CQEBR_Batch_Sub_Step__r.cqext__CQEBR_Batch_Step__r.cqext__CQEBR_Batch__c
                 FROM cqext__CQEBR_Batch_Sub_Step_Measurement__c
-                WHERE cqext__Lot_Number__c IN :comps.keySet()
+                WHERE cqext__Lot_Number__c IN :byLot.keySet()
                   AND cqext__CQEBR_Batch_Sub_Step__r.cqext__CQEBR_Batch_Step__r.cqext__CQEBR_Batch__c != :mine[0].Batch__c LIMIT 5000]) {
             Id b = m.cqext__CQEBR_Batch_Sub_Step__r.cqext__CQEBR_Batch_Step__r.cqext__CQEBR_Batch__c;
             if (!compsByBatch.containsKey(b)) { compsByBatch.put(b, new Set<String>()); }
             compsByBatch.get(b).add(m.cqext__Lot_Number__c);
         }
-        if (!compsByBatch.isEmpty()) {
-            String partNumber = fa.Part__r?.compliancequest__Part_Number__c;
-            for (compliancequest__SQX_Lot_Info__c l : [SELECT Name, Batch__c, compliancequest__Part_Number__c FROM compliancequest__SQX_Lot_Info__c
-                                                       WHERE Batch__c IN :compsByBatch.keySet() ORDER BY Name]) {
-                for (String c : compsByBatch.get(l.Batch__c)) {
-                    Sister s = new Sister(); s.lot = l.Name; s.part = l.compliancequest__Part_Number__c;
-                    s.samePart = s.part == partNumber; s.inScope = s.samePart && inNames.contains(l.Name);
-                    comps.get(c).sisters.add(s);
+        if (compsByBatch.isEmpty()) { return g; }
+        for (compliancequest__SQX_Lot_Info__c l : [SELECT Name, Batch__c, compliancequest__Part_Number__c FROM compliancequest__SQX_Lot_Info__c
+                                                   WHERE Batch__c IN :compsByBatch.keySet() ORDER BY Name]) {
+            for (String c : compsByBatch.get(l.Batch__c)) {
+                for (Node n : byLot.get(c)) {
+                    UsedIn u = new UsedIn(); u.lot = l.Name; u.part = l.compliancequest__Part_Number__c; u.samePart = u.part == partNumber;
+                    n.usedIn.add(u);
                 }
             }
         }
-        g.components = comps.values();
         return g;
     }
 
-    // ---------------------------------------------------------------- scope changes
+    // ---------------------------------------------------------------- scope changes: a draft, then Confirm Scope
 
     private static void openForChange(Field_Action__c fa) {
         if (fa.Status__c == 'Closed') { throw new AuraHandledException('This field action is closed.'); }
         if (fa.Scope__c == FULL) { throw new AuraHandledException('A Full scope covers every lot of the part, so lots are not added or removed by hand.'); }
-        if (fa.Scope_Status__c == 'With Committee') { throw new AuraHandledException('The scope is with the committee. Wait for their decision, or ask a member to send it back.'); }
+        if (fa.Scope__c != PARTIAL) { throw new AuraHandledException('This field action has no scope set.'); }
     }
 
-    /** The coordinator adds a lot to a Partial scope, with the reason. A change after approval needs approval again. */
+    private static void reopen(Field_Action__c fa) {
+        if (fa.Scope_Status__c != 'Being Defined') { update new Field_Action__c(Id = fa.Id, Scope_Status__c = 'Being Defined'); }
+    }
+
+    /**
+     * Ticks or unticks a lot in a Partial scope, saved straight away as a draft. Nothing is logged until Confirm Scope.
+     * Returns the lot row's Id, or null when an unconfirmed lot is unticked and its row goes away.
+     */
     @AuraEnabled
-    public static View addLot(Id recordId, String lot, String reason) {
+    public static Id setLot(Id recordId, String lot, Boolean add) {
         Field_Action__c fa = load(recordId);
         openForChange(fa);
         if (String.isBlank(lot)) { throw new AuraHandledException('Choose a lot.'); }
-        if (String.isBlank(reason)) { throw new AuraHandledException('Give the reason for adding lot ' + lot + '.'); }
-        List<Field_Action_Lot__c> rows = [SELECT Id, In_Scope__c FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId AND Lot_Number__c = :lot LIMIT 1];
-        if (!rows.isEmpty() && rows[0].In_Scope__c) { throw new AuraHandledException('Lot ' + lot + ' is already in scope.'); }
-        if (rows.isEmpty()) {
-            LotRow x = lotsOfPart(fa.Part__c, fa.Part__r?.compliancequest__Part_Number__c).get(lot);
-            insert new Field_Action_Lot__c(Field_Action__c = recordId, Lot_Number__c = lot, Lot__c = x?.lotId, Units_Built__c = x?.built,
-                In_Scope__c = true, Approved_In_Scope__c = false, Added_How__c = 'Coordinator', Reason__c = reason.left(255));
+        List<Field_Action_Lot__c> rows = [SELECT Id, In_Scope__c, Approved_In_Scope__c, Added_How__c FROM Field_Action_Lot__c
+                                          WHERE Field_Action__c = :recordId AND Lot_Number__c = :lot LIMIT 1];
+        Field_Action_Lot__c row = rows.isEmpty() ? null : rows[0];
+        Id out;
+        if (add == true) {
+            if (row != null && row.In_Scope__c) { return row.Id; }
+            if (row == null) {
+                LotRow x = lotsOfPart(fa.Part__c, fa.Part__r?.compliancequest__Part_Number__c).get(lot);
+                row = new Field_Action_Lot__c(Field_Action__c = recordId, Lot_Number__c = lot, Lot__c = x?.lotId, Units_Built__c = x?.built,
+                    In_Scope__c = true, Approved_In_Scope__c = false, Added_How__c = 'Coordinator');
+                insert row;
+            } else {
+                update new Field_Action_Lot__c(Id = row.Id, In_Scope__c = true);
+            }
+            out = row.Id;
         } else {
-            update new Field_Action_Lot__c(Id = rows[0].Id, In_Scope__c = true, Added_How__c = 'Coordinator', Reason__c = reason.left(255));
+            if (row == null || !row.In_Scope__c) { return row?.Id; }
+            if (row.Added_How__c == 'Review' || row.Added_How__c == 'Automatic') {
+                throw new AuraHandledException('Lot ' + lot + ' came in with the review decision, so it cannot be taken out here.');
+            }
+            if (!row.Approved_In_Scope__c) { delete row; }
+            else { update new Field_Action_Lot__c(Id = row.Id, In_Scope__c = false); out = row.Id; }
         }
-        List<Field_Action_Scope_Change__c> logs = new List<Field_Action_Scope_Change__c>();
-        log(logs, recordId, lot, 'Added', 'Coordinator', reason);
-        insert logs;
-        afterChange(fa);
-        return getView(recordId);
+        reopen(fa);
+        return out;
     }
 
-    /** The coordinator removes a lot from a Partial scope, with the reason. The row stays, marked out of scope. */
+    /** Confirm Scope: the draft becomes the scope. Each lot added or removed since the last confirm is logged. */
     @AuraEnabled
-    public static View removeLot(Id recordId, String lot, String reason) {
+    public static View confirmScope(Id recordId) {
         Field_Action__c fa = load(recordId);
         openForChange(fa);
-        if (String.isBlank(reason)) { throw new AuraHandledException('Give the reason for removing lot ' + lot + '.'); }
-        List<Field_Action_Lot__c> rows = [SELECT Id FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId AND Lot_Number__c = :lot AND In_Scope__c = true LIMIT 1];
-        if (rows.isEmpty()) { throw new AuraHandledException('Lot ' + lot + ' is not in scope.'); }
-        update new Field_Action_Lot__c(Id = rows[0].Id, In_Scope__c = false, Reason__c = reason.left(255));
+        List<Field_Action_Lot__c> rows = [SELECT Id, Lot_Number__c, In_Scope__c, Approved_In_Scope__c, Added_How__c FROM Field_Action_Lot__c
+                                          WHERE Field_Action__c = :recordId ORDER BY Lot_Number__c];
+        List<Field_Action_Lot__c> ups = new List<Field_Action_Lot__c>();
         List<Field_Action_Scope_Change__c> logs = new List<Field_Action_Scope_Change__c>();
-        log(logs, recordId, lot, 'Removed', 'Coordinator', reason);
-        insert logs;
-        afterChange(fa);
+        Integer inNow = 0;
+        for (Field_Action_Lot__c l : rows) {
+            if (l.In_Scope__c) { inNow++; }
+            if (l.In_Scope__c == l.Approved_In_Scope__c) { continue; }
+            log(logs, recordId, l.Lot_Number__c, l.In_Scope__c ? 'Added' : 'Removed', 'Coordinator', null);
+            ups.add(new Field_Action_Lot__c(Id = l.Id, Approved_In_Scope__c = l.In_Scope__c));
+        }
+        if (inNow == 0) { throw new AuraHandledException('Put at least one lot in scope.'); }
+        if (ups.isEmpty() && fa.Scope_Status__c == 'Confirmed') { throw new AuraHandledException('Nothing has changed since the scope was confirmed.'); }
+        update ups; insert logs;
+        update new Field_Action__c(Id = recordId, Scope_Status__c = 'Confirmed', Scope_Confirmed_By__c = UserInfo.getUserId(), Scope_Confirmed_On__c = Datetime.now());
+        syncText(new Set<Id>{ recordId });
         return getView(recordId);
     }
 
-    private static void afterChange(Field_Action__c fa) {
-        syncText(new Set<Id>{ fa.Id });
-        if (fa.Scope_Status__c == 'Approved' || fa.Scope_Status__c == null) {
-            update new Field_Action__c(Id = fa.Id, Scope_Status__c = 'Being Defined');
+    /** Discard Changes: the draft goes back to the last confirmed list. */
+    @AuraEnabled
+    public static View discardChanges(Id recordId) {
+        Field_Action__c fa = load(recordId);
+        openForChange(fa);
+        List<Field_Action_Lot__c> drop = new List<Field_Action_Lot__c>(); List<Field_Action_Lot__c> ups = new List<Field_Action_Lot__c>();
+        for (Field_Action_Lot__c l : [SELECT Id, In_Scope__c, Approved_In_Scope__c FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId]) {
+            if (l.In_Scope__c == l.Approved_In_Scope__c) { continue; }
+            if (!l.Approved_In_Scope__c) { drop.add(l); } else { ups.add(new Field_Action_Lot__c(Id = l.Id, In_Scope__c = true)); }
         }
+        delete drop; update ups;
+        update new Field_Action__c(Id = recordId, Scope_Status__c = fa.Scope_Confirmed_On__c != null ? 'Confirmed' : 'Being Defined');
+        return getView(recordId);
     }
 
-    /** Units shipped, on hand and where they are, for one lot in scope. Not a scope change, so no approval is needed. */
+    /** Units shipped, on hand and where they are, for one lot in scope. Not a scope change. */
     @AuraEnabled
     public static View saveLot(Id recordId, Id rowId, Decimal shipped, Decimal onHand, String location) {
         Field_Action_Lot__c l = [SELECT Id, Field_Action__c FROM Field_Action_Lot__c WHERE Id = :rowId];
@@ -444,69 +479,14 @@ public with sharing class CqFieldActionScope {
         return getView(recordId);
     }
 
-    // ---------------------------------------------------------------- scope approval
-
-    /** A Partial scope goes for approval: to the committee, or in an emergency to one emergency approver. */
-    @AuraEnabled
-    public static View submitScope(Id recordId, String team, Boolean emergency, String emergencyReason) {
-        Field_Action__c fa = load(recordId);
-        if (fa.Scope__c != PARTIAL) { throw new AuraHandledException('Only a Partial scope needs approval.'); }
-        if (fa.Scope_Status__c == 'With Committee') { throw new AuraHandledException('The scope is already with the committee.'); }
-        if (emergency == true && String.isBlank(emergencyReason)) { throw new AuraHandledException('Give the reason for the emergency.'); }
-        List<String> inNow = new List<String>(); List<String> added = new List<String>(); List<String> removed = new List<String>();
-        for (Field_Action_Lot__c l : [SELECT Lot_Number__c, In_Scope__c, Approved_In_Scope__c FROM Field_Action_Lot__c
-                                      WHERE Field_Action__c = :recordId ORDER BY Lot_Number__c]) {
-            if (l.In_Scope__c) { inNow.add(l.Lot_Number__c); }
-            if (l.In_Scope__c && !l.Approved_In_Scope__c) { added.add(l.Lot_Number__c); }
-            if (!l.In_Scope__c && l.Approved_In_Scope__c) { removed.add(l.Lot_Number__c); }
-        }
-        if (inNow.isEmpty()) { throw new AuraHandledException('Put at least one lot in scope.'); }
-        if (fa.Scope_Status__c == 'Approved' || (added.isEmpty() && removed.isEmpty())) {
-            throw new AuraHandledException('Nothing has changed since the scope was approved.');
-        }
-        String remark = fa.Name + ' scope (Partial): ' + String.join(inNow, ', ')
-            + (fa.Scope_Approved_On__c == null ? '' : '. Changes since approval: '
-               + (added.isEmpty() ? '' : 'added ' + String.join(added, ', ')) + (added.isEmpty() || removed.isEmpty() ? '' : '; ')
-               + (removed.isEmpty() ? '' : 'removed ' + String.join(removed, ', ')));
-        Id made = CqFarCommittee.submitApproval(fa, remark, team, emergency);
-        update new Field_Action__c(Id = recordId, Scope_Status__c = 'With Committee', Scope_Approval__c = made,
-            Scope_Emergency__c = emergency == true, Scope_Emergency_Reason__c = emergency == true ? emergencyReason : null);
-        return getView(recordId);
-    }
-
-    /** A member approves or sends back the scope. */
-    @AuraEnabled
-    public static View act(Id recordId, Id stepId, String action, String comment) {
-        CqFarCommittee.decide(recordId, stepId, action, comment);
-        return getView(recordId);
-    }
-
     // ---------------------------------------------------------------- when an approval closes
 
     /**
      * Called by the trigger on CQ Approval, after CqFarCommittee has decided any review.
-     *  - A scope approval: approved makes the lots in scope the approved scope; sent back returns it to Being Defined.
      *  - A review decision that starts or joins a field action: the Field Action takes the review's scope if it has none,
      *    and the review's lot comes into scope. A Full scope then fills itself with every lot of the part.
      */
     public static void onClosed(Map<Id, String> statusByApproval) {
-        // scope approvals
-        List<Field_Action__c> faUps = new List<Field_Action__c>();
-        Set<Id> approvedFas = new Set<Id>();
-        for (Field_Action__c fa : [SELECT Id, Scope_Approval__c, Scope_Approved_On__c FROM Field_Action__c
-                                   WHERE Scope_Approval__c IN :statusByApproval.keySet() AND Scope_Status__c = 'With Committee']) {
-            Boolean ok = statusByApproval.get(fa.Scope_Approval__c) == 'Approved';
-            // sent back: a scope approved before keeps its last approval date
-            faUps.add(new Field_Action__c(Id = fa.Id, Scope_Status__c = ok ? 'Approved' : 'Being Defined', Scope_Approved_On__c = ok ? Datetime.now() : fa.Scope_Approved_On__c));
-            if (ok) { approvedFas.add(fa.Id); }
-        }
-        if (!approvedFas.isEmpty()) {
-            List<Field_Action_Lot__c> rows = [SELECT Id, In_Scope__c FROM Field_Action_Lot__c WHERE Field_Action__c IN :approvedFas];
-            for (Field_Action_Lot__c l : rows) { l.Approved_In_Scope__c = l.In_Scope__c; }
-            update rows;
-        }
-        if (!faUps.isEmpty()) { update faUps; }
-
         // review decisions
         List<Field_Action_Review__c> decided = [
             SELECT Id, Name, Scope__c, Committee_Approval__c, Committee_Approval__r.Name, Field_Action__c, Lot_Number__c,
@@ -536,8 +516,8 @@ public with sharing class CqFieldActionScope {
                 : r.Nonconformance__r?.compliancequest__Lot_Number__c != null ? r.Nonconformance__r.compliancequest__Lot_Number__c
                 : r.Complaint__r?.compliancequest__Lot_Number__c;
             if (lot == null) { continue; }
-            // a lot brought by a review that joins an approved scope was approved by that review's own committee
-            Boolean approved = scope == FULL || fa.Scope_Status__c == 'Approved';
+            // a lot brought by an approved review comes in confirmed: that review's own committee approved it
+            Boolean approved = true;
             String why = 'The lot on ' + r.Name + ', approved in ' + r.Committee_Approval__r?.Name;
             Field_Action_Lot__c have;
             for (Field_Action_Lot__c l : fa.Lots_In_Scope__r) { if (l.Lot_Number__c == lot) { have = l; } }

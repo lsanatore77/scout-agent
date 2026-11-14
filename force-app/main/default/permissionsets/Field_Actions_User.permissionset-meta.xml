@@ -11,6 +11,16 @@
     <description>Full access to Field Action Reviews and Field Actions, and the Field Actions app.</description>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Field_Action__c.Scope_Confirmed_By__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Field_Action__c.Scope_Confirmed_On__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Signal_Rule__c.Threshold_Mode__c</field>
         <readable>true</readable>
     </fieldPermissions>

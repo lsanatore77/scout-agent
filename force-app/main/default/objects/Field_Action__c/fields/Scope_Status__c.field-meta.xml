@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Scope_Status__c</fullName>
-    <description>Where the scope stands. Full Scope needs no approval. A Partial scope is Being Defined, then With Committee, then Approved; a change after approval returns it to Being Defined.</description>
+    <description>Where the scope stands. Full Scope covers every lot and needs no confirming. A Partial scope is Being Defined until the coordinator confirms it; a change after that returns it to Being Defined. With Committee and Approved are kept for a later scope approval.</description>
     <label>Scope Status</label>
     <type>Picklist</type>
     <valueSet>
@@ -17,6 +17,11 @@
                 <fullName>Being Defined</fullName>
                 <default>false</default>
                 <label>Being Defined</label>
+            </value>
+            <value>
+                <fullName>Confirmed</fullName>
+                <default>false</default>
+                <label>Confirmed</label>
             </value>
             <value>
                 <fullName>With Committee</fullName>
