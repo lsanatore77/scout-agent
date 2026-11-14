@@ -124,5 +124,6 @@
 .blocker { color: #7a4100; font-weight: 600; }
 .btn { min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn.primary { border-color: #1d5fd1; background: #1d5fd1; color: #fff; }
+.btn.icon { width: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 760px) { .body { flex-direction: column; } .steps { width: auto; border-right: none; border-bottom: 1px solid #eceff2; } .cols, .cols.wide, .paths, .pair, .problem { grid-template-columns: 1fr; } .problem { height: auto; } .cq { flex-direction: column; } }

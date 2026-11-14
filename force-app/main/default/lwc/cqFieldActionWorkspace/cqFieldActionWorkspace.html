@@ -12,8 +12,8 @@
                         </div>
                     </div>
                     <div class="hl-actions">
-                        <lightning-button label="Edit" onclick={handleEdit}></lightning-button>
-                        <lightning-button-icon icon-name="utility:refresh" variant="border" alternative-text="Refresh" onclick={handleRefresh}></lightning-button-icon>
+                        <button class="btn" onclick={handleEdit}>Edit</button>
+                        <button class="btn icon" onclick={handleRefresh} title="Refresh" aria-label="Refresh"><lightning-icon icon-name="utility:refresh" size="x-small"></lightning-icon></button>
                         <c-ask-cq-popover record-id={recordId} suggestions="Summarize this review,What other records are on this lot?,What is left on this review?"></c-ask-cq-popover>
                     </div>
                 </div>
