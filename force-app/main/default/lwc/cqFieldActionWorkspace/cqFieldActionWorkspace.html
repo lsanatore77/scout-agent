@@ -105,31 +105,47 @@
 
                     <template if:true={is1}>
                         <h3 class="q">Signals and Evidence</h3>
-                        <p class="p">Other records on the same part. Tick the ones you considered in this review.</p>
-                        <template if:true={noRecs}><p class="note">No other nonconformances or complaints were found on this part.</p></template>
-                        <template if:true={hasSameLot}>
-                            <div class="lab">On the same lot</div>
-                            <div class="list">
-                                <template for:each={sameLot} for:item="r">
-                                    <button key={r.id} class={r.cls} data-id={r.id} onclick={handleRec} aria-pressed={r.pressed}>
-                                        <span class="tick">{r.tick}</span>
-                                        <span class="rt"><span class="rv">{r.line}</span><span class="rk">{r.meta}</span></span>
-                                        <span class="pill">&#10022; CQ.AI Suggests</span>
-                                    </button>
+                        <p class="p">Patterns CQ.AI has found across complaints, nonconformances and reviews on this part. Every signal is shown, and the committee sees the same set.</p>
+                        <template for:each={signals} for:item="s">
+                            <details key={s.id} class="sig">
+                                <summary>
+                                    <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
+                                    <span class="sgl">{s.label}</span>
+                                </summary>
+                                <template for:each={s.records} for:item="r">
+                                    <div key={r.id} class="evt">
+                                        <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span>
+                                    </div>
                                 </template>
-                            </div>
+                            </details>
                         </template>
-                        <template if:true={hasOther}>
+                        <template if:false={hasSignals}>
+                            <p class="note">No signals at Assess or above on this part or lot.</p>
+                            <template if:true={hasRecs}>
+                                <div class="lab top14">Relevant Records on This Part</div>
+                                <template for:each={recs} for:item="r">
+                                    <div key={r.id} class="evt">
+                                        <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span>
+                                    </div>
+                                </template>
+                            </template>
+                        </template>
+                        <template if:true={hasMore}>
                             <details class="know">
-                                <summary>{otherLabel}</summary>
-                                <div class="list">
-                                    <template for:each={otherRecs} for:item="r">
-                                        <button key={r.id} class={r.cls} data-id={r.id} onclick={handleRec} aria-pressed={r.pressed}>
-                                            <span class="tick">{r.tick}</span>
-                                            <span class="rt"><span class="rv">{r.line}</span><span class="rk">{r.meta}</span></span>
-                                        </button>
-                                    </template>
-                                </div>
+                                <summary>{moreLabel}</summary>
+                                <template for:each={moreSignals} for:item="s">
+                                    <details key={s.id} class="sig">
+                                        <summary>
+                                            <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
+                                            <span class="sgl">{s.label}</span>
+                                        </summary>
+                                        <template for:each={s.records} for:item="r">
+                                            <div key={r.id} class="evt">
+                                                <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span>
+                                            </div>
+                                        </template>
+                                    </details>
+                                </template>
                             </details>
                         </template>
                         <p class="note">Shipments, customers and markets are not shown: there is no distribution data connected.</p>

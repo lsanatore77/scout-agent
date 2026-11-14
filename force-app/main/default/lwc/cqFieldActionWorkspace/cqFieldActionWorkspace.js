@@ -23,7 +23,7 @@ const QUESTIONS = [
 ];
 const TYPES = ['Correction', 'Removal (Recall)', 'Advisory Notice'];
 const CLASSES = ['Class I', 'Class II', 'Class III'];
-const KEEP = ['step', 'maxStep', 'picks', 'hazard', 'level', 'checks', 'outcome', 'rationale', 'faChoice', 'faTitle', 'actionType', 'recallClass'];
+const KEEP = ['step', 'maxStep', 'hazard', 'level', 'checks', 'outcome', 'rationale', 'faChoice', 'faTitle', 'actionType', 'recallClass'];
 
 /** Field Action Review workspace: five steps in the page. CQ.AI gathers and suggests, the reviewer decides. */
 export default class CqFieldActionWorkspace extends NavigationMixin(LightningElement) {
@@ -37,7 +37,6 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     done = false;        // decision is saved
     showSummary = false; // the summary screen straight after submitting
     saving = false;
-    picks = {};
     hazard = '';
     level = '';
     checks = {};
@@ -69,9 +68,6 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             return;
         }
         // first visit: pre-fill from the record and CQ.AI's suggestions; the reviewer can change any of it
-        const picks = {};
-        (v.records || []).forEach((r) => { if (r.suggested) { picks[r.id] = true; } });
-        this.picks = picks;
         this.hazard = v.hazard || '';
         this.level = v.band;
         this.checks = {};   // the checklist is the reviewer's own answers: nothing is pre-filled
@@ -115,12 +111,12 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     }
     get steps() {
         const v = this.v || {};
-        const n = this.pickedRecords.length;
+        const n = (v.signals || []).length;
         const answered = QUESTIONS.filter((q) => this.checks[q.id]).length;
         const subs = [
             this.maxStep > 0 || this.done ? 'Reviewed' : 'Start here',
             this.maxStep > RISK || this.done ? (this.level || v.riskLevel || v.band) + ' · score ' + v.score : 'CQ.AI suggests ' + v.band,
-            this.maxStep > SIGNALS || this.done ? n + ' record' + (n === 1 ? '' : 's') + ' considered' : this.sameLot.length + ' on the same lot',
+            n + ' signal' + (n === 1 ? '' : 's'),
             this.done ? 'Answered' : answered + ' of ' + QUESTIONS.length + ' answered',
             this.done ? v.outcome : this.outcome || 'Not decided'
         ];
@@ -165,23 +161,25 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     }
 
     // ---- signals and evidence (third step)
-    get recs() {
-        return (this.v.records || []).map((r) => {
-            const on = !!this.picks[r.id];
-            return { ...r, on, pressed: on ? 'true' : 'false', tick: on ? '✓' : '',
-                meta: [r.kind, r.status, r.lot ? 'lot ' + r.lot : 'no lot', r.why].filter(Boolean).join(' · '),
-                line: r.name + (r.title ? ' · ' + r.title : ''),
-                cls: 'act' + (on ? ' on' : r.suggested ? ' sug' : '') };
-        });
+    // Display only: every signal is shown, with the records behind it. The reviewer does not pick, so the committee sees the same set.
+    rec(r) {
+        return { ...r, meta: [r.kind, r.status, r.lot ? 'lot ' + r.lot : 'no lot', r.why].filter(Boolean).join(' · '),
+            line: r.title ? ' · ' + r.title : '' };
     }
-    get sameLot() { return this.recs.filter((r) => r.sameLot); }
-    get otherRecs() { return this.recs.filter((r) => !r.sameLot); }
-    get hasSameLot() { return this.sameLot.length > 0; }
-    get hasOther() { return this.otherRecs.length > 0; }
-    get noRecs() { return !this.recs.length; }
-    get otherLabel() { return 'Other records on this part (' + this.otherRecs.length + ')'; }
-    get pickedRecords() { return this.recs.filter((r) => r.on); }
-    handleRec(event) { const id = event.currentTarget.dataset.id; this.picks = { ...this.picks, [id]: !this.picks[id] }; }
+    sig(s) {
+        const seen = s.firstSeen ? new Date(s.firstSeen).toLocaleDateString() : '';
+        return { ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(),
+            meta: [s.name, s.trend, seen ? 'first seen ' + seen : '', s.thisLot ? 'this lot' : s.lot ? 'lot ' + s.lot : 'whole part',
+                s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' · '),
+            records: (s.records || []).map((r) => this.rec(r)) };
+    }
+    get signals() { return (this.v.signals || []).map((s) => this.sig(s)); }
+    get moreSignals() { return (this.v.moreSignals || []).map((s) => this.sig(s)); }
+    get hasSignals() { return this.signals.length > 0; }
+    get hasMore() { return this.moreSignals.length > 0; }
+    get moreLabel() { const n = this.moreSignals.length; return 'Show ' + n + ' weaker or dismissed signal' + (n === 1 ? '' : 's'); }
+    get recs() { return (this.v.records || []).map((r) => this.rec(r)); }
+    get hasRecs() { return this.recs.length > 0; }
 
     // ---- risk (second step)
     get factors() { return (this.v.factors || []).map((f, i) => ({ ...f, key: 'f' + i, of: f.pts + ' / ' + f.max })); }
@@ -274,7 +272,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     buildSummary() {
         const v = this.v;
         return [
-            'Evidence considered: ' + (this.pickedRecords.map((r) => r.name).join(', ') || 'none'),
+            'Signals shown: ' + ((v.signals || []).map((s) => s.name + ' ' + s.rule + ' (' + s.strength + ')').join(', ') || 'none'),
             'Risk score: ' + v.score + ' of 100 (' + v.band + '). ' + (v.factors || []).map((f) => f.name + ' ' + f.pts + '/' + f.max).join('; '),
             'Risk level: ' + this.level + (this.level === v.band ? ' (as CQ.AI suggested)' : ' (CQ.AI suggested ' + v.band + ')'),
             'Checklist: ' + QUESTIONS.map((q) => q.text + ' ' + this.checks[q.id]).join(' | '),
