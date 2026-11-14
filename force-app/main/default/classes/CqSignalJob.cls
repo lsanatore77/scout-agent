@@ -224,21 +224,22 @@ global with sharing class CqSignalJob implements Schedulable {
             existing.put(s.Group_Key__c, s);
         }
         List<Finding> graded = new List<Finding>();
-        Map<Id, Integer> strongByPart = new Map<Id, Integer>();
+        Map<String, Integer> strongByLot = new Map<String, Integer>();   // part and lot -> signals at Assess or above
         for (Finding f : found) {
             grade(f, rules.get(f.code));
             if (f.strength == null) { continue; }
             graded.add(f);
-            if (f.strength != 'Watch' && f.partId != null) {
-                strongByPart.put(f.partId, (strongByPart.containsKey(f.partId) ? strongByPart.get(f.partId) : 0) + 1);
+            if (f.strength != 'Watch' && f.partId != null && f.lot != null) {
+                String k = f.partId + '|' + f.lot;
+                strongByLot.put(k, (strongByLot.containsKey(k) ? strongByLot.get(k) : 0) + 1);
             }
         }
         Datetime now = Datetime.now();
         List<Signal__c> ups = new List<Signal__c>();
         Integer created = 0;
         for (Finding f : graded) {
-            // two or more signals at Assess on the same part count as Escalate
-            if (f.strength == 'Assess' && f.partId != null && strongByPart.get(f.partId) >= 2) { f.strength = 'Escalate'; }
+            // two or more signals at Assess on the same lot count as Escalate. Signals on other lots do not lift this one.
+            if (f.strength == 'Assess' && f.partId != null && f.lot != null && strongByLot.get(f.partId + '|' + f.lot) >= 2) { f.strength = 'Escalate'; }
             Signal__c old = existing.get(f.key);
             Signal__c s = new Signal__c(
                 Group_Key__c = f.key, Rule__c = rules.get(f.code).Id, Summary__c = f.summary.left(255), Part__c = f.partId,

@@ -11,6 +11,7 @@ import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId'
 const STEPS = ['Review at a Glance', 'Risk', 'Signals and Evidence', 'Reviewer Checklist', 'Decision'];
 const RISK = 1;
 const SIGNALS = 2;
+const PAGE = 5;      // records shown under a signal before "Show more"
 const LEVELS = ['Low', 'Medium', 'High'];
 const ANSWERS = ['Yes', 'No', 'Not known'];
 const QUESTIONS = [
@@ -37,6 +38,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     done = false;        // decision is saved
     showSummary = false; // the summary screen straight after submitting
     saving = false;
+    showAll = {};        // signal id -> true once the reviewer asks for every record
     hazard = '';
     level = '';
     checks = {};
@@ -168,11 +170,16 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     }
     sig(s) {
         const seen = s.firstSeen ? new Date(s.firstSeen).toLocaleDateString() : '';
+        const all = (s.records || []).map((r) => this.rec(r));
+        const n = all.length;
+        const rest = this.showAll[s.id] ? 0 : Math.max(0, n - PAGE);
         return { ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(),
-            meta: [s.name, s.trend, seen ? 'first seen ' + seen : '', s.thisLot ? 'this lot' : s.lot ? 'lot ' + s.lot : 'whole part',
-                s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' · '),
-            records: (s.records || []).map((r) => this.rec(r)) };
+            meta: [s.name, s.trend, seen ? 'first seen ' + seen : '', !s.lot ? 'whole part' : s.lot === this.v.lot ? 'this lot' : 'lot ' + s.lot,
+                s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' \u00b7 '),
+            count: n + ' record' + (n === 1 ? '' : 's'),
+            records: rest ? all.slice(0, PAGE) : all, hasRest: rest > 0, restLabel: 'Show ' + rest + ' more' };
     }
+    handleShowAll(event) { this.showAll = { ...this.showAll, [event.currentTarget.dataset.id]: true }; }
     get signals() { return (this.v.signals || []).map((s) => this.sig(s)); }
     get moreSignals() { return (this.v.moreSignals || []).map((s) => this.sig(s)); }
     get hasSignals() { return this.signals.length > 0; }

@@ -109,14 +109,19 @@
                         <template for:each={signals} for:item="s">
                             <details key={s.id} class="sig">
                                 <summary>
-                                    <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
-                                    <span class="sgl">{s.label}</span>
+                                    <span class="chev" aria-hidden="true">&#8250;</span>
+                                    <span class="sgb">
+                                        <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
+                                        <span class="sgl">{s.label}</span>
+                                    </span>
+                                    <span class="rk cnt">{s.count}</span>
                                 </summary>
                                 <template for:each={s.records} for:item="r">
                                     <div key={r.id} class="evt">
-                                        <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span>
+                                        <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span><template if:true={r.sameLot}><span class="lot">This Lot</span></template>
                                     </div>
                                 </template>
+                                <template if:true={s.hasRest}><div class="evt"><button class="link" data-id={s.id} onclick={handleShowAll}>{s.restLabel}</button></div></template>
                             </details>
                         </template>
                         <template if:false={hasSignals}>
@@ -136,14 +141,19 @@
                                 <template for:each={moreSignals} for:item="s">
                                     <details key={s.id} class="sig">
                                         <summary>
-                                            <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
-                                            <span class="sgl">{s.label}</span>
+                                            <span class="chev" aria-hidden="true">&#8250;</span>
+                                            <span class="sgb">
+                                                <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
+                                                <span class="sgl">{s.label}</span>
+                                            </span>
+                                            <span class="rk cnt">{s.count}</span>
                                         </summary>
                                         <template for:each={s.records} for:item="r">
                                             <div key={r.id} class="evt">
-                                                <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span>
+                                                <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span><template if:true={r.sameLot}><span class="lot">This Lot</span></template>
                                             </div>
                                         </template>
+                                        <template if:true={s.hasRest}><div class="evt"><button class="link" data-id={s.id} onclick={handleShowAll}>{s.restLabel}</button></div></template>
                                     </details>
                                 </template>
                             </details>
