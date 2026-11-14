@@ -39,7 +39,7 @@
 .lab { font-size: 13px; font-weight: 600; color: #5b6470; }
 .top14 { margin-top: 14px; }
 .note { margin: 10px 0 0; font-size: 12px; color: #5b6470; }
-.problem { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; padding: 14px; border-radius: 10px; background: #f8f6ff; border: 1px solid #dcd3ff; }
+.problem { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; height: 268px; box-sizing: border-box; padding: 14px; border-radius: 10px; background: #f8f6ff; border: 1px solid #dcd3ff; }
 .photo { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 130px; box-sizing: border-box; padding: 8px; border-radius: 8px; background: #fff; border: 1px dashed #c4cad2; overflow: hidden; }
 .photo.has { position: relative; min-height: 160px; padding: 0; border: none; background: #2b3138; }
 .photo img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -47,7 +47,7 @@
 .ptext { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .plabel { font-size: 13px; font-weight: 600; color: #5b6470; }
 .from { margin-left: 8px; font-weight: 400; }
-.quote { font-size: 15px; line-height: 1.45; white-space: pre-line; }
+.quote { flex: 1 1 auto; min-height: 0; overflow-y: auto; font-size: 15px; line-height: 1.45; white-space: pre-line; }
 .tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
 .tile { padding: 5px 10px; min-width: 100px; border-radius: 6px; background: #fff; border: 1px solid #dde1e6; }
 .tl { font-size: 11px; color: #5b6470; }
@@ -125,4 +125,4 @@
 .btn { min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn.primary { border-color: #1d5fd1; background: #1d5fd1; color: #fff; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
-@media (max-width: 760px) { .body { flex-direction: column; } .steps { width: auto; border-right: none; border-bottom: 1px solid #eceff2; } .cols, .cols.wide, .paths, .pair, .problem { grid-template-columns: 1fr; } .cq { flex-direction: column; } }
+@media (max-width: 760px) { .body { flex-direction: column; } .steps { width: auto; border-right: none; border-bottom: 1px solid #eceff2; } .cols, .cols.wide, .paths, .pair, .problem { grid-template-columns: 1fr; } .problem { height: auto; } .cq { flex-direction: column; } }
