@@ -23,6 +23,7 @@ const SCOPE = 1;
 const STRATEGY = 2;
 const RECOVERY = 5;
 const CLOSURE = 6;
+const PAGE = 10;   // lots per page in the scope table
 const TRACE = {
     Verified: { mark: '✔ ', cls: 'tr ok' },
     NC: { mark: '✖ ', cls: 'tr bad' },
@@ -51,14 +52,14 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     rail = {};           // strategy, recovery, verdict and status for the later steps
 
     async connectedCallback() {
-        try { this.apply(await getView({ recordId: this.recordId })); this.openInScope(); }
+        try { this.apply(await getView({ recordId: this.recordId })); }
         catch (e) { this.error = this.msg(e, 'Could not read this field action.'); }
         await this.loadRail();
     }
     async loadRail() {
         try { this.rail = await railStatus({ recordId: this.recordId }); } catch (e) { /* the rail falls back to what is known */ }
     }
-    /** The lots in scope open straight away, so what they were built from shows without a click. */
+    /** Every lot starts closed; the header chevron opens the lots in scope. */
     openInScope() {
         this.lots.filter((l) => l.inScope && l.known).forEach((l) => { if (!this.open[l.name]) { this.toggleLot(l.name, true); } });
     }
@@ -83,7 +84,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: this.recordId, objectApiName: 'Field_Action__c', actionName: 'edit' } });
     }
     async handleRefresh() {
-        try { this.apply(await getView({ recordId: this.recordId })); this.error = undefined; this.gens = {}; this.edits = {}; this.open = {}; this.openInScope(); }
+        try { this.apply(await getView({ recordId: this.recordId })); this.error = undefined; this.gens = {}; this.edits = {}; this.open = {}; }
         catch (e) { this.error = this.msg(e, 'Could not refresh this field action.'); }
         await this.loadRail();
     }
@@ -235,7 +236,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get inTab() { return 'tog' + (this.view === 'in' ? ' on' : ''); }
     get allPressed() { return this.view === 'all' ? 'true' : 'false'; }
     get inPressed() { return this.view === 'in' ? 'true' : 'false'; }
-    handleView(event) { this.view = event.currentTarget.dataset.v; }
+    handleView(event) { this.view = event.currentTarget.dataset.v; this.page = 0; }
     get countLine() {
         const n = this.draftLots.length;
         return n + ' lot' + (n === 1 ? '' : 's') + ' in scope';
@@ -261,14 +262,31 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         return this.draftLots.length ? 'Confirming the lot list opens Strategy.' : 'Tick at least one lot.';
     }
 
+    /** The lots the table lists: in scope, then CQ.AI suggestions, then lots with a lot record, then lot numbers found only on records. */
+    get shownLots() {
+        const rank = (l) => (l.inScope || l.confirmed ? 0 : l.suggested ? 1 : l.known ? 2 : 3);
+        return (this.view === 'in' ? this.lots.filter((l) => l.inScope || l.confirmed) : this.lots)
+            .map((l, i) => ({ l, i })).sort((a, b) => rank(a.l) - rank(b.l) || a.i - b.i).map((x) => x.l);
+    }
+    // ten lots a page; a lot's open rows stay with it
+    page = 0;
+    get pageCount() { return Math.max(1, Math.ceil(this.shownLots.length / PAGE)); }
+    get pageNow() { return Math.min(this.page, this.pageCount - 1); }
+    get hasPages() { return this.shownLots.length > PAGE; }
+    get pageLine() {
+        const n = this.shownLots.length; const from = this.pageNow * PAGE;
+        return 'Lots ' + (from + 1) + '–' + Math.min(from + PAGE, n) + ' of ' + n;
+    }
+    get cantPrevPage() { return this.pageNow === 0; }
+    get cantNextPage() { return this.pageNow >= this.pageCount - 1; }
+    handlePrevPage() { this.page = Math.max(0, this.pageNow - 1); }
+    handleNextPage() { this.page = Math.min(this.pageCount - 1, this.pageNow + 1); }
+
     /** The nested table: each lot, and when expanded what it was built from, level by level, with where-used rows. */
     get rows() {
         const out = [];
         const byName = new Map(this.lots.map((l) => [l.name, l]));
-        // lots in scope, then CQ.AI suggestions, then lots with a lot record, then lot numbers found only on records
-        const rank = (l) => (l.inScope || l.confirmed ? 0 : l.suggested ? 1 : l.known ? 2 : 3);
-        const shown = (this.view === 'in' ? this.lots.filter((l) => l.inScope || l.confirmed) : this.lots)
-            .map((l, i) => ({ l, i })).sort((a, b) => rank(a.l) - rank(b.l) || a.i - b.i).map((x) => x.l);
+        const shown = this.shownLots.slice(this.pageNow * PAGE, this.pageNow * PAGE + PAGE);
         shown.forEach((l) => {
             const key = l.name;
             const isOpen = !!this.open[key];

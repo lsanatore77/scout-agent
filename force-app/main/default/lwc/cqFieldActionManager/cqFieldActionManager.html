@@ -192,6 +192,13 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <template if:true={hasPages}>
+                                <div class="pager">
+                                    <span class="rk">{pageLine}</span>
+                                    <button class="btn sm" onclick={handlePrevPage} disabled={cantPrevPage}>Previous</button>
+                                    <button class="btn sm" onclick={handleNextPage} disabled={cantNextPage}>Next</button>
+                                </div>
+                            </template>
                             <p class="note">Click shipped, on hand or location to edit them: no distribution or inventory data is connected. Sub-assemblies and components come with their lot, so they have no tick box.</p>
                         </template>
                         <template if:false={hasLots}><p class="note">No lots of this part were found.</p></template>

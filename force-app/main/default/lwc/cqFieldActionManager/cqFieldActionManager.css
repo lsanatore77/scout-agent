@@ -133,3 +133,4 @@
 .cell:hover .pen, .cell:focus-visible .pen { opacity: 1; }
 .fblock { color: #7a4100; font-weight: 600; }
 .step.later { opacity: .55; }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; }
