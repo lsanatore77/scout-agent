@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Score__c</fullName>
+    <label>Score</label>
+    <description>0 to 1. How unusual the pattern is: 0.05 and 0.20 are Watch, 0.60 is Assess, 1.00 is Escalate.</description>
+    <precision>3</precision>
+    <scale>2</scale>
+    <type>Number</type>
+</CustomField>

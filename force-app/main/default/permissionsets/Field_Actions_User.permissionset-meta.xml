@@ -7,6 +7,31 @@
     <description>Full access to Field Action Reviews and Field Actions, and the Field Actions app.</description>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Signal_Rule__c.Threshold_Mode__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Signal_Rule__c.Lookback_Months__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Signal__c.Score__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Signal__c.Baseline__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>Signal__c.Next_Threshold__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Signal_Rule__c.Code__c</field>
         <readable>true</readable>
     </fieldPermissions>
