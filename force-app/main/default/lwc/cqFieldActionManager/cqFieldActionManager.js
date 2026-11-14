@@ -281,6 +281,21 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get cantNextPage() { return this.pageNow >= this.pageCount - 1; }
     handlePrevPage() { this.page = Math.max(0, this.pageNow - 1); }
     handleNextPage() { this.page = Math.min(this.pageCount - 1, this.pageNow + 1); }
+    handlePage(event) { this.page = Number(event.currentTarget.dataset.p); }
+    /** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
+    get pageItems() {
+        const n = this.pageCount; const cur = this.pageNow;
+        const keep = [];
+        for (let i = 0; i < n; i++) { if (n <= 7 || i === 0 || i === n - 1 || Math.abs(i - cur) <= 2) { keep.push(i); } }
+        const out = [];
+        keep.forEach((i, k) => {
+            if (k > 0 && i - keep[k - 1] > 1) { out.push({ key: 'g' + i, text: '…', cls: 'pg gap', off: true, label: 'More pages' }); }
+            const on = i === cur;
+            out.push({ key: 'p' + i, p: i, text: String(i + 1), cls: 'pg' + (on ? ' on' : ''), off: on, current: on ? 'page' : 'false',
+                label: 'Page ' + (i + 1) });
+        });
+        return out;
+    }
 
     /** The nested table: each lot, and when expanded what it was built from, level by level, with where-used rows. */
     get rows() {
