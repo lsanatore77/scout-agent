@@ -5,6 +5,7 @@ import getView from '@salesforce/apex/CqFieldActionReview.getView';
 import saveDraft from '@salesforce/apex/CqFieldActionReview.saveDraft';
 import submitReview from '@salesforce/apex/CqFieldActionReview.submit';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
+import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 
 // Order on screen: glance, risk, signals, checklist, decision. RISK and SIGNALS are the step numbers of those two.
 const STEPS = ['Review at a Glance', 'Risk', 'Signals and Evidence', 'Reviewer Checklist', 'Decision'];
@@ -28,6 +29,7 @@ const KEEP = ['step', 'maxStep', 'picks', 'hazard', 'level', 'checks', 'outcome'
 export default class CqFieldActionWorkspace extends NavigationMixin(LightningElement) {
     @api recordId;
     v;
+    photoId;
     error;
     step = 0;
     maxStep = 0;
@@ -49,6 +51,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     async connectedCallback() {
         try {
             this.apply(await getView({ recordId: this.recordId }), true);
+            this.loadPhoto();
         } catch (e) {
             this.error = this.msg(e, 'Could not read this review.');
         }
@@ -135,12 +138,18 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get problem() { const v = this.v; return v.problem || v.sourceTitle || v.title || 'No description on the source record.'; }
     get hasSource() { return !!this.v.sourceId; }
     get sourceLabel() { return this.v.sourceKind + ' ' + this.v.sourceName; }
+    /** The newest photo on the source record (the NC or complaint). Shown only; photos are added on the source. */
+    async loadPhoto() {
+        if (!this.v || !this.v.sourceId) { return; }
+        try { this.photoId = await getPhotoVersionId({ recordId: this.v.sourceId }); } catch (e) { this.photoId = null; }
+    }
+    get photoUrl() { return this.photoId ? '/sfc/servlet.shepherd/version/download/' + this.photoId : null; }
+    get photoCls() { return 'photo' + (this.photoId ? ' has' : ''); }
     get tiles() {
         const v = this.v;
         const n = (x) => (x === undefined || x === null || x === '' ? '—' : String(x));
         return [
-            ['Part', n(v.partName)], ['Lot', n(v.lot)], ['Affected', n(v.qtyAffected)], ['Shipped', n(v.qtyShipped)],
-            ['Due', this.dueText], ['Requested by', n(v.requestedBy)], ['Reviewer', n(v.reviewer)]
+            ['Affected', n(v.qtyAffected)], ['Shipped', n(v.qtyShipped)], ['Requested by', n(v.requestedBy)]
         ].map(([label, value]) => ({ key: label, label, value }));
     }
     get decidedLine() {

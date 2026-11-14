@@ -54,14 +54,23 @@
                             </div>
                         </template>
                         <div class="problem">
-                            <div class="plabel">The problem
-                                <template if:true={hasSource}><span class="from">from <button class="link" data-id={v.sourceId} onclick={handleOpen}>{sourceLabel}</button></span></template>
-                            </div>
-                            <div class="quote">{problem}</div>
-                            <div class="tiles">
-                                <template for:each={tiles} for:item="t">
-                                    <div key={t.key} class="tile"><div class="tl">{t.label}</div><div class="tv">{t.value}</div></div>
+                            <div class={photoCls}>
+                                <template if:true={photoUrl}><img src={photoUrl} alt="Photo of the problem" /></template>
+                                <template if:false={photoUrl}>
+                                    <lightning-icon icon-name="utility:photo" size="small" alternative-text="Photo"></lightning-icon>
+                                    <span class="nophoto">No photo on the source record</span>
                                 </template>
+                            </div>
+                            <div class="ptext">
+                                <div class="plabel">The problem
+                                    <template if:true={hasSource}><span class="from">from <button class="link" data-id={v.sourceId} onclick={handleOpen}>{sourceLabel}</button></span></template>
+                                </div>
+                                <div class="quote">{problem}</div>
+                                <div class="tiles">
+                                    <template for:each={tiles} for:item="t">
+                                        <div key={t.key} class="tile"><div class="tl">{t.label}</div><div class="tv">{t.value}</div></div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                         <div class="cols top14">
