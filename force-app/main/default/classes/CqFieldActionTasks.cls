@@ -186,7 +186,10 @@ public with sharing class CqFieldActionTasks {
         return fa;
     }
     private static void reopen(Field_Action__c fa) {
-        if (fa.Recovery_Status__c != 'In Progress') { update new Field_Action__c(Id = fa.Id, Recovery_Status__c = 'In Progress'); }
+        // reopening clears the confirmed verdict, so the choice starts blank until it is made again
+        if (fa.Recovery_Status__c != 'In Progress') {
+            update new Field_Action__c(Id = fa.Id, Recovery_Status__c = 'In Progress', Verdict__c = null, Next_Step__c = null, Verdict_By__c = null, Verdict_On__c = null);
+        }
     }
 
     /** Creates CQ.AI's suggested tasks the coordinator kept, owned by the coordinator. */

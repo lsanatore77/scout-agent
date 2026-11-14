@@ -73,9 +73,12 @@ public with sharing class CqFieldActionRecovery {
         if (fa.Status__c == 'Closed') { throw new AuraHandledException('This field action is closed.'); }
         if (fa.Strategy_Status__c != 'Confirmed') { throw new AuraHandledException('Confirm the strategy first.'); }
     }
-    /** Any change to recovery reopens a confirmed verdict. */
+    /** Any change to recovery reopens a confirmed verdict and clears it. */
     private static void reopen(Field_Action__c fa) {
-        if (fa.Recovery_Status__c != 'In Progress') { update new Field_Action__c(Id = fa.Id, Recovery_Status__c = 'In Progress'); }
+        // reopening clears the confirmed verdict, so the choice starts blank until it is made again
+        if (fa.Recovery_Status__c != 'In Progress') {
+            update new Field_Action__c(Id = fa.Id, Recovery_Status__c = 'In Progress', Verdict__c = null, Next_Step__c = null, Verdict_By__c = null, Verdict_On__c = null);
+        }
     }
     private static Decimal targetOf(Field_Action__c fa) {
         switch on fa.Check_Level__c {
