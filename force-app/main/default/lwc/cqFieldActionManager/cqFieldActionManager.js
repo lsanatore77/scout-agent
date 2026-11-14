@@ -227,7 +227,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get inTab() { return 'tog' + (this.view === 'in' ? ' on' : ''); }
     get allPressed() { return this.view === 'all' ? 'true' : 'false'; }
     get inPressed() { return this.view === 'in' ? 'true' : 'false'; }
-    handleView(event) { this.view = event.currentTarget.dataset.v; this.page = 0; }
+    handleView(event) { this.view = event.currentTarget.dataset.v; this.page = 0; this.tableMin = 0; }
     /** Only unconfirmed changes are called out: '2 added, 1 removed, not confirmed'. */
     get pendingLine() {
         if (!this.isPartial) { return ''; }
@@ -257,6 +257,14 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     handlePrevPage() { this.page = Math.max(0, this.pageNow - 1); }
     handleNextPage() { this.page = Math.min(this.pageCount - 1, this.pageNow + 1); }
     handlePage(event) { this.page = Number(event.currentTarget.dataset.p); }
+    // the table keeps the height of its first page, so the pager and what is below it do not jump
+    tableMin = 0;
+    get tableStyle() { return this.hasPages && this.tableMin ? 'min-height:' + this.tableMin + 'px' : ''; }
+    renderedCallback() {
+        if (!this.is1 || !this.hasPages || this.tableMin || this.pageNow !== 0 || this.anyOpen) { return; }
+        const w = this.template.querySelector('.tree');
+        if (w && w.clientHeight) { this.tableMin = w.clientHeight; }
+    }
     /** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
     get pageItems() {
         const n = this.pageCount; const cur = this.pageNow;
