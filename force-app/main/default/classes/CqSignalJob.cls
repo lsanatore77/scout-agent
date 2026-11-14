@@ -385,6 +385,104 @@ global with sharing class CqSignalJob implements Schedulable {
         else if (f.value * 2 >= raise) { f.strength = 'Watch'; f.score = 0.20; f.next = raise; }
     }
 
+    // ---- baselines: what is normal for this part, so a signal can be read against it
+    /**
+     * A rule in Fixed mode keeps its Raise and Escalate thresholds; the baseline is only the normal level to compare with.
+     *  - Part rules (Cluster, Repeat Reviews): the records on the part in the lookback before the window, scaled to one window.
+     *  - Lot rules (Cross-Source, Rate per Units Built): the average across the part's lots made in the lookback before this lot.
+     * Other rules have no baseline yet.
+     */
+    private static void normals(List<Finding> graded, Map<String, Signal_Rule__c> rules) {
+        Set<Id> clusterParts = new Set<Id>(); Set<Id> reviewParts = new Set<Id>(); Set<Id> lotParts = new Set<Id>();
+        for (Finding f : graded) {
+            Signal_Rule__c r = rules.get(f.code);
+            if (f.baseline != null || f.partId == null || r == null || r.Threshold_Mode__c == 'Baseline') { continue; }
+            if (f.code == 'CLUSTER') { clusterParts.add(f.partId); }
+            else if (f.code == 'REPEAT_REVIEWS') { reviewParts.add(f.partId); }
+            else if ((f.code == 'CROSS_SOURCE' || f.code == 'RATE_PER_UNITS_BUILT') && f.lot != null) { lotParts.add(f.partId); }
+        }
+        if (!clusterParts.isEmpty()) { partNormals(graded, rules.get('CLUSTER'), clusterParts); }
+        if (!reviewParts.isEmpty()) { partNormals(graded, rules.get('REPEAT_REVIEWS'), reviewParts); }
+        if (!lotParts.isEmpty()) { lotNormals(graded, rules, lotParts); }
+    }
+    private static Integer lookback(Signal_Rule__c r) { return r == null || r.Lookback_Months__c == null ? 12 : r.Lookback_Months__c.intValue(); }
+
+    private static void partNormals(List<Finding> graded, Signal_Rule__c rule, Set<Id> parts) {
+        Integer window = days(rule, rule.Code__c == 'CLUSTER' ? 90 : 180);
+        Datetime toTs = Datetime.now().addDays(-window);
+        Datetime fromTs = toTs.addMonths(-lookback(rule));
+        Decimal span = Decimal.valueOf(fromTs.date().daysBetween(toTs.date()));
+        Map<Id, Integer> count = new Map<Id, Integer>();
+        if (rule.Code__c == 'CLUSTER') {
+            for (compliancequest__SQX_Complaint__c c : [
+                    SELECT compliancequest__SQX_Part__c, compliancequest__Status__c FROM compliancequest__SQX_Complaint__c
+                    WHERE compliancequest__SQX_Part__c IN :parts AND CreatedDate >= :fromTs AND CreatedDate < :toTs LIMIT 10000]) {
+                if (!alive(c.compliancequest__Status__c)) { continue; }
+                Id p = c.compliancequest__SQX_Part__c;
+                count.put(p, (count.containsKey(p) ? count.get(p) : 0) + 1);
+            }
+        } else {
+            for (Field_Action_Review__c r : [
+                    SELECT Status__c, Part__c, Nonconformance__r.compliancequest__SQX_Part__c, Complaint__r.compliancequest__SQX_Part__c
+                    FROM Field_Action_Review__c WHERE CreatedDate >= :fromTs AND CreatedDate < :toTs LIMIT 10000]) {
+                if (!alive(r.Status__c)) { continue; }
+                Id p = r.Part__c != null ? r.Part__c
+                    : r.Nonconformance__r != null ? r.Nonconformance__r.compliancequest__SQX_Part__c
+                    : r.Complaint__r != null ? r.Complaint__r.compliancequest__SQX_Part__c : null;
+                if (p == null || !parts.contains(p)) { continue; }
+                count.put(p, (count.containsKey(p) ? count.get(p) : 0) + 1);
+            }
+        }
+        for (Finding f : graded) {
+            if (f.code != rule.Code__c || !parts.contains(f.partId) || span <= 0) { continue; }
+            Integer n = count.containsKey(f.partId) ? count.get(f.partId) : 0;
+            f.baseline = (n * window / span).setScale(2);
+        }
+    }
+
+    private static void lotNormals(List<Finding> graded, Map<String, Signal_Rule__c> rules, Set<Id> parts) {
+        Map<Id, String> numberOf = new Map<Id, String>();
+        for (compliancequest__SQX_Part__c p : [SELECT Id, compliancequest__Part_Number__c FROM compliancequest__SQX_Part__c WHERE Id IN :parts]) {
+            numberOf.put(p.Id, p.compliancequest__Part_Number__c);
+        }
+        // every lot of these parts with its date made and units built
+        Map<String, compliancequest__SQX_Lot_Info__c> lots = new Map<String, compliancequest__SQX_Lot_Info__c>();
+        for (compliancequest__SQX_Lot_Info__c l : [
+                SELECT Name, compliancequest__Part_Number__c, compliancequest__Manufacturing_Date__c,
+                       Batch__r.cqext__Quantity__c, Batch__r.cqext__Actual_Yield__c
+                FROM compliancequest__SQX_Lot_Info__c
+                WHERE compliancequest__Part_Number__c IN :numberOf.values() AND compliancequest__Manufacturing_Date__c != null LIMIT 5000]) {
+            lots.put(l.Name, l);
+        }
+        Map<String, Integer> complaints = new Map<String, Integer>();
+        for (compliancequest__SQX_Complaint__c c : [
+                SELECT compliancequest__Lot_Number__c, compliancequest__Status__c FROM compliancequest__SQX_Complaint__c
+                WHERE compliancequest__Lot_Number__c IN :lots.keySet() LIMIT 10000]) {
+            if (!alive(c.compliancequest__Status__c)) { continue; }
+            String k = c.compliancequest__Lot_Number__c;
+            complaints.put(k, (complaints.containsKey(k) ? complaints.get(k) : 0) + 1);
+        }
+        for (Finding f : graded) {
+            if ((f.code != 'CROSS_SOURCE' && f.code != 'RATE_PER_UNITS_BUILT') || f.lot == null || !parts.contains(f.partId)) { continue; }
+            compliancequest__SQX_Lot_Info__c mine = lots.get(f.lot);
+            String partNumber = numberOf.get(f.partId);
+            Date upTo = mine != null ? mine.compliancequest__Manufacturing_Date__c.toStartOfMonth() : Date.today().toStartOfMonth();
+            Date since = upTo.addMonths(-lookback(rules.get(f.code)));
+            Decimal total = 0; Integer n = 0;
+            for (compliancequest__SQX_Lot_Info__c l : lots.values()) {
+                Date made = l.compliancequest__Manufacturing_Date__c;
+                if (l.compliancequest__Part_Number__c != partNumber || l.Name == f.lot || made < since || made >= upTo) { continue; }
+                Integer c = complaints.containsKey(l.Name) ? complaints.get(l.Name) : 0;
+                if (f.code == 'CROSS_SOURCE') { total += c; n++; continue; }
+                Decimal units = l.Batch__r?.cqext__Actual_Yield__c != null && l.Batch__r.cqext__Actual_Yield__c > 0
+                    ? l.Batch__r.cqext__Actual_Yield__c : l.Batch__r?.cqext__Quantity__c;
+                if (units == null || units <= 0) { continue; }
+                total += c * 100 / units; n++;
+            }
+            if (n > 0) { f.baseline = (total / n).setScale(2); }
+        }
+    }
+
     // ---- create or update the signals, let old ones fade, link the records behind each
     private static String save(List<Finding> found, Map<String, Signal_Rule__c> rules) {
         Map<String, Signal__c> existing = new Map<String, Signal__c>();
@@ -402,6 +500,7 @@ global with sharing class CqSignalJob implements Schedulable {
                 strongByLot.put(k, (strongByLot.containsKey(k) ? strongByLot.get(k) : 0) + 1);
             }
         }
+        normals(graded, rules);
         Datetime now = Datetime.now();
         List<Signal__c> ups = new List<Signal__c>();
         Integer created = 0;
