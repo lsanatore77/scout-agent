@@ -44,8 +44,12 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     edits = {};          // lot row id -> { shipped, onHand, location } being typed
 
     async connectedCallback() {
-        try { this.apply(await getView({ recordId: this.recordId })); }
+        try { this.apply(await getView({ recordId: this.recordId })); this.openInScope(); }
         catch (e) { this.error = this.msg(e, 'Could not read this field action.'); }
+    }
+    /** The lots in scope open straight away, so what they were built from shows without a click. */
+    openInScope() {
+        this.lots.filter((l) => l.inScope && l.known).forEach((l) => { if (!this.open[l.name]) { this.toggleLot(l.name, true); } });
     }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     apply(v) { this.v = JSON.parse(JSON.stringify(v)); }
@@ -63,7 +67,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: this.recordId, objectApiName: 'Field_Action__c', actionName: 'edit' } });
     }
     async handleRefresh() {
-        try { this.apply(await getView({ recordId: this.recordId })); this.error = undefined; this.gens = {}; this.edits = {}; }
+        try { this.apply(await getView({ recordId: this.recordId })); this.error = undefined; this.gens = {}; this.edits = {}; this.open = {}; this.openInScope(); }
         catch (e) { this.error = this.msg(e, 'Could not refresh this field action.'); }
     }
     handleOpen(event) {
@@ -180,7 +184,10 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get rows() {
         const out = [];
         const byName = new Map(this.lots.map((l) => [l.name, l]));
-        const shown = this.view === 'in' ? this.lots.filter((l) => l.inScope || l.confirmed) : this.lots;
+        // lots in scope, then CQ.AI suggestions, then lots with a lot record, then lot numbers found only on records
+        const rank = (l) => (l.inScope || l.confirmed ? 0 : l.suggested ? 1 : l.known ? 2 : 3);
+        const shown = (this.view === 'in' ? this.lots.filter((l) => l.inScope || l.confirmed) : this.lots)
+            .map((l, i) => ({ l, i })).sort((a, b) => rank(a.l) - rank(b.l) || a.i - b.i).map((x) => x.l);
         shown.forEach((l) => {
             const key = l.name;
             const isOpen = !!this.open[key];
@@ -267,9 +274,11 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         return { key, isLot: false, isNode: false, isNote: true, rowCls: 'rnote', indentStyle: this.indent(depth), text };
     }
 
-    async handleToggle(event) {
+    handleToggle(event) {
         const key = event.currentTarget.dataset.key;
-        const isOpen = !this.open[key];
+        this.toggleLot(key, !this.open[key]);
+    }
+    async toggleLot(key, isOpen) {
         this.open = { ...this.open, [key]: isOpen };
         if (!isOpen || key.includes('|')) { return; }
         const lot = key;

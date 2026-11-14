@@ -108,8 +108,9 @@
 .nw { white-space: nowrap; }
 .mut { color: #3d4550; }
 .ind { display: inline-block; }
-.chev { width: 22px; height: 22px; padding: 0; border: none; background: none; color: #3b4a43; font-size: 12px; cursor: pointer; vertical-align: middle; }
-.chev0 { display: inline-block; width: 22px; }
+.chev { width: 24px; height: 24px; padding: 0; border: none; border-radius: 6px; background: none; color: #1a1d21; font-size: 16px; line-height: 1; cursor: pointer; vertical-align: middle; }
+.chev:hover { background: #f3f3f3; }
+.chev0 { display: inline-block; width: 24px; }
 .it { vertical-align: middle; }
 .it.lot { font-weight: 700; }
 .it.sub { font-weight: 600; }
