@@ -50,6 +50,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     showSummary = false; // the summary screen straight after submitting
     saving = false;
     showAll = {};        // signal id -> true once the reviewer asks for every record
+    hotSig = '';         // the signal under the pointer, lit in the list and the chart together
     hazard = '';
     level = '';
     checks = {};
@@ -222,10 +223,61 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const rest = this.showAll[s.id] ? 0 : Math.max(0, n - PAGE);
         return { ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(),
             meta: [s.name, s.trend, seen ? 'first seen ' + seen : '', !s.lot ? 'whole part' : s.lot === this.v.lot ? 'this lot' : 'lot ' + s.lot,
-                s.raisedBy ? 'raised by ' + s.raisedBy : '', s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' \u00b7 '),
+                s.raisedBy ? 'raised by ' + s.raisedBy : '', s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' · '),
             count: n + ' record' + (n === 1 ? '' : 's'),
+            sigCls: 'sig' + (this.hotSig === s.id ? ' hot' : ''),
             records: rest ? all.slice(0, PAGE) : all, hasRest: rest > 0, restLabel: 'Show ' + rest + ' more' };
     }
+    handleSigOver(event) { this.hotSig = event.currentTarget.dataset.id; }
+    handleSigOut() { this.hotSig = ''; }
+
+    /** Against Normal: one bar per signal, how many times its normal level it is now, on a log scale from 1x to 100x. */
+    get normalBars() {
+        const ink = { Escalate: '#b42318', Assess: '#c2570c', Watch: '#a37200' };
+        return (this.v.signals || []).map((s) => {
+            const t = s.times;
+            const has = t !== undefined && t !== null;
+            const w = has ? Math.max(1.5, Math.min(100, Math.log10(Math.max(Number(t), 1)) / 2 * 100)) : 0;
+            const c = ink[s.strength] || ink.Watch;
+            return { id: s.id, rule: s.rule, where: !s.lot ? 'whole part' : s.lot === this.v.lot ? 'lot ' + s.lot + ' · this lot' : 'lot ' + s.lot,
+                has, none: !has, rowCls: 'nrow' + (this.hotSig === s.id ? ' hot' : ''),
+                barStyle: 'width:' + w + '%;background:' + c, times: has ? Number(t).toFixed(1).replace(/\.0$/, '') + '×' : 'No baseline',
+                timesStyle: has ? 'color:' + c : 'color:#5b6470;font-weight:400' };
+        });
+    }
+    get hasBars() { return this.normalBars.some((b) => b.has); }
+
+    /** The last 12 months of records on the part, as three lines. */
+    get trendChart() {
+        const months = this.v.trendMonths || [];
+        const series = this.v.trend || [];
+        if (!months.length || !series.length) { return null; }
+        const colors = { Complaints: '#1d5fd1', Nonconformances: '#c2570c', Reviews: '#4a2fc0' };
+        const top = Math.max(1, ...series.map((x) => Math.max(...x.counts)));
+        const maxY = top <= 5 ? 5 : Math.ceil(top / 5) * 5;
+        const left = 44, right = 548, y0 = 14, y1 = 186;
+        const px = (i) => left + i * (right - left) / Math.max(1, months.length - 1);
+        const py = (n) => y1 - n / maxY * (y1 - y0);
+        const last = months.length - 1;
+        const ends = series.map((x) => py(x.counts[last]));
+        const lines = series.map((x, k) => {
+            const color = colors[x.name] || '#5b6470';
+            // keep the end labels apart when lines finish at the same height
+            let ey = ends[k] + 4;
+            for (let j = 0; j < k; j++) { if (Math.abs(ends[j] - ends[k]) < 10) { ey += 11 * (k - j); } }
+            return { key: x.name, name: x.name, color,
+                points: x.counts.map((n, i) => px(i) + ',' + py(n)).join(' '),
+                dots: x.counts.map((n, i) => ({ key: x.name + i, x: px(i), y: py(n), title: months[i] + ': ' + n + ' ' + x.name.toLowerCase() })),
+                endX: px(last) + 8, endY: ey, endLabel: String(x.counts[last]),
+                swatch: 'background:' + color };
+        });
+        const ticks = [0, maxY / 2, maxY].map((t) => ({ key: 't' + t, v: String(t), y: py(t), ty: py(t) + 4 }));
+        const labels = months.map((m, i) => ({ key: 'm' + i, x: px(i), label: m.split(' ')[0] }));
+        const total = (name) => { const x = series.find((y) => y.name === name); return x ? x.counts.reduce((a, b) => a + b, 0) : 0; };
+        return { lines, ticks, labels, range: months[0] + ' to ' + months[last],
+            label: 'Records on this part by month, ' + months[0] + ' to ' + months[last] + ': ' + series.map((x) => total(x.name) + ' ' + x.name.toLowerCase()).join(', ') };
+    }
+    get hasTrend() { return !!this.trendChart; }
     handleShowAll(event) { this.showAll = { ...this.showAll, [event.currentTarget.dataset.id]: true }; }
     get signals() { return (this.v.signals || []).map((s) => this.sig(s)); }
     get moreSignals() { return (this.v.moreSignals || []).map((s) => this.sig(s)); }
@@ -299,10 +351,10 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         if (this.outcomeNow !== 'Field Action Needed') { return ''; }
         const scope = this.done ? this.scopeData.scope : this.isNew ? this.scope : '';     // a review that joins a field action has no scope of its own
         if (!scope) { return this.v.lot ? 'Adds lot ' + this.v.lot + ' to the field action' : ''; }
-        if (scope === 'Full') { return 'Full \u00b7 ' + this.fullLine; }
+        if (scope === 'Full') { return 'Full · ' + this.fullLine; }
         const also = this.alsoLots;
-        return 'Partial \u00b7 starts with ' + (this.v.lot ? 'lot ' + this.v.lot : 'no lot') + (also.length ? ' \u00b7 CQ.AI would also look at ' + also.join(', ') : '')
-            + ' \u00b7 lots chosen and approved in the Field Action';
+        return 'Partial · starts with ' + (this.v.lot ? 'lot ' + this.v.lot : 'no lot') + (also.length ? ' · CQ.AI would also look at ' + also.join(', ') : '')
+            + ' · lots chosen and approved in the Field Action';
     }
     handleScope(event) { this.scope = event.currentTarget.dataset.id; }
     handleOutcome(event) { this.outcome = event.currentTarget.dataset.id; }
@@ -335,26 +387,26 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get csteps() {
         return (this.committee.steps || []).map((s) => ({
             ...s, label: STEP_LABEL[s.status] || s.status, cls: 'cpill ' + (s.status || '').toLowerCase(),
-            line: [s.person, s.doneOn ? new Date(s.doneOn).toLocaleString() : '', s.doneBy && s.doneBy !== s.person ? 'recorded by ' + s.doneBy : ''].filter(Boolean).join(' \u00b7 '),
-            quote: s.comment ? '\u201c' + s.comment + '\u201d' : ''
+            line: [s.person, s.doneOn ? new Date(s.doneOn).toLocaleString() : '', s.doneBy && s.doneBy !== s.person ? 'recorded by ' + s.doneBy : ''].filter(Boolean).join(' · '),
+            quote: s.comment ? '“' + s.comment + '”' : ''
         }));
     }
     get approvedCount() { return this.csteps.filter((s) => s.status === 'Approved').length; }
     get canActAny() { return this.csteps.some((s) => s.canAct); }
-    get committeeTitle() { return 'Committee' + (this.committee.approvalName ? ' \u00b7 ' + this.committee.approvalName : ''); }
+    get committeeTitle() { return 'Committee' + (this.committee.approvalName ? ' · ' + this.committee.approvalName : ''); }
     get sentBack() { return this.live ? this.committee.sentBack : ''; }
     /** What the committee is approving: the coordinator's recommendation and what it rests on. */
     get recRows() {
         const v = this.v; const c = this.committee;
         const fa = this.outcomeNow !== 'Field Action Needed' ? '' : this.faChoice === 'new'
-            ? 'Start a new Field Action: ' + [this.faTitle, this.actionType, this.recallClass].filter(Boolean).join(' \u00b7 ')
+            ? 'Start a new Field Action: ' + [this.faTitle, this.actionType, this.recallClass].filter(Boolean).join(' · ')
             : 'Join ' + (((v.fieldActions || []).find((f) => f.id === this.faChoice) || {}).name || 'an open Field Action');
         return [
             ['Outcome', this.outcomeNow], ['Field Action', fa], ['Scope', this.scopeLine], ['Rationale', this.rationale || v.rationale],
-            ['Risk', (this.level || v.riskLevel || v.band) + ' \u00b7 score ' + v.score + ' of 100'],
+            ['Risk', (this.level || v.riskLevel || v.band) + ' · score ' + v.score + ' of 100'],
             ['Health Hazard Summary', this.hazard || v.hazard],
             ['Checklist', QUESTIONS.filter((q) => this.checks[q.id]).map((q) => q.text + ' ' + this.checks[q.id]).join('\n')],
-            ['Recommended By', [c.recommendedBy, c.recommendedOn ? new Date(c.recommendedOn).toLocaleString() : ''].filter(Boolean).join(' \u00b7 ')],
+            ['Recommended By', [c.recommendedBy, c.recommendedOn ? new Date(c.recommendedOn).toLocaleString() : ''].filter(Boolean).join(' · ')],
             ['Emergency', c.emergency ? c.emergencyReason : '']
         ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val }));
     }
@@ -449,7 +501,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const v = this.v;
         return [
             ['Outcome', v.outcome], ['Field Action', v.faName || 'None'], ['Scope', this.scopeLine], ['Risk', (v.riskLevel || '') + ' · score ' + v.score + ' of 100'],
-            ['Rationale', v.rationale], ['Committee', this.committee.approvalName ? this.committee.approvalName + ' \u00b7 ' + this.approvedCount + ' of ' + this.csteps.length + ' approved' : ''],
+            ['Rationale', v.rationale], ['Committee', this.committee.approvalName ? this.committee.approvalName + ' · ' + this.approvedCount + ' of ' + this.csteps.length + ' approved' : ''],
             ['Approved by', v.decidedBy]
         ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val }));
     }

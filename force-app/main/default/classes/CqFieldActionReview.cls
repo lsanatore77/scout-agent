@@ -28,8 +28,11 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public Boolean thisLot = false; @AuraEnabled public Boolean counts = false;
         @AuraEnabled public String raisedBy;   // set on a signal a person raised by hand
         @AuraEnabled public String why;        // one plain line: what it was measured against
+        @AuraEnabled public Decimal value; @AuraEnabled public Decimal baseline; @AuraEnabled public Decimal times;   // times = value against normal
+        @AuraEnabled public Boolean pct = false;
         @AuraEnabled public List<Rec> records = new List<Rec>();
     }
+    public class Series { @AuraEnabled public String name; @AuraEnabled public List<Integer> counts = new List<Integer>(); }
     /** One line of "What We Know": a question, its answer, and where the answer came from. */
     public class Know {
         @AuraEnabled public String q; @AuraEnabled public String a; @AuraEnabled public String src; @AuraEnabled public Boolean unknown;
@@ -59,6 +62,8 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public List<Know> know = new List<Know>();
         @AuraEnabled public List<Sig> signals = new List<Sig>();        // Assess or Escalate, not dismissed
         @AuraEnabled public List<Sig> moreSignals = new List<Sig>();    // Watch, or dismissed earlier
+        @AuraEnabled public List<String> trendMonths = new List<String>();   // the last 12 months, oldest first
+        @AuraEnabled public List<Series> trend = new List<Series>();        // complaints, nonconformances and reviews on the part each month
         @AuraEnabled public CqFarCommittee.Info committee;             // the committee approval stage, on CQ Approvals
         @AuraEnabled public String draft;
     }
@@ -169,6 +174,7 @@ public with sharing class CqFieldActionReview {
 
         // Signals: is the problem repeating or spreading? Worth 35, from the strongest signal on this lot or part.
         Sig top = loadSignals(v, partId, lot);
+        loadTrend(v, partId);
         v.factors.add(new Factor('Signals',
             top == null ? 'No signals on this lot or part' : top.rule + ' at ' + top.strength + ': ' + top.label,
             top == null || top.score == null ? 0 : (35 * top.score).round(System.RoundingMode.HALF_UP).intValue(), 35));
@@ -233,6 +239,7 @@ public with sharing class CqFieldActionReview {
                 SELECT Id, Name, Rule__r.Name, Rule__r.Code__c, Summary__c, Value_Label__c, Strength__c, Score__c, Trend__c, Status__c,
                        Lot_Number__c, First_Seen__c, Rule__c, CreatedBy.Name, CreatedDate,
                        Value__c, Raise_Threshold__c, Escalate_Threshold__c, Baseline__c, Rule__r.Unit__c,
+                       Rule__r.Threshold_Mode__c, Rule__r.Window_Days__c,
                        (SELECT Complaint__c, Complaint__r.Name, Complaint__r.compliancequest__Complaint_Title__c,
                                Complaint__r.compliancequest__Status__c, Complaint__r.compliancequest__Lot_Number__c,
                                Nonconformance__c, Nonconformance__r.Name, Nonconformance__r.compliancequest__NC_Title__c,
@@ -251,6 +258,10 @@ public with sharing class CqFieldActionReview {
             g.firstSeen = s.First_Seen__c != null ? s.First_Seen__c : s.CreatedDate;
             if (manual) { g.raisedBy = s.CreatedBy.Name; }
             g.why = why(s, g.strength);
+            g.value = s.Value__c; g.baseline = s.Baseline__c; g.pct = s.Rule__r?.Unit__c != null && s.Rule__r.Unit__c.startsWith('%');
+            if (s.Rule__r?.Threshold_Mode__c != 'Baseline' && s.Value__c != null && s.Baseline__c != null && s.Baseline__c > 0) {
+                g.times = (s.Value__c / s.Baseline__c).setScale(1);
+            }
             List<Rec> same = new List<Rec>(); List<Rec> rest = new List<Rec>();
             for (Signal_Event__c e : s.Signal_Events__r) {
                 Rec x = new Rec();
@@ -290,17 +301,73 @@ public with sharing class CqFieldActionReview {
         Boolean pct = unit.startsWith('%');
         String raise = num(s.Raise_Threshold__c) + (pct ? '%' : '');
         String esc = num(s.Escalate_Threshold__c) + (pct ? '%' : '');
-        if (s.Baseline__c != null) {
+        if (s.Baseline__c != null && s.Rule__r.Threshold_Mode__c == 'Baseline') {
             return 'Normal is ' + num(s.Baseline__c.setScale(1)) + ' a month. Raised at ' + num(s.Raise_Threshold__c.setScale(1))
                 + ' (2 standard deviations above normal), escalates at ' + num(s.Escalate_Threshold__c.setScale(1)) + ' (3 above).';
         }
         String one = unit.endsWith('s') && s.Value__c == 1 ? unit.removeEnd('s') : unit;
+        String normal = normalLine(s, pct);
         String have = pct ? num(s.Value__c) + unit : num(s.Value__c) + ' ' + one;
         Boolean atEsc = s.Escalate_Threshold__c != null && s.Value__c >= s.Escalate_Threshold__c;
-        if (strength == 'Escalate' && atEsc) { return have + '. Escalates at ' + esc + '.'; }
-        if (strength == 'Escalate') { return have + '. Raised at ' + raise + '. Lifted to Escalate because two signals are at Assess on this lot.'; }
-        if (s.Value__c >= s.Raise_Threshold__c) { return have + '. Raised at ' + raise + ', escalates at ' + esc + '.'; }
-        return have + '. Below the raise level of ' + raise + '.';
+        if (strength == 'Escalate' && atEsc) { return have + '. ' + normal + 'Escalates at ' + esc + '.'; }
+        if (strength == 'Escalate') { return have + '. ' + normal + 'Raised at ' + raise + '. Lifted to Escalate because two signals are at Assess on this lot.'; }
+        if (s.Value__c >= s.Raise_Threshold__c) { return have + '. ' + normal + 'Raised at ' + raise + ', escalates at ' + esc + '.'; }
+        return have + '. ' + normal + 'Below the raise level of ' + raise + '.';
+    }
+
+    /** "Normal is 0.6 complaints per lot. " from the baseline the signal job stored, or nothing when there is none. */
+    private static String normalLine(Signal__c s, Boolean pct) {
+        if (s.Baseline__c == null) { return ''; }
+        String code = s.Rule__r.Code__c;
+        Integer window = s.Rule__r.Window_Days__c == null ? null : s.Rule__r.Window_Days__c.intValue();
+        String per = pct ? '% of units built'
+            : code == 'CROSS_SOURCE' ? ' complaints per lot'
+            : code == 'CLUSTER' ? ' complaints per ' + (window == null ? 90 : window) + ' days'
+            : code == 'REPEAT_REVIEWS' ? ' reviews per ' + (window == null ? 180 : window) + ' days'
+            : ' ' + (s.Rule__r.Unit__c == null ? '' : s.Rule__r.Unit__c);
+        return 'Normal is ' + num(s.Baseline__c.setScale(s.Baseline__c < 1 ? 2 : 1)) + per + '. ';
+    }
+
+    /**
+     * Records on the part in each of the last 12 months: complaints, nonconformances and Field Action Reviews.
+     * Nonconformances count only on lots of the part that have a lot record, so test records on made-up lot numbers stay out.
+     */
+    private static void loadTrend(View v, Id partId) {
+        if (partId == null) { return; }
+        String partNumber = [SELECT compliancequest__Part_Number__c FROM compliancequest__SQX_Part__c WHERE Id = :partId].compliancequest__Part_Number__c;
+        Date first = Date.today().toStartOfMonth().addMonths(-11);
+        Datetime since = Datetime.newInstance(first, Time.newInstance(0, 0, 0, 0));
+        Map<Integer, Integer> idx = new Map<Integer, Integer>();
+        for (Integer i = 0; i < 12; i++) {
+            Date d = first.addMonths(i);
+            idx.put(d.year() * 12 + d.month(), i);
+            v.trendMonths.add(Datetime.newInstance(d, Time.newInstance(12, 0, 0, 0)).format('MMM yyyy'));
+        }
+        Series c = new Series(); c.name = 'Complaints';
+        Series n = new Series(); n.name = 'Nonconformances';
+        Series f = new Series(); f.name = 'Reviews';
+        for (Series x : new List<Series>{ c, n, f }) { for (Integer i = 0; i < 12; i++) { x.counts.add(0); } }
+        for (compliancequest__SQX_Complaint__c x : [SELECT CreatedDate FROM compliancequest__SQX_Complaint__c
+                                                    WHERE compliancequest__SQX_Part__c = :partId AND CreatedDate >= :since LIMIT 5000]) {
+            Integer i = idx.get(x.CreatedDate.year() * 12 + x.CreatedDate.month());
+            if (i != null) { c.counts[i] = c.counts[i] + 1; }
+        }
+        Set<String> lots = new Set<String>();
+        if (partNumber != null) {
+            for (compliancequest__SQX_Lot_Info__c l : [SELECT Name FROM compliancequest__SQX_Lot_Info__c WHERE compliancequest__Part_Number__c = :partNumber LIMIT 2000]) { lots.add(l.Name); }
+        }
+        for (compliancequest__SQX_Nonconformance__c x : [SELECT CreatedDate FROM compliancequest__SQX_Nonconformance__c
+                                                         WHERE compliancequest__SQX_Part__c = :partId AND compliancequest__Lot_Number__c IN :lots AND CreatedDate >= :since LIMIT 5000]) {
+            Integer i = idx.get(x.CreatedDate.year() * 12 + x.CreatedDate.month());
+            if (i != null) { n.counts[i] = n.counts[i] + 1; }
+        }
+        for (Field_Action_Review__c x : [SELECT CreatedDate FROM Field_Action_Review__c
+                                         WHERE CreatedDate >= :since AND (Part__c = :partId OR Complaint__r.compliancequest__SQX_Part__c = :partId
+                                               OR Nonconformance__r.compliancequest__SQX_Part__c = :partId) LIMIT 5000]) {
+            Integer i = idx.get(x.CreatedDate.year() * 12 + x.CreatedDate.month());
+            if (i != null) { f.counts[i] = f.counts[i] + 1; }
+        }
+        v.trend.add(c); v.trend.add(n); v.trend.add(f);
     }
 
     @AuraEnabled

@@ -109,8 +109,10 @@
                     <template if:true={is1}>
                         <h3 class="q">Signals and Evidence</h3>
                         <p class="p">Patterns CQ.AI has found across complaints, nonconformances and reviews on this part. Every signal is shown, and the committee sees the same set.</p>
+                        <div class="sigcols">
+                        <div class="sigl">
                         <template for:each={signals} for:item="s">
-                            <details key={s.id} class="sig">
+                            <details key={s.id} class={s.sigCls} data-id={s.id} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
                                 <summary>
                                     <span class="chev" aria-hidden="true">&#8250;</span>
                                     <span class="sgb">
@@ -163,6 +165,54 @@
                                 </template>
                             </details>
                         </template>
+                        </div>
+                        <div class="sigr">
+                            <template if:true={hasBars}>
+                                <div class="card chart">
+                                    <div class="chead"><span class="lab">Against Normal</span><span class="rk">How many times its normal level each signal is now</span></div>
+                                    <template for:each={normalBars} for:item="b">
+                                        <div key={b.id} class={b.rowCls} data-id={b.id} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
+                                            <span class="nl"><span class="nt">{b.rule}</span><span class="rk">{b.where}</span></span>
+                                            <span class="ntrack"><template if:true={b.has}><span class="nbar" style={b.barStyle}></span></template></span>
+                                            <span class="nx" style={b.timesStyle}>{b.times}</span>
+                                        </div>
+                                    </template>
+                                    <span class="rk">The grey line is normal, from the last 12 months. Bars use a log scale so 2&times; and 67&times; both fit.</span>
+                                </div>
+                            </template>
+                            <template if:true={hasTrend}>
+                                <div class="card chart">
+                                    <div class="chead"><span class="lab">Records on This Part by Month</span><span class="rk">{trendChart.range}</span></div>
+                                    <svg class="trend" viewBox="0 0 600 210" role="img" aria-label={trendChart.label}>
+                                        <template for:each={trendChart.ticks} for:item="t">
+                                            <g key={t.key}>
+                                                <line x1="36" x2="592" y1={t.y} y2={t.y} stroke="#eef0f3" stroke-width="1"></line>
+                                                <text x="28" y={t.ty} text-anchor="end" font-size="11" fill="#5b6470">{t.v}</text>
+                                            </g>
+                                        </template>
+                                        <template for:each={trendChart.labels} for:item="m">
+                                            <text key={m.key} x={m.x} y="204" text-anchor="middle" font-size="11" fill="#5b6470">{m.label}</text>
+                                        </template>
+                                        <template for:each={trendChart.lines} for:item="l">
+                                            <g key={l.key}>
+                                                <polyline points={l.points} fill="none" stroke={l.color} stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                                                <template for:each={l.dots} for:item="d">
+                                                    <circle key={d.key} cx={d.x} cy={d.y} r="3.5" fill={l.color}><title>{d.title}</title></circle>
+                                                </template>
+                                                <text x={l.endX} y={l.endY} font-size="11" font-weight="700" fill={l.color}>{l.endLabel}</text>
+                                            </g>
+                                        </template>
+                                    </svg>
+                                    <div class="legend">
+                                        <template for:each={trendChart.lines} for:item="l">
+                                            <span key={l.key} class="lg"><span class="sw" style={l.swatch}></span>{l.name}</span>
+                                        </template>
+                                        <span class="rk">Nonconformances on lots of this part only.</span>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        </div>
                         <p class="note">Shipments, customers and markets are not shown: there is no distribution data connected.</p>
                     </template>
 
