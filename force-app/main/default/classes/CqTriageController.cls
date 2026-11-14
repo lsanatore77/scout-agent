@@ -38,7 +38,7 @@ public with sharing class CqTriageController {
     public static Glance getGlance(Id recordId) {
         compliancequest__SQX_Nonconformance__c nc = load(recordId);
         Glance g = new Glance();
-        g.name = nc.Name; g.title = nc.compliancequest__NC_Title__c; g.description = nc.compliancequest__Description__c;
+        g.name = nc.Name; g.title = nc.compliancequest__NC_Title__c; g.description = CqRichText.toText(nc.compliancequest__Description_RT__c, nc.compliancequest__Description__c);
         g.partName = nc.compliancequest__SQX_Part__r?.Name; g.partNumber = nc.compliancequest__SQX_Part__r?.compliancequest__Part_Number__c;
         g.lot = nc.compliancequest__Lot_Number__c; g.lotQuantity = nc.compliancequest__Lot_Quantity__c;
         g.defectiveQuantity = nc.compliancequest__Defective_Quantity__c; g.occurred = nc.compliancequest__Occurrence_Date__c;
@@ -184,7 +184,7 @@ public with sharing class CqTriageController {
     }
 
     private static compliancequest__SQX_Nonconformance__c load(Id recordId) {
-        return [SELECT Id, Name, compliancequest__NC_Title__c, compliancequest__Description__c, compliancequest__Status__c, compliancequest__Triage_Result__c,
+        return [SELECT Id, Name, compliancequest__NC_Title__c, compliancequest__Description__c, compliancequest__Description_RT__c, compliancequest__Status__c, compliancequest__Triage_Result__c,
                        compliancequest__Defect_Severity__c, compliancequest__Severity__c, compliancequest__Reoccurring__c,
                        compliancequest__Lot_Number__c, compliancequest__Lot_Quantity__c, compliancequest__Defective_Quantity__c, compliancequest__Occurrence_Date__c,
                        compliancequest__Has_Containment__c, compliancequest__SQX_Investigation__c, compliancequest__SQX_Investigation__r.Name,

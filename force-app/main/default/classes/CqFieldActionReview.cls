@@ -48,6 +48,7 @@ public with sharing class CqFieldActionReview {
                        Risk_Level__c, Health_Hazard_Summary__c, Outcome__c, Outcome_Rationale__c, Decided_By__r.Name, Decided_On__c,
                        Field_Action__c, Field_Action__r.Name, Review_Summary__c, Review_Draft__c,
                        Nonconformance__c, Nonconformance__r.Name, Nonconformance__r.compliancequest__NC_Title__c, Nonconformance__r.compliancequest__Description__c,
+                       Nonconformance__r.compliancequest__Description_RT__c,
                        Nonconformance__r.compliancequest__Lot_Number__c, Nonconformance__r.compliancequest__SQX_Part__c, Nonconformance__r.Triage_Risk__c,
                        Nonconformance__r.compliancequest__SQX_Part__r.Name, Nonconformance__r.compliancequest__SQX_Part__r.compliancequest__Part_Number__c,
                        Complaint__c, Complaint__r.Name, Complaint__r.compliancequest__Complaint_Title__c, Complaint__r.compliancequest__Description__c,
@@ -71,7 +72,7 @@ public with sharing class CqFieldActionReview {
         String lot = r.Lot_Number__c; String sourceRisk;
         if (r.Nonconformance__c != null) {
             v.sourceKind = 'Nonconformance'; v.sourceId = r.Nonconformance__c; v.sourceName = r.Nonconformance__r.Name;
-            v.sourceTitle = r.Nonconformance__r.compliancequest__NC_Title__c; v.problem = r.Nonconformance__r.compliancequest__Description__c;
+            v.sourceTitle = r.Nonconformance__r.compliancequest__NC_Title__c; v.problem = CqRichText.toText(r.Nonconformance__r.compliancequest__Description_RT__c, r.Nonconformance__r.compliancequest__Description__c);
             sourceRisk = r.Nonconformance__r.Triage_Risk__c;
             if (lot == null) { lot = r.Nonconformance__r.compliancequest__Lot_Number__c; }
             if (partId == null) {
@@ -81,7 +82,7 @@ public with sharing class CqFieldActionReview {
             }
         } else if (r.Complaint__c != null) {
             v.sourceKind = 'Complaint'; v.sourceId = r.Complaint__c; v.sourceName = r.Complaint__r.Name;
-            v.sourceTitle = r.Complaint__r.compliancequest__Complaint_Title__c; v.problem = r.Complaint__r.compliancequest__Description__c;
+            v.sourceTitle = r.Complaint__r.compliancequest__Complaint_Title__c; v.problem = CqRichText.toText(null, r.Complaint__r.compliancequest__Description__c);
             if (lot == null) { lot = r.Complaint__r.compliancequest__Lot_Number__c; }
             if (partId == null) {
                 partId = r.Complaint__r.compliancequest__SQX_Part__c;
@@ -89,7 +90,6 @@ public with sharing class CqFieldActionReview {
                 partName = p == null ? null : p.compliancequest__Part_Number__c != null ? p.compliancequest__Part_Number__c : p.Name;
             }
         }
-        if (v.problem != null) { v.problem = v.problem.stripHtmlTags(); }
         v.partId = partId; v.partName = partName; v.lot = lot;
 
         // Signals and evidence: other records on the same part
