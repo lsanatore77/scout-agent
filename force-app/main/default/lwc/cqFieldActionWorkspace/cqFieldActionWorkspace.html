@@ -113,6 +113,7 @@
                                     <span class="sgb">
                                         <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
                                         <span class="sgl">{s.label}</span>
+                                        <template if:true={s.why}><span class="rk">{s.why}</span></template>
                                     </span>
                                     <span class="rk cnt">{s.count}</span>
                                 </summary>
@@ -145,6 +146,7 @@
                                             <span class="sgb">
                                                 <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
                                                 <span class="sgl">{s.label}</span>
+                                                <template if:true={s.why}><span class="rk">{s.why}</span></template>
                                             </span>
                                             <span class="rk cnt">{s.count}</span>
                                         </summary>

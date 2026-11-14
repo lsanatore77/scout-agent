@@ -27,6 +27,7 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public String status; @AuraEnabled public String lot; @AuraEnabled public Datetime firstSeen;
         @AuraEnabled public Boolean thisLot = false; @AuraEnabled public Boolean counts = false;
         @AuraEnabled public String raisedBy;   // set on a signal a person raised by hand
+        @AuraEnabled public String why;        // one plain line: what it was measured against
         @AuraEnabled public List<Rec> records = new List<Rec>();
     }
     /** One line of "What We Know": a question, its answer, and where the answer came from. */
@@ -228,6 +229,7 @@ public with sharing class CqFieldActionReview {
         for (Signal__c s : [
                 SELECT Id, Name, Rule__r.Name, Rule__r.Code__c, Summary__c, Value_Label__c, Strength__c, Score__c, Trend__c, Status__c,
                        Lot_Number__c, First_Seen__c, Rule__c, CreatedBy.Name, CreatedDate,
+                       Value__c, Raise_Threshold__c, Escalate_Threshold__c, Baseline__c, Rule__r.Unit__c,
                        (SELECT Complaint__c, Complaint__r.Name, Complaint__r.compliancequest__Complaint_Title__c,
                                Complaint__r.compliancequest__Status__c, Complaint__r.compliancequest__Lot_Number__c,
                                Nonconformance__c, Nonconformance__r.Name, Nonconformance__r.compliancequest__NC_Title__c,
@@ -245,6 +247,7 @@ public with sharing class CqFieldActionReview {
             g.score = s.Score__c != null ? s.Score__c : g.strength == 'Escalate' ? 1 : g.strength == 'Assess' ? 0.60 : 0.20;
             g.firstSeen = s.First_Seen__c != null ? s.First_Seen__c : s.CreatedDate;
             if (manual) { g.raisedBy = s.CreatedBy.Name; }
+            g.why = why(s, g.strength);
             List<Rec> same = new List<Rec>(); List<Rec> rest = new List<Rec>();
             for (Signal_Event__c e : s.Signal_Events__r) {
                 Rec x = new Rec();
@@ -272,6 +275,29 @@ public with sharing class CqFieldActionReview {
         }
         v.signals.addAll(here); v.signals.addAll(elsewhere);
         return top;
+    }
+
+    private static String num(Decimal d) { return d == null ? '' : d.stripTrailingZeros().toPlainString(); }
+
+    /** Why a signal sits at its strength, in one line, from the thresholds the job stored on it. */
+    private static String why(Signal__c s, String strength) {
+        if (s.Rule__c == null) { return 'Raised by a person, not by a rule.'; }
+        if (s.Value__c == null || s.Raise_Threshold__c == null) { return null; }
+        String unit = s.Rule__r.Unit__c == null ? '' : s.Rule__r.Unit__c;
+        Boolean pct = unit.startsWith('%');
+        String raise = num(s.Raise_Threshold__c) + (pct ? '%' : '');
+        String esc = num(s.Escalate_Threshold__c) + (pct ? '%' : '');
+        if (s.Baseline__c != null) {
+            return 'Normal is ' + num(s.Baseline__c.setScale(1)) + ' a month. Raised at ' + num(s.Raise_Threshold__c.setScale(1))
+                + ' (2 standard deviations above normal), escalates at ' + num(s.Escalate_Threshold__c.setScale(1)) + ' (3 above).';
+        }
+        String one = unit.endsWith('s') && s.Value__c == 1 ? unit.removeEnd('s') : unit;
+        String have = pct ? num(s.Value__c) + unit : num(s.Value__c) + ' ' + one;
+        Boolean atEsc = s.Escalate_Threshold__c != null && s.Value__c >= s.Escalate_Threshold__c;
+        if (strength == 'Escalate' && atEsc) { return have + '. Escalates at ' + esc + '.'; }
+        if (strength == 'Escalate') { return have + '. Raised at ' + raise + '. Lifted to Escalate because two signals are at Assess on this lot.'; }
+        if (s.Value__c >= s.Raise_Threshold__c) { return have + '. Raised at ' + raise + ', escalates at ' + esc + '.'; }
+        return have + '. Below the raise level of ' + raise + '.';
     }
 
     @AuraEnabled

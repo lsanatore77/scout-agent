@@ -105,7 +105,8 @@
 .sgt { font-size: 14px; font-weight: 700; }
 .sgl { font-size: 14px; }
 .spill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f3f3f3; color: #5b6470; }
-.spill.assess { background: #fff8e1; color: #7a4100; }
+.spill.watch { background: #fff6cc; color: #6b5300; }
+.spill.assess { background: #ffe6cf; color: #8a3c00; }
 .spill.escalate { background: #fdecea; color: #b42318; }
 .evt { display: flex; gap: 12px; padding: 8px 14px 8px 36px; border-bottom: 1px solid #eceff2; }
 .evt:last-child { border-bottom: none; }
