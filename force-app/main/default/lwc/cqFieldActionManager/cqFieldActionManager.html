@@ -12,9 +12,8 @@
                         </div>
                     </div>
                     <div class="hl-actions">
-                        <button class="btn" onclick={handleEdit}>Edit</button>
-                        <button class="btn icon" onclick={handleRefresh} title="Refresh" aria-label="Refresh"><lightning-icon icon-name="utility:refresh" size="x-small"></lightning-icon></button>
                         <c-ask-cq-popover record-id={recordId} suggestions="Summarize this field action,Which lots are in scope?,What is left on this field action?"></c-ask-cq-popover>
+                        <button class="btn" onclick={handleEdit}>Edit</button>
                     </div>
                 </div>
                 <div class="hl-fields">
@@ -102,7 +101,7 @@
                             <template if:true={v.scope}><span class={scopePill}>{v.scope}</span></template>
                             <span class={statePill}>{stateText}</span>
                         </div>
-                        <p class="p top14">{scopeIntro}</p>
+                        <template if:true={noScope}><p class="p top14">This field action has no scope set. It was decided before scope was part of the review.</p></template>
 
                         <template if:true={hasLots}>
                             <div class="tbar">
@@ -110,11 +109,9 @@
                                     <button class={allTab} data-v="all" onclick={handleView} aria-pressed={allPressed}>All Lots</button>
                                     <button class={inTab} data-v="in" onclick={handleView} aria-pressed={inPressed}>In Scope</button>
                                 </div>
-                                <span class="rk">{countLine}</span>
-                                <span class={pendingCls}>{pendingLine}</span>
+                                <template if:true={pendingLine}><span class="pendline warn">{pendingLine}</span></template>
                                 <template if:true={isPartial}>
                                     <div class="cact">
-                                        <span class="rk">{confirmHint}</span>
                                         <button class="btn" onclick={handleDiscard} disabled={cantDiscard}>Discard Changes</button>
                                         <button class="btn primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
                                     </div>
@@ -194,7 +191,6 @@
                             </div>
                             <template if:true={hasPages}>
                                 <div class="pager">
-                                    <span class="rk">{pageLine}</span>
                                     <nav class="pages" aria-label="Lot pages">
                                         <button class="pg" onclick={handlePrevPage} disabled={cantPrevPage} aria-label="Previous page">&laquo;</button>
                                         <template for:each={pageItems} for:item="p">
@@ -204,7 +200,6 @@
                                     </nav>
                                 </div>
                             </template>
-                            <p class="note">Click shipped, on hand or location to edit them: no distribution or inventory data is connected. Sub-assemblies and components come with their lot, so they have no tick box.</p>
                         </template>
                         <template if:false={hasLots}><p class="note">No lots of this part were found.</p></template>
 

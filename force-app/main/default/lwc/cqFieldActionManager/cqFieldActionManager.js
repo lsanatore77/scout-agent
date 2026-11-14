@@ -83,11 +83,6 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     handleEdit() {
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: this.recordId, objectApiName: 'Field_Action__c', actionName: 'edit' } });
     }
-    async handleRefresh() {
-        try { this.apply(await getView({ recordId: this.recordId })); this.error = undefined; this.gens = {}; this.edits = {}; this.open = {}; }
-        catch (e) { this.error = this.msg(e, 'Could not refresh this field action.'); }
-        await this.loadRail();
-    }
     handleOpen(event) {
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: event.currentTarget.dataset.id, actionName: 'view' } });
     }
@@ -226,41 +221,25 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     // ---- step 2: scope
     get scopePill() { return 'spill ' + (this.isFull ? 'full' : 'partial'); }
     get statePill() { return 'spill state' + (this.scopeConfirmed ? ' ok' : this.v.scope ? ' wait' : ''); }
-    get scopeIntro() {
-        if (this.isFull) { return 'Full scope covers every lot of ' + this.partText + '. Any lot found later is added automatically and logged below. Expand a lot to see what it was built from.'; }
-        if (this.isPartial) { return 'Tick the lots this field action covers. Each tick is saved as a draft straight away; the scope counts once you confirm it. Expand a lot to see what it was built from and where those component lots were used.'; }
-        return 'This field action has no scope set. It was decided before scope was part of the review.';
-    }
+    get noScope() { return !this.v.scope; }
     get canChange() { return this.isPartial && this.v.status !== 'Closed'; }
     get allTab() { return 'tog' + (this.view === 'all' ? ' on' : ''); }
     get inTab() { return 'tog' + (this.view === 'in' ? ' on' : ''); }
     get allPressed() { return this.view === 'all' ? 'true' : 'false'; }
     get inPressed() { return this.view === 'in' ? 'true' : 'false'; }
     handleView(event) { this.view = event.currentTarget.dataset.v; this.page = 0; }
-    get countLine() {
-        const n = this.draftLots.length;
-        return n + ' lot' + (n === 1 ? '' : 's') + ' in scope';
-    }
+    /** Only unconfirmed changes are called out: '2 added, 1 removed, not confirmed'. */
     get pendingLine() {
         if (!this.isPartial) { return ''; }
         const parts = [];
         if (this.pendingAdds) { parts.push(this.pendingAdds + ' added'); }
         if (this.pendingRemoves) { parts.push(this.pendingRemoves + ' removed'); }
-        if (parts.length) { return parts.join(', ') + ', not confirmed'; }
-        if (this.v.scopeStatus === 'Confirmed') {
-            return 'Confirmed' + (this.v.scopeConfirmedBy ? ' by ' + this.v.scopeConfirmedBy : '') + (this.v.scopeConfirmedOn ? ' · ' + this.when(this.v.scopeConfirmedOn) : '');
-        }
-        return 'Not confirmed yet';
+        return parts.length ? parts.join(', ') + ', not confirmed' : '';
     }
-    get pendingCls() { return 'pendline' + (this.pending ? ' warn' : ''); }
     get busy() { return this.saving || Object.keys(this.ticking).length > 0; }
     get cantConfirm() { return this.busy || this.draftLots.length === 0 || this.scopeConfirmed; }
     get cantDiscard() { return this.busy || this.pending === 0; }
     get confirmLabel() { return this.saving ? 'Saving…' : this.scopeConfirmed ? 'Scope Confirmed' : 'Confirm Scope'; }
-    get confirmHint() {
-        if (this.scopeConfirmed) { return 'Strategy and the steps after it work from this lot list.'; }
-        return this.draftLots.length ? 'Confirming the lot list opens Strategy.' : 'Tick at least one lot.';
-    }
 
     /** The lots the table lists: in scope, then CQ.AI suggestions, then lots with a lot record, then lot numbers found only on records. */
     get shownLots() {
@@ -273,10 +252,6 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get pageCount() { return Math.max(1, Math.ceil(this.shownLots.length / PAGE)); }
     get pageNow() { return Math.min(this.page, this.pageCount - 1); }
     get hasPages() { return this.shownLots.length > PAGE; }
-    get pageLine() {
-        const n = this.shownLots.length; const from = this.pageNow * PAGE;
-        return 'Lots ' + (from + 1) + '–' + Math.min(from + PAGE, n) + ' of ' + n;
-    }
     get cantPrevPage() { return this.pageNow === 0; }
     get cantNextPage() { return this.pageNow >= this.pageCount - 1; }
     handlePrevPage() { this.page = Math.max(0, this.pageNow - 1); }
