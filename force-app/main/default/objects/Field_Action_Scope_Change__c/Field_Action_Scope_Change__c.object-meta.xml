@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Field Action Scope Change object logs each lot added to or removed from a field action's scope. It records the Field Action, Lot Number, Change (Added or Removed), How it happened and the Reason, with who made it and when. Commonly used for the scope audit trail.</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Field Action Scope Change</label>
+    <nameField>
+        <displayFormat>SC-{0000}</displayFormat>
+        <label>Scope Change Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Field Action Scope Changes</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

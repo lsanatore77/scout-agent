@@ -1,5 +1,5 @@
 /**
- * When a CQ Approval closes, tell the Field Action Review it belongs to.
+ * When a CQ Approval closes, tell the Field Action Review or Field Action it belongs to.
  * Approved decides the review and starts or joins the Field Action; anything else returns it to the coordinator.
  * Runs wherever the approval was closed from, so it also covers approvals completed on CQ's own screens.
  */
@@ -12,7 +12,7 @@ trigger CqFarCommitteeApproval on cqext__CQAPR_Approval__c (after update) {
         }
     }
     if (!closed.isEmpty()) {
-        CqFarCommittee.onClosed(closed);        // decides the review
-        CqFieldActionLots.onClosed(closed);     // then moves its lots in scope onto the Field Action
+        CqFarCommittee.onClosed(closed);        // decides the review, which starts or joins the Field Action
+        CqFieldActionScope.onClosed(closed);    // then the Field Action's scope: the review's lot, or a scope approval
     }
 }

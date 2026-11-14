@@ -1,9 +1,11 @@
 /**
  * CqFieldActionLots: the scope of a field action, decided in the Field Action Review.
  *
- * A review that starts a new Field Action recommends Full (every lot of the part on record in CQ) or Partial (named lots).
- * CQ.AI suggests one of the two and the lots, from the signals on the review. The lots are kept as Field Action Lots:
- * on the review while it is with the committee, and on the Field Action once the committee approves.
+ * A review that starts a new Field Action recommends Full or Partial; the committee approves that with the decision.
+ *  - Full covers every lot of the part, including lots found later.
+ *  - Partial starts with the review's lot. The coordinator chooses the rest in the Field Action (Scope step) and the
+ *    lot list goes for its own approval there (see CqFieldActionScope).
+ * CQ.AI suggests Full or Partial from the signals, and the lots it would look at, shown to the committee as the starting scope.
  * A review that joins an open Field Action brings its own lot.
  */
 public with sharing class CqFieldActionLots {
@@ -109,7 +111,7 @@ public with sharing class CqFieldActionLots {
         return out;
     }
 
-    /** Sends the recommendation to the committee (see CqFarCommittee) with its scope and lots. */
+    /** Sends the recommendation to the committee (see CqFarCommittee) with its scope. The lots are chosen later, in the Field Action. */
     @AuraEnabled
     public static CqFieldActionReview.View submitToCommittee(Id recordId, String hazard, String summary, Integer score, String riskLevel,
                                                              String outcome, String rationale, String draft, String team,
@@ -117,53 +119,9 @@ public with sharing class CqFieldActionLots {
         // scope applies to a new field action; a review that joins one brings its own lot
         if (outcome != 'Field Action Needed' || String.isBlank(scope)) { scope = null; }
         if (scope != null && scope != 'Full' && scope != 'Partial') { throw new AuraHandledException('Choose Full or Partial.'); }
-        if (scope == 'Partial' && (lots == null || lots.isEmpty())) { throw new AuraHandledException('Choose at least one lot.'); }
         CqFarCommittee.submitToCommittee(recordId, hazard, summary, score, riskLevel, outcome, rationale, draft, team, emergency, emergencyReason);
 
-        delete [SELECT Id FROM Field_Action_Lot__c WHERE Field_Action_Review__c = :recordId AND Field_Action__c = null];
         update new Field_Action_Review__c(Id = recordId, Scope__c = scope);
-        if (outcome == 'Field Action Needed') {
-            CqFieldActionReview.View v = CqFieldActionReview.getView(recordId);
-            Set<String> want = scope == 'Full' ? null : scope == 'Partial' ? new Set<String>(lots) : new Set<String>{ v.lot };
-            List<Field_Action_Lot__c> rows = new List<Field_Action_Lot__c>();
-            for (Lot l : build(v).lots) {
-                // Full: every lot on record in CQ, and the review's own lot
-                if (want == null ? (l.known || l.thisLot) : want.contains(l.name)) {
-                    rows.add(new Field_Action_Lot__c(Field_Action_Review__c = recordId, Lot__c = l.id, Lot_Number__c = l.name, Units_Built__c = l.built));
-                }
-            }
-            if (scope == 'Partial' && rows.isEmpty()) { throw new AuraHandledException('Choose at least one lot.'); }
-            insert rows;
-        }
         return CqFieldActionReview.getView(recordId);
-    }
-
-    /**
-     * Called by the trigger on CQ Approval, after CqFarCommittee has decided the review.
-     * Approved with a field action: the review's lots move onto the Field Action, which takes the review's scope if it has none.
-     * Approved with no field action: the lots are dropped. Sent back: they stay on the review for the next submission.
-     */
-    public static void onClosed(Map<Id, String> statusByApproval) {
-        for (Field_Action_Review__c r : [
-                SELECT Id, Committee_Approval__c, Scope__c, Field_Action__c, Field_Action__r.Scope__c, Field_Action__r.Lot_Numbers__c,
-                       (SELECT Id, Lot_Number__c FROM Lots_In_Scope__r WHERE Field_Action__c = null ORDER BY Lot_Number__c)
-                FROM Field_Action_Review__c WHERE Committee_Approval__c IN :statusByApproval.keySet() AND Status__c = 'Decided']) {
-            if (statusByApproval.get(r.Committee_Approval__c) != 'Approved') { continue; }
-            List<Field_Action_Lot__c> rows = r.Lots_In_Scope__r;
-            if (r.Field_Action__c == null) { delete rows; continue; }
-            Set<String> has = new Set<String>();
-            for (Field_Action_Lot__c l : [SELECT Lot_Number__c FROM Field_Action_Lot__c WHERE Field_Action__c = :r.Field_Action__c]) { has.add(l.Lot_Number__c); }
-            String now = r.Field_Action__r.Lot_Numbers__c;
-            List<String> text = String.isBlank(now) ? new List<String>() : now.split(',\\s*');
-            List<Field_Action_Lot__c> move = new List<Field_Action_Lot__c>();
-            for (Field_Action_Lot__c l : rows) {
-                if (!has.contains(l.Lot_Number__c)) { l.Field_Action__c = r.Field_Action__c; move.add(l); }
-                if (!text.contains(l.Lot_Number__c)) { text.add(l.Lot_Number__c); }
-            }
-            update move;
-            Field_Action__c f = new Field_Action__c(Id = r.Field_Action__c, Lot_Numbers__c = String.join(text, ', ').left(255));
-            if (r.Field_Action__r.Scope__c == null && r.Scope__c != null) { f.Scope__c = r.Scope__c; }
-            update f;
-        }
     }
 }

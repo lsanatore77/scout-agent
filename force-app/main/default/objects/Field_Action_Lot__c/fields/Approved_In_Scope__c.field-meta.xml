@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Approved_In_Scope__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Whether the lot was in scope when the scope was last approved. A lot whose In Scope differs from this is a change waiting for approval.</description>
+    <label>Approved In Scope</label>
+    <type>Checkbox</type>
+</CustomField>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Scope_Emergency__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Ticked when the scope was sent to one emergency approver instead of the committee.</description>
+    <label>Scope Emergency</label>
+    <type>Checkbox</type>
+</CustomField>
