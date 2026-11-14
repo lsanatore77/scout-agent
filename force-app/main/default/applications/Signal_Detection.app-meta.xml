@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Signals found across complaints, nonconformances and Field Action Reviews, the rules that find them, and the records behind each one.</description>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
+    <label>Signal Detection</label>
+    <navType>Standard</navType>
+    <tabs>Signal__c</tabs>
+    <tabs>Signal_Rule__c</tabs>
+    <tabs>Signal_Event__c</tabs>
+    <uiType>Lightning</uiType>
+</CustomApplication>

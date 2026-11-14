@@ -4,6 +4,10 @@
         <application>Field_Actions</application>
         <visible>true</visible>
     </applicationVisibilities>
+    <applicationVisibilities>
+        <application>Signal_Detection</application>
+        <visible>true</visible>
+    </applicationVisibilities>
     <description>Full access to Field Action Reviews and Field Actions, and the Field Actions app.</description>
     <fieldPermissions>
         <editable>true</editable>
