@@ -47,11 +47,11 @@
 .act.on .tick { border-color: #1d5fd1; background: #1d5fd1; }
 .dk { flex: 0 0 110px; color: #5b6470; }
 .dv { flex: 1 1 auto; min-width: 0; font-weight: 600; }
-.factcard { padding: 12px; border-radius: 10px; border: 1px solid #dde1e6; background: #fff; }
+.factcard { padding: 12px; border-radius: 4px; border: 1px solid #dde1e6; background: #fff; }
 .flist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
 .fline.bad { color: #b42318; font-weight: 600; }
 .fline.muted { color: #5b6470; }
-.fsug { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #f8f6ff; border: 1px solid #dcd3ff; font-size: 14px; }
+.fsug { margin-top: 12px; padding: 10px 12px; border-radius: 4px; background: #f8f6ff; border: 1px solid #dcd3ff; font-size: 14px; }
 .rec { color: #4a2fc0; font-weight: 600; margin-right: 6px; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .opt { min-height: 40px; padding: 0 16px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
@@ -65,7 +65,7 @@
 .ta, .sel { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; font-weight: 400; color: #1a1d21; }
 .sel { min-height: 40px; max-width: 280px; }
 .addbtn { align-self: flex-start; }
-.addform { padding: 10px 12px 12px; border-radius: 10px; border: 1px solid #dde1e6; background: #fafbfc; }
+.addform { padding: 10px 12px 12px; border-radius: 4px; border: 1px solid #dde1e6; background: #fafbfc; }
 .addform .fl { margin-top: 8px; gap: 3px; font-size: 12px; }
 .addform .opts { margin-top: 10px; gap: 8px; }
 .addform .errbox { margin-top: 8px; padding: 6px 10px; font-size: 12px; }
