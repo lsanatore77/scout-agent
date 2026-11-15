@@ -36,6 +36,9 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public Boolean blocks = false;  // an open item that stops closing
     }
     public class Capa { @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String title; }
+    /** Off for now (Lou, 14 Nov 2026): the acknowledgement target is shown and suggested, but does not stop an Effective verdict or closing. Set true to require it again. */
+    public static final Boolean ACK_REQUIRED = false;
+
     public class View {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String status; @AuraEnabled public Boolean closed = false;
         @AuraEnabled public Boolean strategyConfirmed = false; @AuraEnabled public String recovery; @AuraEnabled public String verdict;
@@ -47,6 +50,7 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public List<HoldDisp> holds = new List<HoldDisp>();
         @AuraEnabled public Decimal shipped = 0; @AuraEnabled public Decimal recovered = 0; @AuraEnabled public Boolean shippedKnown = false;
         @AuraEnabled public Integer acked = 0; @AuraEnabled public Integer total = 0; @AuraEnabled public Boolean targetMet = false;
+        @AuraEnabled public Boolean ackRequired = ACK_REQUIRED;
         @AuraEnabled public Integer decided = 0;
         @AuraEnabled public String aiVerdict; @AuraEnabled public String aiLine;
         // closure
@@ -212,7 +216,7 @@ public with sharing class CqFieldActionRecovery {
         add(v, 'units', 'Units recovered', unitsDetail, v.shippedKnown && inField == 0 ? 'ok' : 'open', false);
         add(v, 'customers', 'Customers confirmed', v.total == 0 ? 'No customers listed'
             : v.acked + ' of ' + v.total + ' acknowledged' + (v.targetMet ? ' · ' + (v.level == null ? 'target' : v.level) + ' met' : ' · ' + (v.level == null ? 'target' : v.level) + ' needs ' + v.target.intValue() + '%'),
-            v.targetMet ? 'ok' : 'open', true);
+            v.targetMet ? 'ok' : 'open', ACK_REQUIRED);
         Integer allTasks = v.tasks.open + v.tasks.completed;
         add(v, 'tasks', 'Recall tasks completed', allTasks == 0 ? 'No recall tasks were created' : v.tasks.completed + ' of ' + allTasks + ' completed'
             + (v.tasks.overdue > 0 ? ' · ' + v.tasks.overdue + ' overdue' : ''), v.tasks.open == 0 ? 'ok' : 'open', false);
@@ -390,7 +394,7 @@ public with sharing class CqFieldActionRecovery {
         if (v.decided < v.holds.size()) { throw new AuraHandledException('Choose what happens to all held stock.'); }
         Field_Action__c up = new Field_Action__c(Id = recordId, Verdict_By__c = UserInfo.getUserId(), Verdict_On__c = now);
         if (fa.Verdict__c == EFFECTIVE) {
-            if (!v.targetMet) { throw new AuraHandledException(v.total == 0 ? 'Add the customers that received these lots.' : (fa.Check_Level__c == null ? 'The check' : fa.Check_Level__c) + ' needs ' + v.target.intValue() + '% of customers to acknowledge.'); }
+            if (ACK_REQUIRED && !v.targetMet) { throw new AuraHandledException(v.total == 0 ? 'Add the customers that received these lots.' : (fa.Check_Level__c == null ? 'The check' : fa.Check_Level__c) + ' needs ' + v.target.intValue() + '% of customers to acknowledge.'); }
             up.Recovery_Status__c = 'Confirmed';
             List<Field_Action_Hold__c> hs = new List<Field_Action_Hold__c>();
             for (HoldDisp h : v.holds) { hs.add(new Field_Action_Hold__c(Id = h.id, Disposition_On__c = now)); }

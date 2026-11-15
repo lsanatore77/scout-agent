@@ -326,7 +326,7 @@ export default class CqFieldActionRecovery extends LightningElement {
     get blocker() {
         if (!this.v.verdict) { return 'Choose a verdict'; }
         if (this.v.decided < this.v.holds.length) { return 'Choose what happens to all held stock'; }
-        if (this.v.verdict === 'Effective' && !this.v.targetMet) {
+        if (this.v.verdict === 'Effective' && this.v.ackRequired && !this.v.targetMet) {
             return this.v.total ? (this.v.level || 'The check') + ' needs ' + this.v.target + '% of customers to acknowledge' : 'Add the customers that received these lots';
         }
         if (this.v.verdict === 'Not Effective' && !this.v.nextStep) { return 'Choose what happens next'; }
