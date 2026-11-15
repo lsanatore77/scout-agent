@@ -176,7 +176,11 @@ export default class CqFieldActionStrategy extends LightningElement {
                     part: h.part ? h.part : '', why: h.kind === 'Component Lot' ? h.reason || '' : '', ai: h.suggested && h.kind === 'Component Lot',
                     onHand: h.onHand === undefined || h.onHand === null ? '—' : String(h.onHand),
                     stateText: h.outOfScope ? 'No longer in scope' : state[0], stateCls: h.outOfScope ? 'spill bad' : state[1],
-                    hasState: h.outOfScope || !!state[0], label: (h.hold ? 'Release ' : 'Hold ') + h.lot });
+                    hasState: h.outOfScope || !!state[0], label: (h.hold ? 'Release ' : 'Hold ') + h.lot,
+                    places: (h.places || []).map((k, i, all) => ({ key: h.id + '|' + i, location: k.location, units: String(Number(k.units)),
+                        href: k.locationId ? '/lightning/r/compliancequest__SQX_Location__c/' + k.locationId + '/view' : null, sep: i < all.length - 1 })),
+                    noPlaces: !(h.places || []).length, locText: Number(h.onHand) === 0 && h.onHand !== null && h.onHand !== undefined ? 'None in stock' : '\u2014',
+                    heldText: h.heldOn ? new Date(h.heldOn).toLocaleDateString() : '\u2014' });
             });
         };
         add('Finished Lot', 'Finished lots in scope');

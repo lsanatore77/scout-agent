@@ -29,6 +29,7 @@ public with sharing class CqFieldActionStrategy {
         @AuraEnabled public String item; @AuraEnabled public Boolean hold = false; @AuraEnabled public Boolean held = false;
         @AuraEnabled public Datetime heldOn; @AuraEnabled public Boolean suggested = false; @AuraEnabled public String reason;
         @AuraEnabled public Decimal onHand; @AuraEnabled public Boolean outOfScope = false;
+        @AuraEnabled public List<CqLotStock.Place> places = new List<CqLotStock.Place>();   // where the stock is, from Lot Stock
     }
     public class Comp {
         @AuraEnabled public String lot; @AuraEnabled public String part; @AuraEnabled public String item; @AuraEnabled public String inLot;
@@ -128,6 +129,16 @@ public with sharing class CqFieldActionStrategy {
             if (h.Kind__c == FINISHED) { x.outOfScope = !byLot.containsKey(h.Lot_Number__c); x.onHand = byLot.get(h.Lot_Number__c)?.Units_On_Hand__c; }
             else { heldComps.add(h.Lot_Number__c); }
             v.holds.add(x);
+        }
+        // where each held lot sits, from Lot Stock; a component lot also takes its on-hand figure from there
+        Set<String> holdLots = new Set<String>();
+        for (HoldRow x : v.holds) { holdLots.add(x.lot); }
+        Map<String, CqLotStock.Stock> stock = holdLots.isEmpty() ? new Map<String, CqLotStock.Stock>() : CqLotStock.forLots(holdLots);
+        for (HoldRow x : v.holds) {
+            CqLotStock.Stock st = stock.get(x.lot);
+            if (st == null || st.hasRecord != true) { continue; }
+            x.places = st.places;
+            if (x.kind != FINISHED) { x.onHand = st.total; }
         }
         List<String> keys = new List<String>(comps.keySet()); keys.sort();
         for (String k : keys) { if (!heldComps.contains(k)) { v.components.add(comps.get(k)); } }
