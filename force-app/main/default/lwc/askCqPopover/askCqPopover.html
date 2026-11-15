@@ -18,13 +18,15 @@
                         <div key={m.key} class={m.cls}>
                             <template if:false={m.isAgent}><lightning-formatted-text value={m.text}></lightning-formatted-text></template>
                             <template if:true={m.isAgent}>
-                                <template for:each={m.blocks} for:item="b">
-                                    <div key={b.key} class={b.cls}>
-                                        <template if:true={b.first}><span class="star small">&#10022;</span></template>
-                                        <template if:true={b.isItem}><span class="dot" aria-hidden="true">&#8226;</span><span class="txt">{b.text}</span></template>
-                                        <template if:true={b.isPara}><span>{b.text}</span></template>
-                                    </div>
-                                </template>
+                                <span class="star small gut" aria-hidden="true">&#10022;</span>
+                                <div class="ans">
+                                    <template for:each={m.blocks} for:item="b">
+                                        <div key={b.key} class={b.cls}>
+                                            <template if:true={b.isItem}><span class="dot" aria-hidden="true">&#8226;</span><span class="txt">{b.text}</span></template>
+                                            <template if:true={b.isPara}><span>{b.text}</span></template>
+                                        </div>
+                                    </template>
+                                </div>
                             </template>
                         </div>
                     </template>
