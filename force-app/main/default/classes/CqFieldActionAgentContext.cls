@@ -113,9 +113,9 @@ global with sharing class CqFieldActionAgentContext {
 
         if (!v.signals.isEmpty()) {
             l.add('');
-            l.add('SIGNALS');
-            for (CqFieldActionReview.Sig g : v.signals) {
-                l.add('- ' + g.name + ': ' + s(g.label) + ', ' + s(g.strength) + ', trend ' + s(g.trend) + (g.thisLot ? ', on this lot' : '')
+            l.add('SIGNALS, strongest first (Escalate, then Assess, then Watch; on this review\'s lot first; then most times normal)');
+            for (CqFieldActionReview.Sig g : strongestFirst(v.signals)) {
+                l.add('- ' + g.name + ': ' + s(g.label) + ', ' + s(g.strength) + ', trend ' + s(g.trend) + (g.thisLot ? ', on this review\'s lot' : '')
                     + (g.times == null ? '' : ', ' + n(g.times.setScale(1)) + ' times normal') + '. ' + s(g.why));
             }
         }
@@ -275,6 +275,23 @@ global with sharing class CqFieldActionAgentContext {
     }
 
     // ---------------------------------------------------------------- helpers
+
+    /** Signals in the order the agent should rank them: strength, then this review's lot, then times normal (highest first). */
+    @TestVisible static List<CqFieldActionReview.Sig> strongestFirst(List<CqFieldActionReview.Sig> sigs) {
+        Map<String, CqFieldActionReview.Sig> byKey = new Map<String, CqFieldActionReview.Sig>();
+        Integer i = 0;
+        for (CqFieldActionReview.Sig g : sigs) {
+            Integer rank = g.strength == 'Escalate' ? 0 : g.strength == 'Assess' ? 1 : 2;
+            Long times = g.times == null ? 0 : Math.min((g.times * 100).round(), 99999999L);
+            String key = String.valueOf(rank) + (g.thisLot ? '0' : '1') + String.valueOf(99999999L - times).leftPad(8, '0') + String.valueOf(i++).leftPad(4, '0');
+            byKey.put(key, g);
+        }
+        List<String> keys = new List<String>(byKey.keySet());
+        keys.sort();
+        List<CqFieldActionReview.Sig> out = new List<CqFieldActionReview.Sig>();
+        for (String k : keys) { out.add(byKey.get(k)); }
+        return out;
+    }
 
     static List<String> cap(List<String> rows) {
         if (rows.size() <= MAX_ROWS) { return rows; }
