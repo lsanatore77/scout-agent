@@ -267,10 +267,25 @@ global with sharing class CqFieldActionAgentContext {
         if (rc.closed) {
             l.add('Closed by ' + s(rc.closedBy) + ' on ' + d(rc.closedOn) + '.');
         }
+        // Grouped so "what is blocking" has one answer: only open items that are required stop closing.
+        List<String> blocking = new List<String>(), openOnly = new List<String>(), done = new List<String>(), na = new List<String>();
         for (CqFieldActionRecovery.Check c : rc.checks) {
-            l.add('- ' + c.text + ': ' + (c.state == 'ok' ? 'done' : c.state == 'na' ? 'not needed' : 'open') + (c.blocks ? ', blocks closing' : '') + (c.detail == null ? '' : '. ' + c.detail));
+            String row = '- ' + c.text + (c.detail == null ? '' : ': ' + c.detail);
+            if (c.state == 'ok') { done.add(row); }
+            else if (c.state == 'na') { na.add(row); }
+            else if (c.blocks) { blocking.add(row); }
+            else { openOnly.add(row); }
         }
-        if (!rc.closed) { l.add('Can close now: ' + (rc.canClose ? 'yes' : 'no') + '.'); }
+        if (!rc.closed) {
+            l.add('Can close now: ' + (rc.canClose ? 'yes' : 'no') + '.');
+            l.add('Blocking closing now (' + blocking.size() + '):' + (blocking.isEmpty() ? ' none' : ''));
+            l.addAll(blocking);
+            l.add('Open but not blocking (' + openOnly.size() + '):' + (openOnly.isEmpty() ? ' none' : ''));
+            l.addAll(openOnly);
+        }
+        l.add('Done (' + done.size() + '):');
+        l.addAll(done);
+        if (!na.isEmpty()) { l.add('Not needed:'); l.addAll(na); }
         l.add('CAPA: ' + (rc.capaName == null ? 'none linked' : rc.capaName) + '. Closure summary: ' + (rc.summary == null ? 'not written' : rc.summary));
         if (rc.summary == null && rc.sSummary != null) { l.add('CQ.AI Suggests this closure summary: ' + rc.sSummary); }
     }
