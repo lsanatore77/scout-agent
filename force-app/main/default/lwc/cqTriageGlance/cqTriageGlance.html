@@ -63,7 +63,6 @@
                     </div>
                 </template>
             </div>
-            <template if:true={triaged}><div class="farwrap"><c-cq-field-action-review record-id={recordId}></c-cq-field-action-review></div></template>
             <template if:true={showAssistant}>
                 <c-cq-triage-assistant record-id={recordId} glance={g} has-photo={hasPhoto} onclose={handleAssistantClose} ondone={handleTriageDone}></c-cq-triage-assistant>
             </template>
