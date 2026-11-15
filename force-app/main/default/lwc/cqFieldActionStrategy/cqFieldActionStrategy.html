@@ -21,14 +21,14 @@
                 <div class="panel" role="tabpanel">
                     <template if:true={isAction}>
                     <template if:true={v.whyAction}>
-                        <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyAction}</div>
+                        <div class="ai"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this action and how far it goes?"></c-cq-ai-why> {v.whyAction}</div>
                     </template>
                     <div class="fld">
                         <span class="fl">Action *</span>
                         <div class="cards c3" role="group" aria-label="Action">
                             <template for:each={actionCards} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><span class="aitag">&#10022; CQ.AI Suggests</span></template></span>
+                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template></span>
                                     <span class="od">{o.desc}</span>
                                 </button>
                             </template>
@@ -39,7 +39,7 @@
                         <div class="cards c3" role="group" aria-label="How far it goes">
                             <template for:each={depthCards} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><span class="aitag">&#10022; CQ.AI Suggests</span></template></span>
+                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template></span>
                                     <span class="od">{o.desc}</span>
                                 </button>
                             </template>
@@ -52,7 +52,7 @@
                         <div class="cards c2" role="group" aria-label="Instruction">
                             <template for:each={instructions} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><span class="aitag">&#10022; CQ.AI Suggests</span></template></span>
+                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template></span>
                                     <span class="od">{o.desc}</span>
                                 </button>
                             </template>
@@ -75,7 +75,7 @@
                                         <template if:false={h.isGroup}>
                                             <td class="hc"><input class="tick" type="checkbox" data-id={h.id} checked={h.hold} disabled={locked} onchange={handleHold} aria-label={h.label} /></td>
                                             <td class="nw b">{h.lot}</td>
-                                            <td><span class="what">{h.item} <template if:true={h.ai}><span class="aitag">&#10022; Suggested</span></template></span><span class="rk">{h.why}</span></td>
+                                            <td><span class="what">{h.item} <template if:true={h.ai}><c-cq-ai-why variant="tag" text="Suggested" lead="Why does CQ.AI suggest holding " subject={h.item}></c-cq-ai-why></template></span><span class="rk">{h.why}</span></td>
                                             <td class="num">{h.onHand}</td>
                                             <td class="nw">
                                                 <template if:true={h.noPlaces}><span class="mut">{h.locText}</span></template>
@@ -105,14 +105,14 @@
                     </template>
                     <template if:true={isCheck}>
                     <template if:true={v.whyLevel}>
-                        <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyLevel}</div>
+                        <div class="ai"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this effectiveness check level?"></c-cq-ai-why> {v.whyLevel}</div>
                     </template>
                     <div class="fld">
                         <span class="fl">Check level *</span>
                         <div class="cards c5" role="group" aria-label="Check level">
                             <template for:each={levelCards} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><span class="aitag">&#10022;</span></template></span>
+                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="star" lead="Why does CQ.AI suggest check level " subject={o.title}></c-cq-ai-why></template></span>
                                     <span class="od">{o.desc}</span>
                                 </button>
                             </template>

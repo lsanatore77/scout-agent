@@ -47,7 +47,7 @@
             <div class="cards">
                 <template for:each={cards} for:item="c">
                     <div key={c.id} class={c.cls}>
-                        <div class="chead"><span class="ct">{c.title}</span><template if:true={c.isSuggestion}><span class="star" title="CQ.AI Suggestion">&#10022;</span></template></div>
+                        <div class="chead"><span class="ct">{c.title}</span><template if:true={c.isSuggestion}><c-cq-ai-why variant="star" lead="What does CQ.AI suggest for " subject={c.title} tail=", and why?"></c-cq-ai-why></template></div>
                         <div class="cheadline">{c.headline}</div>
                         <div class="cwhy">{c.why}</div>
                         <template if:true={c.flag}><div class="cflag">{c.flag}</div></template>

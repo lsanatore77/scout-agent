@@ -97,7 +97,7 @@
 
                     <template if:true={hasSuggestions}>
                         <div class="ai row">
-                            <span class="grow"><span class="aih">&#10022; CQ.AI Suggests:</span> {t.suggestLine}</span>
+                            <span class="grow"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why> {t.suggestLine}</span>
                             <button class="btn xs ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
                         </div>
                         <template if:true={reviewing}>
@@ -213,7 +213,7 @@
                             </select>
                         </label>
                     </template>
-                    <div class="ai grow"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.aiLine}</div>
+                    <div class="ai grow"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="What does CQ.AI suggest for the recovery verdict, and why?"></c-cq-ai-why> {v.aiLine}</div>
                 </div>
             </section>
 

@@ -148,7 +148,7 @@
                                                         <template if:true={r.noKids}><span class="chev0"></span></template>
                                                         <span class={r.itemCls}>{r.item}</span>
                                                         <template if:true={r.pendingAdd}><span class="spill notconf">Not Confirmed</span></template>
-                                                        <template if:true={r.suggested}><span class="pill ai" title={r.why}>&#10022; CQ.AI Suggests</span></template>
+                                                        <template if:true={r.suggested}>&nbsp;&nbsp;<c-cq-ai-why variant="pill" tip={r.why} lead="Why does CQ.AI suggest including " subject={r.item}></c-cq-ai-why></template>
                                                     </td>
                                                     <td class="nw mut">{r.partRev}</td>
                                                     <td class="nw">{r.lot}</td>

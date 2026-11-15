@@ -6,7 +6,7 @@
         </div>
         <div class="mid">
             <template if:true={fa}>
-                <div class="sug"><span class="star">&#10022;</span>CQ.AI Suggests: <span class="rec">{fa.suggestion}</span></div>
+                <div class="sug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={fa.suggestion}></c-cq-ai-why><span class="rec">{fa.suggestion}</span></div>
                 <div class="why">{fa.suggestionWhy}</div>
             </template>
             <template if:true={asking}>

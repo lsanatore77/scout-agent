@@ -49,7 +49,7 @@
                                     <button key={a.id} class={a.cls} data-id={a.id} onclick={handleAct} aria-pressed={a.pressed}>
                                         <span class="tick">{a.tick}</span>
                                         <span class="rt"><span class="rv">{a.label}</span><span class="rk">{a.why}</span></span>
-                                        <template if:true={a.cq}><span class="star" title="CQ.AI Suggestion">&#10022;</span></template>
+                                        <template if:true={a.cq}><c-cq-ai-why variant="star" subject={a.label} tail=" here?"></c-cq-ai-why></template>
                                     </button>
                                 </template>
                                 <template if:true={hasActs}>
@@ -93,7 +93,7 @@
                                     </div>
                                 </template>
                                 <div class="factcard">
-                                    <div class="fsug"><span class="rec">&#10022; CQ.AI Suggests:</span> <strong>{suggestedAct}</strong></div>
+                                    <div class="fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={suggestedAct}></c-cq-ai-why> <strong>{suggestedAct}</strong></div>
                                     <details class="know">
                                         <summary>What we know</summary>
                                         <ul class="flist">
@@ -167,7 +167,7 @@
                                 </div>
                                 <div class="rside">
                                     <div class="sugbox">
-                                        <div class="rec">&#10022; CQ.AI Suggests:</div>
+                                        <div class="rec"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" lead="Why does CQ.AI suggest risk " subject={suggestedRisk}></c-cq-ai-why></div>
                                         <div class="sughead"><span class={sugCls}>{suggestedRisk}</span><span class="rk">Score {suggestedScore} of 25</span></div>
                                         <div class="why">
                                             <div class="whyk">Severity: {sevHead}</div>
@@ -208,7 +208,7 @@
                                             <span class="rk">{v.meta}</span>
                                             <template if:true={v.summary}><span class="isum">{v.summary}</span></template>
                                         </span>
-                                        <template if:true={v.suggested}><span class="pill">&#10022; CQ.AI Suggests</span></template>
+                                        <template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template>
                                     </button>
                                     </template>
                                 </div>
@@ -225,7 +225,7 @@
                                                 <span class="rk">{v.meta}</span>
                                                 <template if:true={v.summary}><span class="isum">{v.summary}</span></template>
                                             </span>
-                                            <template if:true={v.suggested}><span class="pill">&#10022; CQ.AI Suggests</span></template>
+                                            <template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template>
                                         </button>
                                         </template>
                                     </div>

@@ -50,6 +50,13 @@ export default class AskCqPopover extends LightningElement {
     asked = false;        // the user has sent a first question
     _starting;            // the in-flight startSession, so two callers share one session
 
+    // A clickable CQ.AI Suggests marker anywhere on the page (c-cq-ai-why) asks its question here.
+    connectedCallback() {
+        this._onAsk = (event) => { const q = event.detail && event.detail.question; if (q) { this.ask(q); } };
+        document.addEventListener('cqaiask', this._onAsk);
+    }
+    disconnectedCallback() { document.removeEventListener('cqaiask', this._onAsk); }
+
     get suggestionList() {
         return (this.suggestions || '').split(',').map((s) => s.trim()).filter(Boolean).map((q) => ({ key: q, label: q }));
     }
