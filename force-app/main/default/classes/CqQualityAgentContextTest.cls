@@ -37,6 +37,7 @@ private class CqQualityAgentContextTest {
         System.assert(facts.contains('NONCONFORMANCE ['), facts);
         System.assert(facts.contains('Triage is in progress'), facts);
         System.assert(facts.contains('The step open now is Data Check'), facts);
+        System.assert(facts.contains('NEXT STEPS STEP'), facts);
         System.assert(facts.contains('Chosen in triage so far: Hold lot QA-LOT-1'), facts);
         System.assert(facts.contains('Request more information (More photos). Note: Need a close-up'), facts);
         System.assert(facts.contains('CQ.AI Suggests risk'), facts);

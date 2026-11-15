@@ -12,7 +12,7 @@
 global with sharing class CqQualityAgentContext {
 
     @TestVisible static final Integer MAX_ROWS = 10;
-    @TestVisible static final List<String> STEP_NAMES = new List<String>{ 'Triage at a Glance', 'Containment', 'Data Check', 'Risk', 'Investigation Links' };
+    @TestVisible static final List<String> STEP_NAMES = new List<String>{ 'Triage at a Glance', 'Containment', 'Data Check', 'Risk', 'Next Steps' };
 
     global class Request {
         @InvocableVariable(label='Record Id' description='The Nonconformance currently open in the conversation.' required=true)
@@ -61,7 +61,9 @@ global with sharing class CqQualityAgentContext {
     static void build(List<String> l, Id recordId) {
         compliancequest__SQX_Nonconformance__c nc = [
             SELECT Id, Name, Triage_Draft__c, Triage_Risk__c, Triage_Path__c, Triage_Notes__c, Triage_By__r.Name, Triage_On__c,
-                   compliancequest__Containment_Required__c, compliancequest__Investigation_Required__c, compliancequest__Disposition_Required__c
+                   compliancequest__Containment_Required__c, compliancequest__Investigation_Required__c, compliancequest__Disposition_Required__c,
+                   compliancequest__Record_Stage__c, compliancequest__Due_Date_Disposition__c, compliancequest__Disposition_Approval__c,
+                   compliancequest__Due_Date_Investigation__c, compliancequest__Investigation_Approval__c, compliancequest__SQX_Approval_Matrix__r.Name
             FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
         CqTriageController.Glance g = CqTriageController.getGlance(recordId);
         CqTriageRisk.Risk rr = CqTriageRisk.getRisk(recordId);
@@ -74,7 +76,7 @@ global with sharing class CqQualityAgentContext {
 
         // ---- the record
         l.add('NONCONFORMANCE ' + link(g.name, recordId, 'compliancequest__SQX_Nonconformance__c') + ': ' + s(g.title));
-        l.add('Status: ' + s(g.status) + '. Owner: ' + s(g.owner) + '. Type: ' + s(g.ncType) + '. Occurred: ' + d(g.occurred) + '.');
+        l.add('Status: ' + s(g.status) + '. Stage: ' + stage(nc.compliancequest__Record_Stage__c) + '. Owner: ' + s(g.owner) + '. Type: ' + s(g.ncType) + '. Occurred: ' + d(g.occurred) + '.');
         l.add('Part: ' + s(g.partNumber != null ? g.partNumber : g.partName) + (g.partNumber != null && g.partName != null && g.partName != g.partNumber ? ' (' + g.partName + ')' : '')
             + '. Lot: ' + s(g.lot) + '. Lot quantity: ' + n(g.lotQuantity) + '. Defective quantity: ' + n(g.defectiveQuantity) + '.');
         l.add('The problem: ' + (String.isBlank(g.description) ? 'no description is recorded.' : g.description.abbreviate(1200)));
@@ -97,7 +99,7 @@ global with sharing class CqQualityAgentContext {
                 String st = i == step ? 'open now' : i < maxStep || i < step ? 'gone through' : i == maxStep ? 'reached' : 'not started';
                 l.add('- ' + STEP_NAMES[i] + ': ' + st + '.');
             }
-            l.add('Triage is finished with Complete triage on the Investigation Links step.');
+            l.add('Triage is finished with Complete triage on the Next Steps step, which moves the NC to Disposition / Investigate.');
         }
 
         // ---- containment
@@ -119,7 +121,7 @@ global with sharing class CqQualityAgentContext {
                 if (c.compliancequest__Description__c != null && c.compliancequest__Description__c.startsWith('Raised at triage')) { fromTriage.add(c.Name + ' (' + c.compliancequest__Status__c + ')'); }
             }
             if (!fromTriage.isEmpty()) { l.add('Containment records raised by that triage: ' + String.join(fromTriage, ', ') + '.'); }
-            l.add('CQ.AI Suggests now, after triage: ' + sug + '. This is what CQ.AI would suggest today; it is not what was suggested at triage, which is not recorded.');
+            l.add('CQ.AI Suggests now, after triage: ' + sug + '.');
         } else {
             l.add('CQ.AI Suggests: ' + sug + '.');
         }
@@ -221,7 +223,27 @@ global with sharing class CqQualityAgentContext {
 
         // ---- investigation links
         l.add('');
-        l.add('INVESTIGATION LINKS STEP');
+        l.add('NEXT STEPS STEP');
+        CqTriageNext.Next nx = CqTriageNext.getNext(recordId);
+        l.add('Disposition: CQ.AI Suggests' + (complete ? ' now, after triage,' : '') + ' ' + (nx.dispSuggest == 'req' ? 'Required' : 'Not required') + '. Why: ' + nx.dispWhy);
+        l.add('Investigation: CQ.AI Suggests' + (complete ? ' now, after triage,' : '') + ' ' + (nx.invSuggest == 'inv' ? 'Investigate' : 'Log Only') + '. Why: ' + nx.invWhy);
+        l.add('Defaults: disposition due in ' + CqTriageNext.DISPOSITION_DAYS + ' days, investigation due in ' + CqTriageNext.INVESTIGATION_DAYS
+            + ' days, approvals off. Approvals use an approval matrix; the default is ' + CqTriageNext.DEFAULT_MATRIX + '.');
+        if (complete) {
+            l.add('Chosen at triage: disposition ' + (nc.compliancequest__Disposition_Required__c == true
+                    ? 'required, due ' + d(nc.compliancequest__Due_Date_Disposition__c) + (nc.compliancequest__Disposition_Approval__c == true ? ', needs approval' : '') : 'not required')
+                + '; investigation ' + (nc.compliancequest__Investigation_Required__c == true
+                    ? 'required, due ' + d(nc.compliancequest__Due_Date_Investigation__c) + (nc.compliancequest__Investigation_Approval__c == true ? ', needs approval' : '') : 'not required (log only)')
+                + (nc.compliancequest__SQX_Approval_Matrix__r == null ? '' : '; approval matrix ' + nc.compliancequest__SQX_Approval_Matrix__r.Name) + '.');
+        } else if (draft != null && (draft.get('disp') != null || draft.get('inv') != null)) {
+            String dsp = draft.get('disp') == null ? '' : String.valueOf(draft.get('disp'));
+            String iv = draft.get('inv') == null ? '' : String.valueOf(draft.get('inv'));
+            l.add('Chosen in triage so far: disposition ' + (dsp == 'req' ? 'required, due ' + draft.get('dispDue') + (draft.get('dispAppr') == true ? ', needs approval' : '') : dsp == 'no' ? 'not required' : 'not chosen yet')
+                + '; investigation ' + (iv == 'inv' ? 'investigate, due ' + draft.get('invDue') + (draft.get('invAppr') == true ? ', needs approval' : '') : iv == 'log' ? 'log only' : 'not chosen yet') + '.');
+        } else if (!complete) {
+            l.add('Chosen in triage so far: nothing yet.');
+        }
+        l.add('Investigation links (shown only when Investigate is chosen):');
         l.add('This NC\'s own investigation: ' + (lk.ownName != null ? lk.ownName : 'not started') + (lk.due == null ? '' : ', due ' + d(lk.due)) + '.');
         Map<String, Object> picks = draft == null ? null : (Map<String, Object>) draft.get('picks');
         List<String> sugL = new List<String>(); List<String> linkedL = new List<String>(); List<String> otherL = new List<String>();
@@ -352,6 +374,7 @@ global with sharing class CqQualityAgentContext {
     static Integer intOf(Object o) { return o == null ? 0 : Integer.valueOf(String.valueOf(o)); }
     static String link(String label, Id id, String obj) { return id == null ? s(label) : '[' + label + '](/lightning/r/' + obj + '/' + id + '/view)'; }
     static String dot(String v) { return v.endsWith('.') ? v : v + '.'; }
+    static String stage(String v) { return v == null ? 'not set' : v == 'Disposition_Investigate' ? 'Disposition / Investigate' : v; }
     static String yn(Boolean b) { return b == true ? 'yes' : 'no'; }
     static String s(String v) { return String.isBlank(v) ? 'not set' : v; }
     static String n(Decimal v) { return v == null ? 'not known' : v.stripTrailingZeros().toPlainString(); }
