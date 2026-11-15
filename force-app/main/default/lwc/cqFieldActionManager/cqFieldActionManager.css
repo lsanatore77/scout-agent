@@ -94,8 +94,8 @@
 .sec { margin-top: 20px; }
 .sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-.togs { display: inline-flex; border: 1px solid #c4cad2; border-radius: 8px; overflow: hidden; }
-.tog { min-height: 32px; padding: 0 14px; border: none; background: #fff; color: #1a1d21; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.togs { display: inline-flex; border: 1px solid #c4cad2; border-radius: 4px; overflow: hidden; }
+.tog { min-height: 30px; padding: 0 14px; border: none; background: #fff; color: #1a1d21; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .tog.on { background: #1d5fd1; color: #fff; }
 .pendline { font-size: 12px; color: #5b6470; }
 .pendline.warn { color: #6b5300; font-weight: 600; }
