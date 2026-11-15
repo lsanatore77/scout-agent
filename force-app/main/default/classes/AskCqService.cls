@@ -4,16 +4,18 @@
  * Proof of concept: lets a Lightning page talk to the Scout agent through the Agentforce Agent API,
  * so "Ask CQ" can pop over the PHR workspace instead of living in the side panel.
  *
- * Flow: client-credentials token from this org's My Domain -> create an agent session ->
- * send messages (synchronous) -> end the session when the popover closes.
+ * Flow: create an agent session -> send messages (synchronous) -> end the session when the popover closes.
  *
- * Settings come from AskCqSecrets (consumer key and secret of the External Client App connected to
- * the agent, and the agent's Id). That class is dev only and kept out of git; a blank template is
- * committed. A real build would use a Named Credential instead.
+ * Every call goes through the Ask_CQ_Agent_API Named Credential. Its External Credential (Ask_CQ)
+ * holds the External Client App's key and secret in Salesforce's encrypted store and fetches the
+ * client-credentials token itself, so nothing secret lives in code. Users need principal access to
+ * Ask_CQ, granted through a permission set. The agent is found by API name (PHR_Agent by default),
+ * never by an org-specific Id.
  */
 public with sharing class AskCqService {
 
-    public static final String API_BASE = 'https://api.salesforce.com/einstein/ai-agent/v1';
+    public static final String API_BASE = 'callout:Ask_CQ_Agent_API/einstein/ai-agent/v1';
+    public static final String DEFAULT_AGENT = 'PHR_Agent';
 
     public class Reply {
         @AuraEnabled public String sessionId;
@@ -26,9 +28,7 @@ public with sharing class AskCqService {
     /** Opens a session with the agent and returns its opening message, if any. */
     @AuraEnabled
     public static Reply startSession(Id recordId, String agentId) {
-        Settings s = settings();
-        if (String.isNotBlank(agentId)) { s.agentId = agentId; }   // another agent (the Scout Checklist agent, say) through the same pipe
-        String token = accessToken(s);
+        if (String.isBlank(agentId)) { agentId = defaultAgentId(); }   // or another agent (the Scout Checklist agent, say) through the same pipe
         Map<String, Object> body = new Map<String, Object>{
             'externalSessionKey' => uuid(),
             'instanceConfig' => new Map<String, Object>{ 'endpoint' => orgDomain() },
@@ -43,7 +43,7 @@ public with sharing class AskCqService {
                 variable('currentPageType', 'record')
             });
         }
-        HttpResponse res = send('POST', API_BASE + '/agents/' + s.agentId + '/sessions', token, JSON.serialize(body), null);
+        HttpResponse res = send('POST', API_BASE + '/agents/' + agentId + '/sessions', JSON.serialize(body), null);
         Map<String, Object> out = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
         Reply r = new Reply();
         r.sessionId = (String) out.get('sessionId');
@@ -59,8 +59,6 @@ public with sharing class AskCqService {
      */
     @AuraEnabled
     public static Reply sendMessage(String sessionId, Integer sequenceId, String text, Id recordId) {
-        Settings s = settings();
-        String token = accessToken(s);
         String msg = text;
         if (sequenceId == 1 && recordId != null) {
             msg = 'The record open on screen is ' + recordId + ' (' + recordId.getSObjectType().getDescribe().getLabel() + '). ' + text;
@@ -68,7 +66,7 @@ public with sharing class AskCqService {
         Map<String, Object> body = new Map<String, Object>{
             'message' => new Map<String, Object>{ 'sequenceId' => sequenceId, 'type' => 'Text', 'text' => msg }
         };
-        HttpResponse res = send('POST', API_BASE + '/sessions/' + sessionId + '/messages', token, JSON.serialize(body), null);
+        HttpResponse res = send('POST', API_BASE + '/sessions/' + sessionId + '/messages', JSON.serialize(body), null);
         Map<String, Object> out = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
         Reply r = new Reply();
         r.sessionId = sessionId;
@@ -80,59 +78,26 @@ public with sharing class AskCqService {
     @AuraEnabled
     public static void endSession(String sessionId) {
         if (String.isBlank(sessionId)) { return; }
-        Settings s = settings();
-        String token = accessToken(s);
-        send('DELETE', API_BASE + '/sessions/' + sessionId, token, null, new Map<String, String>{ 'x-session-end-reason' => 'UserRequest' });
+        send('DELETE', API_BASE + '/sessions/' + sessionId, null, new Map<String, String>{ 'x-session-end-reason' => 'UserRequest' });
     }
 
     // ---------- helpers ----------
 
-    public class Settings {
-        public String consumerKey;
-        public String consumerSecret;
-        public String agentId;
-    }
+    @TestVisible private static Id testAgentId;
 
-    @TestVisible private static Settings testSettings;
-
+    /** The default agent's Id in this org, looked up by API name. */
     @TestVisible
-    private static Settings settings() {
-        Settings s = new Settings();
-        s.consumerKey = testSettings != null ? testSettings.consumerKey : AskCqSecrets.CONSUMER_KEY;
-        s.consumerSecret = testSettings != null ? testSettings.consumerSecret : AskCqSecrets.CONSUMER_SECRET;
-        s.agentId = testSettings != null ? testSettings.agentId : AskCqSecrets.AGENT_ID;
-        if (String.isBlank(s.consumerKey) || String.isBlank(s.consumerSecret) || String.isBlank(s.agentId)) {
-            throw new AskCqException('Ask CQ is not set up: AskCqSecrets needs the consumer key, consumer secret and agent Id.');
-        }
-        return s;
+    private static Id defaultAgentId() {
+        Id id = Test.isRunningTest() && testAgentId != null ? testAgentId : AskCqAgents.idFor(DEFAULT_AGENT);
+        if (id == null) { throw new AskCqException('Ask CQ is not set up: no agent named ' + DEFAULT_AGENT + ' in this org.'); }
+        return id;
     }
 
-    private static String cachedToken;
-
-    @TestVisible
-    private static String accessToken(Settings s) {
-        if (cachedToken != null) { return cachedToken; }
-        HttpRequest req = new HttpRequest();
-        req.setEndpoint(orgDomain() + '/services/oauth2/token');
-        req.setMethod('POST');
-        req.setHeader('Content-Type', 'application/x-www-form-urlencoded');
-        req.setBody('grant_type=client_credentials&client_id=' + EncodingUtil.urlEncode(s.consumerKey, 'UTF-8')
-            + '&client_secret=' + EncodingUtil.urlEncode(s.consumerSecret, 'UTF-8'));
-        req.setTimeout(60000);
-        HttpResponse res = new Http().send(req);
-        if (res.getStatusCode() != 200) {
-            throw new AskCqException('Could not get a token (' + res.getStatusCode() + '): ' + res.getBody());
-        }
-        Map<String, Object> out = (Map<String, Object>) JSON.deserializeUntyped(res.getBody());
-        cachedToken = (String) out.get('access_token');
-        return cachedToken;
-    }
-
-    private static HttpResponse send(String method, String url, String token, String body, Map<String, String> extra) {
+    /** The Named Credential adds the Authorization header. */
+    private static HttpResponse send(String method, String url, String body, Map<String, String> extra) {
         HttpRequest req = new HttpRequest();
         req.setEndpoint(url);
         req.setMethod(method);
-        req.setHeader('Authorization', 'Bearer ' + token);
         req.setHeader('Accept', 'application/json');
         if (body != null) {
             req.setHeader('Content-Type', 'application/json');

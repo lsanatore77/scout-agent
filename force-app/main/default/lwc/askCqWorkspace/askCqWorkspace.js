@@ -5,7 +5,6 @@ import getChecklist from '@salesforce/apex/AskCqWorkspaceController.getChecklist
 import saveAnswer from '@salesforce/apex/AskCqWorkspaceController.saveAnswer';
 import acceptSuggestion from '@salesforce/apex/AskCqWorkspaceController.acceptSuggestion';
 
-const CHECKLIST_AGENT = '0XxW400000010ijKAA';   // Scout Checklist (dev). Blank = the PHR Agent from AskCqSecrets.
 const OPTION_ORDER = ['Yes', 'No', 'N/A'];
 
 /** Yes before No before anything else, whatever order the result type lists them in. */
@@ -128,7 +127,7 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
     get hasChecklist() { return this.checklist.length > 0; }
 
     /** Which agent and which ready questions the popover carries on this step. */
-    get agentId() { return this.current === 'checklist' ? CHECKLIST_AGENT : ''; }
+    get agentName() { return this.current === 'checklist' ? 'Scout_Checklist' : 'PHR_Agent'; }
     get suggestions() {
         switch (this.current) {
             case 'checklist': return 'Explain the CQ.AI suggested answers,What is the scrap rate?,Which questions still need an answer?';

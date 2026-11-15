@@ -12,7 +12,7 @@ export default class AskCqPopover extends LightningElement {
     @api recordId;
     /** Comma-separated ready questions for this page or step. */
     @api suggestions = 'Why are these records relevant?,What is the scrap rate?,What is left on this review?';
-    /** Optional: another agent's Id (the Scout Checklist agent, say). Blank = the Id in AskCqSecrets. */
+    /** Optional: another agent's Id. Prefer agentName; blank with no name = the PHR Agent. */
     _agentId;
     @api get agentId() { return this._agentId; }
     set agentId(v) {
