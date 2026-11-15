@@ -8,7 +8,7 @@
 .sug { display: flex; align-items: center; gap: 6px; font-weight: 600; color: #4a2fc0; }
 .star { font-size: 13px; }
 .rec { color: #1a1d21; }
-.why { margin-top: 2px; padding-left: 20px; color: #3d4550; }
+.why { margin-top: 2px; padding-left: calc(14px + 0.25em); color: #3d4550; }   /* under the C of CQ.AI: the label's star space plus its quarter space */
 .lbl { display: block; margin-top: 10px; font-size: 12px; font-weight: 600; color: #3d4550; }
 .ta { margin-top: 4px; width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #c4cad2; border-radius: 4px; font: inherit; font-size: 14px; }
 .note { margin-top: 8px; font-weight: 600; color: #12784a; }

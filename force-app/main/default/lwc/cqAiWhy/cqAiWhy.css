@@ -1,9 +1,12 @@
 :host { display: inline-flex; flex: none; vertical-align: baseline; }
 .b { margin: 0; padding: 0; border: 0; background: none; font: inherit; color: #4a2fc0; font-weight: 600; line-height: inherit; cursor: pointer; text-align: left; }
+.t { padding-left: 0.25em; }
 .b:hover .t { text-decoration: underline; }
 .b:focus-visible { outline: 2px solid #4a2fc0; outline-offset: 2px; border-radius: 3px; }
 .pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: #ece7ff; border: 1px solid #dcd3ff; font-size: 11px; white-space: nowrap; }
 .pill:focus-visible { border-radius: 999px; }
 .tag { font-size: 12px; white-space: nowrap; }
 .label { margin-right: 6px; }
+/* the star in a fixed space, so a line under a label can start exactly where the words do */
+.label .st { display: inline-block; width: 14px; }
 .star { font-weight: 400; }
