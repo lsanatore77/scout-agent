@@ -20,53 +20,49 @@
                 </div>
                 <div class="panel" role="tabpanel">
                     <template if:true={isAction}>
-                    <div class="cols2">
-                    <div class="colx">
-                    <div class="fld">
-                        <span class="fl">Action *</span>
-                        <div class="segs" role="group" aria-label="Action">
-                            <template for:each={actions} for:item="o">
-                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>{o.label}</button>
-                            </template>
-                        </div>
-                        <span class="hint">{actionHint}</span>
-                    </div>
-                    <div class="fld">
-                        <span class="fl">How far it goes *</span>
-                        <div class="segs" role="group" aria-label="How far it goes">
-                            <template for:each={depths} for:item="o">
-                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>{o.label}</button>
-                            </template>
-                        </div>
-                        <span class="hint">{depthHint}</span>
-                    </div>
-                    </div>
-                    <div class="colx">
                     <template if:true={v.whyAction}>
                         <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyAction}</div>
                     </template>
+                    <div class="fld">
+                        <span class="fl">Action *</span>
+                        <div class="cards c3" role="group" aria-label="Action">
+                            <template for:each={actionCards} for:item="o">
+                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
+                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><span class="aitag">&#10022; CQ.AI Suggests</span></template></span>
+                                    <span class="od">{o.desc}</span>
+                                </button>
+                            </template>
+                        </div>
                     </div>
+                    <div class="fld">
+                        <span class="fl">How far it goes *</span>
+                        <div class="cards c3" role="group" aria-label="How far it goes">
+                            <template for:each={depthCards} for:item="o">
+                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
+                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><span class="aitag">&#10022; CQ.AI Suggests</span></template></span>
+                                    <span class="od">{o.desc}</span>
+                                </button>
+                            </template>
+                        </div>
                     </div>
                     </template>
                     <template if:true={isTell}>
-                    <div class="cols2">
                     <div class="fld">
                         <span class="fl">Instruction *</span>
-                        <div class="opts" role="group" aria-label="Instruction">
+                        <div class="cards c2" role="group" aria-label="Instruction">
                             <template for:each={instructions} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class={o.dot}></span><span class="ol">{o.label}</span>
-                                    <template if:true={o.ai}><span class="aitag">&#10022; CQ.AI Suggests</span></template>
+                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><span class="aitag">&#10022; CQ.AI Suggests</span></template></span>
+                                    <span class="od">{o.desc}</span>
                                 </button>
                             </template>
                         </div>
                     </div>
                     <label class="fld">
                         <span class="fl">Key message *</span>
-                        <textarea class="ta" rows="8" data-field="message" value={message} disabled={locked} onchange={handleText}></textarea>
+                        <textarea class="ta" rows="5" data-field="message" disabled={locked} onchange={handleText}></textarea>
                         <span class="hint">The Notifications step builds the customer letter from this.</span>
                     </label>
-                    </div>
                     </template>
                     <template if:true={isHolds}>
                     <div class="tblwrap">
@@ -108,27 +104,22 @@
                     <span class="hint">{holdLine}</span>
                     </template>
                     <template if:true={isCheck}>
-                    <div class="cols2">
-                    <div class="colx">
+                    <template if:true={v.whyLevel}>
+                        <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyLevel}</div>
+                    </template>
                     <div class="fld">
                         <span class="fl">Check level *</span>
-                        <div class="segs" role="group" aria-label="Check level">
-                            <template for:each={levels} for:item="o">
-                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>{o.label}</button>
+                        <div class="cards c5" role="group" aria-label="Check level">
+                            <template for:each={levelCards} for:item="o">
+                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
+                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><span class="aitag">&#10022;</span></template></span>
+                                    <span class="od">{o.desc}</span>
+                                </button>
                             </template>
                         </div>
-                        <span class="hint">{levelHint}</span>
                     </div>
-                    <template if:true={isLevelB}>
-                        <label class="fld short">
-                            <span class="fl">Share of customers checked (%) *</span>
-                            <input class="ta in" type="number" min="11" max="99" data-field="percent" value={percent} disabled={locked} onchange={handleText} />
-                        </label>
-                    </template>
-                    </div>
-                    <div class="colx">
                     <template if:true={needsCheck}>
-                        <div class="two">
+                        <div class="row3">
                             <label class="fld">
                                 <span class="fl">How we check *</span>
                                 <select class="sel" data-field="method" disabled={locked} onchange={handleText}>
@@ -141,13 +132,14 @@
                                 <span class="fl">Check by *</span>
                                 <input class="ta in" type="date" data-field="checkBy" value={checkBy} disabled={locked} onchange={handleText} />
                             </label>
+                            <template if:true={isLevelB}>
+                                <label class="fld">
+                                    <span class="fl">Share of customers checked (%) *</span>
+                                    <input class="ta in" type="number" min="11" max="99" data-field="percent" value={percent} disabled={locked} onchange={handleText} />
+                                </label>
+                            </template>
                         </div>
                     </template>
-                    <template if:true={v.whyLevel}>
-                        <div class="ai"><span class="aih">&#10022; CQ.AI Suggests:</span> {v.whyLevel}</div>
-                    </template>
-                    </div>
-                    </div>
                     </template>
                 </div>
             </section>

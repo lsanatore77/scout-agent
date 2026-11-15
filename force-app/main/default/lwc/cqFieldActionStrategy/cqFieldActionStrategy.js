@@ -26,7 +26,13 @@ const INSTRUCTIONS = [
     ['Hold for our technician to correct on site', CORRECTION],
     ['Continue use with the added warning', NOTICE]
 ];
-const LEVELS = [['Level A', 'A · 100%'], ['Level B', 'B'], ['Level C', 'C · 10%'], ['Level D', 'D · 2%'], ['Level E', 'None']];
+const INSTRUCTION_HINT = {
+    'Stop use, quarantine and return': 'Customers set the units aside and send them back to us.',
+    'Stop use and destroy on site': 'Customers destroy the units and confirm they have.',
+    'Hold for our technician to correct on site': 'Units stay where they are until our technician corrects them.',
+    'Continue use with the added warning': 'Customers keep using the product and read the new warning.'
+};
+const LEVELS = [['Level A', 'A · 100%'], ['Level B', 'B · Your share'], ['Level C', 'C · 10%'], ['Level D', 'D · 2%'], ['Level E', 'None']];
 const LEVEL_HINT = {
     'Level A': 'Every customer confirms they received the notice and acted on it.',
     'Level B': 'A share between 10% and 100% of customers, set below.',
@@ -59,6 +65,9 @@ export default class CqFieldActionStrategy extends LightningElement {
     /** The workspace footer shows Confirm Strategy beside Back and Next, so it is told whenever the button changes. */
     renderedCallback() {
         if (!this.v) { return; }
+        // a textarea shows its text through its value property, so it is set here (not while someone is typing in it)
+        const ta = this.template.querySelector('textarea[data-field="message"]');
+        if (ta && this.template.activeElement !== ta && ta.value !== this.message) { ta.value = this.message; }
         const detail = { show: this.showStep, label: this.confirmLabel, disabled: this.cantConfirm, blocker: this.showStep ? this.blocker : '' };
         const sig = JSON.stringify(detail);
         if (sig !== this.footSig) { this.footSig = sig; this.dispatchEvent(new CustomEvent('footchange', { detail })); }
@@ -126,6 +135,16 @@ export default class CqFieldActionStrategy extends LightningElement {
             cls: 'seg' + (cur === value ? ' on' : '') + (i ? ' sep' : '')
         }));
     }
+    /** Choices as option cards: title, CQ.AI marker on the suggested one, and what the choice means. */
+    cards(list, cur, ai, field, hints) {
+        return list.map(([value, title], i) => ({
+            key: field + i, value, field, title, desc: hints[value] || '', ai: value === ai,
+            pressed: cur === value ? 'true' : 'false', cls: 'oc' + (cur === value ? ' on' : '')
+        }));
+    }
+    get actionCards() { return this.cards(ACTIONS, this.action, this.v.sAction, 'action', ACTION_HINT); }
+    get depthCards() { return this.cards(DEPTHS, this.depth, this.v.sDepth, 'depth', DEPTH_HINT); }
+    get levelCards() { return this.cards(LEVELS, this.level, this.v.sLevel, 'level', LEVEL_HINT); }
     get actions() { return this.seg(ACTIONS, this.action, this.v.sAction, 'action'); }
     get depths() { return this.seg(DEPTHS, this.depth, this.v.sDepth, 'depth'); }
     get levels() { return this.seg(LEVELS, this.level, this.v.sLevel, 'level'); }
@@ -138,9 +157,9 @@ export default class CqFieldActionStrategy extends LightningElement {
         return INSTRUCTIONS.map(([value, forAction], i) => {
             const on = this.instruction === value;
             const fits = forAction === this.action;
-            return { key: 'i' + i, value, field: 'instruction', label: value, ai: value === this.v.sInstruction,
-                pressed: on ? 'true' : 'false', cls: 'opt' + (on ? ' on' : '') + (fits ? '' : ' off'),
-                dot: 'dot' + (on ? ' on' : '') };
+            return { key: 'i' + i, value, field: 'instruction', title: value, ai: value === this.v.sInstruction,
+                desc: INSTRUCTION_HINT[value] + (fits ? '' : ' Only for ' + (forAction === REMOVAL ? 'a removal.' : forAction === CORRECTION ? 'a correction.' : 'an advisory notice.')),
+                pressed: on ? 'true' : 'false', cls: 'oc' + (on ? ' on' : '') + (fits ? '' : ' off') };
         });
     }
     get methods() { return METHODS.map((m) => ({ value: m, label: m, selected: m === this.method })); }
