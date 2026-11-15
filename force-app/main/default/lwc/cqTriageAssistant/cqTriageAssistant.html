@@ -194,6 +194,7 @@
                     <template if:true={is3}>
                         <h3 class="q">Next Steps</h3>
                         <p class="p">What happens after triage. CQ.AI suggests; you decide. Complete Triage moves the NC to Disposition / Investigate.</p>
+                        <div class="farwrap"><c-cq-field-action-review record-id={recordId}></c-cq-field-action-review></div>
                         <template if:false={nextReady}><p class="p">Working out the next steps&hellip;</p></template>
                         <template if:true={nextReady}>
                         <div class="cgrid">

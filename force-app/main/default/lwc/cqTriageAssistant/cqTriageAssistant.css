@@ -122,7 +122,7 @@
 .lvl.low { color: #12784a; }
 .lvl.medium { color: #7a4100; }
 .lvl.high { color: #b42318; }
-.ownbox { margin: -4px 0 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid #dde1e6; background: #fafbfc; font-size: 13px; line-height: 1.45; color: #3d4550; }
+.ownbox { margin: 6px 0 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid #dde1e6; background: #fafbfc; font-size: 13px; line-height: 1.45; color: #3d4550; }
 .ownbox strong { color: #1a1d21; }
 .invlist { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .act.inv { align-items: flex-start; }
@@ -159,3 +159,4 @@
 /* in the page, Back and Next sit at the bottom right of the work area like the other workspaces */
 .box.inline .foot { border-top: none; padding: 0 20px 20px 220px; background: none; }
 .steps-title .star { margin-right: 5px; }
+.farwrap { margin: 0 0 20px; }

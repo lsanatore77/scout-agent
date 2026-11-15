@@ -105,6 +105,13 @@ export default class CqTriageAssistant extends LightningElement {
         if (!this.dispDue) { this.dispDue = this.nx.dispDue || this.inDays(5); }
         if (!this.invDue) { this.invDue = this.nx.invDue || this.inDays(60); }
         if (!this.matrixId) { this.matrixId = this.nx.defaultMatrixId; }
+        this.preselect();
+    }
+    /** CQ.AI's suggestion starts selected, so its due date and approval show from the start; the triager clicks the other to change it. */
+    preselect() {
+        if (!this.nx) { return; }
+        if (!this.disp && this.nx.dispSuggest) { this.disp = this.nx.dispSuggest; }
+        if (!this.inv && this.nx.invSuggest) { this.inv = this.nx.invSuggest; }
     }
 
     // tells the page which step is open, so Ask CQ.AI can answer for it
@@ -155,6 +162,7 @@ export default class CqTriageAssistant extends LightningElement {
         this.picks = {}; this.extra = []; this.summary = [];
         this.disp = ''; this.dispAppr = false; this.inv = ''; this.invAppr = false;
         if (this.nx) { this.dispDue = this.nx.dispDue; this.invDue = this.nx.invDue; this.matrixId = this.nx.defaultMatrixId; }
+        this.preselect();
         if (this.inline) { saveDraft({ recordId: this.recordId, draft: null }).catch(() => {}); }
     }
 

@@ -54,3 +54,4 @@
 .panel.embedded .cards { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 /* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
 .btn:not(.xs) { padding-bottom: 3px; }
+.farwrap { margin-top: 16px; }
