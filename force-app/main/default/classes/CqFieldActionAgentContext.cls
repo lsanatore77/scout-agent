@@ -116,7 +116,8 @@ global with sharing class CqFieldActionAgentContext {
             l.add('SIGNALS, strongest first (Escalate, then Assess, then Watch; on this review\'s lot first; then most times normal)');
             for (CqFieldActionReview.Sig g : strongestFirst(v.signals)) {
                 l.add('- ' + g.name + ': ' + s(g.label) + ', ' + s(g.strength) + ', trend ' + s(g.trend) + (g.thisLot ? ', on this review\'s lot' : '')
-                    + (g.times == null ? '' : ', ' + n(g.times.setScale(1)) + ' times normal') + '. ' + s(g.why));
+                    + (g.times == null ? '' : ', ' + n(g.times.setScale(1)) + ' times normal') + '. '
+                    + s(g.why).replace('on this lot', g.lot == null ? 'on this part' : 'on lot ' + g.lot));   // the signal's own lot, not this review's
             }
         }
 
