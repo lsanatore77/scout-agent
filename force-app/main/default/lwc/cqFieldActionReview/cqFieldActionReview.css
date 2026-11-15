@@ -23,3 +23,5 @@
 .link.grey { color: #5b6470; }
 .rev { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; font-size: 13px; }
 .revs { font-weight: 600; color: #3d4550; }
+/* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
+.btn:not(.xs) { padding-bottom: 3px; }

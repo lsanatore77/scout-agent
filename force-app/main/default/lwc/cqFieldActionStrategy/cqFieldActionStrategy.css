@@ -75,3 +75,5 @@
 .cfoot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
 .block { color: #7a4100; font-weight: 600; }
 .errbox { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: #fff8f7; border: 1px solid #f3c7c2; color: #b42318; }
+/* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
+.btn:not(.xs), .seg, .opt { padding-bottom: 3px; }

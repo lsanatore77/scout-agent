@@ -60,3 +60,5 @@
 .file { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #eceff2; font-size: 13px; }
 .file a { font-weight: 700; }
 .file lightning-formatted-date-time { color: #8a94a3; font-size: 12px; margin-left: auto; }
+/* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
+.btn { padding-bottom: 3px; }

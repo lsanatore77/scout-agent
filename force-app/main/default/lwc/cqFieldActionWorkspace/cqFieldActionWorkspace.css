@@ -190,3 +190,5 @@
 .segb.on { background: #1d5fd1; color: #fff; }
 .segb.on .star { color: #fff; }
 @media (max-width: 1100px) { .assess { grid-template-columns: 1fr; } }
+/* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
+.btn:not(.xs), .segb, .opt { padding-bottom: 3px; }

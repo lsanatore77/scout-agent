@@ -152,3 +152,5 @@
 .ploc { color: #1d5fd1; font-weight: 600; text-decoration: none; }
 .ploc:hover { text-decoration: underline; }
 .dotsep { color: #8a94a3; }
+/* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
+.btn:not(.xs), .tog { padding-bottom: 3px; }

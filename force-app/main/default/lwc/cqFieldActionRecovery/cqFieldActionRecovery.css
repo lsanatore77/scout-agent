@@ -110,3 +110,5 @@
 .hl { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
 .hl .ell { display: block; }
 .sel.full { flex: none; width: 172px; font-size: 13px; }
+/* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
+.btn:not(.xs), .seg { padding-bottom: 3px; }
