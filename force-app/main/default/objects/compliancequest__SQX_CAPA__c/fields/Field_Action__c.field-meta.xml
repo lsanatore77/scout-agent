@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Action__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The field action this CAPA was raised from. Set when the CAPA is created from the field action's Closure step.</description>
+    <label>Field Action</label>
+    <referenceTo>Field_Action__c</referenceTo>
+    <relationshipLabel>CAPAs</relationshipLabel>
+    <relationshipName>CAPAs</relationshipName>
+    <type>Lookup</type>
+</CustomField>

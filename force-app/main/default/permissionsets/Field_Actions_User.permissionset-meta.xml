@@ -166,6 +166,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>compliancequest__SQX_CAPA__c.Field_Action__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Field_Action__c.CAPA__c</field>
         <readable>true</readable>
     </fieldPermissions>

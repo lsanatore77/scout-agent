@@ -9,6 +9,8 @@ Every object and field this project adds to the org. Built from the metadata in 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
 ### 14 Nov 2026
+- **CAPA (CQ object `compliancequest__SQX_CAPA__c`)**: added Field Action (lookup to Field Action, relationship CAPAs) and the record type **CAPA - Field Action** (`CAPA_Field_Action`). A field action's Closure step creates a skeleton CAPA of this type (title, part, field action, Target Due Date 60 days out) and links it back in the field action's CAPA field.
+- **Field Action**: Other Records is no longer shown on the Closure step (the field stays for now). The CAPA check blocks closing only until a CAPA is linked; the CAPA's own status does not hold the field action open.
 - **New object Lot Stock** (`Lot_Stock__c`): units of a lot on hand at a CQ Location, one record per lot per location, loaded from the ERP. Fields: Lot (Lot Info lookup), Lot Number, Location (CQ Location lookup), Units On Hand, As Of, Source (ERP, Manual). `LotStockTrigger` fills Lot Number from the lot and keeps open field action lots up to date. Eleven test records (Source Manual) were added in dev for the FA-0001 lots and a few others.
 - **Field Action Lot**: Units On Hand and Location are now filled from Lot Stock (Location is a text summary of the CQ Locations) and are no longer typed on the Scope step; Units Shipped is read-only there too. Logic in `CqLotStock`.
 - **Activity (standard Task and Event) — existing object**: added Recall Task Type, Field Action Customer (lookup), Lot Number, Units. Field action work is tracked as standard Tasks on the Field Action; return and destruction task units add up to the lot's Returned and Destroyed, and a completed Collect response marks the customer Acknowledged.
@@ -37,6 +39,12 @@ Objects and fields from earlier work are listed below; their history is in git (
 | `Lot_Number__c` | Lot Number | Text | 80 chars | For tasks on a Field Action: the lot the task is about. |
 | `Recall_Task_Type__c` | Recall Task Type | Picklist | Send recall notice, Collect response, Track return, Confirm destruction, Confirm correction, Other | For tasks on a Field Action: what the task is. Return and destruction tasks carry the units; a completed Collect response marks the customer Acknowledged. |
 | `Units__c` | Units | Number | 9,0 | For return, destruction and correction tasks on a Field Action: units returned, destroyed or corrected so far. Adds up to the lot's recovery figures. |
+
+### compliancequest__SQX_CAPA__c
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Field_Action__c` | Field Action | Lookup | to Field_Action__c | The field action this CAPA was raised from. Set when the CAPA is created from the field action's Closure step. |
 
 ### compliancequest__SQX_Complaint__c
 
