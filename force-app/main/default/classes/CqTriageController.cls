@@ -49,7 +49,7 @@ public with sharing class CqTriageController {
         List<String> tp = new List<String>();
         if (nc.compliancequest__Type__c != null) { tp.add(nc.compliancequest__Type__c); }
         if (nc.compliancequest__Type_Of_Issue__c != null) { tp.add(nc.compliancequest__Type_Of_Issue__c); }
-        g.ncType = tp.isEmpty() ? null : String.join(tp, ' \u00b7 ');
+        g.ncType = tp.isEmpty() ? null : String.join(tp, ' · ');
 
         // Related records on the same part
         List<compliancequest__SQX_Nonconformance__c> others = new List<compliancequest__SQX_Nonconformance__c>();
@@ -140,7 +140,7 @@ public with sharing class CqTriageController {
             fa.suggestionWhy = 'Lot ' + g.lot + ' has reached customers: ' + String.join(lotComplaints, ', ') + ' reported on the same lot.';
         } else if (g.lot == null) {
             fa.suggestion = 'Not Needed';
-            fa.suggestionWhy = 'No complaints on this part. No lot is recorded on this NC, so shipments can\'t be checked: add the lot to see whether any of it reached customers.';
+            fa.suggestionWhy = 'No lot is recorded on this NC, so complaints and shipments can\'t be matched to it: add the lot to see whether any of it reached customers.';
         } else {
             // the lot's shipments, from Lot Shipment: product in the field is worth a review even before anyone complains
             List<CqLotShipments.Consignee> sent = CqLotShipments.customers(new Set<String>{ g.lot });
