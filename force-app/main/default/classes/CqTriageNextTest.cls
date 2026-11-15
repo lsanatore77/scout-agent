@@ -50,6 +50,7 @@ private class CqTriageNextTest {
         CqTriageNext.Done d = CqTriageNext.completeTriage(ncId, payload);
         Test.stopTest();
         System.assertEquals('Log Only', d.path);
+        System.assert(d.moved, 'disposition only still completes triage: ' + d.warning);
         compliancequest__SQX_Nonconformance__c nc = [SELECT Triage_Risk__c, Triage_Path__c, Triage_Draft__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId];
         System.assertEquals('Low', nc.Triage_Risk__c);
         System.assertEquals(null, nc.Triage_Draft__c);
@@ -98,6 +99,10 @@ private class CqTriageNextTest {
         System.assertEquals(null, nc.Triage_Draft__c);
         Integer lots = [SELECT COUNT() FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :ncId AND compliancequest__Quantity_Left_To_Dispose__c > 0];
         System.assertEquals(lots, [SELECT COUNT() FROM compliancequest__SQX_Disposition__c WHERE compliancequest__SQX_Nonconformance__c = :ncId AND compliancequest__Status__c = 'Draft']);
+        if (d.moved) {
+            Id owner = [SELECT OwnerId FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId].OwnerId;
+            System.assertEquals(User.SObjectType, owner.getSObjectType(), 'a person owns the NC after triage, never a queue');
+        }
         // a second call adds nothing for lots that already have an open disposition
         System.assertEquals(0, CqTriageNext.createDraftDispositions(ncId, Date.today()).size());
     }

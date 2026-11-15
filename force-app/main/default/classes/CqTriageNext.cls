@@ -9,6 +9,8 @@
  * fields and runs CQ's Complete Triage, so CQ moves the NC to Disposition / Investigate by its own rules.
  * If CQ refuses, the triage stays saved and the reason comes back as a warning.
  *
+ * If a queue still owns the NC (CQ's Submit routes it there), the person completing triage becomes the owner.
+ *
  * startTriage() moves a Draft NC to Triage with CQ's own Submit the moment someone starts triage in the workspace,
  * so Draft means not started and Triage means someone is working on it.
  *
@@ -134,7 +136,7 @@ public with sharing class CqTriageNext {
 
         // a triage finished without the workspace's start (the popup, say) still goes through Triage first
         Started st = startTriage(recordId);
-        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__SQX_Investigation__c, OwnerId FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
         String path = !inv ? 'Log Only' : cur.compliancequest__SQX_Investigation__c != null ? 'Continue with Investigation' : 'New Investigation';
         Boolean contain = c.containment == true;
 
@@ -155,8 +157,10 @@ public with sharing class CqTriageNext {
         nc.compliancequest__Containment_Required__c = contain;
         nc.compliancequest__Due_Date_Containment__c = contain ? toDate(c.containmentDue, CONTAINMENT_DAYS) : null;
         // CQ's flag makes CQ raise its own 'Please create Disposition' task (twice, inside CQ). We create the draft
-        // dispositions ourselves instead and keep the flag off, except when disposition approval is chosen, which CQ ties to the flag.
-        nc.compliancequest__Disposition_Required__c = dispAppr;
+        // dispositions ourselves instead and keep the flag off, except when disposition approval is chosen (CQ ties approval to the flag)
+        // or when disposition is the only thing chosen (CQ refuses Complete Triage unless at least one of its policies is on).
+        Boolean dispFlag = dispAppr || (disp && !inv && !contain);
+        nc.compliancequest__Disposition_Required__c = dispFlag;
         nc.compliancequest__Due_Date_Disposition__c = disp ? toDate(c.dispositionDue, DISPOSITION_DAYS) : null;
         nc.compliancequest__Disposition_Approval__c = dispAppr;
         nc.compliancequest__Investigation_Required__c = inv;
@@ -167,6 +171,8 @@ public with sharing class CqTriageNext {
         nc.compliancequest__Activity_Comment__c = String.isBlank(c.notes) ? 'Completed in CQ.AI Triage.' : c.notes.left(4000);
         nc.compliancequest__Activity_Code__c = COMPLETE_TRIAGE;
         nc.Triage_Draft__c = null;      // the work in progress goes in the same save: one save after the stage change
+        // CQ's Submit hands the NC to a queue; whoever completes triage takes it, as CQ's take-ownership would. A person owner stays.
+        if (cur.OwnerId != null && cur.OwnerId.getSObjectType() == Group.SObjectType) { nc.OwnerId = UserInfo.getUserId(); }
         Savepoint sp = Database.setSavepoint();
         try {
             update nc;
@@ -177,7 +183,7 @@ public with sharing class CqTriageNext {
             // still record what was decided, in CQ's own Required flags
             try {
                 update new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Containment_Required__c = contain,
-                    compliancequest__Disposition_Required__c = dispAppr, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
+                    compliancequest__Disposition_Required__c = dispFlag, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
             } catch (Exception e2) { /* the triage is saved; the warning above says CQ refused the move */ }
         }
 
