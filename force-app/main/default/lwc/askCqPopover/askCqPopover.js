@@ -2,6 +2,7 @@ import { LightningElement, api, track } from 'lwc';
 import startSession from '@salesforce/apex/AskCqService.startSession';
 import sendMessage from '@salesforce/apex/AskCqService.sendMessage';
 import endSession from '@salesforce/apex/AskCqService.endSession';
+import agentIdFor from '@salesforce/apex/AskCqAgents.idFor';
 
 /**
  * Ask CQ: the Scout agent in a popover on any record page. Other components call `ask(question)`
@@ -20,6 +21,21 @@ export default class AskCqPopover extends LightningElement {
             if (this.sessionId) { this.close(); }   // a different agent needs a new session
         }
     }
+
+    /** Optional: an agent's API name (CQAI_Field_Action, say), looked up in this org. Used when no agentId is given. */
+    _agentName;
+    @api get agentName() { return this._agentName; }
+    set agentName(v) {
+        if (v !== this._agentName) {
+            this._agentName = v;
+            this._namedId = undefined;
+            if (this.sessionId) { this.close(); }
+        }
+    }
+    _namedId;
+    /** Optional: the step or tab the user has open. Sent ahead of a question when it has changed, never shown. */
+    @api step;
+    _sentStep;
 
     @track messages = [];
     open = false;
@@ -60,6 +76,7 @@ export default class AskCqPopover extends LightningElement {
         this.messages = [];
         this.asked = false;
         this._starting = undefined;
+        this._sentStep = undefined;
         if (id) { try { await endSession({ sessionId: id }); } catch (e) { /* session will expire on its own */ } }
     }
 
@@ -82,7 +99,8 @@ export default class AskCqPopover extends LightningElement {
     ensureSession() {
         if (this.sessionId) { return Promise.resolve(); }
         if (!this._starting) {
-            const p = startSession({ recordId: this.recordId, agentId: this._agentId })
+            const p = this.resolveAgent()
+                .then((agentId) => startSession({ recordId: this.recordId, agentId }))
                 .then((r) => {
                     if (this._starting !== p) { endSession({ sessionId: r.sessionId }).catch(() => {}); return; }   // closed meanwhile
                     this.sessionId = r.sessionId; this.sequence = r.nextSequence;
@@ -94,13 +112,27 @@ export default class AskCqPopover extends LightningElement {
         return this._starting;
     }
 
+    /** The agent to talk to: the agentId given, else the named agent's Id, else blank (the default agent). */
+    async resolveAgent() {
+        if (this._agentId || !this._agentName) { return this._agentId; }
+        if (!this._namedId) {
+            this._namedId = await agentIdFor({ developerName: this._agentName });
+            if (!this._namedId) { throw new Error('The ' + this._agentName.replace(/_/g, ' ') + ' agent is not set up in this org yet.'); }
+        }
+        return this._namedId;
+    }
+
     async send(text, alreadyShown) {
         if (!text || !this.sessionId) { return; }
         if (!alreadyShown) { this.push('user', text); }
         this.draft = '';
         this.busy = true;
         try {
-            const r = await sendMessage({ sessionId: this.sessionId, sequenceId: this.sequence, text, recordId: this.recordId });
+            // The step goes ahead of the question only when it has changed; the user sees just their question.
+            const step = this.step && this.step !== this._sentStep ? this.step : '';
+            const sent = step ? '(I am on the ' + step + ' step.) ' + text : text;
+            const r = await sendMessage({ sessionId: this.sessionId, sequenceId: this.sequence, text: sent, recordId: this.recordId });
+            if (step) { this._sentStep = step; }
             this.sequence = r.nextSequence;
             this.push('agent', r.text || '(no answer)');
             if (/\b(saved|added|attached|updated)\b/i.test(r.text || '')) {

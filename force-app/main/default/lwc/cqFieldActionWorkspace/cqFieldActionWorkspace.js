@@ -11,6 +11,13 @@ import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId'
 
 // Order on screen: glance, signals, the reviewer's own assessment (risk and checklist), recommendation, committee approval.
 const STEPS = ['Review at a Glance', 'Signals and Evidence', 'Reviewer Assessment', 'Recommendation', 'Committee Approval'];
+const ASK = [
+    'Summarize this review,Why does CQ.AI suggest this outcome?,What is left on this review?',
+    'Which signals matter most?,What other records are on this lot?,Which relevant records share the lot?',
+    'How was the risk score worked out?,What is still not known?,What is left on this review?',
+    'Why does CQ.AI suggest this outcome?,Which field actions are on this part?,What is left on this review?',
+    'Who still needs to approve?,Summarize this review,What is left on this review?'
+];
 const SIGNALS = 1;
 const ASSESS = 2;
 const REC = 3;
@@ -144,6 +151,9 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     }
     get open() { return this.ready && !this.done; }                  // not decided yet: being worked on, or with the committee
     get live() { return this.open && !this.waiting; }                // the coordinator is still working on it
+    // ---- Ask CQ.AI: the Field Action agent, told which step is open, with ready questions for that step
+    get askStep() { return STEPS[this.step] || ''; }
+    get askSuggestions() { return ASK[this.step] || ASK[0]; }
     get is0() { return this.ready && ((this.open && this.step === 0) || (this.done && !this.showSummary)); }
     get is1() { return this.open && this.step === SIGNALS; }   // the Signals and Evidence block in the template
     get is3() { return this.live && this.step === ASSESS; }    // the Reviewer Assessment block: risk and checklist

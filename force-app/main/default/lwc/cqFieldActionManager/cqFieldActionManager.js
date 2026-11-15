@@ -19,6 +19,13 @@ const STEPS = [
     { label: 'Recovery and Effectiveness', ready: true },
     { label: 'Closure', ready: true }
 ];
+const ASK = {
+    0: 'Summarize this field action,Where does this field action stand?,What is left on this field action?',
+    1: 'Which lots are in scope?,Why does CQ.AI suggest these lots?,How much stock is on hand?',
+    2: 'Why does CQ.AI suggest this action type?,Which lots are on hold?,What does the effectiveness level mean?',
+    5: 'Which customers have not responded?,Are we on track for the effectiveness target?,How many units are still in the field?',
+    6: 'What is blocking closure?,Summarize this field action,What is left on this field action?'
+};
 const SCOPE = 1;
 const STRATEGY = 2;
 const RECOVERY = 5;
@@ -161,6 +168,9 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get progress() { return this.steps.filter((s) => s.done).length + ' of ' + STEPS.length + ' steps complete'; }
     handleStep(event) { const i = Number(event.currentTarget.dataset.i); if (!this.isLocked(i)) { this.go(i); } }
     go(i) { this.step = i; this.error = undefined; this.foot = { show: false, label: '', disabled: true, blocker: '' }; }
+    // ---- Ask CQ.AI: the Field Action agent, told which step is open, with ready questions for that step
+    get askStep() { return STEPS[this.step] ? STEPS[this.step].label : ''; }
+    get askSuggestions() { return ASK[this.step] || ASK[0]; }
     get is0() { return this.ready && this.step === 0; }
     get is1() { return this.ready && this.step === SCOPE; }
     get is2() { return this.ready && this.step === STRATEGY; }

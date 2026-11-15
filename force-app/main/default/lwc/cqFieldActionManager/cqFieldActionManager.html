@@ -12,7 +12,7 @@
                         </div>
                     </div>
                     <div class="hl-actions">
-                        <c-ask-cq-popover record-id={recordId} suggestions="Summarize this field action,Which lots are in scope?,What is left on this field action?"></c-ask-cq-popover>
+                        <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Field_Action" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
                         <button class="btn cmp" onclick={handleEdit}>Edit</button>
                     </div>
                 </div>
