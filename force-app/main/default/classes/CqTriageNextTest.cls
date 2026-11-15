@@ -94,7 +94,11 @@ private class CqTriageNextTest {
             'investigate' => true, 'investigationDue' => String.valueOf(Date.today().addDays(60)), 'investigationApproval' => false });
         CqTriageNext.Done d = CqTriageNext.completeTriage(ncId, payload);
         compliancequest__SQX_Nonconformance__c nc = [SELECT compliancequest__Disposition_Required__c, Triage_Draft__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId];
-        if (d.moved) { System.assertEquals(true, nc.compliancequest__Disposition_Required__c, 'disposition as chosen, not the opposite of investigate'); }
+        System.assertEquals(false, nc.compliancequest__Disposition_Required__c, 'CQ flag stays off; we create the dispositions');
         System.assertEquals(null, nc.Triage_Draft__c);
+        Integer lots = [SELECT COUNT() FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :ncId AND compliancequest__Quantity_Left_To_Dispose__c > 0];
+        System.assertEquals(lots, [SELECT COUNT() FROM compliancequest__SQX_Disposition__c WHERE compliancequest__SQX_Nonconformance__c = :ncId AND compliancequest__Status__c = 'Draft']);
+        // a second call adds nothing for lots that already have an open disposition
+        System.assertEquals(0, CqTriageNext.createDraftDispositions(ncId, Date.today()).size());
     }
 }

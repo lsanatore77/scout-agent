@@ -154,7 +154,9 @@ public with sharing class CqTriageNext {
         if (c.severity != null && c.severity >= 1 && c.severity <= 5) { nc.compliancequest__Defect_Severity__c = CqTriageRisk.SEV[c.severity - 1]; }
         nc.compliancequest__Containment_Required__c = contain;
         nc.compliancequest__Due_Date_Containment__c = contain ? toDate(c.containmentDue, CONTAINMENT_DAYS) : null;
-        nc.compliancequest__Disposition_Required__c = disp;
+        // CQ's flag makes CQ raise its own 'Please create Disposition' task (twice, inside CQ). We create the draft
+        // dispositions ourselves instead and keep the flag off, except when disposition approval is chosen, which CQ ties to the flag.
+        nc.compliancequest__Disposition_Required__c = dispAppr;
         nc.compliancequest__Due_Date_Disposition__c = disp ? toDate(c.dispositionDue, DISPOSITION_DAYS) : null;
         nc.compliancequest__Disposition_Approval__c = dispAppr;
         nc.compliancequest__Investigation_Required__c = inv;
@@ -175,8 +177,19 @@ public with sharing class CqTriageNext {
             // still record what was decided, in CQ's own Required flags
             try {
                 update new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Containment_Required__c = contain,
-                    compliancequest__Disposition_Required__c = disp, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
+                    compliancequest__Disposition_Required__c = dispAppr, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
             } catch (Exception e2) { /* the triage is saved; the warning above says CQ refused the move */ }
+        }
+
+        // 3. one draft disposition per impacted part and lot, for the Disposition workspace to pick up
+        if (disp) {
+            try {
+                List<String> made = createDraftDispositions(recordId, toDate(c.dispositionDue, DISPOSITION_DAYS));
+                if (made.isEmpty()) { warnings.add('No impacted parts or lots are left to dispose, so no disposition was created.'); }
+                d.created.addAll(made);
+            } catch (DmlException e) {
+                warnings.add('The draft dispositions were not created: ' + e.getDmlMessage(0));
+            }
         }
 
         d.warning = warnings.isEmpty() ? null : 'Triage saved. ' + String.join(warnings, ' ');
@@ -205,6 +218,32 @@ public with sharing class CqTriageNext {
             s.warning = 'CQ did not move the NC to Triage: ' + e.getDmlMessage(0);
         }
         return s;
+    }
+
+    /** A Draft disposition for each impacted part and lot with quantity left, unless one is already open for it. */
+    public static List<String> createDraftDispositions(Id recordId, Date due) {
+        Set<Id> covered = new Set<Id>();
+        for (compliancequest__SQX_Disposition__c x : [SELECT compliancequest__SQX_NC_Impacted_Product__c FROM compliancequest__SQX_Disposition__c
+                WHERE compliancequest__SQX_Nonconformance__c = :recordId AND compliancequest__Status__c NOT IN ('Complete', 'Void')]) {
+            covered.add(x.compliancequest__SQX_NC_Impacted_Product__c);
+        }
+        List<compliancequest__SQX_Disposition__c> ins = new List<compliancequest__SQX_Disposition__c>();
+        List<String> made = new List<String>();
+        for (compliancequest__SQX_NC_Impacted_Product__c ip : [
+                SELECT Id, compliancequest__SQX_Impacted_Part__c, compliancequest__Lot_Number__c, compliancequest__Quantity_Left_To_Dispose__c
+                FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :recordId ORDER BY Name]) {
+            Decimal left = ip.compliancequest__Quantity_Left_To_Dispose__c;
+            if (covered.contains(ip.Id) || left == null || left <= 0 || ip.compliancequest__Lot_Number__c == null) { continue; }
+            String label = 'Disposition for Lot ' + ip.compliancequest__Lot_Number__c;
+            ins.add(new compliancequest__SQX_Disposition__c(Name = label.left(80),
+                compliancequest__SQX_Nonconformance__c = recordId, compliancequest__SQX_NC_Impacted_Product__c = ip.Id,
+                compliancequest__SQX_Part__c = ip.compliancequest__SQX_Impacted_Part__c, compliancequest__Lot_Number__c = ip.compliancequest__Lot_Number__c,
+                compliancequest__Disposition_Quantity__c = left, compliancequest__Status__c = 'Draft',
+                compliancequest__Due_Date__c = due, compliancequest__SQX_User__c = UserInfo.getUserId()));
+            made.add(label + ' (' + num(left) + ')');
+        }
+        if (!ins.isEmpty()) { insert ins; }
+        return made;
     }
 
     static Date toDate(String v, Integer fallbackDays) {
