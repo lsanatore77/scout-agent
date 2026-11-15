@@ -24,12 +24,14 @@
   <select id="meaning"><option>Approved</option><option>Reviewed</option><option>Rejected</option></select>
   <button id="sign" type="button">Sign</button>
   <div id="out"></div>
+  <p class="note" style="margin-top:20px;font-size:12px">Callback URL this page uses (must match the app exactly):<br/><code id="cb"></code></p>
 </div>
 <script>
 (function () {
   var USER = '{!JSENCODE($User.Username)}';
   var BASE = '{!JSENCODE(orgBase)}';
   var REDIRECT = window.location.origin + '/apex/CqEsigCallback';
+  document.getElementById('cb').textContent = REDIRECT;
   var keyEl = document.getElementById('key'), out = document.getElementById('out'), btn = document.getElementById('sign');
   try { keyEl.value = localStorage.getItem('cqesig.key') || ''; } catch (e) {}
 
