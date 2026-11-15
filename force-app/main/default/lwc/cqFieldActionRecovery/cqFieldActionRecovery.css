@@ -105,8 +105,8 @@
 .ulink { align-self: flex-start; padding: 0; border: none; background: none; font: inherit; font-size: 12px; color: #5b6470; cursor: pointer; text-decoration: underline dotted; }
 .ulink:disabled { cursor: default; text-decoration: none; }
 
-/* held stock, stacked for the one-third column */
-.hrow { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px solid #eceff2; }
-.hl { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
-.ell { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sel.full { width: 100%; }
+/* held stock: lot and description on the left, a narrow disposition menu on the same line */
+.hrow { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #eceff2; }
+.hl { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.hl .ell { display: block; }
+.sel.full { flex: none; width: 172px; font-size: 13px; }
