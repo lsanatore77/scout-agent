@@ -110,12 +110,15 @@
                                     <button class={inTab} data-v="in" onclick={handleView} aria-pressed={inPressed}>In Scope</button>
                                 </div>
                                 <template if:true={pendingLine}><span class="pendline warn">{pendingLine}</span></template>
-                                <template if:true={isPartial}>
-                                    <div class="cact">
-                                        <button class="btn" onclick={handleDiscard} disabled={cantDiscard}>Discard Changes</button>
-                                        <button class="btn primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
-                                    </div>
-                                </template>
+                                <div class="cact">
+                                    <template if:true={isPartial}>
+                                        <button class="btn cmp" onclick={handleDiscard} disabled={cantDiscard}>Discard Changes</button>
+                                        <button class="btn cmp primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
+                                        <span class="vdiv"></span>
+                                    </template>
+                                    <button class="btn cmp" onclick={handleBack} disabled={cantBack}>Back</button>
+                                    <button class="btn cmp primary" onclick={handleNext} disabled={cantNext}>Next</button>
+                                </div>
                             </div>
                             <div class="tblwrap tree" style={tableStyle}>
                                 <table class="lottable">
@@ -153,21 +156,29 @@
                                                     <td class="num">{r.qty}</td>
                                                     <td class="nw mut">{r.supplier}</td>
                                                     <td class="nw"><span class={r.traceCls}>{r.trace}</span></td>
-                                                    <template if:true={r.editable}>
-                                                        <template if:true={r.isEditing}>
-                                                            <td class="num"><input class="ta ni" type="number" min="0" data-id={r.rowId} data-f="shipped" value={r.shippedVal} onchange={handleQty} aria-label="Units shipped" /></td>
-                                                            <td class="num"><input class="ta ni" type="number" min="0" data-id={r.rowId} data-f="onHand" value={r.onHandVal} onchange={handleQty} aria-label="Units on hand" /></td>
-                                                            <td><span class="locwrap"><input class="ta ti" type="text" data-id={r.rowId} data-f="location" value={r.locVal} onchange={handleQty} aria-label="Location" />
-                                                                <button class="btn xs primary" data-id={r.rowId} onclick={handleSaveLot} disabled={saving}>Save</button>
-                                                                <button class="btn xs" onclick={handleCancelEdit}>Cancel</button></span></td>
-                                                        </template>
-                                                        <template if:true={r.notEditing}>
-                                                            <td class="num"><button class="cell num" data-id={r.rowId} onclick={handleStartEdit} title="Click to edit" aria-label={r.editLabel}>{r.shippedText}</button></td>
-                                                            <td class="num"><button class="cell num" data-id={r.rowId} onclick={handleStartEdit} title="Click to edit" aria-label={r.editLabel}>{r.onHandText}</button></td>
-                                                            <td><button class="cell" data-id={r.rowId} onclick={handleStartEdit} title="Click to edit" aria-label={r.editLabel}>{r.locText}<span class="pen" aria-hidden="true">&#9998;</span></button></td>
-                                                        </template>
+                                                    <template if:true={r.showStock}>
+                                                        <td class="num">{r.shippedText}</td>
+                                                        <td class="num pos">
+                                                            <template if:true={r.canOpen}><button class="ohbtn" data-key={r.key} onclick={handleStock} aria-expanded={r.stockExpanded} aria-label={r.popLabel}>{r.onHandText}</button></template>
+                                                            <template if:false={r.canOpen}>{r.onHandText}</template>
+                                                            <template if:true={r.stockOpen}>
+                                                                <div class="pop" role="dialog" aria-label={r.popLabel}>
+                                                                    <div class="pophead"><span class="b">Lot {r.name}</span><span class="grow"></span><span class="rk">{r.onHandText} on hand</span></div>
+                                                                    <template for:each={r.places} for:item="k">
+                                                                        <div key={k.key} class="poprow"><a class="ploc" href={k.href} target="_blank">{k.location}</a><span class="grow"></span><span>{k.units}</span></div>
+                                                                    </template>
+                                                                    <span class="rk">{r.asOfText}</span>
+                                                                </div>
+                                                            </template>
+                                                        </td>
+                                                        <td class="nw">
+                                                            <template if:true={r.noPlaces}><span class="mut">{r.locText}</span></template>
+                                                            <template for:each={r.places} for:item="k">
+                                                                <span key={k.key}><a class="ploc" href={k.href} target="_blank">{k.location}</a> {k.units}<template if:true={k.sep}><span class="dotsep"> &middot; </span></template></span>
+                                                            </template>
+                                                        </td>
                                                     </template>
-                                                    <template if:false={r.editable}><td></td><td></td><td></td></template>
+                                                    <template if:false={r.showStock}><td></td><td></td><td></td></template>
                                                 </template>
                                                 <template if:true={r.isNode}>
                                                     <td class="cscope"></td>
@@ -225,6 +236,7 @@
                     </template>
 
                     <template if:true={error}><div class="errbox">{error}</div></template>
+                    <template if:true={showFoot}>
                     <div class="foot">
                         <template if:true={showStepAction}>
                             <span class="fblock">{foot.blocker}</span>
@@ -233,6 +245,7 @@
                         <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
                         <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
                     </div>
+                    </template>
                 </div>
             </div>
         </div>

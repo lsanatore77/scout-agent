@@ -6,7 +6,7 @@ import getGenealogy from '@salesforce/apex/CqFieldActionScope.genealogy';
 import setLot from '@salesforce/apex/CqFieldActionScope.setLot';
 import confirmScope from '@salesforce/apex/CqFieldActionScope.confirmScope';
 import discardChanges from '@salesforce/apex/CqFieldActionScope.discardChanges';
-import saveLot from '@salesforce/apex/CqFieldActionScope.saveLot';
+import forScope from '@salesforce/apex/CqLotStock.forScope';
 import railStatus from '@salesforce/apex/CqFieldActionRecovery.railStatus';
 
 // The seven steps of a field action. Notifications and Regulatory Report are set aside for later and do not block.
@@ -46,8 +46,8 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     gens = {};           // lot -> genealogy from its batch record
     loading = {};        // lot -> genealogy being read
     ticking = {};        // lot -> tick being saved
-    edits = {};          // lot row id -> { shipped, onHand, location } being typed
-    editing = '';        // the lot row whose shipped, on hand and location are open for editing
+    stock = {};          // lot -> shipped, on hand and where, from Lot Shipment and Lot Stock (read-only)
+    stockOpen = '';      // the row whose on-hand split is showing
 
     rail = {};           // strategy, recovery, verdict and status for the later steps
 
@@ -55,6 +55,11 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         try { this.apply(await getView({ recordId: this.recordId })); }
         catch (e) { this.error = this.msg(e, 'Could not read this field action.'); }
         await this.loadRail();
+        await this.loadStock();
+    }
+    async loadStock() {
+        if (!this.v) { return; }
+        try { this.stock = await forScope({ lots: this.lots.map((l) => l.name) }); } catch (e) { /* the columns show dashes */ }
     }
     async loadRail() {
         try { this.rail = await railStatus({ recordId: this.recordId }); } catch (e) { /* the rail falls back to what is known */ }
@@ -163,6 +168,8 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get is6() { return this.ready && this.step === CLOSURE; }
     get cantBack() { return this.near(-1) < 0; }
     get cantNext() { const i = this.near(1); return i < 0 || this.isLocked(i); }
+    // on Scope, Back and Next sit beside the scope buttons above the table (smaller buttons, a one-off for now)
+    get showFoot() { return !this.is1 || !this.hasLots; }
     handleBack() { const i = this.near(-1); if (i >= 0) { this.go(i); } }
     handleNext() { if (!this.cantNext) { this.go(this.near(1)); } }
     // A step's own confirm button (Confirm Strategy, Confirm Verdict, Close Field Action) lives in the footer before Back and Next
@@ -322,8 +329,11 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     lotRow(l, key, depth, isOpen, sharedLot) {
         const removing = !l.inScope && l.confirmed;
         const pendingAdd = this.isPartial && l.inScope && !l.confirmed;
-        const e = (l.id && this.edits[l.id]) || {};
         const where = sharedLot !== false;
+        const s = this.stock[l.name];
+        const has = !!(s && s.hasRecord);
+        const places = has ? (s.places || []).map((k, i, all) => ({ key: key + '|s' + i, location: k.location, units: String(Number(k.units)),
+            href: k.locationId ? '/lightning/r/compliancequest__SQX_Location__c/' + k.locationId + '/view' : null, sep: i < all.length - 1 })) : [];
         const traceText = l.records ? l.records + ' record' + (l.records === 1 ? '' : 's') + (l.signals ? ' · ' + l.signals + ' signal' + (l.signals === 1 ? '' : 's') : '') : 'No records';
         return {
             key, isLot: true, isNode: false, isNote: false,
@@ -342,12 +352,13 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             added: l.inScope, addedTitle: l.locked ? (l.reason || 'Came in with the review decision') : l.how === 'Coordinator' ? 'Ticked by the coordinator' : (l.reason || ''),
             pendingAdd, removing,
             suggested: !l.inScope && !removing && !!l.suggested, why: l.why,
-            editable: !where && l.inScope && !!l.id, rowId: l.id,
-            isEditing: !!l.id && this.editing === l.id, notEditing: !(l.id && this.editing === l.id),
-            shippedVal: e.shipped !== undefined ? e.shipped : l.shipped, onHandVal: e.onHand !== undefined ? e.onHand : l.onHand,
-            locVal: e.location !== undefined ? e.location : l.location || '',
-            shippedText: this.num(l.shipped), onHandText: this.num(l.onHand), locText: l.location || '—',
-            editLabel: 'Edit shipped, on hand and location for lot ' + l.name
+            showStock: !where,
+            shippedText: this.num(s && s.shipped !== undefined && s.shipped !== null ? s.shipped : l.shipped),
+            onHandText: has ? this.num(s.total) : '—', canOpen: places.length > 0,
+            stockOpen: this.stockOpen === key && places.length > 0, stockExpanded: this.stockOpen === key ? 'true' : 'false',
+            places, noPlaces: places.length === 0, locText: has ? 'None in stock' : '—',
+            asOfText: has ? [s.source, s.asOf ? 'as of ' + this.when(s.asOf) : ''].filter(Boolean).join(' · ') : '',
+            popLabel: 'On hand for lot ' + l.name
         };
     }
     nodeRow(n, key, depth, hasKids, isOpen, lot, g) {
@@ -422,28 +433,10 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         await this.run(() => discardChanges({ recordId: this.recordId }));
     }
 
-    handleQty(event) {
-        const id = event.target.dataset.id; const f = event.target.dataset.f;
-        const cur = { ...(this.edits[id] || {}) };
-        cur[f] = f === 'location' ? event.target.value : event.target.value === '' ? null : Number(event.target.value);
-        this.edits = { ...this.edits, [id]: cur };
-    }
-    handleStartEdit(event) {
-        const id = event.currentTarget.dataset.id;
-        if (this.editing && this.editing !== id) { const x = { ...this.edits }; delete x[this.editing]; this.edits = x; }
-        this.editing = id;
-    }
-    handleCancelEdit() {
-        const x = { ...this.edits }; delete x[this.editing]; this.edits = x;
-        this.editing = '';
-    }
-    async handleSaveLot(event) {
-        const id = event.currentTarget.dataset.id;
-        const row = this.lots.find((l) => l.id === id);
-        const e = this.edits[id] || {};
-        await this.run(() => saveLot({ recordId: this.recordId, rowId: id,
-            shipped: e.shipped !== undefined ? e.shipped : row.shipped, onHand: e.onHand !== undefined ? e.onHand : row.onHand,
-            location: e.location !== undefined ? e.location : row.location }), () => { const x = { ...this.edits }; delete x[id]; this.edits = x; this.editing = ''; });
+    /** On hand opens a small card with the split by CQ Location and how fresh the figures are. */
+    handleStock(event) {
+        const key = event.currentTarget.dataset.key;
+        this.stockOpen = this.stockOpen === key ? '' : key;
     }
     async run(call, after) {
         if (this.saving) { return; }

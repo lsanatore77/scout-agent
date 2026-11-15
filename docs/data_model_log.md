@@ -3,6 +3,8 @@
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
 ### 14 Nov 2026
+- **New object Lot Stock** (`Lot_Stock__c`): units of a lot on hand at a CQ Location, one record per lot per location, loaded from the ERP. Fields: Lot (Lot Info lookup), Lot Number, Location (CQ Location lookup), Units On Hand, As Of, Source (ERP, Manual). `LotStockTrigger` fills Lot Number from the lot and keeps open field action lots up to date. Eleven test records (Source Manual) were added in dev for the FA-0001 lots and a few others.
+- **Field Action Lot**: Units On Hand and Location are now filled from Lot Stock (Location is a text summary of the CQ Locations) and are no longer typed on the Scope step; Units Shipped is read-only there too. Logic in `CqLotStock`.
 - **Activity (standard Task and Event) — existing object**: added Recall Task Type, Field Action Customer (lookup), Lot Number, Units. Field action work is tracked as standard Tasks on the Field Action; return and destruction task units add up to the lot's Returned and Destroyed, and a completed Collect response marks the customer Acknowledged.
 - **Field Action Customer**: Status now follows the customer's Collect response task; Follow Ups is no longer used (follow-ups are tasks).
 - **Field Action Lot**: Units Returned, Destroyed and Corrected now add up from the units on the lot's recall tasks (lots whose tasks carry no units keep the figures typed before). The Recovery step no longer edits them directly. Logic in `CqFieldActionTasks`.

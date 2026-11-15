@@ -188,7 +188,7 @@ export default class CqFieldActionStrategy extends LightningElement {
         const n = hs.filter((h) => h.hold).length;
         const placed = hs.filter((h) => h.hold && h.held).length;
         return n + ' lot' + (n === 1 ? '' : 's') + ' to hold' + (placed ? ', ' + placed + ' held' : '')
-            + '. Holds are placed on Confirm Strategy. On hand comes from the Scope step until inventory is connected.';
+            + '. Holds are placed on Confirm Strategy.';
     }
     get compOptions() {
         return [{ value: '', label: 'Add a component lot…', selected: !this.addLot }].concat((this.v.components || []).map((c) => ({

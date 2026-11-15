@@ -9,6 +9,8 @@ Every object and field this project adds to the org. Built from the metadata in 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
 ### 14 Nov 2026
+- **New object Lot Stock** (`Lot_Stock__c`): units of a lot on hand at a CQ Location, one record per lot per location, loaded from the ERP. Fields: Lot (Lot Info lookup), Lot Number, Location (CQ Location lookup), Units On Hand, As Of, Source (ERP, Manual). `LotStockTrigger` fills Lot Number from the lot and keeps open field action lots up to date. Eleven test records (Source Manual) were added in dev for the FA-0001 lots and a few others.
+- **Field Action Lot**: Units On Hand and Location are now filled from Lot Stock (Location is a text summary of the CQ Locations) and are no longer typed on the Scope step; Units Shipped is read-only there too. Logic in `CqLotStock`.
 - **Activity (standard Task and Event) — existing object**: added Recall Task Type, Field Action Customer (lookup), Lot Number, Units. Field action work is tracked as standard Tasks on the Field Action; return and destruction task units add up to the lot's Returned and Destroyed, and a completed Collect response marks the customer Acknowledged.
 - **Field Action Customer**: Status now follows the customer's Collect response task; Follow Ups is no longer used (follow-ups are tasks).
 - **Field Action Lot**: Units Returned, Destroyed and Corrected now add up from the units on the lot's recall tasks (lots whose tasks carry no units keep the figures typed before). The Recovery step no longer edits them directly. Logic in `CqFieldActionTasks`.
@@ -275,6 +277,19 @@ The Lot Shipment object records units of one lot shipped to one customer: Lot, L
 | `Ship_Date__c` | Ship Date | Date |  | When the units were shipped. |
 | `Ship_To__c` | Ship To | Text | 255 chars | Ship-to address or site. |
 | `Units__c` | Units | Number | 9,0 | Units of the lot shipped. |
+
+### Lot Stock (`Lot_Stock__c`)
+
+The Lot Stock object records the units of one lot on hand at one CQ Location: Lot, Lot Number, Location, Units On Hand, As Of and Source. Loaded from the ERP. Field actions show on hand and location from it.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `As_Of__c` | As Of | DateTime |  | When the source last reported this figure. |
+| `Location__c` | Location | Lookup | to compliancequest__SQX_Location__c | The CQ Location where the units are held. |
+| `Lot_Number__c` | Lot Number | Text | 80 chars | The lot number, as the ERP sends it. Filled from the lot record when only the lookup is set. |
+| `Lot__c` | Lot | Lookup | to compliancequest__SQX_Lot_Info__c | The CQ lot record the stock belongs to, when there is one. |
+| `Source__c` | Source | Picklist | ERP, Manual | Where the figure came from: ERP, or Manual for test data. |
+| `Units_On_Hand__c` | Units On Hand | Number | 9,0 | Units of the lot on hand at the location. |
 
 ### PHR Lead (`PHR_Lead__c`)
 
