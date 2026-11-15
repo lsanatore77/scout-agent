@@ -153,13 +153,39 @@ export default class AskCqPopover extends LightningElement {
 
     push(role, text) {
         this._seq += 1;
+        const key = 'm' + this._seq;
         this.messages = [...this.messages, {
-            key: 'm' + this._seq,
+            key,
             text,
             cls: role === 'user' ? 'msg user' : 'msg agent',
-            isAgent: role === 'agent'
+            isAgent: role === 'agent',
+            blocks: role === 'agent' ? this.blocks(text, key) : []
         }];
         this.scrollToEnd();
+    }
+
+    /**
+     * An answer as rows: "- " lines become bullets with a hanging indent (wrapped text lines up under the text,
+     * not the marker), other lines stay paragraphs, a blank line leaves a small gap. Record numbers such as
+     * L26-0922 get a non-breaking hyphen so they never split across lines.
+     */
+    blocks(text, key) {
+        const keep = (s) => s.replace(/([A-Za-z0-9])-(?=[A-Za-z0-9])/g, '$1‑');
+        const out = [];
+        (text || '').split('\n').forEach((line, i) => {
+            const m = line.match(/^(\s*)[-*•]\s+(.*)$/);
+            const b = { key: key + 'b' + i, first: out.length === 0 };
+            if (m) {
+                const nested = m[1].length >= 2;
+                out.push({ ...b, isItem: true, text: keep(m[2]), cls: 'blk li' + (nested ? ' sub' : '') });
+            } else if (!line.trim()) {
+                if (out.length) { out.push({ ...b, first: false, isGap: true, cls: 'blk gap' }); }
+            } else {
+                out.push({ ...b, isPara: true, text: keep(line), cls: 'blk p' });
+            }
+        });
+        while (out.length && out[out.length - 1].isGap) { out.pop(); }
+        return out;
     }
 
     scrollToEnd() {

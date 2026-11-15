@@ -21,3 +21,13 @@
 .foot { display: flex; gap: 8px; align-items: center; padding: 8px 12px 12px; border-top: 1px solid #eceff2; }
 .foot lightning-input { flex: 1; }
 .pi { --sds-c-icon-color-foreground-default: #7c5cc4; --slds-c-icon-color-foreground-default: #7c5cc4; }
+
+/* Answers: bullet rows with a hanging indent (styling guide rev45) */
+.msg.agent { white-space: normal; }
+.blk.p { margin: 0; }
+.blk.li { display: flex; align-items: baseline; }
+.blk.li .dot { flex: none; width: 12px; }
+.blk.li .txt { flex: 1; min-width: 0; }
+.blk.li.sub { padding-left: 14px; }
+.blk.gap { height: 6px; }
+.blk .star.small { flex: none; margin-right: 4px; }
