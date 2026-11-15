@@ -158,3 +158,4 @@
 .chead { display: flex; align-items: flex-end; min-height: 0; }
 /* in the page, Back and Next sit at the bottom right of the work area like the other workspaces */
 .box.inline .foot { border-top: none; padding: 0 20px 20px 220px; background: none; }
+.steps-title .star { margin-right: 5px; }
