@@ -47,7 +47,7 @@
                 </template>
 
                 <footer class="foot">
-                    <lightning-input variant="label-hidden" placeholder="Ask about this review…" value={draft} onchange={handleDraft} onkeyup={handleKey} disabled={busy}></lightning-input>
+                    <lightning-input variant="label-hidden" placeholder={placeholder} value={draft} onchange={handleDraft} onkeyup={handleKey} disabled={busy}></lightning-input>
                     <lightning-button-icon icon-name="utility:send" variant="brand" alternative-text="Send" onclick={handleSend} disabled={sendDisabled}></lightning-button-icon>
                 </footer>
             </section>

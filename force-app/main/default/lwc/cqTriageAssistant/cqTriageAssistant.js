@@ -86,6 +86,16 @@ export default class CqTriageAssistant extends LightningElement {
         }
     }
 
+    // tells the page which step is open, so Ask CQ.AI can answer for it
+    renderedCallback() {
+        const names = this.inline ? ['Triage at a Glance', ...STEPS] : STEPS;
+        const now = this.done ? 'Triage complete' : names[this.step] || '';
+        if (now !== this._toldStep) {
+            this._toldStep = now;
+            this.dispatchEvent(new CustomEvent('stepchange', { detail: { step: now } }));
+        }
+    }
+
     tomorrow() {
         const d = new Date(Date.now() + 86400000);
         const p = (n) => String(n).padStart(2, '0');
@@ -153,7 +163,7 @@ export default class CqTriageAssistant extends LightningElement {
         const subs = [
             this.noAction ? 'No action' : n ? n + ' action' + (n > 1 ? 's' : '') : 'Not decided',
             this.data === 'ok' ? 'Good enough' : this.data === 'ask' ? 'More information requested' : 'Not checked',
-            this.maxStep > 2 + this.off || this.done ? this.risk + ' \u00b7 score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
+            this.maxStep > 2 + this.off || this.done ? this.risk + ' · score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
             this.linkCount ? this.linkCount + ' to link' : this.done ? 'None linked' : 'Optional'
         ];
         const valid = this.valid;
@@ -395,9 +405,9 @@ export default class CqTriageAssistant extends LightningElement {
             { k: 'Containment', v: this.noAction ? 'No action: ' + this.noActionWhy.trim()
                 : [...this.chosenActs, ...this.added.map((a) => a.name + ' ' + a.title)].join('; ') },
             { k: 'Data Check', v: this.dataAsk ? 'More information requested: ' + [...this.askList, this.askNote.trim()].filter(Boolean).join(', ') : 'Good enough' },
-            { k: 'Risk', v: this.risk + ' \u00b7 score ' + this.score + ' (' + this.sevLabel + ' severity x ' + this.likLabel + ' likelihood)'
-                + (this.escaped ? ' \u00b7 High because of complaints on the lot' : '')
-                + (this.riskChanged ? ' \u00b7 changed from CQ.AI ' + this.suggestedRisk : ' \u00b7 as CQ.AI suggested') },
+            { k: 'Risk', v: this.risk + ' · score ' + this.score + ' (' + this.sevLabel + ' severity x ' + this.likLabel + ' likelihood)'
+                + (this.escaped ? ' · High because of complaints on the lot' : '')
+                + (this.riskChanged ? ' · changed from CQ.AI ' + this.suggestedRisk : ' · as CQ.AI suggested') },
             { k: 'Investigation', v: this.lk && this.lk.ownName ? 'Continues with ' + this.lk.ownName : 'Needs its own investigation' },
             { k: 'Links', v: this.linkCount ? this.chosenLinks.map((v) => v.name).join(', ') + ' (research only)' : 'None' }
         ];

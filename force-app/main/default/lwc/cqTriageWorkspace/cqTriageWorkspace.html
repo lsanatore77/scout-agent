@@ -12,7 +12,7 @@
                         </div>
                     </div>
                     <div class="hl-actions">
-                        <c-ask-cq-popover record-id={recordId} suggestions="Summarize this nonconformance,What else is open on this part?,What is left on this triage?"></c-ask-cq-popover>
+                        <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Quality" placeholder="Ask about this nonconformance…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
                         <button class="btn" onclick={handleEdit}>Edit</button>
                     </div>
                 </div>
@@ -30,7 +30,7 @@
                     <div class="f"><span class="k">Occurred</span><span class="v">{occurredText}</span></div>
                 </div>
             </header>
-            <c-cq-triage-assistant inline record-id={recordId} glance={g} has-photo={hasPhoto} onchanged={handleChanged} ondone={handleChanged}>
+            <c-cq-triage-assistant inline record-id={recordId} glance={g} has-photo={hasPhoto} onchanged={handleChanged} ondone={handleChanged} onstepchange={handleStep}>
                 <c-cq-triage-glance embedded record-id={recordId} onchanged={handleChanged}></c-cq-triage-glance>
             </c-cq-triage-assistant>
         </div>

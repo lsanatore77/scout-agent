@@ -35,6 +35,8 @@ export default class AskCqPopover extends LightningElement {
     _namedId;
     /** Optional: the step or tab the user has open. Sent ahead of a question when it has changed, never shown. */
     @api step;
+    /** Text in the empty question box. */
+    @api placeholder = 'Ask about this review…';
     _sentStep;
 
     @track messages = [];
