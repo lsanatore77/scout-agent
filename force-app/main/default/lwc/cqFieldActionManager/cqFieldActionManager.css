@@ -63,9 +63,9 @@
 .spill.escalate { background: #fdecea; color: #b42318; }
 .btn.sm { flex: none; min-height: 32px; padding: 0 12px; font-size: 13px; }
 .fl { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; font-size: 13px; font-weight: 600; color: #3d4550; }
-.ta { width: 100%; box-sizing: border-box; min-height: 40px; padding: 8px 10px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; font-weight: 400; color: #1a1d21; }
+.ta { width: 100%; box-sizing: border-box; min-height: 40px; padding: 8px 10px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; font-weight: 400; color: #1a1d21; }
 .errbox { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: #fff8f7; border: 1px solid #f3c7c2; color: #b42318; }
-.btn { min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn { min-height: 40px; padding: 0 16px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn.primary { border-color: #1d5fd1; background: #1d5fd1; color: #fff; }
 .btn.icon { width: 40px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }

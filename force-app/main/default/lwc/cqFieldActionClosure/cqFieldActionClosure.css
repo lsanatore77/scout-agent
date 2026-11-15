@@ -31,7 +31,7 @@
 
 .fld { display: flex; flex-direction: column; gap: 6px; }
 .fl { font-size: 13px; font-weight: 600; color: #3d4550; }
-.ta { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; line-height: 1.45; color: #1a1d21; resize: vertical; }
-.ta.in { min-height: 36px; padding: 0 10px; }
-.sel { min-height: 36px; max-width: 100%; padding: 0 8px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; color: #1a1d21; }
+.ta { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; line-height: 1.45; color: #1a1d21; resize: vertical; }
+.ta.in { min-height: 40px; padding: 0 10px; }
+.sel { min-height: 40px; max-width: 100%; padding: 0 8px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; color: #1a1d21; }
 .errbox { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: #fff8f7; border: 1px solid #f3c7c2; color: #b42318; }

@@ -29,7 +29,7 @@
 .col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .lab { font-size: 13px; font-weight: 600; color: #5b6470; }
 .top8 { margin-top: 16px; }
-.row, .act { display: flex; align-items: center; gap: 12px; min-height: 56px; box-sizing: border-box; padding: 8px 14px; border-radius: 10px; border: 1px solid #dde1e6; background: #fff; }
+.row, .act { display: flex; align-items: center; gap: 12px; min-height: 56px; box-sizing: border-box; padding: 8px 14px; border-radius: 4px; border: 1px solid #dde1e6; background: #fff; }
 .row.slim { min-height: 44px; margin-bottom: 8px; }
 .row.bad { border-color: #f3c7c2; background: #fff8f7; }
 .row.warn { border-color: #f2d3a8; background: #fffbf5; }
@@ -54,7 +54,7 @@
 .fsug { margin-top: 12px; padding: 10px 12px; border-radius: 8px; background: #f8f6ff; border: 1px solid #dcd3ff; font-size: 14px; }
 .rec { color: #4a2fc0; font-weight: 600; margin-right: 6px; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.opt { min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.opt { min-height: 40px; padding: 0 16px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .opt.wide { min-width: 110px; }
 .opt.sug { border-color: #dcd3ff; background: #f8f6ff; }
 .opt.on { border: 2px solid #1d5fd1; background: #e8f0fd; color: #1d5fd1; }
@@ -62,14 +62,14 @@
 .chip { min-height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .chip.on { border-color: #1d5fd1; background: #e8f0fd; color: #1d5fd1; }
 .fl { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; font-size: 13px; font-weight: 600; color: #3d4550; }
-.ta, .sel { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; font-weight: 400; color: #1a1d21; }
+.ta, .sel { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; font-weight: 400; color: #1a1d21; }
 .sel { min-height: 40px; max-width: 280px; }
 .addbtn { align-self: flex-start; }
 .addform { padding: 10px 12px 12px; border-radius: 10px; border: 1px solid #dde1e6; background: #fafbfc; }
 .addform .fl { margin-top: 8px; gap: 3px; font-size: 12px; }
 .addform .opts { margin-top: 10px; gap: 8px; }
 .addform .errbox { margin-top: 8px; padding: 6px 10px; font-size: 12px; }
-.ta.sm { padding: 5px 8px; border-radius: 6px; font-size: 13px; min-height: 32px; }
+.ta.sm { padding: 5px 8px; border-radius: 4px; font-size: 13px; min-height: 32px; }
 .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 10px; align-items: end; }
 .btn.sm { min-height: 32px; padding: 0 12px; font-size: 13px; }
 .row.added { margin-bottom: 0; }
@@ -138,7 +138,7 @@
 .foot { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: #fff; border-top: 1px solid #dde1e6; }
 .grow { flex: 1 1 auto; }
 .blocker { color: #7a4100; font-weight: 600; }
-.btn { min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn { min-height: 40px; padding: 0 16px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn.primary { border-color: #1d5fd1; background: #1d5fd1; color: #fff; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 760px) { .riskwrap { grid-template-columns: 1fr; } .body { flex-direction: column; } .steps { width: auto; border-right: none; border-bottom: 1px solid #eceff2; } .cols { grid-template-columns: 1fr; } }
