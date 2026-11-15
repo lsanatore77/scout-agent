@@ -83,7 +83,7 @@
                                             <td class={l.leftCls}>{l.leftText}</td>
                                             <td>
                                                 <template for:each={l.recs} for:item="r">
-                                                    <div key={r.id}><a class="link" href={r.href} target="_blank">{r.name}</a> <span class="muted">{r.meta}</span></div>
+                                                    <div key={r.id}><a class="link" href={r.href} target="_blank">{r.name}</a><span class="muted">&nbsp;{r.meta}</span></div>
                                                 </template>
                                                 <template if:true={l.noRecs}><span class="muted">None Yet</span></template>
                                             </td>
@@ -108,7 +108,7 @@
                                 <template if:true={hasHistory}>
                                     <ul class="flist plainlist">
                                         <template for:each={historyRows} for:item="h">
-                                            <li key={h.key}><a class="link" href={h.href} target="_blank">{h.ncName}</a> <span class="muted">&middot; {h.meta}</span></li>
+                                            <li key={h.key}><a class="link" href={h.href} target="_blank">{h.ncName}</a><span class="muted">&nbsp;&middot; {h.meta}</span></li>
                                         </template>
                                     </ul>
                                 </template>
