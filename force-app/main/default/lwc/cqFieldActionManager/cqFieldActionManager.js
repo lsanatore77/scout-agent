@@ -167,13 +167,13 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         if (i === CLOSURE) { return this.isClosed ? 'Closed' : this.recoveryDone ? 'Ready to close' : 'Needs an effective verdict'; }
         return '';
     }
+    /**
+     * Any step that is built can be opened to look at. Each step's own confirm still waits for the one before it:
+     * Strategy says to confirm the scope first, Recovery the strategy, and Closure lists the verdict as an open item.
+     */
     isLocked(i) {
         const s = STEPS[i];
-        if (!s.ready || s.later) { return true; }
-        if (i === STRATEGY) { return !this.scopeConfirmed; }
-        if (i === RECOVERY) { return !this.strategyDone; }
-        if (i === CLOSURE) { return !this.recoveryDone && !this.isClosed; }
-        return false;
+        return !s.ready || !!s.later;
     }
     /** The next or previous step that is not set aside for later. */
     near(dir) {

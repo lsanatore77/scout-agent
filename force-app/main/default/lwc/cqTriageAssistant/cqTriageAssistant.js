@@ -30,6 +30,7 @@ export default class CqTriageAssistant extends LightningElement {
 
     step = 0;
     maxStep = 0;
+    seen = {};          // steps opened at least once: any step can be opened, but Complete Triage waits until each has been
     booted = false;
     resumed = false;
     done = false;
@@ -75,9 +76,12 @@ export default class CqTriageAssistant extends LightningElement {
             try { const d = await getDraft({ recordId: this.recordId }); draft = d ? JSON.parse(d) : null; } catch (e) { draft = null; }
         }
         if (draft && draft.v === 1) {
-            ['step', 'maxStep', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
+            ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
+            // a draft saved before steps could be opened in any order: every step up to the furthest one was seen
+            if (!draft.seen) { const m = {}; for (let i = 0; i <= this.maxStep; i++) { m[i] = true; } this.seen = m; }
             this.resumed = this.maxStep > 0;
         }
+        this.seen = { ...this.seen, [this.step]: true };
         this.booted = true;
         try {
             this.rk = await getRisk({ recordId: this.recordId });
@@ -139,11 +143,11 @@ export default class CqTriageAssistant extends LightningElement {
     persist() {
         if (!this.inline || this.done) { return; }
         const s = {};
-        ['step', 'maxStep', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId'].forEach((k) => { s[k] = this[k]; });
+        ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId'].forEach((k) => { s[k] = this[k]; });
         saveDraft({ recordId: this.recordId, draft: JSON.stringify({ v: 1, ...s }) }).catch(() => {});
     }
     handleRestart() {
-        this.step = 0; this.maxStep = 0; this.done = false; this.finished = false; this.resumed = false;
+        this.step = 0; this.maxStep = 0; this.seen = { 0: true }; this.done = false; this.finished = false; this.resumed = false;
         this.error = undefined; this.warning = undefined;
         this.acts = {}; this.noActionWhy = ''; this.due = this.inDays(5); this.showAdd = false; this.added = [];
         this.data = ''; this.asks = {}; this.askNote = '';
@@ -172,7 +176,7 @@ export default class CqTriageAssistant extends LightningElement {
         const v = [
             (this.hasActs && !!this.due) || (this.noAction && !!this.noActionWhy.trim()) || this.hasAdded,
             this.data === 'ok' || (this.dataAsk && (this.askList.length > 0 || !!this.askNote.trim())),
-            this.maxStep > 2 + this.off,
+            !!this.seen[2 + this.off],
             this.done
         ];
         return this.inline ? [this.maxStep > 0, ...v] : v;
@@ -182,7 +186,7 @@ export default class CqTriageAssistant extends LightningElement {
         const subs = [
             this.noAction ? 'No action' : n ? n + ' action' + (n > 1 ? 's' : '') : 'Not decided',
             this.data === 'ok' ? 'Good enough' : this.data === 'ask' ? 'More information requested' : 'Not checked',
-            this.maxStep > 2 + this.off || this.done ? this.risk + ' · score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
+            this.seen[2 + this.off] || this.done ? this.risk + ' · score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
             this.nextSub
         ];
         const valid = this.valid;
@@ -190,8 +194,9 @@ export default class CqTriageAssistant extends LightningElement {
         if (this.inline) { subs.unshift(this.maxStep > 0 || this.done ? 'Reviewed' : 'Start here'); }
         return names.map((label, i) => {
             const stepDone = this.done || valid[i];
-            return { i, n: i + 1, label, sub: subs[i], done: stepDone, notDone: !stepDone,
-                cls: 'step' + ((!this.done && i === this.step) || (this.finished && i === 0) ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done || i > this.maxStep };
+            const unseen = !this.done && !this.seen[i];
+            return { i, n: i + 1, label, sub: unseen ? 'Not Reviewed' : subs[i], done: stepDone, notDone: !stepDone,
+                cls: 'step' + ((!this.done && i === this.step) || (this.finished && i === 0) ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done };
         });
     }
     get progress() { return this.steps.filter((x) => x.done).length + ' of ' + this.steps.length + ' steps complete'; }
@@ -433,20 +438,21 @@ export default class CqTriageAssistant extends LightningElement {
     handleInvAppr() { this.invAppr = !this.invAppr; }
     handleMatrix(event) { this.matrixId = event.target.value || undefined; }
 
-    // ---- navigation
-    get blocker() {
-        if (!this.booted) { return 'Loading'; }
-        if (this.cur === 0) {
+    // ---- navigation: any step opens from the list, Back and Next always move; Complete Triage waits for every step
+    names() { return this.inline ? ['Triage at a Glance', ...STEPS] : STEPS; }
+    /** What is missing on one triage step (0 Containment .. 3 Next Steps), or ''. */
+    stepBlocker(c) {
+        if (c === 0) {
             if (!this.hasActs && !this.noAction && !this.hasAdded) { return 'Choose an action, add a containment, or No Action'; }
             if (this.hasActs && !this.due) { return 'Set a due date'; }
             if (this.noAction && !this.noActionWhy.trim()) { return 'Say why no action is needed'; }
         }
-        if (this.cur === 1) {
+        if (c === 1) {
             if (!this.data) { return 'Is the data good enough?'; }
             if (this.dataAsk && !this.askList.length && !this.askNote.trim()) { return 'Say what you need'; }
         }
-        if (this.cur === 2 && !this.rk) { return 'Working out the risk'; }
-        if (this.cur === 3) {
+        if (c === 2 && !this.rk) { return 'Working out the risk'; }
+        if (c === 3) {
             if (!this.lk || !this.nx) { return 'Working out the next steps'; }
             if (!this.disp) { return 'Is a disposition needed?'; }
             if (this.dispReq && !this.dispDue) { return 'Set the disposition due date'; }
@@ -456,13 +462,35 @@ export default class CqTriageAssistant extends LightningElement {
         }
         return '';
     }
+    /** Shown only beside Complete Triage: steps not opened yet, then the first step with something missing. */
+    get blocker() {
+        if (!this.booted) { return 'Loading'; }
+        if (this.step !== this.last) { return ''; }
+        const unseen = this.names().filter((n, i) => !this.seen[i]);
+        if (unseen.length) {
+            const list = unseen.length === 1 ? unseen[0] : unseen.slice(0, -1).join(', ') + ' and ' + unseen[unseen.length - 1];
+            return 'Open ' + list + ' first';
+        }
+        for (let c = 0; c < STEPS.length; c++) {
+            const b = this.stepBlocker(c);
+            if (b) { return c === this.cur ? b : STEPS[c] + ': ' + b; }
+        }
+        return '';
+    }
     get cantNext() { return !!this.blocker || this.saving; }
     get cantBack() { return this.step === 0 || this.saving; }
     get nextLabel() { return this.saving ? 'Saving…' : this.step === this.last ? 'Complete Triage' : 'Next'; }
-    handleBack() { if (this.step > 0) { this.step -= 1; this.persist(); } }
+    go(i) {
+        this.step = i;
+        this.seen = { ...this.seen, [i]: true };
+        this.maxStep = Math.max(this.maxStep, i);
+        this.resumed = false;
+        this.persist();
+    }
+    handleBack() { if (this.step > 0) { this.go(this.step - 1); } }
     handleStep(event) {
         const i = Number(event.currentTarget.dataset.i);
-        if (!this.done && i <= this.maxStep) { this.step = i; this.persist(); }
+        if (!this.done) { this.go(i); }
     }
     handleClose() { this.dispatchEvent(new CustomEvent('close')); }
 
@@ -485,12 +513,7 @@ export default class CqTriageAssistant extends LightningElement {
     async handleNext() {
         if (this.blocker || this.saving) { return; }
         this.resumed = false;
-        if (this.step < this.last) {
-            this.step += 1;
-            this.maxStep = Math.max(this.maxStep, this.step);
-            this.persist();
-            return;
-        }
+        if (this.step < this.last) { this.go(this.step + 1); return; }
         this.saving = true;
         this.error = undefined;
         const rows = this.buildSummary();
