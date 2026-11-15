@@ -1,0 +1,201 @@
+<template>
+    <template if:true={loadError}><div class="err">{loadError}</div></template>
+    <template if:true={ready}>
+        <div class="box">
+            <header class="hl">
+                <div class="hl-top">
+                    <div class="hl-who">
+                        <span class="hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Nonconformance"></lightning-icon></span>
+                        <div class="hl-name">
+                            <span class="hl-obj">Nonconformance</span>
+                            <span class="hl-title">{v.name}</span>
+                        </div>
+                    </div>
+                    <div class="hl-actions">
+                        <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Quality" placeholder="Ask about this disposition…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
+                        <button class="btn" onclick={handleEdit}>Edit</button>
+                    </div>
+                </div>
+                <div class="hl-fields">
+                    <div class="f"><span class="k">Title</span><span class="v">{titleText}</span></div>
+                    <div class="f"><span class="k">Part</span>
+                        <template if:true={v.partId}><a class="v link" href={partHref} target="_blank">{v.partNumber}</a></template>
+                        <template if:false={v.partId}><span class="v">&mdash;</span></template>
+                    </div>
+                    <div class="f"><span class="k">Lot</span><span class="v">{lotText}</span></div>
+                    <div class="f"><span class="k">Stage</span><span class="v">{stageText}</span></div>
+                    <div class="f"><span class="k">Risk</span><span class={riskCls}>{riskText}</span></div>
+                    <div class="f"><span class="k">Disposition Due</span><span class="v">{dueText}</span></div>
+                    <div class="f"><span class="k">Owner</span><span class="v">{ownerText}</span></div>
+                </div>
+            </header>
+
+            <div class="body">
+                <nav class="steps" aria-label="Disposition Steps">
+                    <div class="steps-title"><span class="star">&#10022;</span> CQ.AI Disposition Steps</div>
+                    <template for:each={steps} for:item="s">
+                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep}>
+                            <span class="mark">
+                                <template if:true={s.done}>&#10003;</template>
+                                <template if:true={s.notDone}>{s.n}</template>
+                            </span>
+                            <span class="txt">
+                                <span class="lbl">{s.label}</span>
+                                <span class="ssub">{s.sub}</span>
+                            </span>
+                        </button>
+                    </template>
+                    <div class="progress">{progress}</div>
+                </nav>
+
+                <div class="main">
+                    <template if:true={showGlance}>
+                        <h3 class="q">Disposition at a Glance</h3>
+                        <div class="cols wide">
+                            <div class="sugbox plain">
+                                <div class="lab">The Problem</div>
+                                <p class="prob">{problemText}</p>
+                                <div class="tiles">
+                                    <div class="tile"><div class="tl">Left to Dispose</div><div class="tv">{leftText}</div></div>
+                                    <div class="tile"><div class="tl">Lots</div><div class="tv">{lotCount}</div></div>
+                                    <div class="tile"><div class="tl">Approval</div><div class="tv">{approvalText}</div></div>
+                                    <div class="tile"><div class="tl">Due</div><div class="tv">{dueText}</div></div>
+                                </div>
+                            </div>
+                            <div class="sugbox">
+                                <c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why>
+                                <div class="big">{suggestHeadline}</div>
+                                <div class="whyv">{v.suggestWhy}</div>
+                            </div>
+                        </div>
+
+                        <div class="lab top8">Parts and Lots to Dispose</div>
+                        <div class="tblwrap">
+                            <table class="tbl">
+                                <thead><tr><th>Part</th><th>Lot</th><th class="num">Impacted</th><th class="num">Disposed</th><th class="num">Left</th><th>Disposition Records</th></tr></thead>
+                                <tbody>
+                                    <template for:each={lotRows} for:item="l">
+                                        <tr key={l.impactedId}>
+                                            <td>{l.partName}</td>
+                                            <td class="strong">{l.lot}</td>
+                                            <td class="num">{l.impactedText}</td>
+                                            <td class="num">{l.disposedText}</td>
+                                            <td class={l.leftCls}>{l.leftText}</td>
+                                            <td>
+                                                <template for:each={l.recs} for:item="r">
+                                                    <div key={r.id}><a class="link" href={r.href} target="_blank">{r.name}</a> <span class="muted">{r.meta}</span></div>
+                                                </template>
+                                                <template if:true={l.noRecs}><span class="muted">None Yet</span></template>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                        <template if:true={noLots}><p class="note">This NC has no impacted parts or lots, so there is nothing to dispose.</p></template>
+
+                        <div class="cols top16">
+                            <div class="yours">
+                                <div class="lab">Decided at Triage</div>
+                                <div class="triaged"><span class="okdot sm">&#10003;</span> {triagedText}</div>
+                                <ul class="flist">
+                                    <li>{decidedDisp}</li>
+                                    <template if:true={v.investigationId}><li>Investigation <a class="link" href={invHref} target="_blank">{v.investigationName}</a></li></template>
+                                </ul>
+                            </div>
+                            <div class="yours">
+                                <div class="lab">Dispositions on This Part</div>
+                                <template if:true={hasHistory}>
+                                    <ul class="flist plainlist">
+                                        <template for:each={historyRows} for:item="h">
+                                            <li key={h.key}><a class="link" href={h.href} target="_blank">{h.ncName}</a> <span class="muted">&middot; {h.meta}</span></li>
+                                        </template>
+                                    </ul>
+                                </template>
+                                <template if:false={hasHistory}><p class="note">No other dispositions have been completed on this part.</p></template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template if:true={showDispose}>
+                        <h3 class="q">Dispose by Lot</h3>
+                        <p class="p">Record what was done with each lot. CQ.AI's suggestion starts selected; click another type to change it. Complete Disposition saves the dispositions and completes them in CQ in one step.</p>
+                        <template if:true={v.needsApproval}>
+                            <div class="warnbox">This NC needs disposition approval, which this workspace does not do yet. Use the Disposition tab to send it for approval.</div>
+                        </template>
+                        <template for:each={lotForms} for:item="l">
+                            <section key={l.impactedId} class="lot">
+                                <div class="lothead">
+                                    <span class="lotname">Lot {l.lot}</span>
+                                    <span class="muted grow">{l.partName}</span>
+                                    <span class={l.countCls}>{l.countText}</span>
+                                </div>
+                                <template if:true={l.open}>
+                                    <div class="fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why> <strong>{l.suggestText}.</strong></div>
+                                    <template for:each={l.rows} for:item="r">
+                                        <div key={r.key} class="drow">
+                                            <div class="fl first"><span>Type *</span>
+                                                <div class="opts tight">
+                                                    <template for:each={r.typeOpts} for:item="t">
+                                                        <button key={t.label} class={t.cls} data-lot={l.idx} data-row={r.idx} data-type={t.label} aria-pressed={t.pressed} onclick={handleType}>{t.label}</button>
+                                                    </template>
+                                                </div>
+                                            </div>
+                                            <div class="fields">
+                                                <label class="fl"><span>Quantity *</span>
+                                                    <input class="ta qty" type="number" min="1" step="1" value={r.qty} data-lot={l.idx} data-row={r.idx} data-f="qty" onchange={handleField}>
+                                                </label>
+                                                <label class="fl"><span>Completed On *</span>
+                                                    <input class="ta date" type="date" value={r.completedOn} data-lot={l.idx} data-row={r.idx} data-f="completedOn" onchange={handleField}>
+                                                </label>
+                                                <label class="fl growf"><span>Comment</span>
+                                                    <input class="ta" type="text" value={r.comment} placeholder="For example, scrapped per the lot's SOP" data-lot={l.idx} data-row={r.idx} data-f="comment" onchange={handleField}>
+                                                </label>
+                                                <template if:true={r.canRemove}><button class="btn sm rm" data-lot={l.idx} data-row={r.idx} onclick={handleRemove}>Remove</button></template>
+                                            </div>
+                                            <template if:true={r.needsWhy}>
+                                                <label class="fl"><span>Justification *</span>
+                                                    <textarea class="ta" rows="2" value={r.justification} data-lot={l.idx} data-row={r.idx} data-f="justification" onchange={handleField}></textarea>
+                                                    <span class="note">Use As Is releases nonconforming units, so it needs a reason on the record.</span>
+                                                </label>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <div class="splitline">
+                                        <button class="btn sm" data-lot={l.idx} onclick={handleSplit}>+ Split Quantity</button>
+                                        <span class="note">For example, rework some units and scrap the rest.</span>
+                                    </div>
+                                    <template if:true={l.draftName}><p class="note">The draft {l.draftName} from triage is used for the first row, not duplicated.</p></template>
+                                </template>
+                            </section>
+                        </template>
+                        <div class="ownbox">
+                            <strong>On Complete Disposition:</strong> each row is saved as a CQ disposition and marked Complete by {userText}. CQ updates each lot's disposed quantity, and when nothing is left the NC's disposition is complete. Anything left on a lot gets a new draft for later.
+                        </div>
+                    </template>
+
+                    <template if:true={showDone}>
+                        <div class="donehead"><span class="okdot">&#10003;</span><h3 class="q nom">{doneHeading}</h3></div>
+                        <template for:each={doneRows} for:item="r">
+                            <div key={r.key} class="row slim"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
+                        </template>
+                        <template if:true={doneLeftNote}><div class="warnbox">{doneLeftNote}</div></template>
+                        <div class="opts"><button class="btn primary" onclick={handleFinish}>Done</button></div>
+                    </template>
+
+                    <template if:true={error}><div class="errbox">{error}</div></template>
+                </div>
+            </div>
+
+            <template if:false={showDone}>
+                <footer class="foot">
+                    <span class="grow"></span>
+                    <span class="blocker">{blocker}</span>
+                    <template if:true={showDispose}><button class="btn primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
+                    <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
+                    <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
+                </footer>
+            </template>
+        </div>
+    </template>
+</template>
