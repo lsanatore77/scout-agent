@@ -68,6 +68,7 @@ global with sharing class CqQualityAgentContext {
         CqTriageLinks.Links lk = CqTriageLinks.getLinks(recordId);
         Map<String, Object> draft = parseDraft(nc.Triage_Draft__c);
         Boolean complete = nc.Triage_Risk__c != null && nc.Triage_Path__c != null;
+        Map<String, String> chose = complete ? notesMap(nc.Triage_Notes__c) : new Map<String, String>();
         Boolean hasPhoto = false;
         try { hasPhoto = CqTriagePhoto.getPhotoVersionId(recordId) != null; } catch (Exception e) { hasPhoto = false; }
 
@@ -110,7 +111,18 @@ global with sharing class CqQualityAgentContext {
         String sug = contained ? 'No further action, because containment is already raised on this NC'
             : g.lot != null ? 'Hold lot ' + g.lot + ', because no containment is recorded on this NC yet'
             : 'Hold the affected stock, because no containment is recorded and no lot is set';
-        l.add('CQ.AI Suggests: ' + sug + '.');
+        if (complete) {
+            l.add('Chosen at triage: ' + s(chose.get('Containment')) + '.');
+            List<String> fromTriage = new List<String>();
+            for (compliancequest__SQX_Containment__c c : [SELECT Name, compliancequest__Status__c, compliancequest__Description__c FROM compliancequest__SQX_Containment__c
+                                                         WHERE compliancequest__SQX_Nonconformance__c = :recordId ORDER BY Name LIMIT 50]) {
+                if (c.compliancequest__Description__c != null && c.compliancequest__Description__c.startsWith('Raised at triage')) { fromTriage.add(c.Name + ' (' + c.compliancequest__Status__c + ')'); }
+            }
+            if (!fromTriage.isEmpty()) { l.add('Containment records raised by that triage: ' + String.join(fromTriage, ', ') + '.'); }
+            l.add('CQ.AI Suggests now, after triage: ' + sug + '. This is what CQ.AI would suggest today; it is not what was suggested at triage, which is not recorded.');
+        } else {
+            l.add('CQ.AI Suggests: ' + sug + '.');
+        }
         l.add('Options on this step: Hold (' + (g.lot != null ? 'hold lot ' + g.lot : 'hold the affected stock') + '); Check (100% inspect remaining stock of this part); Stop (stop the process until the cause is known); No action.');
         if (g.lot != null) {
             CqLotStock.Stock st = CqLotStock.forLots(new Set<String>{ g.lot }).get(g.lot);
@@ -169,6 +181,7 @@ global with sharing class CqQualityAgentContext {
         if (rr.severityAssumed) { missing.add('severity'); }
         l.add(missing.isEmpty() ? 'CQ.AI Suggests: Good enough, send on, because every item is recorded.'
             : 'Missing: ' + String.join(missing, ', ') + '. CQ.AI does not suggest sending it on until these are recorded; the triager can still choose Good enough, send on, or Request more information.');
+        if (complete) { l.add('Chosen at triage: ' + s(chose.get('Data Check')) + '.'); }
         if (!complete && draft != null) {
             String data = draft.get('data') == null ? '' : String.valueOf(draft.get('data'));
             if (data == 'ok') { l.add('Chosen in triage: Good enough, send on.'); }
@@ -187,7 +200,7 @@ global with sharing class CqQualityAgentContext {
         l.add('RISK STEP');
         Integer score = rr.severity * rr.likelihood;
         String level = rr.escaped ? 'High' : CqTriageRisk.band(score);
-        l.add('CQ.AI Suggests risk ' + level + ': severity ' + CqTriageRisk.SEV[rr.severity - 1] + ' x likelihood ' + CqTriageRisk.LIK[rr.likelihood - 1] + ' = score ' + score + ' of 25'
+        l.add('CQ.AI Suggests' + (complete ? ' now, after triage,' : '') + ' risk ' + level + ': severity ' + CqTriageRisk.SEV[rr.severity - 1] + ' x likelihood ' + CqTriageRisk.LIK[rr.likelihood - 1] + ' = score ' + score + ' of 25'
             + (rr.escaped ? ', raised to High because ' + s(rr.escapedWhy) : '') + '.');
         l.add('Bands: Low below 6, Medium 6 to 14, High 15 and above.');
         l.add('- Severity ' + rr.severity + ' (' + CqTriageRisk.SEV[rr.severity - 1].substringAfter(' - ') + '): ' + s(rr.severityWhy) + '.');
@@ -195,7 +208,8 @@ global with sharing class CqQualityAgentContext {
         if (rr.recent != null && !rr.recent.isEmpty()) { l.add('Recent NCs counted for likelihood (last ' + CqTriageRisk.WINDOW_DAYS + ' days): ' + String.join(rr.recent, ', ') + '.'); }
         l.add('Same lot: ' + factOf(riskCard, 'Same lot') + '. Complaints: ' + factOf(riskCard, 'Complaints') + '.');
         if (complete) {
-            l.add('Risk chosen at triage: ' + nc.Triage_Risk__c + (nc.Triage_Risk__c == level ? ', as CQ.AI suggested.' : ', changed from CQ.AI\'s ' + level + '.'));
+            if (chose.get('Risk') != null) { l.add('Recorded at triage: ' + chose.get('Risk') + '.'); }
+            l.add('Risk chosen at triage: ' + nc.Triage_Risk__c + '. The CQ.AI risk above is worked out today; the line recorded at triage says what CQ.AI suggested then.');
         } else if (draft != null && draft.get('sev') != null && draft.get('lik') != null) {
             Integer ds = intOf(draft.get('sev')); Integer dl = intOf(draft.get('lik'));
             if (ds != rr.severity || dl != rr.likelihood) {
@@ -217,6 +231,7 @@ global with sharing class CqQualityAgentContext {
                 + (String.isBlank(v.summary) ? '.' : '. Summary: ' + dot(v.summary.abbreviate(200)));
             if (v.linked) { linkedL.add(line); } else if (v.suggested) { sugL.add(line); } else { otherL.add(line); }
         }
+        if (complete) { l.add('Chosen at triage: investigation ' + s(chose.get('Investigation')) + '; links ' + s(chose.get('Links')) + '.'); }
         l.add(sugL.isEmpty() ? 'CQ.AI Suggests linking: none.' : 'CQ.AI Suggests linking these for research (' + sugL.size() + '):');
         l.addAll(sugL);
         if (!linkedL.isEmpty()) { l.add('Already linked (' + linkedL.size() + '):'); l.addAll(linkedL); }
@@ -315,6 +330,16 @@ global with sharing class CqQualityAgentContext {
             Map<String, Object> m = (Map<String, Object>) System.JSON.deserializeUntyped(json);
             return m != null && intOf(m.get('v')) == 1 ? m : null;
         } catch (Exception e) { return null; }
+    }
+    /** The triage notes, one "Step: choice" line per step, as a map. */
+    @TestVisible
+    static Map<String, String> notesMap(String notes) {
+        Map<String, String> m = new Map<String, String>();
+        if (String.isBlank(notes)) { return m; }
+        for (String line : notes.split('\n')) {
+            if (line.contains(': ')) { m.put(line.substringBefore(': ').trim(), line.substringAfter(': ').trim().removeEnd('.')); }
+        }
+        return m;
     }
     static CqTriageController.Card card(CqTriageController.Glance g, String id) {
         for (CqTriageController.Card c : g.cards) { if (c.id == id) { return c; } }

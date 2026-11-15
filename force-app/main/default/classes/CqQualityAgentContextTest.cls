@@ -53,6 +53,15 @@ private class CqQualityAgentContextTest {
     }
 
     @IsTest
+    static void triageNotesByStep() {
+        Map<String, String> m = CqQualityAgentContext.notesMap('Containment: Hold the affected stock\nData Check: Good enough\nRisk: High, score 20\nLinks: None');
+        System.assertEquals('Hold the affected stock', m.get('Containment'));
+        System.assertEquals('Good enough', m.get('Data Check'));
+        System.assertEquals('None', m.get('Links'));
+        System.assertEquals(0, CqQualityAgentContext.notesMap(null).size());
+    }
+
+    @IsTest
     static void relevantRecordsSameLotThenOpenThenNewest() {
         Datetime now = Datetime.now();
         Id fake = compliancequest__SQX_Nonconformance__c.SObjectType.getDescribe().getKeyPrefix() + '000000000001AAA';
