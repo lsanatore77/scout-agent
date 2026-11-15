@@ -26,7 +26,7 @@ export default class CqFieldActionRecovery extends LightningElement {
     saving = 0;
     footSig;
     filter = 'all';          // all | open | done | over | week
-    closedCust = {};         // customer rows folded away
+    openCust = {};           // customer rows opened (all start closed)
     reviewing = false;       // CQ.AI's suggested tasks open for review
     keep = {};               // suggestion key -> false when unticked
     adding = false;          // the Add Task form
@@ -146,7 +146,7 @@ export default class CqFieldActionRecovery extends LightningElement {
             const mine = c.other ? loose : t.tasks.filter((x) => x.customerId === c.id);
             const shown = mine.filter((x) => this.keepTask(x));
             if (this.filter !== 'all' && !shown.length) { return; }
-            const open = this.filter !== 'all' || !this.closedCust[c.id];
+            const open = this.filter !== 'all' || !!this.openCust[c.id];
             const openCount = mine.filter((x) => !x.done).length;
             const lots = c.other ? [] : (t.lotsByCustomer[c.id] || []).slice();
             mine.forEach((x) => { if (x.lot && !lots.includes(x.lot)) { lots.push(x.lot); } });
@@ -184,18 +184,17 @@ export default class CqFieldActionRecovery extends LightningElement {
     get emptyLine() {
         return this.filter !== 'all' ? 'No tasks match.' : this.v.customers.length ? 'No tasks yet.' : 'No customers yet: add lot shipments for the lots in scope, or add a task for a customer by hand.';
     }
-    get allOpen() { return !this.v.customers.some((c) => this.closedCust[c.id]); }
-    get allChev() { return this.allOpen ? '▾' : '▸'; }
-    get allLabel() { return this.allOpen ? 'Fold all customers' : 'Show all customers'; }
+    get anyOpen() { return Object.values(this.openCust).some(Boolean); }
+    get allChev() { return this.anyOpen ? '▾' : '▸'; }
+    get allLabel() { return this.anyOpen ? 'Close all customers' : 'Open all customers'; }
     handleToggleAll() {
-        const fold = this.allOpen;
         const m = {};
-        if (fold) { this.v.customers.forEach((c) => { m[c.id] = true; }); m[NO_CUSTOMER] = true; }
-        this.closedCust = m;
+        if (!this.anyOpen) { this.v.customers.forEach((c) => { m[c.id] = true; }); m[NO_CUSTOMER] = true; }
+        this.openCust = m;
     }
     handleToggle(event) {
         const id = event.currentTarget.dataset.id;
-        this.closedCust = { ...this.closedCust, [id]: !this.closedCust[id] };
+        this.openCust = { ...this.openCust, [id]: !this.openCust[id] };
     }
     async handleCheck(event) {
         const id = event.target.dataset.id;
