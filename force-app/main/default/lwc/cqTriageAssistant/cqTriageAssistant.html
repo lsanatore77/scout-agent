@@ -1,6 +1,7 @@
 <template>
     <div class={veilCls} role={dlgRole} aria-modal={dlgModal} aria-label={heading}>
         <div class={boxCls}>
+            <template if:true={popup}>
             <header class="top">
                 <div class="tt"><div class="h"><span class="star">&#10022;</span> {heading}</div><div class="sub">{title}</div></div>
                 <template if:true={popup}><button class="x" onclick={handleClose} aria-label="Close">&times;</button></template>
@@ -12,9 +13,10 @@
                     </div>
                 </template>
             </header>
+            </template>
             <div class="body">
                 <nav class="steps" aria-label="Triage steps">
-                    <div class="steps-title">Triage steps</div>
+                    <div class="steps-title"><template if:true={inline}><span class="star">&#10022;</span> </template>{stepsTitle}</div>
                     <template for:each={steps} for:item="s">
                         <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}>
                             <span class="mark">
@@ -32,12 +34,17 @@
                 </nav>
                 <div class="main">
                     <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
-                    <template if:true={isGlance}><slot></slot></template>
+                    <template if:true={isGlance}><template if:true={inline}><h3 class="q">Triage at a Glance</h3></template><slot></slot></template>
                     <template if:true={is0}>
                         <h3 class="q">Containment</h3>
-                        <div class="cols">
+                        <div class="cgrid">
+                            <div class="lab">Possible actions</div>
+                            <div class="chead">
+                                <template if:false={showAdd}>
+                                    <button class="btn addbtn" onclick={handleShowAdd}>Add Containment</button>
+                                </template>
+                            </div>
                             <div class="col">
-                                <div class="lab">Possible actions</div>
                                 <template for:each={actions} for:item="a">
                                     <button key={a.id} class={a.cls} data-id={a.id} onclick={handleAct} aria-pressed={a.pressed}>
                                         <span class="tick">{a.tick}</span>
@@ -60,9 +67,6 @@
                             <div class="col">
                                 <template for:each={added} for:item="a">
                                     <div key={a.key} class="row slim added"><span class="ic">&#10003;</span><span class="dv">{a.name} &middot; {a.title}</span></div>
-                                </template>
-                                <template if:false={showAdd}>
-                                    <button class="btn addbtn" onclick={handleShowAdd}>Add Containment</button>
                                 </template>
                                 <template if:true={showAdd}>
                                     <div class="addform">
@@ -250,9 +254,9 @@
             </div>
             <template if:true={footNav}>
                 <footer class="foot">
-                    <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
                     <span class="grow"></span>
                     <span class="blocker">{blocker}</span>
+                    <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
                     <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
                 </footer>
             </template>

@@ -102,8 +102,9 @@ export default class CqTriageAssistant extends LightningElement {
     get dlgModal() { return this.inline ? undefined : 'true'; }
     get heading() { return this.inline ? 'CQ.AI Triage' : 'Triage Assistant'; }
     get popup() { return !this.inline; }
-    get topNav() { return this.inline && !this.done; }
-    get footNav() { return !this.inline && !this.done; }
+    get topNav() { return false; }
+    get footNav() { return !this.done; }
+    get stepsTitle() { return this.inline ? 'CQ.AI Triage Steps' : 'Triage steps'; }
     get showResumed() { return this.resumed && this.live; }
     get canRestart() { return this.inline && (this.done || this.maxStep > 0) && !this.saving; }
 

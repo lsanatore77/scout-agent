@@ -1,2 +1,19 @@
-:host { display: block; }
+:host { display: block; color: #1a1d21; font-size: 13px; }
 .err { padding: 10px 14px; border-radius: 8px; background: #fff8f7; border: 1px solid #f3c7c2; color: #b42318; }
+.box { display: flex; flex-direction: column; border-radius: 12px; background: #fff; border: 1px solid #dde1e6; }
+/* record header: the same layout as the Field Action and Field Action Review workspaces */
+.hl { padding: 14px 20px 12px; background: #f3f3f3; border-bottom: 1px solid #e5e5e5; border-radius: 12px 12px 0 0; display: flex; flex-direction: column; gap: 12px; }
+.hl-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.hl-who { display: flex; align-items: center; gap: 12px; }
+.hl-icon { display: inline-flex; }
+.hl-name { display: flex; flex-direction: column; gap: 1px; }
+.hl-obj { font-size: 12px; color: #5c6572; }
+.hl-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
+.hl-actions { display: flex; align-items: center; gap: 8px; }
+.hl-fields { display: flex; gap: 32px; flex-wrap: wrap; }
+.f { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.k { font-size: 11px; font-weight: 700; color: #5c6572; }
+.v { font-size: 13px; }
+.link { color: #1d5fd1; font-weight: 600; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.btn { min-height: 40px; padding: 0 16px 3px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
