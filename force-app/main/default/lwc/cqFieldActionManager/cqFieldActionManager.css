@@ -95,7 +95,7 @@
 .sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
 .togs { display: inline-flex; border: 1px solid #c4cad2; border-radius: 4px; overflow: hidden; }
-.tog { min-height: 30px; padding: 0 14px; border: none; background: #fff; color: #1a1d21; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.tog { min-height: 38px; padding: 0 16px; border: none; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .tog.on { background: #1d5fd1; color: #fff; }
 .pendline { font-size: 12px; color: #5b6470; }
 .pendline.warn { color: #6b5300; font-weight: 600; }
@@ -140,7 +140,7 @@
 .pg:disabled { color: #c4cad2; cursor: default; }
 .pg.gap:disabled { color: #8a94a3; }
 .pg.on, .pg.on:disabled { color: #1d5fd1; font-weight: 700; }
-.btn.cmp { min-height: 32px; padding: 0 12px; font-size: 13px; border-radius: 4px; }
+.btn.cmp { border-radius: 4px; }
 .vdiv { width: 1px; height: 22px; background: #dde1e6; }
 .pos { position: relative; }
 .ohbtn { padding: 0; border: none; background: none; font: inherit; font-weight: 600; color: #1d5fd1; font-variant-numeric: tabular-nums; cursor: pointer; text-decoration: underline dotted; }
