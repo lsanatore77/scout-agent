@@ -11,6 +11,7 @@
 .hl-obj { font-size: 12px; color: #5c6572; }
 .hl-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
 .hl-actions { display: flex; align-items: center; gap: 8px; }
+.btn { min-height: 40px; padding: 0 16px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .hl-fields { display: flex; gap: 32px; flex-wrap: wrap; }
 .f { display: flex; flex-direction: column; gap: 2px; }
 .k { font-size: 11px; font-weight: 700; color: #5c6572; }

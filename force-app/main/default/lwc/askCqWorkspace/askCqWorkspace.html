@@ -10,9 +10,8 @@
                     </div>
                 </div>
                 <div class="hl-actions">
-                    <lightning-button label="Edit" onclick={handleEdit}></lightning-button>
-                    <lightning-button-icon icon-name="utility:refresh" variant="border" alternative-text="Refresh" onclick={handleRefresh}></lightning-button-icon>
                     <c-ask-cq-popover record-id={recordId} agent-id={agentId} suggestions={suggestions}></c-ask-cq-popover>
+                    <button class="btn" onclick={handleEdit}>Edit</button>
                 </div>
             </div>
             <div class="hl-fields">
