@@ -31,8 +31,10 @@
                         </div>
                         <div class="actions">
                             <template if:true={standalone}><button class="btn primary" onclick={handleAssistant}><span class="star w">&#10022;</span>Triage Assistant</button></template>
-                            <button class="btn outline" onclick={handleEdit}>Edit</button>
-                            <template if:true={hasGaps}><button class="btn" onclick={handleGaps}>{gapsLabel}</button></template>
+                            <template if:true={standalone}>
+                                <button class="btn outline" onclick={handleEdit}>Edit</button>
+                                <template if:true={hasGaps}><button class="btn" onclick={handleGaps}>{gapsLabel}</button></template>
+                            </template>
                         </div>
                     </div>
                     <template if:true={showGaps}>
