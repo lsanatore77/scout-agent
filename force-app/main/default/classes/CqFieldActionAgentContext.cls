@@ -115,7 +115,8 @@ global with sharing class CqFieldActionAgentContext {
             l.add('');
             l.add('SIGNALS');
             for (CqFieldActionReview.Sig g : v.signals) {
-                l.add('- ' + g.name + ': ' + s(g.label) + ', ' + s(g.strength) + ', trend ' + s(g.trend) + (g.thisLot ? ', on this lot' : '') + '. ' + s(g.why));
+                l.add('- ' + g.name + ': ' + s(g.label) + ', ' + s(g.strength) + ', trend ' + s(g.trend) + (g.thisLot ? ', on this lot' : '')
+                    + (g.times == null ? '' : ', ' + n(g.times.setScale(1)) + ' times normal') + '. ' + s(g.why));
             }
         }
 
