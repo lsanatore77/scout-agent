@@ -5,7 +5,9 @@
 public with sharing class CqTriageDraft {
     @AuraEnabled
     public static String getDraft(Id recordId) {
-        return [SELECT Triage_Draft__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId].Triage_Draft__c;
+        compliancequest__SQX_Nonconformance__c nc = [SELECT Triage_Draft__c, Triage_Risk__c, Triage_Path__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+        // once triage is complete the draft is left over, never work in progress
+        return nc.Triage_Risk__c != null && nc.Triage_Path__c != null ? null : nc.Triage_Draft__c;
     }
 
     @AuraEnabled

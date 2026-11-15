@@ -9,7 +9,7 @@ const ASK = {
     Containment: 'Why does CQ.AI suggest this containment?,How much of this lot is on hand or shipped?,What containment is on this NC?',
     'Data Check': 'What is missing before this can go on?,Is the data good enough?',
     Risk: 'How was the risk worked out?,Why is the likelihood what it is?',
-    'Investigation Links': 'Which investigations should be linked and why?,Does this need a field action review?',
+    'Next Steps': 'Does this need a disposition?,Should this be investigated or logged only?,Which investigations should be linked and why?',
     'Triage complete': 'Summarize this nonconformance,What is still open on this NC?,Does this need a field action review?'
 };
 const LOT_ASK = 'Which relevant records share the lot?';

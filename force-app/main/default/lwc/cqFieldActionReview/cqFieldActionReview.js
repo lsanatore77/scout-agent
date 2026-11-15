@@ -22,8 +22,10 @@ export default class CqFieldActionReview extends NavigationMixin(LightningElemen
     get status() { return this.fa && this.fa.status; }
     get isSent() { return this.status === 'Sent for Review'; }
     get isDone() { return !!this.status && !this.asking; }
-    get isOpen() { return !!this.fa && !this.status && !this.asking; }
-    get statusText() { return this.asking ? 'Sending for review' : this.status || 'Not set'; }
+    // a review can exist without a decision on the NC (opened from the review side): show it, don't ask again
+    get reviewOnly() { return !!this.fa && !this.status && !!this.fa.reviewId; }
+    get isOpen() { return !!this.fa && !this.status && !this.reviewOnly && !this.asking; }
+    get statusText() { return this.asking ? 'Sending for review' : this.status || (this.reviewOnly ? 'Review opened' : 'Not set'); }
     get boxClass() { return 'box' + (this.isSent ? ' sent' : ''); }
     get noteClass() { return 'note' + (this.isSent ? ' red' : ''); }
     get cannotSend() { return this.busy || !this.reason.trim(); }
@@ -35,7 +37,7 @@ export default class CqFieldActionReview extends NavigationMixin(LightningElemen
             : 'Set to Not Needed' + who + '.';
     }
     // the Field Action Review created by Send for Review
-    get hasReview() { return this.isDone && this.isSent && !!this.fa.reviewId; }
+    get hasReview() { return ((this.isDone && this.isSent) || this.reviewOnly) && !this.asking && !!this.fa.reviewId; }
     get reviewLine() {
         const f = this.fa;
         return f.reviewStatus === 'Decided' ? 'Decided: ' + (f.reviewOutcome || '') : f.reviewStatus;

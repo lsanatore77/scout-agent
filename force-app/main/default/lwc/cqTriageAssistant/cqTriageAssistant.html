@@ -192,51 +192,100 @@
                     </template>
 
                     <template if:true={is3}>
-                        <h3 class="q">Investigation Links</h3>
-                        <div class="ownbox"><strong>{ownLine}</strong> Linked investigations are for research only and do not replace it. Linking is optional.</div>
-                        <template if:false={linksReady}><p class="p">Looking for related investigations&hellip;</p></template>
-                        <template if:true={linksReady}>
-                            <div class="lab">Related investigations</div>
-                            <template if:true={noLinks}><p class="note">No other investigations were found on this part.</p></template>
-                            <template if:true={hasSug}>
-                                <div class="invlist">
-                                    <template for:each={sugItems} for:item="v">
-                                    <button key={v.id} class={v.cls} data-id={v.id} onclick={handleLink} aria-pressed={v.pressed}>
-                                        <span class="tick">{v.tick}</span>
-                                        <span class="rt">
-                                            <span class="rv">{v.name}</span>
-                                            <span class="rk">{v.meta}</span>
-                                            <template if:true={v.summary}><span class="isum">{v.summary}</span></template>
-                                        </span>
-                                        <template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template>
-                                    </button>
+                        <h3 class="q">Next Steps</h3>
+                        <p class="p">What happens after triage. CQ.AI suggests; you decide. Complete triage moves the NC to Disposition / Investigate.</p>
+                        <template if:false={nextReady}><p class="p">Working out the next steps&hellip;</p></template>
+                        <template if:true={nextReady}>
+                        <div class="cgrid">
+                            <div class="col">
+                                <div class="lab">Disposition</div>
+                                <div class="fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Does this nonconformance need a disposition?"></c-cq-ai-why> <strong>{dispSugText}.</strong> {nx.dispWhy}</div>
+                                <div class="opts">
+                                    <template for:each={dispOpts} for:item="o">
+                                        <button key={o.id} class={o.cls} data-id={o.id} onclick={handleDisp} aria-pressed={o.pressed}>{o.label}</button>
                                     </template>
                                 </div>
-                            </template>
-                            <template if:true={hasOther}>
-                                <details class="know">
-                                    <summary>{otherLabel}</summary>
-                                    <div class="invlist">
-                                        <template for:each={otherItems} for:item="v">
-                                        <button key={v.id} class={v.cls} data-id={v.id} onclick={handleLink} aria-pressed={v.pressed}>
-                                            <span class="tick">{v.tick}</span>
-                                            <span class="rt">
-                                                <span class="rv">{v.name}</span>
-                                                <span class="rk">{v.meta}</span>
-                                                <template if:true={v.summary}><span class="isum">{v.summary}</span></template>
-                                            </span>
-                                            <template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template>
-                                        </button>
-                                        </template>
-                                    </div>
-                                </details>
-                            </template>
-                            <div class="addinv">
-                                <lightning-record-picker label="Add another investigation" placeholder="Search by investigation number"
-                                    object-api-name="compliancequest__SQX_Investigation__c" onchange={handlePick}></lightning-record-picker>
+                                <template if:true={dispReq}>
+                                    <label class="fl">Disposition due *
+                                        <input class="ta date" type="date" data-f="dispDue" value={dispDue} onchange={handleInput} />
+                                    </label>
+                                    <div class="opts"><button class={dispApprCls} onclick={handleDispAppr} aria-pressed={dispApprPressed}>Needs approval</button></div>
+                                    <p class="note">Decided in the Disposition workspace after triage.</p>
+                                </template>
                             </div>
-                            <template if:true={linkError}><div class="errbox">{linkError}</div></template>
-                            <p class="note">Ticked investigations are linked to this NC when you click Complete triage.</p>
+                            <div class="col">
+                                <div class="lab">Investigation</div>
+                                <div class="fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this nonconformance be investigated or logged only?"></c-cq-ai-why> <strong>{invSugText}.</strong> {nx.invWhy}</div>
+                                <div class="opts">
+                                    <template for:each={invOpts} for:item="o">
+                                        <button key={o.id} class={o.cls} data-id={o.id} onclick={handleInv} aria-pressed={o.pressed}>{o.label}</button>
+                                    </template>
+                                </div>
+                                <template if:true={invReq}>
+                                    <label class="fl">Investigation due *
+                                        <input class="ta date" type="date" data-f="invDue" value={invDue} onchange={handleInput} />
+                                    </label>
+                                    <div class="opts"><button class={invApprCls} onclick={handleInvAppr} aria-pressed={invApprPressed}>Needs approval</button></div>
+                                </template>
+                            </div>
+                        </div>
+                        <template if:true={needMatrix}>
+                            <label class="fl">Approval matrix *
+                                <select class="sel" onchange={handleMatrix}>
+                                    <template for:each={matrixOpts} for:item="m"><option key={m.value} value={m.value} selected={m.selected}>{m.label}</option></template>
+                                </select>
+                            </label>
+                            <template if:true={noMatrix}><p class="note">No nonconformance approval matrix covers this approval. Add a step for it in CQ's Approval Matrix.</p></template>
+                            <p class="note">Approvers come from the matrix. CQ asks them when the disposition or investigation is submitted.</p>
+                        </template>
+                        <template if:true={invReq}>
+                            <div class="lab top8">Investigations to link for research</div>
+                            <div class="ownbox"><strong>{ownLine}</strong> Linked investigations are for research only and do not replace it. Linking is optional.</div>
+                                <template if:false={linksReady}><p class="p">Looking for related investigations&hellip;</p></template>
+                                <template if:true={linksReady}>
+                                    <div class="lab">Related investigations</div>
+                                    <template if:true={noLinks}><p class="note">No other investigations were found on this part.</p></template>
+                                    <template if:true={hasSug}>
+                                        <div class="invlist">
+                                            <template for:each={sugItems} for:item="v">
+                                            <button key={v.id} class={v.cls} data-id={v.id} onclick={handleLink} aria-pressed={v.pressed}>
+                                                <span class="tick">{v.tick}</span>
+                                                <span class="rt">
+                                                    <span class="rv">{v.name}</span>
+                                                    <span class="rk">{v.meta}</span>
+                                                    <template if:true={v.summary}><span class="isum">{v.summary}</span></template>
+                                                </span>
+                                                <template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template>
+                                            </button>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template if:true={hasOther}>
+                                        <details class="know">
+                                            <summary>{otherLabel}</summary>
+                                            <div class="invlist">
+                                                <template for:each={otherItems} for:item="v">
+                                                <button key={v.id} class={v.cls} data-id={v.id} onclick={handleLink} aria-pressed={v.pressed}>
+                                                    <span class="tick">{v.tick}</span>
+                                                    <span class="rt">
+                                                        <span class="rv">{v.name}</span>
+                                                        <span class="rk">{v.meta}</span>
+                                                        <template if:true={v.summary}><span class="isum">{v.summary}</span></template>
+                                                    </span>
+                                                    <template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template>
+                                                </button>
+                                                </template>
+                                            </div>
+                                        </details>
+                                    </template>
+                                    <div class="addinv">
+                                        <lightning-record-picker label="Add another investigation" placeholder="Search by investigation number"
+                                            object-api-name="compliancequest__SQX_Investigation__c" onchange={handlePick}></lightning-record-picker>
+                                    </div>
+                                    <template if:true={linkError}><div class="errbox">{linkError}</div></template>
+                                    <p class="note">Ticked investigations are linked to this NC when you click Complete triage.</p>
+                                </template>
+                        </template>
                         </template>
                     </template>
 
