@@ -13,7 +13,7 @@ import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId'
 const STEPS = ['Review at a Glance', 'Signals and Evidence', 'Reviewer Assessment', 'Recommendation', 'Committee Approval'];
 const ASK = [
     'Summarize this review,Why does CQ.AI suggest this outcome?,What is left on this review?',
-    'Which signals matter most?,What other records are on this lot?,Which relevant records share the lot?',
+    'Which signals matter most?,LOT_QUESTION,How far above normal is the strongest signal?',
     'How was the risk score worked out?,What is still not known?,What is left on this review?',
     'Why does CQ.AI suggest this outcome?,Which field actions are on this part?,What is left on this review?',
     'Who still needs to approve?,Summarize this review,What is left on this review?'
@@ -153,7 +153,11 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get live() { return this.open && !this.waiting; }                // the coordinator is still working on it
     // ---- Ask CQ.AI: the Field Action agent, told which step is open, with ready questions for that step
     get askStep() { return STEPS[this.step] || ''; }
-    get askSuggestions() { return ASK[this.step] || ASK[0]; }
+    get askSuggestions() {
+        // Signals: ask about the lot only when the review has one
+        const lotQ = this.v && this.v.lot ? 'Which relevant records share the lot?' : 'Which relevant records matter most?';
+        return (ASK[this.step] || ASK[0]).replace('LOT_QUESTION', lotQ);
+    }
     get is0() { return this.ready && ((this.open && this.step === 0) || (this.done && !this.showSummary)); }
     get is1() { return this.open && this.step === SIGNALS; }   // the Signals and Evidence block in the template
     get is3() { return this.live && this.step === ASSESS; }    // the Reviewer Assessment block: risk and checklist
