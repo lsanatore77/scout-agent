@@ -10,7 +10,7 @@
                 <div class="why">{fa.suggestionWhy}</div>
             </template>
             <template if:true={asking}>
-                <label class="lbl" for="why">Why does this need field action review? (required)</label>
+                <label class="lbl" for="why">Why Does This Need Field Action Review? (Required)</label>
                 <textarea id="why" class="ta" rows="2" oninput={handleReason} placeholder="For example: this lot may have shipped before the hold"></textarea>
             </template>
             <template if:true={doneNote}><div class={noteClass}>{doneNote}</div></template>

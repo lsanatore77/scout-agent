@@ -28,6 +28,22 @@ const OLD_MAX = [0, ASSESS, ASSESS, ASSESS, REC, COMMITTEE];
 const READ_ONLY = [0, SIGNALS, COMMITTEE];   // steps the committee can open while the review is with them
 const STEP_LABEL = { Open: 'Pending', Approved: 'Approved', Rejected: 'Sent Back', Void: 'Not Required', Skipped: 'Not Required' };
 const PAGE = 5;      // records shown under a signal before "Show more"
+
+const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'on', 'in', 'to', 'at', 'for', 'is', 'by', 'per', 'with']);
+/**
+ * Title Case for short label lines that are not sentences (styling guide): every word capitalised except the small
+ * words, unless one starts the line or follows ". " or "· ". Record numbers, dates and figures stay as written.
+ * "11 complaints. Normal is 1.5 complaints per 90 days." -> "11 Complaints. Normal is 1.5 Complaints per 90 Days."
+ */
+function titleCase(text) {
+    if (!text) { return text; }
+    return String(text).replace(/[A-Za-z][A-Za-z']*/g, (w, i, all) => {
+        const before = all.slice(0, i);
+        const start = /^\s*$/.test(before) || /[.\u00b7:(]\s*$/.test(before);   // first word, or first after . · : (
+        if (!start && SMALL_WORDS.has(w.toLowerCase())) { return w.toLowerCase(); }
+        return w.charAt(0).toUpperCase() + w.slice(1);
+    });
+}
 const LEVELS = ['Low', 'Medium', 'High'];
 const ANSWERS = ['Yes', 'No', 'Not known'];
 const QUESTIONS = [
@@ -211,7 +227,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const v = this.v;
         const n = (x) => (x === undefined || x === null || x === '' ? '—' : String(x));
         return [
-            ['Affected', n(v.qtyAffected)], ['Shipped', n(v.qtyShipped)], ['Requested by', n(v.requestedBy)]
+            ['Affected', n(v.qtyAffected)], ['Shipped', n(v.qtyShipped)], ['Requested By', n(v.requestedBy)]
         ].map(([label, value]) => ({ key: label, label, value }));
     }
     /** When CQ.AI suggests no field action, show why a person still sent it for review. */
@@ -229,7 +245,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     // ---- signals and evidence (third step)
     // Display only: every signal is shown, with the records behind it. The reviewer does not pick, so the committee sees the same set.
     rec(r) {
-        return { ...r, meta: [r.kind, r.status, r.lot ? 'lot ' + r.lot : 'no lot', r.why].filter(Boolean).join(' · '),
+        return { ...r, meta: [r.kind, r.status, r.lot ? 'Lot ' + r.lot : 'No Lot', r.why].filter(Boolean).join(' · '),
             line: r.title ? ' · ' + r.title : '' };
     }
     sig(s) {
@@ -238,11 +254,13 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const n = all.length;
         const rest = this.showAll[s.id] ? 0 : Math.max(0, n - PAGE);
         return { ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(),
-            meta: [s.name, s.trend, seen ? 'first seen ' + seen : '', !s.lot ? 'whole part' : s.lot === this.v.lot ? 'this lot' : 'lot ' + s.lot,
-                s.raisedBy ? 'raised by ' + s.raisedBy : '', s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' · '),
+            meta: titleCase([s.name, s.trend, seen ? 'first seen ' + seen : '', !s.lot ? 'whole part' : s.lot === this.v.lot ? 'this lot' : 'lot ' + s.lot,
+                s.raisedBy ? 'raised by ' + s.raisedBy : '', s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' · ')),
+            label: titleCase(s.label),
+            why: titleCase(s.why),
             count: n + ' record' + (n === 1 ? '' : 's'),
             sigCls: 'sig' + (this.hotSig === s.id ? ' hot' : ''),
-            records: rest ? all.slice(0, PAGE) : all, hasRest: rest > 0, restLabel: 'Show ' + rest + ' more' };
+            records: rest ? all.slice(0, PAGE) : all, hasRest: rest > 0, restLabel: 'Show ' + rest + ' More' };
     }
     handleSigOver(event) { this.hotSig = event.currentTarget.dataset.id; }
     handleSigOut() { this.hotSig = ''; }
@@ -255,7 +273,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             const has = t !== undefined && t !== null;
             const w = has ? Math.max(1.5, Math.min(100, Math.log10(Math.max(Number(t), 1)) / 2 * 100)) : 0;
             const c = ink[s.strength] || ink.Watch;
-            return { id: s.id, rule: s.rule, where: !s.lot ? 'whole part' : s.lot === this.v.lot ? 'lot ' + s.lot + ' · this lot' : 'lot ' + s.lot,
+            return { id: s.id, rule: s.rule, where: !s.lot ? 'Whole Part' : s.lot === this.v.lot ? 'Lot ' + s.lot + ' · This Lot' : 'Lot ' + s.lot,
                 has, none: !has, rowCls: 'nrow' + (this.hotSig === s.id ? ' hot' : ''),
                 barStyle: 'width:' + w + '%;background:' + c, times: has ? Number(t).toFixed(1).replace(/\.0$/, '') + '×' : 'No baseline',
                 timesStyle: has ? 'color:' + c : 'color:#5b6470;font-weight:400' };
@@ -299,7 +317,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get moreSignals() { return (this.v.moreSignals || []).map((s) => this.sig(s)); }
     get hasSignals() { return this.signals.length > 0; }
     get hasMore() { return this.moreSignals.length > 0; }
-    get moreLabel() { const n = this.moreSignals.length; return 'Show ' + n + ' weaker or dismissed signal' + (n === 1 ? '' : 's'); }
+    get moreLabel() { const n = this.moreSignals.length; return 'Show ' + n + ' Weaker or Dismissed Signal' + (n === 1 ? '' : 's'); }
     get recs() { return (this.v.records || []).map((r) => this.rec(r)); }
     get hasRecs() { return this.recs.length > 0; }
 
@@ -333,7 +351,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             id: f.id, label: 'Join ' + f.name, cq: f.suggested,
             why: [f.title, f.actionType, f.status, f.why].filter(Boolean).join(' · ')
         }));
-        list.push({ id: 'new', label: 'Start a new Field Action', why: 'For a problem no open field action covers.', cq: !list.some((x) => x.cq) && !list.length });
+        list.push({ id: 'new', label: 'Start a New Field Action', why: 'For a problem no open field action covers.', cq: !list.some((x) => x.cq) && !list.length });
         return list.map((o) => ({ ...o, cls: 'act' + (this.faChoice === o.id ? ' on' : o.cq ? ' sug' : ''), tick: this.faChoice === o.id ? '✓' : '' }));
     }
     get isNew() { return this.needed && this.faChoice === 'new'; }
@@ -415,7 +433,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get recRows() {
         const v = this.v; const c = this.committee;
         const fa = this.outcomeNow !== 'Field Action Needed' ? '' : this.faChoice === 'new'
-            ? 'Start a new Field Action: ' + [this.faTitle, this.actionType, this.recallClass].filter(Boolean).join(' · ')
+            ? 'Start a New Field Action: ' + [this.faTitle, this.actionType, this.recallClass].filter(Boolean).join(' · ')
             : 'Join ' + (((v.fieldActions || []).find((f) => f.id === this.faChoice) || {}).name || 'an open Field Action');
         return [
             ['Outcome', this.outcomeNow], ['Field Action', fa], ['Scope', this.scopeLine], ['Rationale', this.rationale || v.rationale],
@@ -518,7 +536,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         return [
             ['Outcome', v.outcome], ['Field Action', v.faName || 'None'], ['Scope', this.scopeLine], ['Risk', (v.riskLevel || '') + ' · score ' + v.score + ' of 100'],
             ['Rationale', v.rationale], ['Committee', this.committee.approvalName ? this.committee.approvalName + ' · ' + this.approvedCount + ' of ' + this.csteps.length + ' approved' : ''],
-            ['Approved by', v.decidedBy]
+            ['Approved By', v.decidedBy]
         ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val }));
     }
     handleFinish() { this.showSummary = false; }

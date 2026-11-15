@@ -214,7 +214,7 @@ export default class CqFieldActionStrategy extends LightningElement {
             + '. Holds are placed on Confirm Strategy.';
     }
     get compOptions() {
-        return [{ value: '', label: 'Add a component lot…', selected: !this.addLot }].concat((this.v.components || []).map((c) => ({
+        return [{ value: '', label: 'Add a Component Lot…', selected: !this.addLot }].concat((this.v.components || []).map((c) => ({
             value: c.lot, selected: c.lot === this.addLot,
             label: c.lot + ' · ' + (c.item || c.part || '') + ' · ' + (c.inLot || '').toLowerCase().replace(/^nc/, 'NC')
         })));

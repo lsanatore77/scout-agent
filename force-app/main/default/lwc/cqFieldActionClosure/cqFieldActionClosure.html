@@ -46,7 +46,7 @@
                             <div class="capaopts">
                                 <button class="btn primary" onclick={handleCreateCapa} disabled={cantCreate}>Create CAPA</button>
                                 <span class="or">or</span>
-                                <select class="sel grow" onchange={handleCapa} disabled={cantCreate} aria-label="Link an existing CAPA">
+                                <select class="sel grow" onchange={handleCapa} disabled={cantCreate} aria-label="Link an Existing CAPA">
                                     <template for:each={capaOpts} for:item="o">
                                         <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                     </template>

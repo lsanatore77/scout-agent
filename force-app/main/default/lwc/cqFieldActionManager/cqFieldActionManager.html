@@ -25,8 +25,8 @@
                 </div>
             </header>
             <div class="body">
-                <nav class="steps" aria-label="Field action steps">
-                    <div class="steps-title">Field action steps</div>
+                <nav class="steps" aria-label="Field Action Steps">
+                    <div class="steps-title">Field Action Steps</div>
                     <template for:each={steps} for:item="s">
                         <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}>
                             <span class="mark">

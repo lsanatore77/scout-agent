@@ -15,7 +15,7 @@ const STEPS = ['Containment', 'Data Check', 'Risk', 'Next Steps'];
 const SEV = ['Negligible', 'Low', 'Moderate', 'Significant', 'Catastrophic'];
 const LIK = ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'];
 const band = (n) => (n >= 15 ? 'High' : n >= 6 ? 'Medium' : 'Low');
-const ASKS = ['More photos', 'Measurements', 'When it started', 'Other lots affected?'];
+const ASKS = ['More Photos', 'Measurements', 'When It Started', 'Other Lots Affected?'];
 
 /**
  * Triage Assistant: containment, data check, risk, investigation links. CQ.AI suggests, the triager decides.
@@ -131,7 +131,7 @@ export default class CqTriageAssistant extends LightningElement {
     get popup() { return !this.inline; }
     get topNav() { return false; }
     get footNav() { return !this.done; }
-    get stepsTitle() { return this.inline ? 'CQ.AI Triage Steps' : 'Triage steps'; }
+    get stepsTitle() { return this.inline ? 'CQ.AI Triage Steps' : 'Triage Steps'; }
     get showResumed() { return this.resumed && this.live; }
     get canRestart() { return this.inline && (this.done || this.maxStep > 0) && !this.saving; }
 
@@ -226,7 +226,7 @@ export default class CqTriageAssistant extends LightningElement {
             ['hold', 'Hold', lot ? 'Hold lot ' + lot : 'Hold the affected stock', !this.contained],
             ['check', 'Check', '100% inspect remaining stock of this part', false],
             ['stop', 'Stop', 'Stop the process until the cause is known', false],
-            ['none', 'No action', this.contained ? 'Containment is already raised' : 'It is already under control', this.contained]
+            ['none', 'No Action', this.contained ? 'Containment is already raised' : 'It is already under control', this.contained]
         ];
         return defs.map(([id, label, why, cq]) => {
             const on = !!this.acts[id];
@@ -245,7 +245,7 @@ export default class CqTriageAssistant extends LightningElement {
     // Add Containment: creates the CQ record straight away
     get hasAdded() { return this.added.length > 0; }
     get cantCreate() { return this.adding || !this.cTitle.trim() || !this.cDue; }
-    get createLabel() { return this.adding ? 'Creating…' : 'Create containment'; }
+    get createLabel() { return this.adding ? 'Creating…' : 'Create Containment'; }
     handleShowAdd() { this.cDue = this.due; this.addError = undefined; this.showAdd = true; }
     handleCancelAdd() { this.showAdd = false; }
     handleAssignee(event) { this.cAssignee = (event.detail && event.detail.recordId) || null; }
@@ -278,15 +278,15 @@ export default class CqTriageAssistant extends LightningElement {
         const rows = [
             ['Description', g.description ? 'Recorded' : 'None', !!g.description],
             ['Photo', this.hasPhoto ? 'Attached' : 'None attached', !!this.hasPhoto],
-            ['Part and lot', (part || 'No part') + ' · ' + (g.lot ? 'lot ' + g.lot : 'no lot'), !!part && !!g.lot],
-            ['How many', g.defectiveQuantity == null ? 'Defective quantity not set' : g.defectiveQuantity + ' of ' + (g.lotQuantity == null ? '?' : g.lotQuantity), g.defectiveQuantity != null],
+            ['Part and Lot', (part || 'No part') + ' · ' + (g.lot ? 'lot ' + g.lot : 'no lot'), !!part && !!g.lot],
+            ['How Many', g.defectiveQuantity == null ? 'Defective quantity not set' : g.defectiveQuantity + ' of ' + (g.lotQuantity == null ? '?' : g.lotQuantity), g.defectiveQuantity != null],
             ['Severity', sev ? sev.v : 'Not set', !!sev && !sev.warn]
         ];
         return rows.map(([k, v, ok]) => ({ key: k, k, v, ok, icon: ok ? '✓' : '!', cls: 'row slim' + (ok ? '' : ' warn') }));
     }
     get dataComplete() { return this.dataRows.every((r) => r.ok); }
     get dataOpts() {
-        return [['ok', 'Good enough, send on', this.dataComplete], ['ask', 'Request more information', false]]
+        return [['ok', 'Good Enough, Send On', this.dataComplete], ['ask', 'Request More Information', false]]
             .map(([id, label, cq]) => ({ id, label, cls: 'opt' + (this.data === id ? ' on' : cq ? ' sug' : '') }));
     }
     get dataAsk() { return this.data === 'ask'; }
@@ -358,7 +358,7 @@ export default class CqTriageAssistant extends LightningElement {
     get hasSug() { return this.sugItems.length > 0; }
     get hasOther() { return this.otherItems.length > 0; }
     get noLinks() { return this.linksReady && !this.linkItems.length; }
-    get otherLabel() { return 'Other investigations on this part (' + this.otherItems.length + ')'; }
+    get otherLabel() { return 'Other Investigations on This Part (' + this.otherItems.length + ')'; }
     get chosenLinks() { return this.linkItems.filter((v) => v.on && !v.linked); }
     get linkCount() { return this.chosenLinks.length; }
     handleLink(event) {
@@ -397,13 +397,13 @@ export default class CqTriageAssistant extends LightningElement {
     get nextReady() { return !!this.nx && !!this.lk; }
     get dispReq() { return this.disp === 'req'; }
     get invReq() { return this.inv === 'inv'; }
-    get dispOpts() { return this.choiceOpts([['req', 'Required'], ['no', 'Not required']], this.disp, this.nx && this.nx.dispSuggest); }
+    get dispOpts() { return this.choiceOpts([['req', 'Required'], ['no', 'Not Required']], this.disp, this.nx && this.nx.dispSuggest); }
     get invOpts() { return this.choiceOpts([['inv', 'Investigate'], ['log', 'Log Only']], this.inv, this.nx && this.nx.invSuggest); }
     choiceOpts(defs, chosen, sug) {
         return defs.map(([id, label]) => ({ id, label, pressed: chosen === id ? 'true' : 'false',
             cls: 'opt wide' + (chosen === id ? ' on' : id === sug ? ' sug' : '') }));
     }
-    get dispSugText() { return this.nx ? (this.nx.dispSuggest === 'req' ? 'Required' : 'Not required') : ''; }
+    get dispSugText() { return this.nx ? (this.nx.dispSuggest === 'req' ? 'Required' : 'Not Required') : ''; }
     get invSugText() { return this.nx ? (this.nx.invSuggest === 'inv' ? 'Investigate' : 'Log Only') : ''; }
     get dispApprCls() { return 'opt' + (this.dispAppr ? ' on' : ''); }
     get invApprCls() { return 'opt' + (this.invAppr ? ' on' : ''); }
@@ -437,7 +437,7 @@ export default class CqTriageAssistant extends LightningElement {
     get blocker() {
         if (!this.booted) { return 'Loading'; }
         if (this.cur === 0) {
-            if (!this.hasActs && !this.noAction && !this.hasAdded) { return 'Choose an action, add a containment, or No action'; }
+            if (!this.hasActs && !this.noAction && !this.hasAdded) { return 'Choose an action, add a containment, or No Action'; }
             if (this.hasActs && !this.due) { return 'Set a due date'; }
             if (this.noAction && !this.noActionWhy.trim()) { return 'Say why no action is needed'; }
         }
@@ -458,7 +458,7 @@ export default class CqTriageAssistant extends LightningElement {
     }
     get cantNext() { return !!this.blocker || this.saving; }
     get cantBack() { return this.step === 0 || this.saving; }
-    get nextLabel() { return this.saving ? 'Saving…' : this.step === this.last ? 'Complete triage' : 'Next'; }
+    get nextLabel() { return this.saving ? 'Saving…' : this.step === this.last ? 'Complete Triage' : 'Next'; }
     handleBack() { if (this.step > 0) { this.step -= 1; this.persist(); } }
     handleStep(event) {
         const i = Number(event.currentTarget.dataset.i);
@@ -477,7 +477,7 @@ export default class CqTriageAssistant extends LightningElement {
             { k: 'Disposition', v: this.dispReq ? 'Required, due ' + this.dispDue + (this.dispAppr ? ', needs approval' : '') : 'Not required' },
             { k: 'Investigation', v: !this.invReq ? 'Log only'
                 : (this.lk && this.lk.ownName ? 'Continues with ' + this.lk.ownName : 'Needs its own investigation') + ', due ' + this.invDue + (this.invAppr ? ', needs approval' : '') },
-            ...(this.needMatrix ? [{ k: 'Approval matrix', v: this.matrixName }] : []),
+            ...(this.needMatrix ? [{ k: 'Approval Matrix', v: this.matrixName }] : []),
             { k: 'Links', v: this.invReq && this.linkCount ? this.chosenLinks.map((v) => v.name).join(', ') + ' (research only)' : 'None' }
         ];
     }

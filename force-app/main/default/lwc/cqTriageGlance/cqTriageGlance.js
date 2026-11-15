@@ -5,6 +5,13 @@ import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId'
 import savePhoto from '@salesforce/apex/CqTriagePhoto.savePhoto';
 import getTriage from '@salesforce/apex/CqTriageAssistant.getTriage';
 
+const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'on', 'in', 'to', 'at', 'for', 'is', 'by', 'per', 'with']);
+/** Title Case for a short label (styling guide): small words stay lowercase unless first. */
+function titleCase(text) {
+    if (!text) { return text; }
+    return String(text).replace(/[A-Za-z][A-Za-z']*/g, (w, i, all) => (i > 0 && /\S/.test(all.slice(0, i)) && SMALL_WORDS.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)));
+}
+
 /** Triage at a Glance on a Nonconformance: the problem, then four cards. Purple cards are CQ.AI suggestions. */
 export default class CqTriageGlance extends NavigationMixin(LightningElement) {
     @api recordId;
@@ -51,7 +58,7 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
 
     get photoUrl() { return this.photoId ? '/sfc/servlet.shepherd/version/download/' + this.photoId : null; }
     get photoCls() { return 'photo' + (this.photoId ? ' has' : '') + (this.dragging ? ' drag' : ''); }
-    get addLabel() { return this.uploading ? 'Saving\u2026' : 'Add a photo'; }
+    get addLabel() { return this.uploading ? 'Saving\u2026' : 'Add a Photo'; }
 
     handlePick() { this.template.querySelector('input.file').click(); }
     handleFile(event) {
@@ -125,13 +132,13 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
             ...c,
             cls: 'card' + (c.isSuggestion ? ' sug' : ''),
             isOpen: !!this.open[c.id],
-            toggleLabel: this.open[c.id] ? '− Less detail' : '+ More detail',
-            facts: (c.facts || []).map((f, i) => ({ ...f, key: c.id + i, cls: 'fv' + (f.warn ? ' red' : '') }))
+            toggleLabel: this.open[c.id] ? '− Less Detail' : '+ More Detail',
+            facts: (c.facts || []).map((f, i) => ({ ...f, k: titleCase(f.k), key: c.id + i, cls: 'fv' + (f.warn ? ' red' : '') }))   // the name is a lookup key in Apex; shown in Title Case
         }));
     }
     get gaps() { return ((this.g && this.g.gaps) || []).map((t, i) => ({ key: 'g' + i, text: t })); }
     get hasGaps() { return this.gaps.length > 0; }
-    get gapsLabel() { return (this.showGaps ? 'Hide' : 'Show') + ' missing data (' + this.gaps.length + ')'; }
+    get gapsLabel() { return (this.showGaps ? 'Hide' : 'Show') + ' Missing Data (' + this.gaps.length + ')'; }
 
     handleToggle(event) {
         const id = event.currentTarget.dataset.id;

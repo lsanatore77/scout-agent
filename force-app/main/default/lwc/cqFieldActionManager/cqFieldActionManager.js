@@ -10,6 +10,21 @@ import forScope from '@salesforce/apex/CqLotStock.forScope';
 import railStatus from '@salesforce/apex/CqFieldActionRecovery.railStatus';
 
 // The seven steps of a field action. Notifications and Regulatory Report are set aside for later and do not block.
+const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'on', 'in', 'to', 'at', 'for', 'is', 'by', 'per', 'with']);
+/**
+ * Title Case for short label lines that are not sentences (styling guide): every word capitalised except the small
+ * words, unless one starts the line or follows ". " or "· ". Record numbers, dates and figures stay as written.
+ * "11 complaints. Normal is 1.5 complaints per 90 days." -> "11 Complaints. Normal is 1.5 Complaints per 90 Days."
+ */
+function titleCase(text) {
+    if (!text) { return text; }
+    return String(text).replace(/[A-Za-z][A-Za-z']*/g, (w, i, all) => {
+        const before = all.slice(0, i);
+        const start = /^\s*$/.test(before) || /[.\u00b7:(]\s*$/.test(before);   // first word, or first after . · : (
+        if (!start && SMALL_WORDS.has(w.toLowerCase())) { return w.toLowerCase(); }
+        return w.charAt(0).toUpperCase() + w.slice(1);
+    });
+}
 const STEPS = [
     { label: 'Field Action at a Glance', ready: true },
     { label: 'Scope', ready: true },
@@ -77,7 +92,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     }
     get anyOpen() { return Object.values(this.open).some(Boolean); }
     get allChev() { return this.anyOpen ? '▾' : '▸'; }
-    get allLabel() { return this.anyOpen ? 'Collapse all' : 'Expand the lots in scope'; }
+    get allLabel() { return this.anyOpen ? 'Collapse All' : 'Expand the Lots in Scope'; }
     get allExpanded() { return this.anyOpen ? 'true' : 'false'; }
     handleAll() { if (this.anyOpen) { this.open = {}; } else { this.openInScope(); } }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
@@ -231,13 +246,13 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get reviews() {
         return (this.v.reviews || []).map((r) => ({
             ...r,
-            meta: [r.source, r.lot ? 'lot ' + r.lot : '', r.risk ? r.risk + (r.score !== undefined && r.score !== null ? ' · ' + r.score : '') : '', this.day(r.decidedOn)].filter(Boolean).join(' · '),
+            meta: [r.source, r.lot ? 'Lot ' + r.lot : '', r.risk ? r.risk + (r.score !== undefined && r.score !== null ? ' · ' + r.score : '') : '', this.day(r.decidedOn)].filter(Boolean).join(' · '),
             approval: r.approvalName ? r.approvalName + (r.emergency ? ' · emergency approval' : '') + (r.approvedBy ? ' · approved by ' + r.approvedBy : '') : 'Decided before committee approval was in place'
         }));
     }
     get hasReviews() { return this.reviews.length > 0; }
     get signals() {
-        return (this.v.signals || []).map((s) => ({ ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(), where: s.lot ? 'lot ' + s.lot : 'whole part' }));
+        return (this.v.signals || []).map((s) => ({ ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(), where: s.lot ? 'Lot ' + s.lot : 'Whole Part', label: titleCase(s.label) }));
     }
     get hasSignals() { return this.signals.length > 0; }
     goScope() { this.step = SCOPE; }

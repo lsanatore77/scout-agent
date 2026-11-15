@@ -20,7 +20,7 @@
                 <div class="f"><span class="k">Lot</span><span class="v">{lotNumber}</span></div>
                 <div class="f"><span class="k">Owner</span><span class="v">{ownerName}</span></div>
                 <div class="f"><span class="k">Status</span><span class="v">{phrStatus}</span></div>
-                <div class="f"><span class="k">Pending checklist</span><span class="v">{pendingChecklist}</span></div>
+                <div class="f"><span class="k">Pending Checklist</span><span class="v">{pendingChecklist}</span></div>
             </div>
         </header>
 
@@ -30,7 +30,7 @@
 
         <div class="body">
             <nav class="steps">
-                <div class="steps-title">Review steps</div>
+                <div class="steps-title">Review Steps</div>
                 <template for:each={steps} for:item="s">
                     <button key={s.key} class={s.cls} data-key={s.key} onclick={handleStep}>
                         <span class="mark">

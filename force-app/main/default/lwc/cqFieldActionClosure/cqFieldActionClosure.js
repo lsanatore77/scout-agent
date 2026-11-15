@@ -88,7 +88,7 @@ export default class CqFieldActionClosure extends LightningElement {
     get cantCreate() { return this.locked || this.busy; }
     get capaOpts() {
         const list = (this.v.capas || []).map((c) => ({ value: c.id, label: c.name + (c.title ? ' · ' + c.title : ''), selected: false }));
-        return [{ value: '', label: 'Link an existing CAPA…', selected: true }].concat(list);
+        return [{ value: '', label: 'Link an Existing CAPA…', selected: true }].concat(list);
     }
     async handleCapa(event) {
         const value = event.target.value;

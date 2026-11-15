@@ -65,7 +65,7 @@
                                     <template for:each={custOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
                                 </select></label>
                             <template if:true={isNewCustomer}>
-                                <label class="fld"><span class="fl">New customer *</span>
+                                <label class="fld"><span class="fl">New Customer *</span>
                                     <input class="ta in" type="text" data-f="newCustomer" value={form.newCustomer} oninput={handleForm} /></label>
                             </template>
                             <label class="fld"><span class="fl">Lot</span>
@@ -85,7 +85,7 @@
                             <label class="fld"><span class="fl">Due</span>
                                 <input class="ta in" type="date" data-f="due" value={form.due} onchange={handleForm} /></label>
                             <template if:true={formHasUnits}>
-                                <label class="fld"><span class="fl">Units so far</span>
+                                <label class="fld"><span class="fl">Units So Far</span>
                                     <input class="ta in w80" type="number" min="0" data-f="units" value={form.units} oninput={handleForm} /></label>
                             </template>
                             <div class="formbtns">
@@ -205,7 +205,7 @@
                     </div>
                     <template if:true={notEffective}>
                         <label class="fld">
-                            <span class="fl">What happens next *</span>
+                            <span class="fl">What Happens Next *</span>
                             <select class="sel" onchange={handleNext} disabled={locked}>
                                 <template for:each={nextOpts} for:item="o">
                                     <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>

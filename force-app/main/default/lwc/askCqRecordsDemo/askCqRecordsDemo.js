@@ -9,7 +9,7 @@ const OPTIONAL_COLS = [
     { key: 'status', label: 'Status' },
     { key: 'title', label: 'Title' },
     { key: 'rootCause', label: 'Root Cause' },
-    { key: 'match', label: 'Matched on' }
+    { key: 'match', label: 'Matched On' }
 ];
 const TYPE_LABEL = { 'Nonconformance': 'NC', 'CAPA': 'CAPA', 'Change Order': 'Change', 'Inspection': 'Inspection', 'Investigation': 'Investigation' };
 

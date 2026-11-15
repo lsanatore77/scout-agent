@@ -29,8 +29,8 @@
                 </div>
             </header>
             <div class="body">
-                <nav class="steps" aria-label="Review steps">
-                    <div class="steps-title">Review steps</div>
+                <nav class="steps" aria-label="Review Steps">
+                    <div class="steps-title">Review Steps</div>
                     <template for:each={steps} for:item="s">
                         <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}>
                             <span class="mark">
@@ -41,8 +41,8 @@
                         </button>
                     </template>
                     <div class="progress">{progress}</div>
-                    <template if:true={canRestart}><button class="restart" onclick={handleRestart}>Start over</button></template>
-                    <template if:true={canReopen}><button class="restart" onclick={handleReopen}>Reopen review</button></template>
+                    <template if:true={canRestart}><button class="restart" onclick={handleRestart}>Start Over</button></template>
+                    <template if:true={canReopen}><button class="restart" onclick={handleReopen}>Reopen Review</button></template>
                 </nav>
                 <div class="main">
                     <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
@@ -67,7 +67,7 @@
                                         </template>
                                     </div>
                                     <div class="ptext">
-                                        <div class="plabel">The problem
+                                        <div class="plabel">The Problem
                                             <template if:true={hasSource}><span class="from">from <button class="link" data-id={v.sourceId} onclick={handleOpen}>{sourceLabel}</button></span></template>
                                         </div>
                                         <div class="quote">{problem}</div>
@@ -243,7 +243,7 @@
                                 <p class="note">Bands: 0&ndash;39 Low &middot; 40&ndash;69 Medium &middot; 70&ndash;100 High. The score supports the decision; it does not make it.</p>
                                 <div class="lvlrow">
                                     <span class="lab dark">Risk Level *</span>
-                                    <div class="seg" role="group" aria-label="Risk level">
+                                    <div class="seg" role="group" aria-label="Risk Level">
                                         <template for:each={levels} for:item="l">
                                             <button key={l.id} class={l.cls} data-id={l.id} onclick={handleLevel} aria-pressed={l.pressed}><template if:true={l.cq}><c-cq-ai-why variant="star" lead="Why does CQ.AI suggest risk level " subject={l.id}></c-cq-ai-why>&nbsp;</template>{l.id}</button>
                                         </template>
@@ -269,7 +269,7 @@
                             </template>
                         </div>
                         <template if:true={needed}>
-                            <div class="lab top14">Which field action?</div>
+                            <div class="lab top14">Which Field Action?</div>
                             <div class="list">
                                 <template for:each={faOpts} for:item="f">
                                     <button key={f.id} class={f.cls} data-id={f.id} onclick={handleFa}>
@@ -285,15 +285,15 @@
                                         <input class="ta" type="text" data-f="faTitle" value={faTitle} oninput={handleInput} />
                                     </label>
                                     <div class="pair">
-                                        <label class="fl">Action type *
+                                        <label class="fl">Action Type *
                                             <select class="ta" data-f="actionType" onchange={handleInput}>
                                                 <option value="">Choose</option>
                                                 <template for:each={typeOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
                                             </select>
                                         </label>
-                                        <label class="fl">Recall class
+                                        <label class="fl">Recall Class
                                             <select class="ta" data-f="recallClass" onchange={handleInput}>
-                                                <option value="">Not yet determined</option>
+                                                <option value="">Not Yet Determined</option>
                                                 <template for:each={classOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
                                             </select>
                                         </label>
@@ -389,7 +389,7 @@
                     </template>
 
                     <template if:true={showSummary}>
-                        <div class="donehead"><span class="okdot">&#10003;</span><h3 class="q nom">Decision submitted</h3></div>
+                        <div class="donehead"><span class="okdot">&#10003;</span><h3 class="q nom">Decision Submitted</h3></div>
                         <template for:each={summaryRows} for:item="r">
                             <div key={r.key} class="row"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
                         </template>

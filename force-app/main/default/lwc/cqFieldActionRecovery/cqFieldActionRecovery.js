@@ -186,7 +186,7 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
     get anyOpen() { return Object.values(this.openCust).some(Boolean); }
     get allChev() { return this.anyOpen ? '▾' : '▸'; }
-    get allLabel() { return this.anyOpen ? 'Close all customers' : 'Open all customers'; }
+    get allLabel() { return this.anyOpen ? 'Close All Customers' : 'Open All Customers'; }
     handleToggleAll() {
         const m = {};
         if (!this.anyOpen) { this.v.customers.forEach((c) => { m[c.id] = true; }); m[NO_CUSTOMER] = true; }
@@ -238,16 +238,16 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
     get custOpts() {
         const f = this.form;
-        return [{ value: '', label: 'No customer', selected: !f.customerId }]
+        return [{ value: '', label: 'No Customer', selected: !f.customerId }]
             .concat(this.v.customers.map((c) => ({ value: c.id, label: c.name, selected: f.customerId === c.id })))
-            .concat([{ value: NEW_CUSTOMER, label: 'New customer…', selected: f.customerId === NEW_CUSTOMER }]);
+            .concat([{ value: NEW_CUSTOMER, label: 'New Customer…', selected: f.customerId === NEW_CUSTOMER }]);
     }
     get isNewCustomer() { return this.form.customerId === NEW_CUSTOMER; }
     get lotOpts() {
         const f = this.form;
         const lots = f.customerId && f.customerId !== NEW_CUSTOMER && (this.t.lotsByCustomer[f.customerId] || []).length
             ? this.t.lotsByCustomer[f.customerId] : this.v.lots.map((l) => l.lot);
-        return [{ value: '', label: 'No lot', selected: !f.lot }].concat(lots.map((l) => ({ value: l, label: l, selected: f.lot === l })));
+        return [{ value: '', label: 'No Lot', selected: !f.lot }].concat(lots.map((l) => ({ value: l, label: l, selected: f.lot === l })));
     }
     get typeOpts() { return TYPES.map((x) => ({ value: x, label: x, selected: this.form.type === x })); }
     get ownerOpts() { return this.t.people.map((p) => ({ value: p.id, label: p.name, selected: this.form.ownerId === p.id })); }
