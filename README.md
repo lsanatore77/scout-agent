@@ -25,7 +25,7 @@ four review steps, with the agent one click away for "why?".
 Agent scripts for this build (paste into Agent Script Builder as a new version):
 - `PHR_Agent_Script_AskCQ_v27.txt` — Scout: words only, no cards or tick boxes (the workspace does the UI); why-questions get reasons only. v26 is the first words-only version.
 - `Scout_Checklist_Agent_Script_v2.txt` — Scout Checklist: a why-question about one answer is answered from that question's basis, verbatim numbers, no re-run, no save prompt in the workspace.
-- `CQAI_Field_Action_Agent_Script_v2.txt` — CQ.AI Field Action (v2: risk answers give score, band, every factor including zeros, and the review's own level) (new agent, API name `CQAI_Field_Action`): read-only answers on Field Action Reviews and Field Actions from `CqFieldActionAgentContext` (Get Field Action Facts). The popover on both workspaces finds it by API name (`AskCqAgents.idFor`) and sends the open step ahead of each question when it changes.
+- `CQAI_Field_Action_Agent_Script_v3.txt` — CQ.AI Field Action (v3: rules for risk, signals ranked as listed, lots and relevant records, never mentions "the facts") (new agent, API name `CQAI_Field_Action`): read-only answers on Field Action Reviews and Field Actions from `CqFieldActionAgentContext` (Get Field Action Facts). The popover on both workspaces finds it by API name (`AskCqAgents.idFor`) and sends the open step ahead of each question when it changes.
 
 Org settings that are not metadata: custom theme **Dev Background** (SLDS 1, page background `#E9EBEE`); the
 workspace's own header strip is `#F3F3F3` to match the native highlights panel. Labels: "CQ.AI Suggested",
