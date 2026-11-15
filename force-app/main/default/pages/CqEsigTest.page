@@ -1,0 +1,115 @@
+<apex:page controller="CqEsigTest" showHeader="false" sidebar="false" standardStylesheets="false" docType="html-5.0" title="E-Signature Test">
+<style>
+  body { font: 14px/1.45 -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: #181818; background: #f3f3f3; margin: 0; padding: 32px 16px; }
+  .card { max-width: 560px; margin: 0 auto; background: #fff; border: 1px solid #e5e5e5; border-radius: 4px; padding: 24px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { margin: 0 0 20px; color: #5c5c5c; }
+  label { display: block; font-weight: 600; margin: 14px 0 4px; }
+  input, select { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #c9c9c9; border-radius: 4px; font: inherit; }
+  button { margin-top: 20px; padding: 9px 18px; border: 0; border-radius: 4px; background: #0176d3; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: default; }
+  #out { margin-top: 20px; }
+  .ok { border-left: 4px solid #2e844a; background: #f1faf3; padding: 12px; }
+  .bad { border-left: 4px solid #ba0517; background: #fef1ee; padding: 12px; }
+  .note { color: #5c5c5c; }
+  table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
+  td, th { text-align: left; padding: 4px 6px; border-bottom: 1px solid #eee; }
+</style>
+<div class="card">
+  <h1>E-signature test</h1>
+  <p class="sub">Signs with Salesforce's own login page in a pop-up. Your password goes only to Salesforce; this page never sees it. Nothing is saved.</p>
+  <label for="key">Consumer Key (CQ E-Signature Test app)</label>
+  <input id="key" autocomplete="off"/>
+  <label for="meaning">Meaning of signature</label>
+  <select id="meaning"><option>Approved</option><option>Reviewed</option><option>Rejected</option></select>
+  <button id="sign" type="button">Sign</button>
+  <div id="out"></div>
+</div>
+<script>
+(function () {
+  var USER = '{!JSENCODE($User.Username)}';
+  var BASE = '{!JSENCODE(orgBase)}';
+  var REDIRECT = window.location.origin + '/apex/CqEsigCallback';
+  var keyEl = document.getElementById('key'), out = document.getElementById('out'), btn = document.getElementById('sign');
+  try { keyEl.value = localStorage.getItem('cqesig.key') || ''; } catch (e) {}
+
+  function b64url(bytes) {
+    var s = ''; for (var i = 0; i < bytes.length; i++) { s += String.fromCharCode(bytes[i]); }
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  function random(n) { var a = new Uint8Array(n); crypto.getRandomValues(a); return b64url(a); }
+  function show(cls, html) { out.className = cls; out.innerHTML = html; }
+  function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  var pending = null;
+
+  btn.addEventListener('click', function () {
+    var key = keyEl.value.trim();
+    if (!key) { show('bad', 'Paste the Consumer Key first.'); return; }
+    try { localStorage.setItem('cqesig.key', key); } catch (e) {}
+    var verifier = random(48), state = random(16);
+    crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier)).then(function (h) {
+      var challenge = b64url(new Uint8Array(h));
+      var url = BASE + '/services/oauth2/authorize?response_type=code'
+        + '&client_id=' + encodeURIComponent(key)
+        + '&redirect_uri=' + encodeURIComponent(REDIRECT)
+        + '&scope=' + encodeURIComponent('openid id')
+        + '&prompt=login'
+        + '&login_hint=' + encodeURIComponent(USER)
+        + '&code_challenge=' + challenge + '&code_challenge_method=S256'
+        + '&state=' + state;
+      var w = window.open(url, 'cqesig', 'width=480,height=640');
+      if (!w) { show('bad', 'The pop-up was blocked. Allow pop-ups for this page and try again.'); return; }
+      pending = { verifier: verifier, state: state, key: key, win: w, started: Date.now() };
+      btn.disabled = true;
+      show('note', 'Waiting for you to log in in the pop-up…');
+      watch();
+    });
+  });
+
+  // the callback page posts the code back; reading the pop-up's address is the fallback
+  window.addEventListener('message', function (e) {
+    if (e.origin !== window.location.origin || !e.data || e.data.type !== 'cqesig') { return; }
+    finish(e.data);
+  });
+  function watch() {
+    if (!pending) { return; }
+    var w = pending.win;
+    try {
+      if (w.location.origin === window.location.origin && w.location.pathname.indexOf('CqEsigCallback') >= 0) {
+        var p = new URLSearchParams(w.location.search);
+        if (p.get('code') || p.get('error')) {
+          finish({ code: p.get('code'), state: p.get('state'), error: p.get('error'), error_description: p.get('error_description') });
+          try { w.close(); } catch (x) {}
+          return;
+        }
+      }
+    } catch (e) { /* still on Salesforce's login page */ }
+    if (w.closed) { btn.disabled = false; if (pending) { show('bad', 'The pop-up was closed before the login finished. Nothing was signed.'); pending = null; } return; }
+    setTimeout(watch, 400);
+  }
+
+  function finish(d) {
+    if (!pending) { return; }
+    var p = pending; pending = null;
+    var loginSecs = ((Date.now() - p.started) / 1000).toFixed(1);
+    if (d.error) { btn.disabled = false; show('bad', 'Salesforce refused the login: ' + esc(d.error_description || d.error)); return; }
+    if (d.state !== p.state) { btn.disabled = false; show('bad', 'The login did not come from this page (state mismatch). Nothing was signed.'); return; }
+    show('note', 'Checking the login with Salesforce…');
+    var t = Date.now();
+    Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.CqEsigTest.verify}',
+      d.code, p.verifier, p.key, REDIRECT, document.getElementById('meaning').value,
+      function (r, ev) {
+        btn.disabled = false;
+        if (!ev.status || !r) { show('bad', 'Error: ' + esc(ev.message)); return; }
+        var rows = (r.logins || []).map(function (l) {
+          return '<tr><td>' + esc(l.loginTime) + '</td><td>' + esc(l.loginType) + '</td><td>' + esc(l.application) + '</td><td>' + esc(l.method) + '</td><td>' + esc(l.status) + '</td></tr>';
+        }).join('');
+        show(r.ok ? 'ok' : 'bad', '<b>' + esc(r.message) + '</b>'
+          + '<div class="note">Time in the pop-up: ' + loginSecs + ' s. Check after login: ' + ((Date.now() - t) / 1000).toFixed(1) + ' s.</div>'
+          + (rows ? '<table><tr><th>Login time</th><th>Type</th><th>App</th><th>Method</th><th>Status</th></tr>' + rows + '</table>' : ''));
+      }, { escape: false });
+  }
+})();
+</script>
+</apex:page>
