@@ -149,21 +149,15 @@ export default class AskCqRecordsDemo extends LightningElement {
     get count() { return this.shown.length; }
     get suggestedCount() { return this.shown.filter((r) => r.suggested && !r.added).length; }
     get hasSuggested() { return this.suggestedCount > 0; }
-    /** "✦ CQ.AI Suggested – 1 Recommendation" above the table; nothing when CQ.AI suggests nothing. */
+    /** "✦ CQ.AI Suggests: 1 Recommendation" above the table; nothing when CQ.AI suggests nothing. */
     get summaryLabel() {
         const n = this.suggestedCount;
-        return 'CQ.AI Suggested \u2013 ' + n + (n === 1 ? ' Recommendation' : ' Recommendations');
+        return 'CQ.AI Suggests: ' + n + (n === 1 ? ' Recommendation' : ' Recommendations');
     }
     get submitLabel() { return this.staged.size ? 'Submit (' + this.staged.size + ')' : 'Submit'; }
     get submitDisabled() { return this.busy || this.loading || this.staged.size === 0; }
 
     // ----- actions -----
-
-    /** ✦ on a row: the workspace owns the Ask CQ popover, so hand it the question. */
-    handleWhy(event) {
-        const question = event.currentTarget.dataset.q;
-        this.dispatchEvent(new CustomEvent('ask', { detail: { question }, bubbles: true, composed: true }));
-    }
 
     handleToggle(event) {
         const id = event.currentTarget.dataset.id;

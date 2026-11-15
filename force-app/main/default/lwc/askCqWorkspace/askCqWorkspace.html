@@ -67,7 +67,7 @@
                                     <div class="qh">
                                         <span class="question">{q.question}</span>
                                         <template if:true={q.showPill}>
-                                            <button class="pill" data-q={q.why} onclick={handleWhy} title={q.why}><span class="st">&#10022;</span>CQ.AI Suggested</button>
+                                            <c-cq-ai-why variant="pill" text="CQ.AI Suggests" question={q.why}></c-cq-ai-why>
                                         </template>
                                     </div>
                                     <template if:true={q.evidence}><div class="ev">{q.evidence}</div></template>

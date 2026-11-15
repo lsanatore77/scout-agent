@@ -74,7 +74,7 @@
                         <template if:true={col.match}><td class="muted">{r.match}</td></template>
                         <td class="c-why">
                             <template if:true={r.suggested}>
-                                <button class="pill" data-q={r.why} onclick={handleWhy} title={r.why}><span class="st">&#10022;</span>CQ.AI Suggested</button>
+                                <c-cq-ai-why variant="pill" text="CQ.AI Suggests" question={r.why}></c-cq-ai-why>
                             </template>
                         </td>
                         <td>
