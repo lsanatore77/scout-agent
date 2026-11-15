@@ -112,7 +112,6 @@
                                 <template if:true={pendingLine}><span class="pendline warn">{pendingLine}</span></template>
                                 <div class="cact">
                                     <template if:true={isPartial}>
-                                        <button class="btn cmp" onclick={handleDiscard} disabled={cantDiscard}>Discard Changes</button>
                                         <button class="btn cmp primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
                                         <span class="vdiv"></span>
                                     </template>
