@@ -9,6 +9,9 @@
  * fields and runs CQ's Complete Triage, so CQ moves the NC to Disposition / Investigate by its own rules.
  * If CQ refuses, the triage stays saved and the reason comes back as a warning.
  *
+ * startTriage() moves a Draft NC to Triage with CQ's own Submit the moment someone starts triage in the workspace,
+ * so Draft means not started and Triage means someone is working on it.
+ *
  * Defaults live here until the NC settings page exists. E-signature is not asked for yet.
  */
 public with sharing class CqTriageNext {
@@ -19,6 +22,7 @@ public with sharing class CqTriageNext {
     public static final String MATRIX_TYPE = 'Nonconformance';
     public static final String INVESTIGATION_LEVEL = 'NC Investigation';
     public static final String COMPLETE_TRIAGE = 'takeownershipandinitiate';
+    public static final String SUBMIT = 'submit';
 
     public class Matrix {
         @AuraEnabled public Id id; @AuraEnabled public String name;
@@ -128,16 +132,19 @@ public with sharing class CqTriageNext {
         if (inv && String.isBlank(c.investigationDue)) { throw new AuraHandledException('Set the investigation due date.'); }
         if ((dispAppr || invAppr) && c.matrixId == null) { throw new AuraHandledException('Choose an approval matrix.'); }
 
+        // a triage finished without the workspace's start (the popup, say) still goes through Triage first
+        Started st = startTriage(recordId);
         compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
         String path = !inv ? 'Log Only' : cur.compliancequest__SQX_Investigation__c != null ? 'Continue with Investigation' : 'New Investigation';
         Boolean contain = c.containment == true;
 
         // 1. our triage, as before (risk, path, notes, containment records)
         CqTriageAssistant.Triage t = CqTriageAssistant.saveTriage(recordId, c.risk, path, c.notes, contain, inv,
-            c.containmentTitles, c.containmentDue);
+            c.containmentTitles, c.containmentDue, false);
         Done d = new Done();
         d.risk = t.risk; d.path = t.path; d.created = t.created;
         List<String> warnings = new List<String>();
+        if (st.warning != null) { warnings.add(st.warning); }
         if (t.warning != null) { warnings.add(t.warning.removeStart('Triage saved. ')); }
 
         // 2. CQ's own Complete Triage, so CQ moves the NC on
@@ -157,6 +164,7 @@ public with sharing class CqTriageNext {
         nc.compliancequest__SQX_Approval_Matrix__c = dispAppr || invAppr ? c.matrixId : null;
         nc.compliancequest__Activity_Comment__c = String.isBlank(c.notes) ? 'Completed in CQ.AI Triage.' : c.notes.left(4000);
         nc.compliancequest__Activity_Code__c = COMPLETE_TRIAGE;
+        nc.Triage_Draft__c = null;      // the work in progress goes in the same save: one save after the stage change
         Savepoint sp = Database.setSavepoint();
         try {
             update nc;
@@ -167,15 +175,36 @@ public with sharing class CqTriageNext {
             // still record what was decided, in CQ's own Required flags
             try {
                 update new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Containment_Required__c = contain,
-                    compliancequest__Disposition_Required__c = disp, compliancequest__Investigation_Required__c = inv);
-            } catch (Exception e2) { /* saveTriage already reported any refusal of the flags */ }
+                    compliancequest__Disposition_Required__c = disp, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
+            } catch (Exception e2) { /* the triage is saved; the warning above says CQ refused the move */ }
         }
-
-        // 3. the work in progress is no longer needed
-        try { update new compliancequest__SQX_Nonconformance__c(Id = recordId, Triage_Draft__c = null); } catch (Exception e) { /* left for getDraft to ignore */ }
 
         d.warning = warnings.isEmpty() ? null : 'Triage saved. ' + String.join(warnings, ' ');
         return d;
+    }
+
+    public class Started {
+        @AuraEnabled public Boolean moved = false;
+        @AuraEnabled public String stage;
+        @AuraEnabled public String warning;
+    }
+
+    /** Triage has started: a Draft NC goes to Triage through CQ's own Submit. Any other stage is left as it is. */
+    @AuraEnabled
+    public static Started startTriage(Id recordId) {
+        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+        Started s = new Started();
+        s.stage = cur.compliancequest__Record_Stage__c;
+        if (s.stage != 'Draft') { return s; }
+        try {
+            update new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Activity_Code__c = SUBMIT,
+                compliancequest__Activity_Comment__c = 'Triage started in CQ.AI Triage.');
+            s.moved = true;
+            s.stage = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId].compliancequest__Record_Stage__c;
+        } catch (DmlException e) {
+            s.warning = 'CQ did not move the NC to Triage: ' + e.getDmlMessage(0);
+        }
+        return s;
     }
 
     static Date toDate(String v, Integer fallbackDays) {

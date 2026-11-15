@@ -1,6 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import getNext from '@salesforce/apex/CqTriageNext.getNext';
 import completeTriage from '@salesforce/apex/CqTriageNext.completeTriage';
+import startTriage from '@salesforce/apex/CqTriageNext.startTriage';
 import createContainment from '@salesforce/apex/CqTriageContainment.create';
 import getRisk from '@salesforce/apex/CqTriageRisk.getRisk';
 import saveRisk from '@salesforce/apex/CqTriageRisk.saveRisk';
@@ -30,6 +31,7 @@ export default class CqTriageAssistant extends LightningElement {
 
     step = 0;
     maxStep = 0;
+    started = false;    // triage has been started on the server this session (Draft -> Triage)
     seen = {};          // steps opened at least once: any step can be opened, but Complete Triage waits until each has been
     booted = false;
     resumed = false;
@@ -83,6 +85,7 @@ export default class CqTriageAssistant extends LightningElement {
         }
         this.seen = { ...this.seen, [this.step]: true };
         this.booted = true;
+        if (this.step > 0) { this.ensureStarted(); }
         try {
             this.rk = await getRisk({ recordId: this.recordId });
         } catch (e) {
@@ -488,7 +491,21 @@ export default class CqTriageAssistant extends LightningElement {
     get cantNext() { return !!this.blocker || this.saving; }
     get cantBack() { return this.step === 0 || this.saving; }
     get nextLabel() { return this.saving ? 'Saving…' : this.step === this.last ? 'Complete Triage' : 'Next'; }
+    /**
+     * In the workspace, the first step past the glance is the start of triage: a Draft NC moves to Triage through
+     * CQ's own Submit (the server leaves any other stage alone). Looking at the glance changes nothing.
+     */
+    async ensureStarted() {
+        if (!this.inline || this.started || this.done) { return; }
+        this.started = true;
+        try {
+            const s = await startTriage({ recordId: this.recordId });
+            if (s && s.moved) { this.dispatchEvent(new CustomEvent('changed')); }
+            if (s && s.warning) { this.error = s.warning; }
+        } catch (e) { this.started = false; }
+    }
     go(i) {
+        if (i > 0) { this.ensureStarted(); }
         this.step = i;
         this.seen = { ...this.seen, [i]: true };
         this.maxStep = Math.max(this.maxStep, i);
@@ -556,8 +573,7 @@ export default class CqTriageAssistant extends LightningElement {
             }
             this.summary = rows.map((r) => ({ ...r, key: r.k }));
             this.warning = [t && t.warning, riskWarning, linkWarning].filter(Boolean).join(' ') || undefined;
-            this.done = true;
-            if (this.inline) { saveDraft({ recordId: this.recordId, draft: null }).catch(() => {}); }
+            this.done = true;      // Complete Triage cleared the work in progress in its own save; no second save here
             this.dispatchEvent(new CustomEvent('done'));
         } catch (e) {
             this.error = (e && e.body && e.body.message) || 'Could not save the triage.';

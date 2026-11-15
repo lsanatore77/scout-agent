@@ -28,6 +28,16 @@ public with sharing class CqTriageAssistant {
     @AuraEnabled
     public static Triage saveTriage(Id recordId, String risk, String path, String notes, Boolean containment, Boolean investigate,
                                     List<String> containmentTitles, String dueDate) {
+        return saveTriage(recordId, risk, path, notes, containment, investigate, containmentTitles, dueDate, true);
+    }
+
+    /**
+     * setFlags: also set CQ's Containment / Investigation / Disposition Required flags (the popup's original rule).
+     * Complete Triage passes false, since it sets those flags itself in the same save that moves the NC on;
+     * a second save there made CQ raise its "Please create Disposition" task twice.
+     */
+    public static Triage saveTriage(Id recordId, String risk, String path, String notes, Boolean containment, Boolean investigate,
+                                    List<String> containmentTitles, String dueDate, Boolean setFlags) {
         if (!RISKS.contains(risk)) { throw new AuraHandledException('Choose a risk.'); }
         if (!PATHS.contains(path)) { throw new AuraHandledException('Choose a path.'); }
         compliancequest__SQX_Nonconformance__c nc = new compliancequest__SQX_Nonconformance__c(Id = recordId);
@@ -65,14 +75,16 @@ public with sharing class CqTriageAssistant {
             }
         }
 
-        try {
-            compliancequest__SQX_Nonconformance__c flags = new compliancequest__SQX_Nonconformance__c(Id = recordId);
-            flags.compliancequest__Containment_Required__c = containment == true;
-            flags.compliancequest__Investigation_Required__c = investigate == true;
-            flags.compliancequest__Disposition_Required__c = investigate != true;
-            update flags;
-        } catch (Exception e) {
-            warnings.add('CQ did not accept its Containment / Investigation / Disposition Required flags: ' + e.getMessage());
+        if (setFlags == true) {
+            try {
+                compliancequest__SQX_Nonconformance__c flags = new compliancequest__SQX_Nonconformance__c(Id = recordId);
+                flags.compliancequest__Containment_Required__c = containment == true;
+                flags.compliancequest__Investigation_Required__c = investigate == true;
+                flags.compliancequest__Disposition_Required__c = investigate != true;
+                update flags;
+            } catch (Exception e) {
+                warnings.add('CQ did not accept its Containment / Investigation / Disposition Required flags: ' + e.getMessage());
+            }
         }
 
         Triage t = getTriage(recordId);

@@ -69,4 +69,32 @@ private class CqTriageNextTest {
         }
         System.assertNotEquals(null, CqTriageNext.matrices());
     }
+
+    @IsTest
+    static void startTriageMovesDraftOnly() {
+        Id ncId = makeNc(4);
+        Test.startTest();
+        CqTriageNext.Started s = CqTriageNext.startTriage(ncId);
+        CqTriageNext.Started again = CqTriageNext.startTriage(ncId);
+        Test.stopTest();
+        System.assert(s.moved || s.warning != null, 'either moved or told why not');
+        if (s.moved) {
+            System.assertEquals('Triage', s.stage);
+            System.assertEquals(false, again.moved, 'a second start leaves the NC where it is');
+        }
+    }
+
+    @IsTest
+    static void completeLeavesFlagsToCompleteTriage() {
+        Id ncId = makeNc(4);
+        String payload = JSON.serialize(new Map<String, Object>{
+            'risk' => 'Medium', 'notes' => 'x', 'severity' => 3,
+            'containment' => false, 'containmentTitles' => new List<String>(),
+            'disposition' => true, 'dispositionDue' => String.valueOf(Date.today().addDays(5)), 'dispositionApproval' => false,
+            'investigate' => true, 'investigationDue' => String.valueOf(Date.today().addDays(60)), 'investigationApproval' => false });
+        CqTriageNext.Done d = CqTriageNext.completeTriage(ncId, payload);
+        compliancequest__SQX_Nonconformance__c nc = [SELECT compliancequest__Disposition_Required__c, Triage_Draft__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId];
+        if (d.moved) { System.assertEquals(true, nc.compliancequest__Disposition_Required__c, 'disposition as chosen, not the opposite of investigate'); }
+        System.assertEquals(null, nc.Triage_Draft__c);
+    }
 }
