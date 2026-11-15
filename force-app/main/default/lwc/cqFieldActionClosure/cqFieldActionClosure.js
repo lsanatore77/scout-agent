@@ -37,6 +37,9 @@ export default class CqFieldActionClosure extends LightningElement {
 
     renderedCallback() {
         if (!this.v) { return; }
+        // a textarea shows its text through its value property, so it is set here (not while someone is typing in it)
+        const ta = this.template.querySelector('textarea.ta');
+        if (ta && this.template.activeElement !== ta && ta.value !== this.summaryText) { ta.value = this.summaryText; }
         const detail = { show: true, label: this.closeLabel, disabled: this.cantClose, blocker: this.blocker };
         const sig = JSON.stringify(detail);
         if (sig !== this.footSig) { this.footSig = sig; this.dispatchEvent(new CustomEvent('footchange', { detail })); }
