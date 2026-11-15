@@ -1,15 +1,30 @@
-<apex:page showHeader="false" sidebar="false" standardStylesheets="false" docType="html-5.0" title="Finishing signature">
+<apex:page controller="CqEsigTest" showHeader="false" sidebar="false" standardStylesheets="false" docType="html-5.0" title="Finishing signature">
 <p id="m" style="font: 14px -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; padding: 24px;">Finishing signature…</p>
 <script>
 (function () {
+  // Runs on the session the signer's fresh login just started, so it does the check itself
+  // and sends only the result back to the page that opened it.
+  var m = document.getElementById('m');
   var p = new URLSearchParams(window.location.search);
-  var msg = { type: 'cqesig', code: p.get('code'), state: p.get('state'), error: p.get('error'), error_description: p.get('error_description') };
-  if (window.opener) {
-    window.opener.postMessage(msg, window.location.origin);
-    setTimeout(function () { window.close(); }, 300);
-  } else {
-    document.getElementById('m').textContent = 'You can close this window and return to the test page.';
+  var pend = null;
+  try { pend = JSON.parse(localStorage.getItem('cqesig.pending')); localStorage.removeItem('cqesig.pending'); } catch (e) {}
+  function done(msg) {
+    if (window.opener) {
+      window.opener.postMessage(msg, window.location.origin);
+      setTimeout(function () { window.close(); }, 300);
+    } else {
+      m.textContent = msg.error ? msg.error : msg.result.message;
+    }
   }
+  if (p.get('error')) { done({ type: 'cqesig-result', error: 'Salesforce refused the login: ' + (p.get('error_description') || p.get('error')) }); return; }
+  if (!pend || !p.get('code')) { done({ type: 'cqesig-result', error: 'This signature was not started from the test page. Nothing was signed.' }); return; }
+  if (p.get('state') !== pend.state) { done({ type: 'cqesig-result', error: 'The login did not come from the test page (state mismatch). Nothing was signed.' }); return; }
+  Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.CqEsigTest.verify}',
+    p.get('code'), pend.verifier, pend.key, pend.redirect, pend.meaning,
+    function (r, ev) {
+      if (!ev.status || !r) { done({ type: 'cqesig-result', error: 'Error: ' + ev.message }); return; }
+      done({ type: 'cqesig-result', result: r });
+    }, { escape: false });
 })();
 </script>
 </apex:page>

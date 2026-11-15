@@ -60,57 +60,43 @@
         + '&login_hint=' + encodeURIComponent(USER)
         + '&code_challenge=' + challenge + '&code_challenge_method=S256'
         + '&state=' + state;
+      // the pop-up's login starts a new session, so the pop-up finishes the check itself
+      try { localStorage.setItem('cqesig.pending', JSON.stringify({ verifier: verifier, state: state, key: key, redirect: REDIRECT, meaning: document.getElementById('meaning').value })); }
+      catch (e) { show('bad', 'This browser blocked local storage, which the test needs.'); return; }
       var w = window.open(url, 'cqesig', 'width=480,height=640');
       if (!w) { show('bad', 'The pop-up was blocked. Allow pop-ups for this page and try again.'); return; }
-      pending = { verifier: verifier, state: state, key: key, win: w, started: Date.now() };
+      pending = { state: state, win: w, started: Date.now() };
       btn.disabled = true;
       show('note', 'Waiting for you to log in in the pop-up…');
       watch();
     });
   });
 
-  // the callback page posts the code back; reading the pop-up's address is the fallback
+  // the pop-up finishes the check on its new session and posts back only the result
   window.addEventListener('message', function (e) {
-    if (e.origin !== window.location.origin || !e.data || e.data.type !== 'cqesig') { return; }
-    finish(e.data);
+    if (e.origin !== window.location.origin || !e.data || e.data.type !== 'cqesig-result') { return; }
+    if (!pending) { return; }
+    var secs = ((Date.now() - pending.started) / 1000).toFixed(1);
+    pending = null; btn.disabled = false;
+    var d = e.data;
+    if (d.error) { show('bad', esc(d.error)); return; }
+    var r = d.result;
+    var rows = (r.logins || []).map(function (l) {
+      return '<tr><td>' + esc(l.loginTime) + '</td><td>' + esc(l.loginType) + '</td><td>' + esc(l.application) + '</td><td>' + esc(l.method) + '</td><td>' + esc(l.status) + '</td></tr>';
+    }).join('');
+    show(r.ok ? 'ok' : 'bad', '<b>' + esc(r.message) + '</b>'
+      + '<div class="note">Total time from Sign to result: ' + secs + ' s (check on the server: ' + (r.ms == null ? '?' : (r.ms / 1000).toFixed(1)) + ' s).</div>'
+      + (rows ? '<table><tr><th>Login time</th><th>Type</th><th>App</th><th>Method</th><th>Status</th></tr>' + rows + '</table>' : ''));
   });
   function watch() {
     if (!pending) { return; }
-    var w = pending.win;
-    try {
-      if (w.location.origin === window.location.origin && w.location.pathname.indexOf('CqEsigCallback') >= 0) {
-        var p = new URLSearchParams(w.location.search);
-        if (p.get('code') || p.get('error')) {
-          finish({ code: p.get('code'), state: p.get('state'), error: p.get('error'), error_description: p.get('error_description') });
-          try { w.close(); } catch (x) {}
-          return;
-        }
-      }
-    } catch (e) { /* still on Salesforce's login page */ }
-    if (w.closed) { btn.disabled = false; if (pending) { show('bad', 'The pop-up was closed before the login finished. Nothing was signed.'); pending = null; } return; }
+    if (pending.win.closed) {
+      setTimeout(function () {
+        if (pending) { pending = null; btn.disabled = false; show('bad', 'The pop-up was closed before the signature finished. Nothing was signed.'); }
+      }, 800);
+      return;
+    }
     setTimeout(watch, 400);
-  }
-
-  function finish(d) {
-    if (!pending) { return; }
-    var p = pending; pending = null;
-    var loginSecs = ((Date.now() - p.started) / 1000).toFixed(1);
-    if (d.error) { btn.disabled = false; show('bad', 'Salesforce refused the login: ' + esc(d.error_description || d.error)); return; }
-    if (d.state !== p.state) { btn.disabled = false; show('bad', 'The login did not come from this page (state mismatch). Nothing was signed.'); return; }
-    show('note', 'Checking the login with Salesforce…');
-    var t = Date.now();
-    Visualforce.remoting.Manager.invokeAction('{!$RemoteAction.CqEsigTest.verify}',
-      d.code, p.verifier, p.key, REDIRECT, document.getElementById('meaning').value,
-      function (r, ev) {
-        btn.disabled = false;
-        if (!ev.status || !r) { show('bad', 'Error: ' + esc(ev.message)); return; }
-        var rows = (r.logins || []).map(function (l) {
-          return '<tr><td>' + esc(l.loginTime) + '</td><td>' + esc(l.loginType) + '</td><td>' + esc(l.application) + '</td><td>' + esc(l.method) + '</td><td>' + esc(l.status) + '</td></tr>';
-        }).join('');
-        show(r.ok ? 'ok' : 'bad', '<b>' + esc(r.message) + '</b>'
-          + '<div class="note">Time in the pop-up: ' + loginSecs + ' s. Check after login: ' + ((Date.now() - t) / 1000).toFixed(1) + ' s.</div>'
-          + (rows ? '<table><tr><th>Login time</th><th>Type</th><th>App</th><th>Method</th><th>Status</th></tr>' + rows + '</table>' : ''));
-      }, { escape: false });
   }
 })();
 </script>
