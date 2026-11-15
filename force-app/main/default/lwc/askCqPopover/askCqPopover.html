@@ -18,7 +18,6 @@
                         <div key={m.key} class={m.cls}>
                             <template if:false={m.isAgent}><lightning-formatted-text value={m.text}></lightning-formatted-text></template>
                             <template if:true={m.isAgent}>
-                                <span class="star small gut" aria-hidden="true">&#10022;</span>
                                 <div class="ans">
                                     <template for:each={m.blocks} for:item="b">
                                         <div key={b.key} class={b.cls}>

@@ -22,10 +22,8 @@
 .foot lightning-input { flex: 1; }
 .pi { --sds-c-icon-color-foreground-default: #7c5cc4; --slds-c-icon-color-foreground-default: #7c5cc4; }
 
-/* Answers: star in its own column, bullet rows with a hanging indent (styling guide rev45, rev46) */
-.msg.agent { white-space: normal; display: flex; align-items: flex-start; }
-.msg.agent .gut { flex: none; width: 16px; margin: 3px 0 0; }
-.msg.agent .ans { flex: 1; min-width: 0; }
+/* Answers: no star (the header carries it), bullet rows with a hanging indent (styling guide rev45, rev47) */
+.msg.agent { white-space: normal; }
 .blk.p { margin: 0; }
 .blk.li { display: flex; align-items: baseline; }
 .blk.li .dot { flex: none; width: 12px; }
