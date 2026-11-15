@@ -21,8 +21,8 @@
                                 <div class="ans">
                                     <template for:each={m.blocks} for:item="b">
                                         <div key={b.key} class={b.cls}>
-                                            <template if:true={b.isItem}><span class="dot" aria-hidden="true">&#8226;</span><span class="txt">{b.text}</span></template>
-                                            <template if:true={b.isPara}><span>{b.text}</span></template>
+                                            <template if:true={b.isItem}><span class="dot" aria-hidden="true">&#8226;</span><span class="txt"><template for:each={b.parts} for:item="p"><template if:true={p.isLink}><a key={p.key} class="alink" href={p.href} target="_blank">{p.text}</a></template><template if:true={p.isAction}><button key={p.key} class="alink act" data-action={p.action} onclick={handleAction}>{p.text}</button></template><template if:true={p.isText}><span key={p.key}>{p.text}</span></template></template></span></template>
+                                            <template if:true={b.isPara}><span><template for:each={b.parts} for:item="p"><template if:true={p.isLink}><a key={p.key} class="alink" href={p.href} target="_blank">{p.text}</a></template><template if:true={p.isAction}><button key={p.key} class="alink act" data-action={p.action} onclick={handleAction}>{p.text}</button></template><template if:true={p.isText}><span key={p.key}>{p.text}</span></template></template></span></template>
                                         </div>
                                     </template>
                                 </div>

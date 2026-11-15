@@ -38,6 +38,9 @@ public with sharing class CqFieldActionRecovery {
     public class Capa { @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String title; }
     /** Off for now (Lou, 14 Nov 2026): the acknowledgement target is shown and suggested, but does not stop an Effective verdict or closing. Set true to require it again. */
     public static final Boolean ACK_REQUIRED = false;
+    public static final String CAPA_MISSING = 'CAPA has not been created yet';
+    public static final String CAPA_RECORD_TYPE = 'CAPA_Field_Action';
+    public static final Integer CAPA_DUE_DAYS = 60;
 
     public class View {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String status; @AuraEnabled public Boolean closed = false;
@@ -57,7 +60,7 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public List<Check> checks = new List<Check>();
         @AuraEnabled public Boolean canClose = false;
         @AuraEnabled public String summary; @AuraEnabled public String sSummary;
-        @AuraEnabled public Id capaId; @AuraEnabled public String capaName;
+        @AuraEnabled public Id capaId; @AuraEnabled public String capaName; @AuraEnabled public String capaTitle; @AuraEnabled public String capaStatus;
         @AuraEnabled public List<Capa> capas = new List<Capa>();
         @AuraEnabled public String otherRecords; @AuraEnabled public String sOther;
         @AuraEnabled public String closedBy; @AuraEnabled public Datetime closedOn;
@@ -70,7 +73,7 @@ public with sharing class CqFieldActionRecovery {
                        Scope__c, Scope_Status__c, Scope_Confirmed_By__r.Name, Scope_Confirmed_On__c,
                        Strategy_Status__c, Strategy_Confirmed_On__c, Check_Level__c, Check_Percent__c, Check_By__c,
                        Recovery_Status__c, Verdict__c, Next_Step__c, Verdict_By__r.Name, Verdict_On__c,
-                       Closure_Summary__c, CAPA__c, CAPA__r.Name, Other_Records__c, Closed_By__r.Name, Closed_On__c
+                       Closure_Summary__c, CAPA__c, CAPA__r.Name, CAPA__r.compliancequest__Title__c, CAPA__r.compliancequest__Status__c, Other_Records__c, Closed_By__r.Name, Closed_On__c
                 FROM Field_Action__c WHERE Id = :recordId];
     }
     private static void openForChange(Field_Action__c fa) {
@@ -117,7 +120,7 @@ public with sharing class CqFieldActionRecovery {
         v.recovery = fa.Recovery_Status__c; v.verdict = fa.Verdict__c; v.nextStep = fa.Next_Step__c;
         v.verdictBy = fa.Verdict_By__r?.Name; v.verdictOn = fa.Verdict_On__c;
         v.action = fa.Action_Type__c; v.depth = fa.Depth__c; v.level = fa.Check_Level__c; v.target = targetOf(fa); v.checkBy = fa.Check_By__c;
-        v.summary = fa.Closure_Summary__c; v.capaId = fa.CAPA__c; v.capaName = fa.CAPA__r?.Name; v.otherRecords = fa.Other_Records__c;
+        v.summary = fa.Closure_Summary__c; v.capaId = fa.CAPA__c; v.capaName = fa.CAPA__r?.Name; v.capaTitle = fa.CAPA__r?.compliancequest__Title__c; v.capaStatus = fa.CAPA__r?.compliancequest__Status__c; v.otherRecords = fa.Other_Records__c;
         v.closedBy = fa.Closed_By__r?.Name; v.closedOn = fa.Closed_On__c;
         if (!v.closed && v.strategyConfirmed) {
             CqLotShipments.fillShipped(recordId);
@@ -225,7 +228,8 @@ public with sharing class CqFieldActionRecovery {
         Boolean verdictOk = fa.Recovery_Status__c == 'Confirmed' && fa.Verdict__c == EFFECTIVE;
         add(v, 'verdict', 'Effectiveness verdict', verdictOk ? 'Effective · confirmed by ' + fa.Verdict_By__r?.Name + ', ' + fa.Verdict_On__c?.date().format()
             : fa.Verdict__c == NOT_EFFECTIVE && fa.Verdict_On__c != null ? 'Not Effective: ' + fa.Next_Step__c : 'No verdict confirmed yet', verdictOk ? 'ok' : 'open', true);
-        add(v, 'capa', 'CAPA linked', fa.CAPA__c == null ? 'Choose the CAPA that root cause and prevention continue in' : fa.CAPA__r.Name, fa.CAPA__c != null ? 'ok' : 'open', true);
+        // Blocks only until a CAPA is linked; its own status does not hold the field action open.
+        add(v, 'capa', 'CAPA', fa.CAPA__c == null ? CAPA_MISSING : fa.CAPA__r.Name, fa.CAPA__c != null ? 'ok' : 'open', true);
         v.canClose = !v.closed;
         for (Check c : v.checks) { if (c.state == 'open' && c.blocks) { v.canClose = false; } }
 
@@ -410,6 +414,32 @@ public with sharing class CqFieldActionRecovery {
 
     // ---------------------------------------------------------------- closure saves
 
+    /**
+     * Creates a skeleton CAPA for this field action (record type CAPA - Field Action, title, part, a pointer back to the
+     * field action, Target Due Date 60 days out) and links it in the field action's CAPA field. The CAPA is filled in on
+     * its own record; its status does not hold the field action open.
+     */
+    @AuraEnabled
+    public static View createCapa(Id recordId) {
+        Field_Action__c fa = [SELECT Id, Name, Title__c, Status__c, Part__c, Action_Type__c, Recall_Class__c, CAPA__c FROM Field_Action__c WHERE Id = :recordId];
+        if (fa.Status__c == 'Closed') { throw new AuraHandledException('This field action is closed.'); }
+        if (fa.CAPA__c != null) { throw new AuraHandledException('A CAPA is already linked to this field action.'); }
+        RecordTypeInfo rt = Schema.SObjectType.compliancequest__SQX_CAPA__c.getRecordTypeInfosByDeveloperName().get(CAPA_RECORD_TYPE);
+        String title = (fa.Name + ': ' + (fa.Title__c == null ? 'field action' : fa.Title__c)).left(255);
+        compliancequest__SQX_CAPA__c c = new compliancequest__SQX_CAPA__c(
+            compliancequest__Title__c = title,
+            compliancequest__SQX_Part__c = fa.Part__c,
+            compliancequest__Target_Due_Date__c = Date.today().addDays(CAPA_DUE_DAYS),
+            compliancequest__Description__c = 'Raised from field action ' + fa.Name
+                + (fa.Action_Type__c == null ? '' : ' (' + fa.Action_Type__c + (fa.Recall_Class__c == null ? '' : ', ' + fa.Recall_Class__c) + ')')
+                + ' for root cause and prevention.',
+            Field_Action__c = fa.Id);
+        if (rt != null) { c.RecordTypeId = rt.getRecordTypeId(); }
+        insert c;
+        update new Field_Action__c(Id = fa.Id, CAPA__c = c.Id);
+        return getView(recordId);
+    }
+
     @AuraEnabled
     public static View saveClosure(Id recordId, String field, String value) {
         Field_Action__c fa = load(recordId);
@@ -432,7 +462,7 @@ public with sharing class CqFieldActionRecovery {
         View v = getView(recordId);
         if (v.closed) { throw new AuraHandledException('This field action is already closed.'); }
         List<String> pending = new List<String>();
-        for (Check c : v.checks) { if (c.state == 'open' && c.blocks) { pending.add(c.text.toLowerCase()); } }
+        for (Check c : v.checks) { if (c.state == 'open' && c.blocks) { pending.add(c.key == 'capa' ? c.detail : c.text.toLowerCase()); } }
         if (!pending.isEmpty()) { throw new AuraHandledException('Before closing: ' + String.join(pending, ', ') + '.'); }
         String text = String.isNotBlank(summary) ? summary : String.isNotBlank(v.summary) ? v.summary : v.sSummary;
         update new Field_Action__c(Id = recordId, Status__c = 'Closed', Closure_Summary__c = text,

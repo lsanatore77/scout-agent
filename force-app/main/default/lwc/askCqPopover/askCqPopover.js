@@ -146,6 +146,11 @@ export default class AskCqPopover extends LightningElement {
         }
     }
 
+    /** An action link in an answer (Create CAPA, say): the page that holds the popover does it. */
+    handleAction(event) {
+        this.dispatchEvent(new CustomEvent('askcqaction', { detail: { name: event.currentTarget.dataset.action }, bubbles: true, composed: true }));
+    }
+
     handleSuggestion(event) { this.ask(event.currentTarget.dataset.q); }
     handleDraft(event) { this.draft = event.target.value; }
     handleKey(event) { if (event.key === 'Enter' && !this.sendDisabled) { this.ask(this.draft); } }
@@ -177,14 +182,32 @@ export default class AskCqPopover extends LightningElement {
             const b = { key: key + 'b' + i, first: out.length === 0 };
             if (m) {
                 const nested = m[1].length >= 2;
-                out.push({ ...b, isItem: true, text: keep(m[2]), cls: 'blk li' + (nested ? ' sub' : '') });
+                out.push({ ...b, isItem: true, parts: this.parts(keep(m[2]), b.key), cls: 'blk li' + (nested ? ' sub' : '') });
             } else if (!line.trim()) {
                 if (out.length) { out.push({ ...b, first: false, isGap: true, cls: 'blk gap' }); }
             } else {
-                out.push({ ...b, isPara: true, text: keep(line), cls: 'blk p' });
+                out.push({ ...b, isPara: true, parts: this.parts(keep(line), b.key), cls: 'blk p' });
             }
         });
         while (out.length && out[out.length - 1].isGap) { out.pop(); }
+        return out;
+    }
+
+    /** Text with [label](/lightning/...) links as clickable parts. Only links into this org are made clickable. */
+    parts(text, key) {
+        const out = [];
+        const re = /\[([^\]]+)\]\((\/lightning\/[^)\s]+|action:[A-Za-z]+)\)/g;
+        let last = 0; let m; let i = 0;
+        while ((m = re.exec(text)) !== null) {
+            if (m.index > last) { out.push({ key: key + 'p' + i++, text: text.slice(last, m.index), isText: true }); }
+            if (m[2].startsWith('action:')) {
+                out.push({ key: key + 'p' + i++, text: m[1], action: m[2].slice(7), isAction: true });
+            } else {
+                out.push({ key: key + 'p' + i++, text: m[1], href: m[2].replace(/‑/g, '-'), isLink: true });
+            }
+            last = re.lastIndex;
+        }
+        if (last < text.length) { out.push({ key: key + 'p' + i++, text: text.slice(last), isText: true }); }
         return out;
     }
 

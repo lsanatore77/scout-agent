@@ -171,6 +171,13 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     // ---- Ask CQ.AI: the Field Action agent, told which step is open, with ready questions for that step
     get askStep() { return STEPS[this.step] ? STEPS[this.step].label : ''; }
     get askSuggestions() { return ASK[this.step] || ASK[0]; }
+    /** Ask CQ.AI's Create CAPA link: open Closure and create the CAPA there, so its progress and errors show on the step. */
+    handleAskAction(event) {
+        if (event.detail.name !== 'createCapa' || this.isLocked(CLOSURE)) { return; }
+        this.go(CLOSURE);
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => { const s = this.template.querySelector('c-cq-field-action-closure'); if (s) { s.createCapa(); } }, 0);
+    }
     get is0() { return this.ready && this.step === 0; }
     get is1() { return this.ready && this.step === SCOPE; }
     get is2() { return this.ready && this.step === STRATEGY; }

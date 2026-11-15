@@ -15,7 +15,9 @@
                     <template for:each={checks} for:item="c">
                         <div key={c.key} class="lrow">
                             <span class={c.markCls} aria-hidden="true">{c.mark}</span>
-                            <span class="fn"><span class="b">{c.text}</span><span class="rk">{c.detail}</span></span>
+                            <span class="fn"><span class="b">{c.text}</span><span class="rk">{c.detail}</span>
+                                <template if:true={c.createCapa}><button class="mklink" onclick={handleCreateCapa}>Create CAPA</button></template>
+                            </span>
                         </div>
                     </template>
                 </div>
@@ -30,19 +32,29 @@
                 </section>
                 <section class="card">
                     <div class="ch"><span class="cn">3</span><span class="ct">What Follows</span></div>
-                    <label class="fld">
+                    <div class="fld">
                         <span class="fl">CAPA *</span>
-                        <select class="sel" onchange={handleCapa} disabled={locked}>
-                            <template for:each={capaOpts} for:item="o">
-                                <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
-                            </template>
-                        </select>
-                    </label>
-                    <label class="fld">
-                        <span class="fl">Other records</span>
-                        <input class="ta in" type="text" value={otherText} disabled={locked} onchange={handleOther} />
-                        <span class="hint">Filled from the records behind the reviews and the held component lots.</span>
-                    </label>
+                        <template if:true={hasCapa}>
+                            <div class="capa">
+                                <span class="fn"><a class="clink" href={capaUrl} target="_blank">{v.capaName}</a><span class="rk">{v.capaTitle}</span></span>
+                                <template if:true={v.capaStatus}><span class={capaStatusCls}>{v.capaStatus}</span></template>
+                                <template if:false={locked}><button class="btn cmp" onclick={handleUnlink} disabled={busy}>Unlink</button></template>
+                            </div>
+                            <span class="hint">Root cause and prevention continue in this CAPA. The field action can close while the CAPA carries on.</span>
+                        </template>
+                        <template if:true={noCapa}>
+                            <div class="capaopts">
+                                <button class="btn primary" onclick={handleCreateCapa} disabled={cantCreate}>Create CAPA</button>
+                                <span class="or">or</span>
+                                <select class="sel grow" onchange={handleCapa} disabled={cantCreate} aria-label="Link an existing CAPA">
+                                    <template for:each={capaOpts} for:item="o">
+                                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                    </template>
+                                </select>
+                            </div>
+                            <span class="hint">Create CAPA makes a new CAPA - Field Action record for this field action, due in 60 days, and links it here. Fill it in on the CAPA.</span>
+                        </template>
+                    </div>
                 </section>
             </div>
         </div>

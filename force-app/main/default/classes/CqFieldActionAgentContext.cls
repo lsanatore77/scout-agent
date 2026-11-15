@@ -270,7 +270,9 @@ global with sharing class CqFieldActionAgentContext {
         // Grouped so "what is blocking" has one answer: only open items that are required stop closing.
         List<String> blocking = new List<String>(), openOnly = new List<String>(), done = new List<String>(), na = new List<String>();
         for (CqFieldActionRecovery.Check c : rc.checks) {
-            String row = '- ' + c.text + (c.detail == null ? '' : ': ' + c.detail);
+            String row = c.key == 'capa' && c.state == 'open'
+                ? '- ' + CqFieldActionRecovery.CAPA_MISSING + '. [Create CAPA](action:createCapa)'
+                : '- ' + c.text + (c.detail == null ? '' : ': ' + c.detail);
             if (c.state == 'ok') { done.add(row); }
             else if (c.state == 'na') { na.add(row); }
             else if (c.blocks) { blocking.add(row); }
@@ -286,7 +288,8 @@ global with sharing class CqFieldActionAgentContext {
         l.add('Done (' + done.size() + '):');
         l.addAll(done);
         if (!na.isEmpty()) { l.add('Not needed:'); l.addAll(na); }
-        l.add('CAPA: ' + (rc.capaName == null ? 'none linked' : rc.capaName) + '. Closure summary: ' + (rc.summary == null ? 'not written' : rc.summary));
+        l.add('CAPA: ' + (rc.capaName == null ? 'none linked' : rc.capaName + (rc.capaStatus == null ? '' : ' (' + rc.capaStatus + ')')
+            + '; the field action can close while the CAPA carries on') + '. Closure summary: ' + (rc.summary == null ? 'not written' : rc.summary));
         if (rc.summary == null && rc.sSummary != null) { l.add('CQ.AI Suggests this closure summary: ' + rc.sSummary); }
     }
 
