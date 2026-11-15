@@ -279,10 +279,16 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get doneRows() {
         const recs = this.result ? this.result.done : this.allRecords.filter((r) => r.status === 'Complete');
         const rows = recs.map((r) => ({ key: r.id, k: r.name, v: (r.type || '') + ' ' + this.fmt(r.qty) + ' · Complete' + (r.completedOn ? ' on ' + this.dateText(r.completedOn) : '') }));
-        const types = [...new Set(recs.map((r) => r.type).filter(Boolean))];
+        const by = {};
+        recs.forEach((r) => { if (r.type) { by[r.type] = (by[r.type] || 0) + this.num(r.qty); } });
+        const types = Object.keys(by);
+        const total = types.reduce((a, t) => a + by[t], 0);
+        const chosen = types.map((t) => t + ' ' + this.fmt(by[t]));
         const sug = this.suggestedAtSave || this.v.suggestType;
         if (sug) {
-            rows.push({ key: 'sug', k: 'CQ.AI Suggested', v: sug + (types.length === 1 && types[0] === sug ? ' · as decided' : types.length ? ' · decided ' + types.join(' and ') : '') });
+            const said = types.length === 1 && types[0] === sug ? ' · As Decided'
+                : chosen.length ? ' · You Chose ' + (chosen.length > 1 ? chosen.slice(0, -1).join(', ') + ' and ' + chosen[chosen.length - 1] : chosen[0]) : '';
+            rows.push({ key: 'sug', k: 'CQ.AI Suggested', v: sug + ' ' + this.fmt(total) + said });
         }
         if (this.v.investigationId) {
             rows.push({ key: 'next', k: 'Next', v: 'Investigation ' + this.v.investigationName + ' carries on; the NC closes after it.' });
