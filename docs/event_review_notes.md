@@ -20,6 +20,11 @@ Working ideas from Lou, 16 Nov 2026. Nothing here is decided or built yet.
 Lou: an event works like a Salesforce Case: queues, a case team working it together, and escalation when it waits too long.
 What Case has that we would otherwise build: queues and assignment rules, case teams (roles on one record), escalation rules (reassign or notify when it sits too long), Omni-Channel routing, and entitlements with milestones (a clock, which fits the complaint clock from the aware date).
 
+## The clock (Lou likes it, 16 Nov 2026; to design)
+- Starts at the event's **aware date**, not when it was typed in or picked up.
+- Targets per kind of event, set in setup (for example: urgent reviewed within 1 day, others within 5; a complaint's reporting deadline counted from the aware date).
+- Shown on the queue and the reviewer's own list as time left, amber when close, red when overdue, and used for the escalation (notify, then reassign).
+
 ## Open questions
 - Can a reviewer pass an event straight to a named person, or only back to the queue?
 - Does Take Ownership and Initiate change the event's status (for example to In Review)?
