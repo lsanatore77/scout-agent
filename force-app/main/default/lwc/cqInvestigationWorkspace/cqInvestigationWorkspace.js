@@ -34,8 +34,8 @@ const POLL_TRIES = 8;
  * CQ.AI Investigation workspace: the investigation's record header, then six steps in the page.
  * Built: Investigation at a Glance, What Changed (timeline of changes CQ holds, changes added by hand,
  * Add as Hypothesis), Check History (past records ranked like the Product History Review, and the problem
- * that happened before after a fix), Actions and Conclusion with Complete Investigation. Find the Cause shows
- * what CQ already holds and is built next.
+ * that happened before after a fix), Find the Cause (c-cq-investigation-cause: hypotheses with evidence, Is / Is Not,
+ * 5 Why and root causes), Actions and Conclusion with Complete Investigation.
  * Steps can be opened in any order.
  */
 export default class CqInvestigationWorkspace extends NavigationMixin(LightningElement) {
@@ -121,7 +121,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             done || this.step !== 0 ? 'Reviewed' : 'Start Here',
             this.changedSub || (this.seen[1] || done ? 'Reviewed' : 'Not Reviewed'),
             this.historySub || (this.seen[2] || done ? 'Reviewed' : 'Not Reviewed'),
-            causes ? this.plural(causes, 'Root Cause', 'Root Causes') : 'No Root Cause Yet',
+            this.causeSub(causes),
             this.plans.length ? this.plural(this.plans.length, 'Action', 'Actions') + (this.plansDirty ? ' · Not Saved' : '') : 'No Actions Yet',
             done ? (this.v.conclusion || this.conclusion || 'Submitted') + ' · ' + this.doneWord : this.conclusion || 'Not Concluded'
         ];
@@ -131,6 +131,13 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             i, n: i + 1, label, sub: subs[i], done: stepDone[i], notDone: !stepDone[i],
             cls: 'step' + (!done && i === this.step ? ' active' : '') + (stepDone[i] ? ' done' : '')
         }));
+    }
+    causeSub(causes) {
+        const c = this.causeState;
+        if (c && c.confirmed + c.ruledOut + c.open > 0) {
+            return [c.confirmed ? c.confirmed + ' Confirmed' : null, c.ruledOut ? c.ruledOut + ' Ruled Out' : null, c.open ? c.open + ' Open' : null].filter((x) => x).join(' · ');
+        }
+        return causes ? this.plural(causes, 'Root Cause', 'Root Causes') : 'No Root Cause Yet';
     }
     get progress() { return this.steps.filter((s) => s.done).length + ' of 6 steps complete'; }
     get doneWord() { return this.v.inApproval || (this.result && this.result.needsApproval) ? 'In Approval' : 'Complete'; }
@@ -199,17 +206,24 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         return Object.keys(by).map((t) => by[t] + ' ' + t).join(', ');
     }
 
-    // ---- steps 2 to 4: what CQ holds today
-    get hasCauses() { return (this.v.causes || []).length > 0; }
-    get causeRows() {
-        return (this.v.causes || []).map((c) => ({ key: c.id, href: this.href(c.id), category: this.dash(c.category), code: this.dash(c.code),
-            description: this.dash(c.description), verified: c.verified ? 'Verified' : 'Not Verified', vCls: c.verified ? 'chip ok' : 'chip' }));
+    // ---- step 4: Find the Cause (its own component; the footer's Save Root Causes and blocker come from it)
+    causeState;
+    handleCauseState(event) { this.causeState = event.detail; }
+    get showSaveRoots() { return this.showCause && !!this.causeState && this.causeState.showSave; }
+    get cantSaveRoots() { return !this.causeState || !this.causeState.canSave; }
+    get saveRootsLabel() { return this.causeState && this.causeState.saving ? 'Saving…' : 'Save Root Causes'; }
+    handleSaveRoots() { const c = this.template.querySelector('c-cq-investigation-cause'); if (c) { c.saveRoots(); } }
+    async handleCauseChanged() { await this.load(false); }
+    handleCauseAddHyp(event) {
+        const d = event.detail;
+        const t = d.text.replace(/;\s*no hypothesis covers it\.?$/, '').replace(/^[^:]+:\s*/, '').replace(/,\s*[^,]*before the start$/, '');
+        this.hypForm = { from: 'cause', key: 'c:' + d.sourceId, title: t.charAt(0).toUpperCase() + t.slice(1) + ' (' + d.name + ')', category: d.category,
+            sourceId: d.sourceId, sourceName: d.name, fromName: d.name, fromHref: this.href(d.sourceId), fromText: d.text, fromSub: 'CQ.AI Suggests a Hypothesis' };
+        this.hypFocus = true;
     }
-    get hasTools() { return (this.v.tools || []).length > 0; }
-    get toolRows() {
-        return (this.v.tools || []).map((t) => ({ key: t.id, href: this.href(t.id), name: t.name, type: this.dash(t.type), status: this.dash(t.status),
-            sCls: t.status === 'Complete' ? 'chip ok' : 'chip warn' }));
-    }
+    // Ask CQ.AI: Add to Evidence under an answer while Find the Cause is open
+    get pinLabel() { return this.showCause ? 'Add to Evidence' : null; }
+    handleAskPin(event) { const c = this.template.querySelector('c-cq-investigation-cause'); if (c) { c.pin(event.detail); } }
 
     // ---- step 5: Actions
     get planRows() {
@@ -481,7 +495,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         const t = this.shortText(i.whatChanged);
         this.hypForm = { key: i.key, title: t.charAt(0).toUpperCase() + t.slice(1) + (i.byHand ? '' : ' (' + i.name + ')'), category: i.category, sourceId: i.recordId, sourceName: i.name,
             fromName: i.byHand ? 'Added by You' : i.name, fromHref: i.recordId && !i.byHand ? this.href(i.recordId) : null, fromText: i.whatChanged,
-            fromSub: [i.foundIn, i.rating].filter((x) => x).join(' \u00b7 ') };
+            fromSub: [i.foundIn, i.rating].filter((x) => x).join(' · ') };
         this.hypFocus = true;
         this.wcError = undefined;
         this.wcNotice = undefined;
@@ -525,13 +539,14 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             const from = this.hypForm.from;
             const n = await addHypothesis({ recordId: this.recordId, payload: JSON.stringify({ title: this.hypForm.title.trim(), category: this.hypForm.category, sourceId: this.hypForm.sourceId, sourceName: this.hypForm.sourceName }) });
             const note = 'Added as H' + n + '. Test it in Find the Cause.';
-            if (from === 'hist') { this.histNotice = note; } else { this.wcNotice = note; }
+            if (from === 'hist') { this.histNotice = note; } else if (from !== 'cause') { this.wcNotice = note; }
+            if (from === 'cause') { const c = this.template.querySelector('c-cq-investigation-cause'); if (c) { c.refresh(); } }
             this.hypForm = undefined;
             const loads = [this.loadHistory(true)];
             if (this.wc) { loads.push(this.loadChanges()); }
             await Promise.all(loads);
         } catch (e) {
-            if (this.hypForm && this.hypForm.from === 'hist') { this.histError = this.msg(e, 'The hypothesis was not saved.'); } else { this.wcError = this.msg(e, 'The hypothesis was not saved.'); }
+            if (this.hypForm && this.hypForm.from === 'hist') { this.histError = this.msg(e, 'The hypothesis was not saved.'); } else if (this.hypForm && this.hypForm.from === 'cause') { this.error = this.msg(e, 'The hypothesis was not saved.'); } else { this.wcError = this.msg(e, 'The hypothesis was not saved.'); }
         } finally {
             this.wcSaving = false;
         }
@@ -694,7 +709,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         if (!i) { return; }
         this.hypForm = { from: 'hist', key: 'h:' + i.key, title: this.histHypTitle(i), category: i.category, sourceId: i.recordId, sourceName: i.name,
             fromName: i.name, fromHref: this.href(i.recordId), fromText: i.whatHappened,
-            fromSub: i.causeHead ? 'Root cause: ' + i.causeHead + (i.causeNote ? ' \u00b7 ' + i.causeNote : '') : null };
+            fromSub: i.causeHead ? 'Root cause: ' + i.causeHead + (i.causeNote ? ' · ' + i.causeNote : '') : null };
         this.hypFocus = true;
         this.histNotice = undefined;
         this.histError = undefined;
@@ -737,6 +752,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
 
     // ---- footer
     get blocker() {
+        if (this.showCause) { return this.causeState ? this.causeState.blocker : null; }
         if (this.showActions) { return this.planBlocker(); }
         if (this.showConclusion) { return this.conclusionBlocker(); }
         return null;

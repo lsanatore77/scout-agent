@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>How_Do_You_Know__c</fullName><label>How Do You Know</label><description>One line on the evidence that confirmed or ruled it out; becomes the CQ root cause Justification.</description><type>TextArea</type><required>false</required>
+</CustomField>

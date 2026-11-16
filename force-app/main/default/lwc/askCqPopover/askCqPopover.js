@@ -35,6 +35,13 @@ export default class AskCqPopover extends LightningElement {
     _namedId;
     /** Optional: the step or tab the user has open. Sent ahead of a question when it has changed, never shown. */
     @api step;
+    /**
+     * Optional: a button under each answer that hands the answer to the page (Add to Evidence, say).
+     * The page gets an askcqpin event with { text, question }.
+     */
+    @api pinLabel;
+    pinned = {};
+    get pinnedText() { return (this.pinLabel || 'Added').replace(/^Add\b/, 'Added'); }
     /** Text in the empty question box. */
     @api placeholder = 'Ask about this review…';
     _sentStep;
@@ -56,6 +63,18 @@ export default class AskCqPopover extends LightningElement {
         document.addEventListener('cqaiask', this._onAsk);
     }
     disconnectedCallback() { document.removeEventListener('cqaiask', this._onAsk); }
+
+    get shownMessages() {
+        return this.messages.map((m) => ({ ...m, canPin: !!this.pinLabel && m.isAgent && !this.pinned[m.key], pinned: m.isAgent && !!this.pinned[m.key] }));
+    }
+    handlePin(event) {
+        const k = event.currentTarget.dataset.key;
+        const i = this.messages.findIndex((m) => m.key === k);
+        if (i < 0) { return; }
+        const q = [...this.messages.slice(0, i)].reverse().find((m) => !m.isAgent);
+        this.pinned = { ...this.pinned, [k]: true };
+        this.dispatchEvent(new CustomEvent('askcqpin', { detail: { text: this.messages[i].text, question: q ? q.text : null }, bubbles: true, composed: true }));
+    }
 
     get suggestionList() {
         return (this.suggestions || '').split(',').map((s) => s.trim()).filter(Boolean).map((q) => ({ key: q, label: q }));
@@ -83,6 +102,7 @@ export default class AskCqPopover extends LightningElement {
         this.sessionId = undefined;
         this.sequence = 1;
         this.messages = [];
+        this.pinned = {};
         this.asked = false;
         this._starting = undefined;
         this._sentStep = undefined;

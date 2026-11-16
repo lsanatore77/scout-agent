@@ -1,0 +1,349 @@
+<template>
+    <template if:true={loadError}><div class="errbox">{loadError}</div></template>
+    <template if:false={ready}><template if:false={loadError}><div class="spinwrap"><lightning-spinner alternative-text="Reading the hypotheses" size="small" class="spin"></lightning-spinner><span class="muted">Reading the hypotheses and evidence…</span></div></template></template>
+    <template if:true={ready}>
+        <div class="tabs" role="tablist">
+            <template for:each={tabs} for:item="t">
+                <button key={t.key} class={t.cls} role="tab" aria-selected={t.sel} data-t={t.key} onclick={handleTab}>{t.label}</button>
+            </template>
+        </div>
+
+        <!-- Hypotheses -->
+        <template if:true={onHyp}>
+            <template if:true={noHyps}>
+                <div class="ownbox">No hypotheses yet. Add them from What Changed or Check History with Add as Hypothesis.</div>
+            </template>
+            <template if:true={hasHyps}>
+                <div class="sugbox">
+                    <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                    <div class="whyv">{hypStandsOut}</div>
+                </div>
+                <div class="tblwrap top16">
+                    <table class="tbl">
+                        <thead><tr><th>Hypothesis</th><th>Category</th><th><span class="star">&#10022;</span>CQ.AI Suggests</th><th>Status</th><th>Tests</th><th></th></tr></thead>
+                        <tbody>
+                            <template for:each={hypRows} for:item="h">
+                                <tr key={h.id} class={h.rowCls}>
+                                    <td class="wide"><div class="strong">{h.title}</div><div class="note sm0">{h.sub}</div></td>
+                                    <td>{h.category}</td>
+                                    <td class="wide">
+                                        <c-cq-ai-why variant="label" text={h.suggest} question={h.askWhy}></c-cq-ai-why>
+                                        <div class="note sm0">{h.suggestWhy}</div>
+                                        <template if:true={h.canPlan}><button class="btn sm top6" data-id={h.id} onclick={handlePlan}>Plan This Test</button></template>
+                                    </td>
+                                    <td><span class={h.statusCls}>{h.status}</span></td>
+                                    <td class="nowrap">{h.tests}</td>
+                                    <td><button class={h.btnCls} data-id={h.id} onclick={handleSelect}>{h.btn}</button></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="note">Every hypothesis starts Open; you decide Confirmed or Ruled Out. CQ.AI&rsquo;s suggestion comes from the evidence, and clicking &#10022; shows the facts behind it.</p>
+            </template>
+
+            <template if:true={hasNewHyps}>
+                <template for:each={newHyps} for:item="n">
+                    <div key={n.key} class="newhyp">
+                        <span class="sugword"><span class="star">&#10022;</span>CQ.AI Suggests a Hypothesis:</span>
+                        <span class="grow">{n.text}</span>
+                        <button class="btn sm" data-key={n.key} onclick={handleNewHyp}>Add as Hypothesis</button>
+                        <button class="smalllink plainbtn" data-key={n.key} onclick={handleNewHypHide}>Not Relevant</button>
+                    </div>
+                </template>
+            </template>
+
+            <template if:true={hasSel}>
+                <div class="selcard">
+                    <div class="selhead">
+                        <div class="grow">
+                            <div class="note sm0 strong">{selHead}</div>
+                            <div class="seltitle">{sel.title}</div>
+                        </div>
+                        <div class="opts tight">
+                            <template for:each={statusOpts} for:item="s">
+                                <button key={s.label} class={s.cls} aria-pressed={s.pressed} data-s={s.label} onclick={handleStatus} disabled={saving}>{s.label}</button>
+                            </template>
+                        </div>
+                    </div>
+                    <div class="lab">Could This Be the Root Cause?</div>
+                    <div class="checks">
+                        <template for:each={checks} for:item="c">
+                            <div key={c.key} class={c.cls}><span class="cm">{c.mark}</span><span>{c.text}<template if:true={c.isBack}><button class="smalllink plainbtn gap" onclick={handleGoWhy}>Open 5 Why</button></template></span></div>
+                        </template>
+                    </div>
+                    <div class="evhead">
+                        <span class="lab nomb">Evidence</span>
+                        <span class="grow"></span>
+                        <button class="btn sm" onclick={handleAddTest}>+ Add Test</button>
+                        <button class="btn sm" onclick={handleLink}>+ Link a CQ Record</button>
+                    </div>
+                    <div class="evlist">
+                        <template for:each={evidenceRows} for:item="e">
+                            <div key={e.key} class="ev">
+                                <span class={e.tagCls}>{e.tag}</span>
+                                <div class="evtext">
+                                    <div>{e.text}<template if:true={e.against}> <span class="negword">Goes against it</span></template><template if:true={e.inconclusive}> <span class="muted">(inconclusive)</span></template></div>
+                                    <div class="note sm0">{e.origin}<template if:true={e.hasRecord}> &middot; <a class="link" href={e.recordHref} target="_blank">{e.recordName}</a></template><template if:true={e.files}> &middot; {e.files}</template></div>
+                                </div>
+                                <template if:true={e.canEdit}>
+                                    <div class="evact">
+                                        <template if:true={e.isPlanned}><button class="smalllink plainbtn" data-id={e.id} onclick={handleRecordResult}>Record Result</button></template>
+                                        <button class="smalllink plainbtn" data-id={e.id} onclick={handleRemoveEvidence}>Remove</button>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                    <p class="note sm0">To keep an Ask CQ.AI answer here, ask it in Ask CQ.AI above and click Add to Evidence under the answer.</p>
+                    <label class="fl top16"><span>How Do You Know? *</span>
+                        <textarea class="ta hk" rows="2" value={howKnowText} data-val={howKnowText} oninput={handleHowKnow} placeholder="For example, pin measured 0.12 mm under nominal; only BF-02 units leak"></textarea>
+                    </label>
+                    <div class="splitline">
+                        <span class="note sm0"><template if:true={howKnowPrefilled}>Prefilled from the evidence. </template>It becomes the CQ root cause&rsquo;s Justification.</span>
+                        <template if:true={howKnowDirty}><button class="btn sm" onclick={handleSaveHowKnow} disabled={saving}>Save</button></template>
+                    </div>
+                </div>
+            </template>
+        </template>
+
+        <!-- Is / Is Not -->
+        <template if:true={onIs}>
+            <p class="p">Say where the problem is and where it could be but is not. A hypothesis that cannot explain an Is Not is unlikely.<template if:true={isPrefilledNote}> Filled in from the NC; edit any cell, then save.</template></p>
+            <div class="tblwrap">
+                <table class="tbl istbl">
+                    <thead><tr><th></th><th>Is</th><th>Is Not</th><th>Which Hypotheses Fit</th></tr></thead>
+                    <tbody>
+                        <template for:each={isTable} for:item="r">
+                            <tr key={r.key}>
+                                <td class="strong nowrap">{r.label}</td>
+                                <td><textarea class="ta cell" rows="2" data-k={r.key} data-f="isText" value={r.isText} data-val={r.isText} onchange={handleIsField} aria-label="Is"></textarea></td>
+                                <td><textarea class="ta cell" rows="2" data-k={r.key} data-f="isNotText" value={r.isNotText} data-val={r.isNotText} onchange={handleIsField} aria-label="Is Not"></textarea></td>
+                                <td class="nowrap">
+                                    <template for:each={r.fits} for:item="f">
+                                        <button key={f.key} class={f.cls} title={f.title} data-h={f.hypId} data-r={f.row} onclick={handleFit} disabled={saving}>{f.mark} {f.label}</button>
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <div class="sugbox top16">
+                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                <div class="whyv">{isStandsOut}</div>
+            </div>
+            <div class="bar top16">
+                <span class="grow note sm0">Saved to CQ&rsquo;s 5W2H on {v.investigationName}, Is and Is Not in each field.</span>
+                <button class="btn sm" onclick={handleSaveIs} disabled={cantSaveIs}>Save Is / Is Not</button>
+                <template if:true={ruleOutLabel}><button class="btn sm" onclick={handleRuleOut} disabled={saving}>{ruleOutLabel}</button></template>
+            </div>
+        </template>
+
+        <!-- 5 Why -->
+        <template if:true={onWhy}>
+            <template if:false={hasWhyHyp}><div class="ownbox">Add a hypothesis first; each one can have its own 5 Why.</div></template>
+            <template if:true={hasWhyHyp}>
+                <div class="forrow">
+                    <span class="strong">For</span>
+                    <template for:each={whyHyps} for:item="h">
+                        <button key={h.id} class={h.cls} aria-pressed={h.pressed} data-id={h.id} onclick={handleWhyHyp}>{h.label}</button>
+                    </template>
+                    <span class="note sm0">One 5 Why per hypothesis; stop when the answer is something you can fix.</span>
+                </div>
+                <div class="probbox">
+                    <div class="lab">The Problem</div>
+                    <div class="strong">{problemText}</div>
+                </div>
+                <div class="whycard">
+                    <template for:each={whyRows} for:item="w">
+                        <div key={w.key} class="whyrow">
+                            <span class="whylab">{w.label}</span>
+                            <div class={w.cls}>
+                                <textarea class="ta whyta" rows="2" data-i={w.idx} value={w.text} data-val={w.text} oninput={handleWhyText} placeholder="Because…" aria-label={w.label}></textarea>
+                                <template for:each={w.evidence} for:item="e">
+                                    <div key={e.key} class={e.lineCls}>{e.line}<template if:true={e.hasRecord}> &middot; <a class="link" href={e.recordHref} target="_blank">{e.recordName}</a></template></div>
+                                </template>
+                                <div class="whyacts">
+                                    <button class={w.rootCls} aria-pressed={w.rootPressed} data-i={w.idx} onclick={handleWhyRoot}>Root Cause</button>
+                                    <template if:true={w.canEvidence}>
+                                        <button class="smalllink plainbtn" data-why={w.id} onclick={handleAddTest}>+ Test</button>
+                                        <button class="smalllink plainbtn" data-why={w.id} onclick={handleLink}>+ CQ Record</button>
+                                    </template>
+                                    <template if:true={w.canRemove}><button class="smalllink plainbtn" data-i={w.idx} onclick={handleWhyRemove}>Remove</button></template>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <div><button class="btn sm" onclick={handleWhyAdd}>+ Add Why</button></div>
+                </div>
+                <div class="sugbox top16">
+                    <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                    <div class="whyv">{whyStandsOut}</div>
+                </div>
+                <div class="bar top16">
+                    <span class="grow note sm0">Saved in CQ&rsquo;s own 5 Why on the investigation<template if:true={whyToolHref}> (<a class="link" href={whyToolHref} target="_blank">{whyToolName}</a>)</template>, a 5 Why tool with its Why records. Evidence can be added to a why once it is saved.</span>
+                    <template if:true={whyDirty}><button class="btn sm" onclick={handleWhyUndo}>Undo</button></template>
+                    <button class="btn sm primary" onclick={handleSaveWhy} disabled={cantSaveWhy}>Save 5 Why</button>
+                </div>
+            </template>
+        </template>
+
+        <!-- Root Causes -->
+        <template if:true={onRoots}>
+            <div class="sugbox">
+                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                <div class="whyv">{rootStandsOut}</div>
+            </div>
+            <template if:true={hasRoots}>
+                <div class="tblwrap top16">
+                    <table class="tbl">
+                        <thead><tr><th>Root Cause</th><th>Role</th><th>Category</th><th>CQ Cause Code</th><th>Evidence</th><th>Verified</th><th></th></tr></thead>
+                        <tbody>
+                            <template for:each={rootRows} for:item="r">
+                                <tr key={r.key}>
+                                    <td class="wide">
+                                        <template if:true={r.isNew}><textarea class="ta cell" rows="2" data-i={r.idx} data-f="text" value={r.text} data-val={r.text} onchange={handleRootField} placeholder="Describe the cause" aria-label="Root Cause"></textarea></template>
+                                        <template if:false={r.isNew}><div class="strong">{r.text}</div></template>
+                                        <div class="note sm0">{r.source}<template if:true={r.savedHref}> &middot; <a class="link" href={r.savedHref} target="_blank">In CQ</a></template></div>
+                                    </td>
+                                    <td class="nowrap">
+                                        <div class="roles">
+                                            <template for:each={r.roleOpts} for:item="o">
+                                                <button key={o.label} class={o.cls} aria-pressed={o.pressed} data-i={r.idx} data-v={o.label} onclick={handleRootRole}>{o.label}</button>
+                                            </template>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <select class="sel" data-i={r.idx} onchange={handleRootCat} aria-label="Category">
+                                            <option value="">Choose</option>
+                                            <template for:each={r.catOpts} for:item="c"><option key={c.value} value={c.value} selected={c.sel}>{c.label}</option></template>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <select class="sel code" data-i={r.idx} onchange={handleRootCode} aria-label="CQ Cause Code">
+                                            <template for:each={r.codeOpts} for:item="c"><option key={c.value} value={c.value} selected={c.sel}>{c.label}</option></template>
+                                        </select>
+                                    </td>
+                                    <td class="wide"><textarea class="ta cell" rows="2" data-i={r.idx} data-f="evidence" value={r.evidence} data-val={r.evidence} onchange={handleRootField} aria-label="Evidence"></textarea></td>
+                                    <td class="center"><input type="checkbox" class="cb" data-i={r.idx} checked={r.verified} onchange={handleRootVerified} aria-label="Verified"></td>
+                                    <td><template if:true={r.isNew}><button class="smalllink plainbtn" data-i={r.idx} onclick={handleRootRemove}>Remove</button></template></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="note">Rows come from confirmed hypotheses and the whys marked Root Cause in their 5 Why; root causes already in CQ show here too. There can be more than one Primary. Evidence starts from the evidence on the why, or How Do You Know?</p>
+            </template>
+            <div class="bar top16">
+                <span class="grow note sm0"><strong>On Save Root Causes:</strong> each row is saved as a CQ root cause on {v.investigationName} with its role, category, cause code, the evidence as justification, and Verified. Ruled-out hypotheses stay on the investigation with their evidence.</span>
+                <button class="btn sm" onclick={handleRootAdd}>+ Add Root Cause</button>
+            </div>
+        </template>
+
+        <template if:true={notice}><div class="okbox">{notice}</div></template>
+        <template if:true={error}><div class="errbox">{error}</div></template>
+
+        <!-- the evidence popup -->
+        <template if:true={formOpen}>
+            <div class="modal-back" onkeydown={handleFormKey}>
+                <section class="modal" role="dialog" aria-modal="true" aria-labelledby="ev-head">
+                    <header class="modal-head">
+                        <h2 id="ev-head" class="modal-title">{formTitle}</h2>
+                        <button class="modal-x" aria-label="Close" onclick={handleFormCancel}>&times;</button>
+                    </header>
+                    <div class="modal-body">
+                        <template if:true={formIsPin}>
+                            <div class="fl"><span>For *</span>
+                                <div class="opts tight">
+                                    <template for:each={pinTargets} for:item="t">
+                                        <button key={t.id} class={t.cls} aria-pressed={t.pressed} data-k="hypId" data-v={t.id} onclick={handleFormPick}>{t.label}</button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        <div class="fromcard">
+                            <div class="note sm0">For</div>
+                            <div>{formFor}</div>
+                        </div>
+                        <template if:true={formIsTest}>
+                            <div class="fl"><span>Kind of Test *</span>
+                                <div class="opts tight">
+                                    <template for:each={testTypeOpts} for:item="t">
+                                        <button key={t.label} class={t.cls} aria-pressed={t.pressed} data-k="testType" data-v={t.label} onclick={handleFormPick}>{t.label}</button>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="fl"><span>Is It Done? *</span>
+                                <div class="opts tight">
+                                    <template for:each={testStatusOpts} for:item="s">
+                                        <button key={s.v} class={s.cls} aria-pressed={s.pressed} data-k="status" data-v={s.v} onclick={handleFormPick}>{s.label}</button>
+                                    </template>
+                                </div>
+                            </div>
+                            <label class="fl"><span>{detailLabel}</span>
+                                <textarea class="ta" rows="2" data-first="1" data-k="detail" value={form.detail} data-val={form.detail} oninput={handleFormField} placeholder={detailPlaceholder}></textarea>
+                            </label>
+                            <template if:true={formDone}>
+                                <label class="fl"><span>Result *</span>
+                                    <input class="ta" type="text" data-k="result" value={form.result} oninput={handleFormField} placeholder="For example, pin 0.12 mm under nominal">
+                                </label>
+                            </template>
+                            <div class="fields">
+                                <div class="fl owner"><span>Owner</span>
+                                    <lightning-record-picker label="Owner" variant="label-hidden" object-api-name="User" placeholder="You, if left empty" value={form.ownerId} onchange={handleFormOwner}></lightning-record-picker>
+                                </div>
+                                <template if:true={formPlanned}>
+                                    <label class="fl"><span>Due</span>
+                                        <input class="ta date" type="date" data-k="due" value={form.due} onchange={handleFormField}>
+                                    </label>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:true={formIsLink}>
+                            <template if:false={form.recordId}>
+                                <label class="fl"><span>CQ Record *</span>
+                                    <input class="ta" type="search" data-first="1" value={form.search} oninput={handleSearch} placeholder="Type a number, such as CAL-000006 or NC-000172">
+                                </label>
+                                <template if:true={hasFound}>
+                                    <div class="found">
+                                        <template for:each={form.found} for:item="f">
+                                            <button key={f.key} class="foundrow" data-id={f.id} onclick={handlePickRecord}>{f.line}</button>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:true={noneFound}><div class="note sm0">No CQ record starts with that number.</div></template>
+                            </template>
+                            <template if:true={form.recordId}>
+                                <div class="picked"><a class="link" href={pickedHref} target="_blank">{form.recordName}</a> <span class="muted">{form.recordType}</span> <button class="smalllink plainbtn" onclick={handleClearRecord}>Change</button></div>
+                            </template>
+                            <label class="fl"><span>What It Shows</span>
+                                <input class="ta" type="text" data-k="result" value={form.result} oninput={handleFormField} placeholder="For example, BF-02 maintenance plan has no pin check">
+                            </label>
+                        </template>
+                        <template if:true={formIsPin}>
+                            <label class="fl"><span>The Answer *</span>
+                                <textarea class="ta pin" rows="5" data-first="1" data-k="detail" value={form.detail} data-val={form.detail} oninput={handleFormField}></textarea>
+                            </label>
+                            <template if:true={form.recordName}><div class="note sm0">Source kept with it: {form.recordName}</div></template>
+                        </template>
+                        <template if:true={formShowsSupports}>
+                            <div class="fl"><span>Does It Support the Hypothesis? *</span>
+                                <div class="opts tight">
+                                    <template for:each={supportOpts} for:item="s">
+                                        <button key={s.v} class={s.cls} aria-pressed={s.pressed} data-k="supports" data-v={s.v} onclick={handleFormPick}>{s.label}</button>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                    <footer class="modal-foot">
+                        <span class="blocker">{formBlocker}</span>
+                        <button class="btn" onclick={handleFormCancel}>Cancel</button>
+                        <button class="btn primary" onclick={handleFormSave} disabled={cantSaveForm}>{formSaveLabel}</button>
+                    </footer>
+                </section>
+            </div>
+        </template>
+    </template>
+</template>

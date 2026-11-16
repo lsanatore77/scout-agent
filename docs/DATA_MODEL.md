@@ -9,6 +9,10 @@ Every object and field this project adds to the org. Built from the metadata in 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
 ### 15 Nov 2026
+- **New object Investigation Evidence** (`Investigation_Evidence__c`, IEV-0000): evidence for a hypothesis or a why on the Find the Cause step. Fields: Investigation (lookup), Hypothesis (lookup, related list Evidence), Why (lookup to CQ's Why), Kind (Test, CQ Record, Ask CQ.AI), Test Type (Measure or Inspect, Compare, Reproduce, Remove the Cause, Check Records), Supports (For, Against, Inconclusive), Status (Planned, Done), Detail, Result, Record Id, Record Name, Owner (User), Due Date, Done On. Files attach to the record.
+- **Investigation Hypothesis**: added How Do You Know? (becomes the CQ root cause's Justification), Is Not Fit (JSON: which Is / Is Not rows it fits or does not), Five Why Tool (lookup to the CQ 5 Why investigation tool made for it), Root Cause (lookup to the CQ root cause it was saved as).
+- **Root Cause** (CQ object, our field): Cause Role (Primary, Contributing). There can be more than one Primary.
+- **5W2H, Investigation Tool, Why** (CQ objects, no new fields): Find the Cause writes the Is / Is Not into CQ's 5W2H (Is and Is Not in each field) and each hypothesis's 5 Why into a CQ 5 Why tool with its Why records.
 - **Nonconformance** (CQ object, our fields): Repeat Of (lookup to the earlier NC), Repeat Decision (Escalate to CAPA, Link to Earlier CAPA, Not Needed), Repeat Decision Reason. Set at Complete Triage when the same problem happened before after a CAPA closed. Escalate also sets CQ's Initiate CAPA; Link sets CQ's Related CAPA to the earlier CAPA. A closed CAPA is never reopened.
 - **Investigation Not Relevant**: added Nonconformance (lookup, related list Triage Not Relevant), set when triage marks the earlier NC Not the Same Problem; the NC's investigation honours it later. Investigation is now empty on those rows.
 - **New object Investigation Hypothesis** (`Investigation_Hypothesis__c`, HYP-0000): a possible cause tested in the CQ.AI Investigation workspace. Fields: Investigation (lookup to CQ Investigation), Number (H1, H2 ... within the investigation), Hypothesis, Category (CQ's root cause categories), Status (Open, Confirmed, Ruled Out), Source (name), Source Record Id (the CQ change order, document, deviation or calibration it came from), Investigation Change (lookup). Made by Add as Hypothesis on the What Changed step; Find the Cause will confirm or rule them out and save confirmed ones as CQ root causes.
@@ -89,6 +93,12 @@ Objects and fields from earlier work are listed below; their history is in git (
 | API name | Label | Type | Details | Description |
 |---|---|---|---|---|
 | `Has_NC__c` | Has NC? | Checkbox |  |  |
+
+### compliancequest__SQX_Root_Cause__c
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Cause_Role__c` | Role | Picklist | Primary, Contributing | Primary: would cause the problem on its own (there can be more than one). Contributing: made it more likely or worse, or let it escape (CQ.AI Investigation). |
 
 ### In dev but not in this repo
 
@@ -294,6 +304,27 @@ A change added by hand on the What Changed step of the CQ.AI Investigation works
 | `What_Changed__c` | What Changed | Text | 255 chars | What changed, in a sentence. |
 | `Where_Found__c` | Where Found | Text | 255 chars | Where the change was found, for example the maintenance log for line 3. |
 
+### Investigation Evidence (`Investigation_Evidence__c`)
+
+Evidence for or against a hypothesis, or for a why, on the Find the Cause step of the CQ.AI Investigation workspace: a test (planned or done), a linked CQ record, or a pinned Ask CQ.AI answer. Files attach to the evidence record.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Detail__c` | Detail | LongTextArea | 32768 chars | What was done, or the Ask CQ.AI answer. |
+| `Done_On__c` | Done On | Date |  | When the test was done. |
+| `Due_Date__c` | Due Date | Date |  | For planned tests. |
+| `Hypothesis__c` | Hypothesis | Lookup | to Investigation_Hypothesis__c | The hypothesis this is evidence for or against. |
+| `Investigation__c` | Investigation | Lookup | to compliancequest__SQX_Investigation__c | The CQ investigation. |
+| `Kind__c` | Kind | Picklist | Test, CQ Record, Ask CQ.AI | Test, a linked CQ record, or a pinned Ask CQ.AI answer. |
+| `Owner__c` | Owner | Lookup | to User | Who does or did the test. |
+| `Record_Id__c` | Record Id | Text | 18 chars | A linked CQ record. |
+| `Record_Name__c` | Record Name | Text | 80 chars | The linked CQ record name. |
+| `Result__c` | Result | Text | 255 chars | The result in a sentence. |
+| `Status__c` | Status | Picklist | Planned, Done | For tests: Planned or Done. |
+| `Supports__c` | Supports | Picklist | For, Against, Inconclusive | For, Against or Inconclusive. |
+| `Test_Type__c` | Test Type | Picklist | Measure or Inspect, Compare, Reproduce, Remove the Cause, Check Records | For tests: what kind of test. |
+| `Why__c` | Why | Lookup | to compliancequest__SQX_Why__c | The CQ Why (5 Why step) this proves, when it is evidence for a why. |
+
 ### Investigation Hypothesis (`Investigation_Hypothesis__c`)
 
 A possible cause being tested in the CQ.AI Investigation workspace. Made from a change on the What Changed step (or by hand in Find the Cause). Open until it is Confirmed or Ruled Out; a confirmed hypothesis is saved as a CQ root cause.
@@ -301,9 +332,13 @@ A possible cause being tested in the CQ.AI Investigation workspace. Made from a 
 | API name | Label | Type | Details | Description |
 |---|---|---|---|---|
 | `Category__c` | Category | Picklist | People, Machine, Method, Environment (Nature), Materials, Measurement | CQ's root cause category for this cause. |
+| `Five_Why_Tool__c` | 5 Why | Lookup | to compliancequest__SQX_Investigation_Tool__c | Its CQ 5 Why investigation tool. |
+| `How_Do_You_Know__c` | How Do You Know | TextArea |  | One line on the evidence that confirmed or ruled it out; becomes the CQ root cause Justification. |
 | `Investigation_Change__c` | Investigation Change | Lookup | to Investigation_Change__c | The change added by hand that it came from, if any. |
 | `Investigation__c` | Investigation | Lookup | to compliancequest__SQX_Investigation__c | The investigation this hypothesis belongs to. |
+| `Is_Not_Fit__c` | Is / Is Not Fit | LongTextArea | 32768 chars | Which Is / Is Not rows it fits or fails (JSON). |
 | `Number__c` | Number | Number | 4,0 | The hypothesis number within the investigation, shown as H1, H2 and so on. |
+| `Root_Cause__c` | Root Cause | Lookup | to compliancequest__SQX_Root_Cause__c | The CQ root cause it became. |
 | `Source_Name__c` | Source | Text | 255 chars | The name of the record or change it came from, for example CHG-000005. |
 | `Source_Record_Id__c` | Source Record Id | Text | 18 chars | The CQ record it came from (change order, document, deviation, calibration), if any. |
 | `Status__c` | Status | Picklist | Open, Confirmed, Ruled Out | Open while it is being tested; Confirmed or Ruled Out once decided. |

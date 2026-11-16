@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cause_Role__c</fullName><label>Role</label><description>Primary: would cause the problem on its own (there can be more than one). Contributing: made it more likely or worse, or let it escape (CQ.AI Investigation).</description><type>Picklist</type><required>false</required><valueSet><restricted>true</restricted><valueSetDefinition><sorted>false</sorted><value><fullName>Primary</fullName><default>false</default><label>Primary</label></value><value><fullName>Contributing</fullName><default>false</default><label>Contributing</label></value></valueSetDefinition></valueSet>
+</CustomField>

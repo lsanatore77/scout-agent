@@ -12,7 +12,7 @@
                         </div>
                     </div>
                     <div class="hl-actions">
-                        <c-ask-cq-popover record-id={v.investigationId} agent-name="CQAI_Quality" placeholder="Ask about this investigation…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
+                        <c-ask-cq-popover record-id={v.investigationId} agent-name="CQAI_Quality" placeholder="Ask about this investigation…" step={askStep} suggestions={askSuggestions} pin-label={pinLabel} onaskcqpin={handleAskPin}></c-ask-cq-popover>
                         <button class="btn" onclick={handleEdit}>Edit</button>
                     </div>
                 </div>
@@ -318,44 +318,10 @@
                         <template if:true={histError}><div class="errbox">{histError}</div></template>
                     </template>
 
-                    <!-- 4 Find the Cause (stage 2): what CQ holds today -->
+                    <!-- 4 Find the Cause -->
                     <template if:true={showCause}>
                         <h3 class="q">Find the Cause</h3>
-                        <div class="ownbox">Coming next: hypotheses with evidence, Cause Map, Fishbone, 5-Why and Is / Is Not views, and Set as Primary Root Cause. Below are the root causes and tools already on this investigation in CQ.</div>
-                        <div class="lab top16">Root Causes</div>
-                        <template if:true={hasCauses}>
-                            <div class="tblwrap">
-                                <table class="tbl">
-                                    <thead><tr><th>Category</th><th>Code</th><th>Description</th><th>Verified</th></tr></thead>
-                                    <tbody>
-                                        <template for:each={causeRows} for:item="c">
-                                            <tr key={c.key}>
-                                                <td class="strong"><a class="link" href={c.href} target="_blank">{c.category}</a></td>
-                                                <td>{c.code}</td><td>{c.description}</td><td><span class={c.vCls}>{c.verified}</span></td>
-                                            </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </template>
-                        <template if:false={hasCauses}><p class="note">No root cause is recorded on this investigation yet.</p></template>
-                        <template if:true={hasTools}>
-                            <div class="lab top16">Analysis Tools</div>
-                            <div class="tblwrap">
-                                <table class="tbl">
-                                    <thead><tr><th>Tool</th><th>Type</th><th>Status</th></tr></thead>
-                                    <tbody>
-                                        <template for:each={toolRows} for:item="t">
-                                            <tr key={t.key}>
-                                                <td class="strong"><a class="link" href={t.href} target="_blank">{t.name}</a></td>
-                                                <td>{t.type}</td><td><span class={t.sCls}>{t.status}</span></td>
-                                            </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <p class="note">Open tools are completed for you on Complete Investigation, since CQ needs every tool complete first.</p>
-                        </template>
+                        <c-cq-investigation-cause record-id={v.investigationId} onaddhyp={handleCauseAddHyp} oncausestate={handleCauseState} oncausechanged={handleCauseChanged}></c-cq-investigation-cause>
                     </template>
 
                     <!-- 5 Actions -->
@@ -438,6 +404,7 @@
                 <footer class="foot">
                     <span class="grow"></span>
                     <span class="blocker">{blocker}</span>
+                    <template if:true={showSaveRoots}><button class="btn primary" onclick={handleSaveRoots} disabled={cantSaveRoots}>{saveRootsLabel}</button></template>
                     <template if:true={showActions}><button class="btn primary" onclick={handleSaveActions} disabled={cantSaveActions}>{saveActionsLabel}</button></template>
                     <template if:true={showConclusion}><button class="btn primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
                     <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>

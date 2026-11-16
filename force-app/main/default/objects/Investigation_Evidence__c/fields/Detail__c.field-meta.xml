@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Detail__c</fullName><label>Detail</label><description>What was done, or the Ask CQ.AI answer.</description><type>LongTextArea</type><length>32768</length><visibleLines>4</visibleLines>
+</CustomField>

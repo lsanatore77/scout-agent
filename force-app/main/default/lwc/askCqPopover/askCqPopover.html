@@ -14,7 +14,7 @@
                 </header>
 
                 <div class="log">
-                    <template for:each={messages} for:item="m">
+                    <template for:each={shownMessages} for:item="m">
                         <div key={m.key} class={m.cls}>
                             <template if:false={m.isAgent}><lightning-formatted-text value={m.text}></lightning-formatted-text></template>
                             <template if:true={m.isAgent}>
@@ -26,6 +26,8 @@
                                         </div>
                                     </template>
                                 </div>
+                                <template if:true={m.canPin}><div class="pinrow"><button class="pinbtn" data-key={m.key} onclick={handlePin}>{pinLabel}</button></div></template>
+                                <template if:true={m.pinned}><div class="pinrow pinned">&#10003; {pinnedText}</div></template>
                             </template>
                         </div>
                     </template>

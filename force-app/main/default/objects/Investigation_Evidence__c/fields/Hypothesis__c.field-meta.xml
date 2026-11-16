@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Hypothesis__c</fullName><label>Hypothesis</label><description>The hypothesis this is evidence for or against.</description><type>Lookup</type><referenceTo>Investigation_Hypothesis__c</referenceTo><relationshipName>Evidence</relationshipName><relationshipLabel>Evidence</relationshipLabel><deleteConstraint>SetNull</deleteConstraint><required>false</required>
+</CustomField>

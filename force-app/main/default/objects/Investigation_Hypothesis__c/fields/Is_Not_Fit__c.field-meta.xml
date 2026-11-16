@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Not_Fit__c</fullName><label>Is / Is Not Fit</label><description>Which Is / Is Not rows it fits or fails (JSON).</description><type>LongTextArea</type><length>32768</length><visibleLines>3</visibleLines>
+</CustomField>
