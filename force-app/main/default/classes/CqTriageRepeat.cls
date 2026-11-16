@@ -20,8 +20,18 @@ public with sharing class CqTriageRepeat {
         @AuraEnabled public List<CqInvestigationHistory.Dismissed> dismissed = new List<CqInvestigationHistory.Dismissed>();
     }
 
+    /** Found once per NC per transaction: the risk, the next steps and the agent's facts all ask for it, and it runs the PHR ranking. */
+    static Map<Id, Repeat> cache = new Map<Id, Repeat>();
+
     /** The first recurrence for the NC, or found = false. Never throws: triage carries on without it. */
     public static Repeat find(Id ncId) {
+        if (ncId != null && cache.containsKey(ncId)) { return cache.get(ncId); }
+        Repeat r = rank(ncId);
+        if (ncId != null) { cache.put(ncId, r); }
+        return r;
+    }
+
+    static Repeat rank(Id ncId) {
         Repeat r = new Repeat();
         try {
             CqInvestigationHistory.View v = CqInvestigationHistory.forNc(ncId);
@@ -56,12 +66,14 @@ public with sharing class CqTriageRepeat {
             insert new Investigation_Not_Relevant__c(Nonconformance__c = recordId, Record_Id__c = targetId,
                 Record_Name__c = targetName == null ? null : targetName.left(80), Reason__c = 'Not the same problem (triage)');
         } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); }
+        cache.remove(recordId);
         return find(recordId);
     }
 
     @AuraEnabled
     public static Repeat restore(Id recordId, Id dismissedId) {
         CqInvestigationHistory.restore(dismissedId);
+        cache.remove(recordId);
         return find(recordId);
     }
 }

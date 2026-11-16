@@ -5,7 +5,9 @@
  * workspace shows as plain text, so the agent answers from the same facts the user sees: the problem,
  * each CQ.AI Triage step (Containment, Data Check, Risk, Investigation Links) with what CQ.AI Suggests
  * and what the triager chose, the Field Action Review suggestion and decision, and the relevant
- * records on the part (other NCs, complaints, CAPAs, field actions), already sorted.
+ * records on the part (other NCs, complaints, CAPAs, field actions), already sorted; also the problem that happened
+ * before and the disposition. Given an Investigation, returns what the CQ.AI Investigation workspace shows
+ * (CqInvestigationAgentContext).
  *
  * Read only: everything runs inside a savepoint that is rolled back, so the action changes nothing.
  */
@@ -40,14 +42,15 @@ global with sharing class CqQualityAgentContext {
 
     public static String factsFor(Id recordId) {
         if (recordId == null) { return 'No record was given, so I cannot tell which nonconformance to read.'; }
-        if (recordId.getSObjectType() != compliancequest__SQX_Nonconformance__c.SObjectType) {
+        Boolean isInv = recordId.getSObjectType() == compliancequest__SQX_Investigation__c.SObjectType;
+        if (!isInv && recordId.getSObjectType() != compliancequest__SQX_Nonconformance__c.SObjectType) {
             return 'This record is a ' + recordId.getSObjectType().getDescribe().getLabel()
-                + ', not a Nonconformance. The Quality agent only reads nonconformances for now.';
+                + ', not a Nonconformance or an Investigation. The Quality agent only reads nonconformances and investigations for now.';
         }
         List<String> lines = new List<String>();
         Savepoint sp = Database.setSavepoint();
         try {
-            build(lines, recordId);
+            if (isInv) { CqInvestigationAgentContext.investigation(lines, recordId); } else { build(lines, recordId); }
         } catch (Exception e) {
             lines.add('The record could not be read: ' + e.getMessage());
         } finally {
@@ -270,6 +273,9 @@ global with sharing class CqQualityAgentContext {
             l.add('Review ' + link(fa.reviewName, fa.reviewId, 'Field_Action_Review__c') + ': ' + s(fa.reviewStatus) + (fa.reviewOutcome == null ? '' : ', outcome ' + fa.reviewOutcome)
                 + (fa.faName == null ? '' : '. Field action ' + link(fa.faName, fa.faId, 'Field_Action__c') + ' was opened from it') + '.');
         }
+
+        // ---- the repeat problem and the disposition (CqInvestigationAgentContext)
+        CqInvestigationAgentContext.ncExtras(l, recordId);
 
         // ---- relevant records on the part
         partHistory(l, g, recordId);
