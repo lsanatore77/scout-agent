@@ -1,0 +1,21 @@
+# Packaging notes (CQ.AI Quality and Field Actions)
+
+Not now; at some point. Kept so packaging is a known list, not a discovery.
+
+## Decided (16 Nov 2026)
+- Package as a **managed package in the `enablement` namespace**, the same packaging set up for "Enablement - Document Agent" (Developer Edition org `enablement-ns`, Dev Hub golden). It depends on the CQ package (compliancequest), installed first.
+
+## What changes when it is packaged
+- **Names get the namespace.** Our objects and fields become `enablement__Quality_Event__c`, `enablement__Triage_Risk__c` and so on, including the fields we add to CQ objects (Nonconformance, Investigation, CAPA, Root Cause). Code written in the namespace org needs no change; anything that builds names as text (LWC field paths such as the part picker's `compliancequest__Part_Number__c`, dynamic SOQL, the agent scripts, the prompt template name `CQAI_Investigation_Summary`) must be checked.
+- **The dev org will not adopt the package.** dev (cqse-golden--dev) has these components unmanaged and without a namespace; installing the managed package there would add a second, namespaced copy. Test the package in a scratch org or a fresh sandbox, not over dev.
+- **Data does not travel.** Setup records (Event Questions, Quick Log Categories, Signal Rules, settings) need an install script (a post-install Apex class) or Custom Metadata to arrive with the package.
+- **Shortcuts agreed for dev** need a packaged form: closing quick-log NCs directly; agent scripts pasted by hand; the prompt template made through the API (GenAiPromptTemplate is packageable).
+- **Permission sets** (CQ.AI Quality, Field Actions User) package; assignments do not.
+- **Tests:** 75% coverage in the packaging org, no reliance on org data, and field-level security in a fresh org (the Document Agent package hit this: fields created by metadata are hidden until a permission set grants them).
+- **API version:** Lightning Types and agent metadata need API 66.0 or later (golden notes say 67.0 for Lightning Types).
+- **CQ version:** build against the oldest CQ version customers run (Master is on 15.6).
+
+## Running list of things to check before packaging
+- Hard-coded CQ picklist values and activity codes (submit, takeownershipandinitiate, Closed).
+- Record-type and app names referenced by name.
+- The Report a Problem tab (created by hand in dev).
