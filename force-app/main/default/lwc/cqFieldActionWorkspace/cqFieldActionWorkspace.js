@@ -25,7 +25,7 @@ const COMMITTEE = 4;
 // drafts saved before Risk joined the checklist (version 1) used six steps: glance, risk, signals, checklist, recommendation, committee
 const OLD_STEP = [0, ASSESS, SIGNALS, ASSESS, REC, COMMITTEE];
 const OLD_MAX = [0, ASSESS, ASSESS, ASSESS, REC, COMMITTEE];
-const READ_ONLY = [0, SIGNALS, COMMITTEE];   // steps the committee can open while the review is with them
+const READ_ONLY = [0, SIGNALS, ASSESS, REC, COMMITTEE];   // steps that open while the review is with the committee (Assessment and Recommendation view only)
 const STEP_LABEL = { Open: 'Pending', Approved: 'Approved', Rejected: 'Sent Back', Void: 'Not Required', Skipped: 'Not Required' };
 const PAGE = 5;      // records shown under a signal before "Show more"
 
@@ -182,8 +182,13 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     }
     get is0() { return this.ready && ((this.open && this.step === 0) || (this.done && !this.showSummary)); }
     get is1() { return this.open && this.step === SIGNALS; }   // the Signals and Evidence block in the template
-    get is3() { return this.live && this.step === ASSESS; }    // the Reviewer Assessment block: risk and checklist
-    get is4() { return this.live && this.step === REC; }
+    get is3() { return this.open && this.step === ASSESS; }    // the Reviewer Assessment block: risk and checklist (view only with the committee)
+    get is4() { return this.open && this.step === REC; }
+    /** With the committee, Reviewer Assessment and Recommendation open view only: the main panel gets the viewonly class. */
+    renderedCallback() {
+        const m = this.template.querySelector('.main');
+        if (m) { m.classList.toggle('viewonly', !!this.waiting && (this.step === ASSESS || this.step === REC)); }
+    }
     get is5() { return this.open && this.step === COMMITTEE; }
     get showResumed() { return this.resumed && this.live; }
     get canRestart() { return this.live && this.maxStep > 0 && !this.saving; }
@@ -363,7 +368,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get levels() {
         return LEVELS.map((l) => ({ id: l, cq: l === this.v.band, pressed: this.level === l ? 'true' : 'false', cls: 'segb' + (this.level === l ? ' on' : '') }));
     }
-    handleLevel(event) { this.level = event.currentTarget.dataset.id; }
+    handleLevel(event) { if (this.waiting) { return; } this.level = event.currentTarget.dataset.id; }
     get assessDone() { return !!this.hazard.trim() && !!this.level && this.checksDone; }
 
     get questions() {
@@ -373,7 +378,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         }));
     }
     get checksDone() { return QUESTIONS.every((q) => !!this.checks[q.id]); }
-    handleCheck(event) { const d = event.currentTarget.dataset; this.checks = { ...this.checks, [d.q]: d.a }; }
+    handleCheck(event) { if (this.waiting) { return; } const d = event.currentTarget.dataset; this.checks = { ...this.checks, [d.q]: d.a }; }
 
     // ---- step 5: recommendation
     get outcomes() {
@@ -426,10 +431,10 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         return 'Partial · starts with ' + (this.v.lot ? 'lot ' + this.v.lot : 'no lot') + (also.length ? ' · CQ.AI would also look at ' + also.join(', ') : '')
             + ' · lots chosen and approved in the Field Action';
     }
-    handleScope(event) { this.scope = event.currentTarget.dataset.id; }
-    handleOutcome(event) { this.outcome = event.currentTarget.dataset.id; }
-    handleFa(event) { this.faChoice = event.currentTarget.dataset.id; }
-    handleInput(event) { this[event.target.dataset.f] = event.target.value; }
+    handleScope(event) { if (this.waiting) { return; } this.scope = event.currentTarget.dataset.id; }
+    handleOutcome(event) { if (this.waiting) { return; } this.outcome = event.currentTarget.dataset.id; }
+    handleFa(event) { if (this.waiting) { return; } this.faChoice = event.currentTarget.dataset.id; }
+    handleInput(event) { if (this.waiting) { return; } this[event.target.dataset.f] = event.target.value; }
 
     // ---- step 6: committee approval, on CQ Approvals
     get committee() { return (this.v && this.v.committee) || {}; }

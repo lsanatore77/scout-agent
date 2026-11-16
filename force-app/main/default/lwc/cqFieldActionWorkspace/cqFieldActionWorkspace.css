@@ -213,3 +213,7 @@
 .chevbtn { padding: 0; border: none; background: none; cursor: pointer; }
 .chev.open { transform: rotate(90deg); }
 .stbl .evrow td { padding: 8px 12px; border-top: 1px solid #eceff2; }
+/* With the committee, Reviewer Assessment and Recommendation open view only (class set in renderedCallback) */
+.main.viewonly .q::after { content: ' \00B7  View Only'; font-size: 14px; font-weight: 600; color: #5b6470; }
+.main.viewonly button:not(.link), .main.viewonly select, .main.viewonly input, .main.viewonly textarea { pointer-events: none; }
+.main.viewonly textarea, .main.viewonly input, .main.viewonly select { background: #fafbfc; }
