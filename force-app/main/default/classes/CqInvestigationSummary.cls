@@ -145,7 +145,8 @@ public with sharing class CqInvestigationSummary {
 
     static String actionLine(String title, String type, String description, String owner, Date due) {
         Boolean descNew = String.isNotBlank(description) && description.trim() != (title == null ? '' : title.trim());
-        return '- ' + s(title) + ' (' + s(type) + '), owner ' + s(owner) + ', due ' + d(due) + '.' + (descNew ? ' Description: ' + description.trim() : '');
+        // an owner that is not known is left out, so the summary never says "not set"
+        return '- ' + s(title) + ' (' + s(type) + ')' + (String.isBlank(owner) ? '' : ', owner ' + owner) + ', due ' + d(due) + '.' + (descNew ? ' Description: ' + description.trim() : '');
     }
 
     // ---------------------------------------------------------------- the prompt template

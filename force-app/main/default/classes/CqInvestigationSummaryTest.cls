@@ -37,6 +37,7 @@ private class CqInvestigationSummaryTest {
         }
         System.assert(data.contains('Replace the locating pin (Correction)'), 'the actions on screen are used');
         System.assert(data.contains('On fixture BF-02'));
+        System.assert(!data.contains('owner not set'), 'an unknown owner is left out');
         System.assertEquals('Problem\nHole offset.\n\nActions\n- Replace the pin.', text, 'markdown taken off');
         System.assert(CqInvestigationSummary.buildData(nc.compliancequest__SQX_Investigation__c, null).contains('## ACTIONS'));
     }
