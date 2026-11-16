@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Repeat_Decision__c</fullName>
+    <label>Repeat Decision</label>
+    <description>What triage decided for a problem that happened before after a CAPA closed (CQ.AI Triage).</description>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Escalate to CAPA</fullName><default>false</default><label>Escalate to CAPA</label></value>
+            <value><fullName>Link to Earlier CAPA</fullName><default>false</default><label>Link to Earlier CAPA</label></value>
+            <value><fullName>Not Needed</fullName><default>false</default><label>Not Needed</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

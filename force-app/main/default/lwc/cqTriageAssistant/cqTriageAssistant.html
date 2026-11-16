@@ -34,7 +34,30 @@
                 </nav>
                 <div class="main">
                     <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
-                    <template if:true={isGlance}><template if:true={inline}><h3 class="q">Triage at a Glance</h3></template><slot></slot></template>
+                    <template if:true={isGlance}><template if:true={inline}><h3 class="q">Triage at a Glance</h3></template><slot></slot>
+                        <template if:true={showRepGlance}>
+                            <div class="recur">
+                                <div class="recur-head"><span aria-hidden="true">&#9888;</span> Happened Before, and the Fix Didn&rsquo;t Hold</div>
+                                <div class="lh"><a class="link" href={repBox.ncHref} target="_blank">{repBox.ncName}</a>{repBox.text1}<a class="link" href={repBox.capaHref} target="_blank">{repBox.capaName}</a>{repBox.text2}</div>
+                                <template if:true={repBox.efrText}><div class={repBox.efrCls}><a class="redlink" href={repBox.efrHref} target="_blank">{repBox.efrName}</a>{repBox.efrText}</div></template>
+                                <template if:true={repBox.noReview}><div class="lh muted">{repBox.capaName} closed with no effectiveness review on record.</div></template>
+                                <div class="lh"><strong>What this changes in triage:</strong> {repBox.changes}</div>
+                                <div class="repacts">
+                                    <a class="btn sm linkbtn" href={repBox.ncHref} target="_blank">Open {repBox.ncName}</a>
+                                    <a class="btn sm linkbtn" href={repBox.capaHref} target="_blank">Open {repBox.capaName}</a>
+                                    <button class="smalllink" onclick={handleNotSame} disabled={repBusy}>Not the Same Problem</button>
+                                </div>
+                            </div>
+                        </template>
+                        <template if:true={showRepDismissed}>
+                            <div class="repoff">
+                                <span class="muted">Marked Not the Same Problem:</span>
+                                <template for:each={repDismissed} for:item="d">
+                                    <span key={d.key} class="repoffitem">{d.name} <button class="btn sm" data-id={d.id} onclick={handleRepRestore} disabled={repBusy}>Restore</button></span>
+                                </template>
+                            </div>
+                        </template>
+                    </template>
                     <template if:true={is0}>
                         <h3 class="q">Containment</h3>
                         <div class="cgrid">
@@ -174,8 +197,9 @@
                                             <div class="whyv">{sevWhy}</div>
                                         </div>
                                         <div class="why">
-                                            <div class="whyk">Likelihood: {likHead}</div>
+                                            <div class="whyk">Likelihood: {likHead} <span class="raised">{likRaised}</span></div>
                                             <div class="whyv">{likWhy}</div>
+                                            <template if:true={rep}><div class="whyv redtext">{repRiskLine}</div></template>
                                             <template if:true={recentList}><div class="whyv muted">Latest: {recentList}</div></template>
                                         </div>
                                         <template if:true={escaped}><div class="why bad">{escapedWhy}. Risk is High whatever cell is chosen.</div></template>
@@ -230,6 +254,23 @@
                                 </template>
                             </div>
                         </div>
+                        <template if:true={rep}>
+                            <div class="recur top8">
+                                <div class="lab">CAPA</div>
+                                <div class="fsug nomt"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this repeat problem be escalated to a CAPA?"></c-cq-ai-why> <strong>Escalate to CAPA.</strong> {capaWhy}</div>
+                                <div class="opts">
+                                    <template for:each={capaOpts} for:item="o">
+                                        <button key={o.id} class={o.cls} data-id={o.id} onclick={handleCapa} aria-pressed={o.pressed}>{o.label}</button>
+                                    </template>
+                                </div>
+                                <p class="note lh"><strong>Escalate to CAPA:</strong> sets CQ&rsquo;s Initiate CAPA on this NC and records {rep.ncName} as what it repeats. A closed CAPA is not reopened. <strong>Link to {capaLinkName}:</strong> sets it as this NC&rsquo;s Related CAPA, with no new CAPA.</p>
+                                <template if:true={capaNeedsReason}>
+                                    <label class="fl">Why Not Escalated *
+                                        <input class="ta" type="text" data-f="capaReason" value={capaReason} oninput={handleInput} placeholder="For example, the cause is different: a new adhesive lot, not the fixture" />
+                                    </label>
+                                </template>
+                            </div>
+                        </template>
                         <template if:true={needMatrix}>
                             <label class="fl">Approval Matrix *
                                 <select class="sel" onchange={handleMatrix}>

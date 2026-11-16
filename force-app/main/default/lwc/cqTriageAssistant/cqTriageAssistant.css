@@ -160,3 +160,23 @@
 .box.inline .foot { border-top: none; padding: 0 20px 20px 220px; background: none; }
 .steps-title .star { margin-right: 5px; }
 .farwrap { margin: 0 0 20px; }
+/* the repeat: happened before, and the fix did not hold */
+.recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid #f2d3a8; background: #fffbf5; display: flex; flex-direction: column; gap: 8px; }
+.recur .opts { margin-top: 0; }
+.recur .fl { margin-top: 0; }
+.recur-head { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #7a4100; }
+.lh { line-height: 1.5; }
+.redtext { color: #b42318; font-weight: 600; }
+.redlink { color: #b42318; font-weight: 600; text-decoration: underline; }
+.link { color: #1d5fd1; font-weight: 600; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.muted { color: #5b6470; }
+.repacts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.linkbtn { display: inline-flex; align-items: center; text-decoration: none; color: #1a1d21; }
+.smalllink { border: none; background: transparent; padding: 0; font: inherit; font-size: 12px; color: #1d5fd1; cursor: pointer; }
+.smalllink:hover { text-decoration: underline; }
+.repoff { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; padding: 8px 12px; border-radius: 8px; border: 1px solid #dde1e6; background: #fafbfc; }
+.repoffitem { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.raised { font-weight: 600; color: #7a4100; }
+.fsug.nomt { margin-top: 0; }
+.cell.base:not(.on) { outline: 1px dashed #5b6470; outline-offset: -4px; }

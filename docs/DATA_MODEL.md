@@ -9,6 +9,8 @@ Every object and field this project adds to the org. Built from the metadata in 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
 ### 15 Nov 2026
+- **Nonconformance** (CQ object, our fields): Repeat Of (lookup to the earlier NC), Repeat Decision (Escalate to CAPA, Link to Earlier CAPA, Not Needed), Repeat Decision Reason. Set at Complete Triage when the same problem happened before after a CAPA closed. Escalate also sets CQ's Initiate CAPA; Link sets CQ's Related CAPA to the earlier CAPA. A closed CAPA is never reopened.
+- **Investigation Not Relevant**: added Nonconformance (lookup, related list Triage Not Relevant), set when triage marks the earlier NC Not the Same Problem; the NC's investigation honours it later. Investigation is now empty on those rows.
 - **New object Investigation Hypothesis** (`Investigation_Hypothesis__c`, HYP-0000): a possible cause tested in the CQ.AI Investigation workspace. Fields: Investigation (lookup to CQ Investigation), Number (H1, H2 ... within the investigation), Hypothesis, Category (CQ's root cause categories), Status (Open, Confirmed, Ruled Out), Source (name), Source Record Id (the CQ change order, document, deviation or calibration it came from), Investigation Change (lookup). Made by Add as Hypothesis on the What Changed step; Find the Cause will confirm or rule them out and save confirmed ones as CQ root causes.
 - **New object Investigation Change** (`Investigation_Change__c`, IC-0000): a change added by hand on the What Changed step (not held in CQ). Fields: Investigation (lookup), What Changed, Change Date, Category (CQ's root cause categories plus Other), Where Found, Link or Reference.
 - **New object Investigation Not Relevant** (`Investigation_Not_Relevant__c`, INR-0000): a past record the investigator marked Not Relevant on the Check History step, so it drops off the list for that investigation. Fields: Investigation (lookup, related list Not Relevant Records), Record Id (18), Record Name, Reason. Restore deletes it.
@@ -72,6 +74,9 @@ Objects and fields from earlier work are listed below; their history is in git (
 | `Field_Action_Review_On__c` | Field Action Review Set On | DateTime |  |  |
 | `Field_Action_Review_Reason__c` | Field Action Review Reason | LongTextArea | 2000 chars | Why this nonconformance was sent for field action review. |
 | `Field_Action_Review__c` | Field Action Review | Picklist | Not Needed, Sent for Review | Set at triage: whether this nonconformance was sent to the recall coordinator for field action review. |
+| `Repeat_Decision_Reason__c` | Repeat Decision Reason | TextArea |  | Why the repeat was not escalated to a CAPA (CQ.AI Triage). |
+| `Repeat_Decision__c` | Repeat Decision | Picklist | Escalate to CAPA, Link to Earlier CAPA, Not Needed | What triage decided for a problem that happened before after a CAPA closed (CQ.AI Triage). |
+| `Repeat_Of__c` | Repeat Of | Lookup | to compliancequest__SQX_Nonconformance__c | The earlier NC with the same problem whose CAPA closed, found at triage (CQ.AI Triage). |
 | `Triage_By__c` | Triaged By | Lookup | to User |  |
 | `Triage_Draft__c` | Triage Draft | LongTextArea | 20000 chars | Work in progress in the Triage workspace, so a triager can leave and pick up where they left off. Cleared when triage is completed. |
 | `Triage_Notes__c` | Triage Notes | LongTextArea | 5000 chars | What the triager decided at each step of the Triage Assistant. |
@@ -311,6 +316,7 @@ A past record marked Not Relevant on the Check History step of the CQ.AI Investi
 | API name | Label | Type | Details | Description |
 |---|---|---|---|---|
 | `Investigation__c` | Investigation | Lookup | to compliancequest__SQX_Investigation__c | The investigation the record was marked Not Relevant for. |
+| `Nonconformance__c` | Nonconformance | Lookup | to compliancequest__SQX_Nonconformance__c | Set when the record was marked Not the Same Problem in triage, before there is an investigation. |
 | `Reason__c` | Reason | Text | 255 chars | Why it is not relevant, optional. |
 | `Record_Id__c` | Record Id | Text | 18 chars | The Id of the NC, CAPA or inspection marked Not Relevant. |
 | `Record_Name__c` | Record | Text | 80 chars | The name of the record, for example NC-000162. |

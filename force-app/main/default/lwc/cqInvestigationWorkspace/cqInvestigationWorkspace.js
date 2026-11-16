@@ -497,6 +497,8 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         const ta = this.template.querySelector('textarea.hypta');
         if (!ta) { return; }
         this.hypFocus = false;
+        // set the prefilled text on the element itself: the value binding alone left it empty on first open
+        ta.value = (this.hypForm && this.hypForm.title) || '';
         ta.focus();
         const n = ta.value.length;
         try { ta.setSelectionRange(n, n); } catch (e) { /* not all inputs allow it */ }

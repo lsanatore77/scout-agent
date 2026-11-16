@@ -38,6 +38,8 @@ public with sharing class CqTriageNext {
         @AuraEnabled public Date containmentDue; @AuraEnabled public Date dispDue; @AuraEnabled public Date invDue;
         @AuraEnabled public Id defaultMatrixId;
         @AuraEnabled public List<Matrix> matrices = new List<Matrix>();
+        @AuraEnabled public CqTriageRepeat.Repeat repeat;   // the problem happened before after a CAPA closed
+        @AuraEnabled public String capaWhy;                 // why Escalate to CAPA is suggested
     }
     public class Choice {
         public String risk; public String notes; public Integer severity;
@@ -45,7 +47,9 @@ public with sharing class CqTriageNext {
         public Boolean disposition; public String dispositionDue; public Boolean dispositionApproval;
         public Boolean investigate; public String investigationDue; public Boolean investigationApproval;
         public Id matrixId;
+        public String repeatDecision; public String repeatReason; public Id repeatOfId; public Id repeatCapaId;
     }
+    public static final List<String> REPEAT_DECISIONS = new List<String>{ 'Escalate to CAPA', 'Link to Earlier CAPA', 'Not Needed' };
     public class Done {
         @AuraEnabled public String risk; @AuraEnabled public String path;
         @AuraEnabled public List<String> created = new List<String>();
@@ -88,10 +92,12 @@ public with sharing class CqTriageNext {
         Integer score = rr.severity * rr.likelihood;
         String level = rr.escaped ? 'High' : CqTriageRisk.band(score);
         Integer repeats = rr.count == null ? 0 : rr.count;
-        if (level != 'Low' || repeats > 0) {
+        Boolean again = rr.repeat != null && rr.repeat.found == true;
+        if (level != 'Low' || repeats > 0 || again) {
             n.invSuggest = 'inv';
             List<String> w = new List<String>();
             if (level != 'Low') { w.add('Risk is ' + level + ' (score ' + score + ' of 25)'); }
+            if (again) { w.add('the same problem happened before (' + rr.repeat.ncName + ')'); }
             if (repeats > 0) { w.add(repeats + ' other ' + (repeats == 1 ? 'NC was' : 'NCs were') + ' raised on this part in the last ' + CqTriageRisk.WINDOW_DAYS + ' days'); }
             n.invWhy = String.join(w, ' and ') + '.';
         } else {
@@ -99,6 +105,12 @@ public with sharing class CqTriageNext {
             n.invWhy = 'Risk is Low (score ' + score + ' of 25) and no other NCs were raised on this part in the last ' + CqTriageRisk.WINDOW_DAYS + ' days.';
         }
 
+        if (again) {
+            n.repeat = rr.repeat;
+            n.capaWhy = 'The same problem came back after ' + rr.repeat.capaName
+                + (rr.repeat.effective ? ' was marked effective' : ' closed')
+                + ', so that fix did not deal with why it happened. An investigation of this NC alone would likely repeat the same fix.';
+        }
         n.matrices = matrices();
         for (Matrix m : n.matrices) { if (m.name == DEFAULT_MATRIX) { n.defaultMatrixId = m.id; } }
         return n;
@@ -133,10 +145,14 @@ public with sharing class CqTriageNext {
         if (disp && String.isBlank(c.dispositionDue)) { throw new AuraHandledException('Set the disposition due date.'); }
         if (inv && String.isBlank(c.investigationDue)) { throw new AuraHandledException('Set the investigation due date.'); }
         if ((dispAppr || invAppr) && c.matrixId == null) { throw new AuraHandledException('Choose an approval matrix.'); }
+        if (c.repeatOfId != null) {
+            if (String.isBlank(c.repeatDecision) || !REPEAT_DECISIONS.contains(c.repeatDecision)) { throw new AuraHandledException('Choose what to do about the repeat: Escalate to CAPA, Link to Earlier CAPA or Not Needed.'); }
+            if (c.repeatDecision != 'Escalate to CAPA' && String.isBlank(c.repeatReason)) { throw new AuraHandledException('Say why the repeat is not escalated to a CAPA.'); }
+        }
 
         // a triage finished without the workspace's start (the popup, say) still goes through Triage first
         Started st = startTriage(recordId);
-        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__SQX_Investigation__c, OwnerId FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__SQX_Investigation__c, compliancequest__SQX_CAPA__c, OwnerId FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
         String path = !inv ? 'Log Only' : cur.compliancequest__SQX_Investigation__c != null ? 'Continue with Investigation' : 'New Investigation';
         Boolean contain = c.containment == true;
 
@@ -185,6 +201,19 @@ public with sharing class CqTriageNext {
                 update new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Containment_Required__c = contain,
                     compliancequest__Disposition_Required__c = dispFlag, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
             } catch (Exception e2) { /* the triage is saved; the warning above says CQ refused the move */ }
+        }
+
+        // the repeat: CQ's Initiate CAPA, or the earlier CAPA as Related CAPA (a closed CAPA is never reopened), and what was decided
+        if (c.repeatOfId != null) {
+            compliancequest__SQX_Nonconformance__c rp = new compliancequest__SQX_Nonconformance__c(Id = recordId, Repeat_Of__c = c.repeatOfId,
+                Repeat_Decision__c = c.repeatDecision, Repeat_Decision_Reason__c = c.repeatDecision == 'Escalate to CAPA' ? null : c.repeatReason.left(255));
+            if (c.repeatDecision == 'Escalate to CAPA') { rp.compliancequest__Initiate_CAPA__c = true; }
+            if (c.repeatDecision == 'Link to Earlier CAPA' && c.repeatCapaId != null && cur.compliancequest__SQX_CAPA__c == null) { rp.compliancequest__SQX_CAPA__c = c.repeatCapaId; }
+            try {
+                update rp;
+            } catch (DmlException e) {
+                warnings.add('The repeat decision was not saved: ' + e.getDmlMessage(0));
+            }
         }
 
         // 3. one draft disposition per impacted part and lot, for the Disposition workspace to pick up

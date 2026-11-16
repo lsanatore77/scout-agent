@@ -5,6 +5,7 @@
  * Likelihood: other NCs on the same part in the last 14 days. 5 or more = 5 Frequent, 2 to 4 = 3 Occasional, else 1 Improbable.
  * Severity:   first of Severity on the NC, Failure Severity on the NC, the failure code's severity, the part's risk level.
  *             If none is set, Moderate is assumed and flagged.
+ * Repeat:     when the same problem happened before on the part after a CAPA closed (CqTriageRepeat), likelihood goes up one step.
  * Bands:      1 to 5 Low, 6 to 12 Medium, 15 to 25 High. Complaints on the same lot make it High.
  */
 public with sharing class CqTriageRisk {
@@ -18,6 +19,8 @@ public with sharing class CqTriageRisk {
         @AuraEnabled public Integer likelihood; @AuraEnabled public String likelihoodWhy;
         @AuraEnabled public Integer score; @AuraEnabled public String level;
         @AuraEnabled public Boolean escaped = false; @AuraEnabled public String escapedWhy;
+        @AuraEnabled public Integer baseLikelihood; @AuraEnabled public Boolean repeatRaised = false;
+        @AuraEnabled public CqTriageRepeat.Repeat repeat;
     }
 
     public static String band(Integer score) { return score >= 15 ? 'High' : score >= 6 ? 'Medium' : 'Low'; }
@@ -52,6 +55,10 @@ public with sharing class CqTriageRisk {
         }
         r.likelihood = r.count >= 5 ? 5 : r.count >= 2 ? 3 : 1;
         r.likelihoodWhy = r.count + ' other NC(s) on this part in the last ' + WINDOW_DAYS + ' days';
+        r.baseLikelihood = r.likelihood;
+        // the same problem came back after a CAPA closed: one step more likely
+        r.repeat = CqTriageRepeat.find(recordId);
+        if (r.repeat.found && r.likelihood < 5) { r.likelihood++; r.repeatRaised = true; }
 
         // Severity from the first place CQ already holds it
         Integer s = lead(nc.compliancequest__Severity__c);

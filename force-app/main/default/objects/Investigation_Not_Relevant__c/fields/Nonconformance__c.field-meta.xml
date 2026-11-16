@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Nonconformance__c</fullName>
+    <label>Nonconformance</label>
+    <description>Set when the record was marked Not the Same Problem in triage, before there is an investigation.</description>
+    <type>Lookup</type>
+    <referenceTo>compliancequest__SQX_Nonconformance__c</referenceTo>
+    <relationshipName>Triage_Not_Relevant</relationshipName>
+    <relationshipLabel>Triage Not Relevant</relationshipLabel>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

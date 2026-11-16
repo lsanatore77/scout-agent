@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Repeat_Of__c</fullName>
+    <label>Repeat Of</label>
+    <description>The earlier NC with the same problem whose CAPA closed, found at triage (CQ.AI Triage).</description>
+    <type>Lookup</type>
+    <referenceTo>compliancequest__SQX_Nonconformance__c</referenceTo>
+    <relationshipName>Repeat_NCs</relationshipName>
+    <relationshipLabel>Repeat NCs</relationshipLabel>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

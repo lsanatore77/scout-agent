@@ -4,6 +4,8 @@ import completeTriage from '@salesforce/apex/CqTriageNext.completeTriage';
 import startTriage from '@salesforce/apex/CqTriageNext.startTriage';
 import createContainment from '@salesforce/apex/CqTriageContainment.create';
 import getRisk from '@salesforce/apex/CqTriageRisk.getRisk';
+import notSameProblem from '@salesforce/apex/CqTriageRepeat.notSame';
+import restoreRepeat from '@salesforce/apex/CqTriageRepeat.restore';
 import saveRisk from '@salesforce/apex/CqTriageRisk.saveRisk';
 import getLinks from '@salesforce/apex/CqTriageLinks.getLinks';
 import getOne from '@salesforce/apex/CqTriageLinks.getOne';
@@ -17,6 +19,10 @@ const SEV = ['Negligible', 'Low', 'Moderate', 'Significant', 'Catastrophic'];
 const LIK = ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'];
 const band = (n) => (n >= 15 ? 'High' : n >= 6 ? 'Medium' : 'Low');
 const ASKS = ['More Photos', 'Measurements', 'When It Started', 'Other Lots Affected?'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const ESCALATE = 'Escalate to CAPA';
+const LINK = 'Link to Earlier CAPA';
+const NOT_NEEDED = 'Not Needed';
 
 /**
  * Triage Assistant: containment, data check, risk, investigation links. CQ.AI suggests, the triager decides.
@@ -67,6 +73,9 @@ export default class CqTriageAssistant extends LightningElement {
     dispDue;
     dispAppr = false;
     inv = '';           // 'inv' or 'log'
+    capa = '';          // the repeat: Escalate to CAPA, Link to Earlier CAPA or Not Needed
+    capaReason = '';
+    repBusy = false;
     invDue;
     invAppr = false;
     matrixId;
@@ -78,7 +87,7 @@ export default class CqTriageAssistant extends LightningElement {
             try { const d = await getDraft({ recordId: this.recordId }); draft = d ? JSON.parse(d) : null; } catch (e) { draft = null; }
         }
         if (draft && draft.v === 1) {
-            ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
+            ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId', 'capa', 'capaReason'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
             // a draft saved before steps could be opened in any order: every step up to the furthest one was seen
             if (!draft.seen) { const m = {}; for (let i = 0; i <= this.maxStep; i++) { m[i] = true; } this.seen = m; }
             this.resumed = this.maxStep > 0;
@@ -115,7 +124,83 @@ export default class CqTriageAssistant extends LightningElement {
         if (!this.nx) { return; }
         if (!this.disp && this.nx.dispSuggest) { this.disp = this.nx.dispSuggest; }
         if (!this.inv && this.nx.invSuggest) { this.inv = this.nx.invSuggest; }
+        if (!this.capa && this.rep) { this.capa = ESCALATE; }
     }
+
+    // ---- the repeat: the same problem happened before on the part after a CAPA closed
+    get rep() { return this.rk && this.rk.repeat && this.rk.repeat.found ? this.rk.repeat : null; }
+    md(iso) { if (!iso) { return ''; } const p = String(iso).split('-'); return MONTHS[Number(p[1]) - 1] + ' ' + Number(p[2]); }
+    href(id) { return '/lightning/r/' + id + '/view'; }
+    get repBox() {
+        const r = this.rep;
+        if (!r) { return null; }
+        const cause = r.causeNote ? ', traced to ' + r.causeNote.charAt(0).toLowerCase() + r.causeNote.slice(1) : '';
+        return {
+            ncName: r.ncName, ncHref: this.href(r.ncId), capaName: r.capaName, capaHref: this.href(r.capaId),
+            text1: ' had the same problem in ' + this.md(r.ncDay).split(' ')[0] + cause + '. ',
+            text2: ' (' + (r.capaTitle || 'CAPA') + ') closed' + (r.capaClosed ? ' on ' + this.md(r.capaClosed) : '') + ', but the problem came back' + (r.startDate ? ' on ' + this.md(r.startDate) : '') + '.',
+            efrName: r.efrName, efrHref: r.efrId ? this.href(r.efrId) : null,
+            efrText: r.efrId ? (r.effective ? ' marked ' + r.capaName + ' ' + r.efrResolution + ' on ' + this.md(r.efrDate) + ', yet the same problem came back.'
+                : ' rated ' + r.capaName + ' ' + r.efrResolution + ' on ' + this.md(r.efrDate) + '.') : null,
+            efrCls: r.effective ? 'lh redtext' : 'lh',
+            noReview: !r.efrId,
+            changes: this.rk.repeatRaised ? 'the risk suggestion goes up one likelihood step, and Next Steps suggests Escalate to CAPA.'
+                : 'Next Steps suggests Escalate to CAPA (the likelihood is already at its highest).'
+        };
+    }
+    get repDismissed() {
+        const d = this.rk && this.rk.repeat ? this.rk.repeat.dismissed || [] : [];
+        return d.map((x) => ({ key: x.id, id: x.id, name: x.name }));
+    }
+    get hasRepDismissed() { return !this.rep && this.repDismissed.length > 0; }
+    get showRepGlance() { return !this.done && !!this.repBox; }
+    get showRepDismissed() { return !this.done && this.hasRepDismissed; }
+    /** Not the same problem, or put back: the risk and next-step suggestions are worked out again. */
+    async refreshAfterRepeat(call) {
+        if (this.repBusy) { return; }
+        this.repBusy = true;
+        const wasSuggested = this.rk && this.sev === this.rk.severity && this.lik === this.rk.likelihood;
+        try {
+            await call();
+            this.rk = await getRisk({ recordId: this.recordId });
+            this.nx = await getNext({ recordId: this.recordId });
+            if (wasSuggested) { this.sev = this.rk.severity; this.lik = this.rk.likelihood; }
+            this.inv = this.nx.invSuggest || this.inv;
+            this.capa = this.rep ? (this.capa || ESCALATE) : '';
+            if (!this.rep) { this.capaReason = ''; }
+            this.persist();
+        } catch (e) {
+            this.error = (e && e.body && e.body.message) || 'It was not saved.';
+        }
+        this.repBusy = false;
+    }
+    handleNotSame() {
+        const r = this.rep;
+        if (!r) { return; }
+        this.refreshAfterRepeat(() => notSameProblem({ recordId: this.recordId, targetId: r.ncId, targetName: r.ncName }));
+    }
+    handleRepRestore(event) {
+        const id = event.currentTarget.dataset.id;
+        this.refreshAfterRepeat(() => restoreRepeat({ recordId: this.recordId, dismissedId: id }));
+    }
+    get likRaised() { return this.rk && this.rk.repeatRaised ? '(raised from ' + this.rk.baseLikelihood + ')' : ''; }
+    get repRiskLine() {
+        const r = this.rep;
+        if (!r) { return ''; }
+        const how = 'the same problem came back after ' + r.capaName + (r.effective ? ' was marked effective (' + r.efrName + ')' : ' closed') + '.';
+        return this.rk.repeatRaised ? 'Raised one step: ' + how : 'Already at the highest likelihood; ' + how;
+    }
+    get capaOpts() {
+        const r = this.rep;
+        if (!r) { return []; }
+        return [[ESCALATE, ESCALATE], [LINK, 'Link to ' + r.capaName], [NOT_NEEDED, NOT_NEEDED]].map(([id, label]) => ({ id, label,
+            pressed: this.capa === id ? 'true' : 'false', cls: 'opt wide' + (this.capa === id ? ' on' : id === ESCALATE ? ' sug' : '') }));
+    }
+    handleCapa(event) { this.capa = event.currentTarget.dataset.id; this.persist(); }
+    get capaWhy() { return this.nx && this.nx.capaWhy ? this.nx.capaWhy : ''; }
+    get capaNeedsReason() { return !!this.rep && !!this.capa && this.capa !== ESCALATE; }
+    get capaReasonOff() { return !this.capaNeedsReason; }
+    get capaLinkName() { return this.rep ? this.rep.capaName : ''; }
 
     // tells the page which step is open, so Ask CQ.AI can answer for it
     renderedCallback() {
@@ -153,7 +238,7 @@ export default class CqTriageAssistant extends LightningElement {
     persist() {
         if (!this.inline || this.done) { return; }
         const s = {};
-        ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId'].forEach((k) => { s[k] = this[k]; });
+        ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId', 'capa', 'capaReason'].forEach((k) => { s[k] = this[k]; });
         saveDraft({ recordId: this.recordId, draft: JSON.stringify({ v: 1, ...s }) }).catch(() => {});
     }
     handleRestart() {
@@ -163,7 +248,7 @@ export default class CqTriageAssistant extends LightningElement {
         this.data = ''; this.asks = {}; this.askNote = '';
         if (this.rk) { this.sev = this.rk.severity; this.lik = this.rk.likelihood; }
         this.picks = {}; this.extra = []; this.summary = [];
-        this.disp = ''; this.dispAppr = false; this.inv = ''; this.invAppr = false;
+        this.disp = ''; this.dispAppr = false; this.inv = ''; this.invAppr = false; this.capa = ''; this.capaReason = '';
         if (this.nx) { this.dispDue = this.nx.dispDue; this.invDue = this.nx.invDue; this.matrixId = this.nx.defaultMatrixId; }
         this.preselect();
         if (this.inline) { saveDraft({ recordId: this.recordId, draft: null }).catch(() => {}); }
@@ -320,12 +405,13 @@ export default class CqTriageAssistant extends LightningElement {
                 const n = sv * lk;
                 const on = sv === this.sev && lk === this.lik;
                 const sug = sv === r.severity && lk === r.likelihood;
+                const base = !!r.repeatRaised && sv === r.severity && lk === r.baseLikelihood;
                 const sevText = sv + ' - ' + SEV[sv - 1] + ' Severity';
                 const likText = lk + ' - ' + LIK[lk - 1] + ' Likelihood';
                 return { key: sv + '-' + lk, s: sv, l: lk, n, text: band(n), sug, pressed: on ? 'true' : 'false',
                     lvlCls: 'lvl ' + band(n).toLowerCase(), tipSev: sevText, tipLik: likText,
                     aria: band(n) + ', score ' + n + ' of 25, ' + sevText + ' x ' + likText,
-                    cls: 'cell ' + (sug ? 'sug' : band(n).toLowerCase()) + (on ? ' on' : '') };
+                    cls: 'cell ' + (sug ? 'sug' : band(n).toLowerCase()) + (on ? ' on' : '') + (base ? ' base' : '') };
             })
         }));
     }
@@ -470,6 +556,8 @@ export default class CqTriageAssistant extends LightningElement {
             if (!this.inv) { return 'Investigate or Log Only?'; }
             if (this.invReq && !this.invDue) { return 'Set the investigation due date'; }
             if (this.needMatrix && !this.matrixOk) { return 'Choose an approval matrix'; }
+            if (this.rep && !this.capa) { return 'Escalate to CAPA?'; }
+            if (this.capaNeedsReason && !this.capaReason.trim()) { return 'Say why it is not escalated'; }
         }
         return '';
     }
@@ -531,6 +619,8 @@ export default class CqTriageAssistant extends LightningElement {
             { k: 'Investigation', v: !this.invReq ? 'Log only'
                 : (this.lk && this.lk.ownName ? 'Continues with ' + this.lk.ownName : 'Needs its own investigation') + ', due ' + this.invDue + (this.invAppr ? ', needs approval' : '') },
             ...(this.needMatrix ? [{ k: 'Approval Matrix', v: this.matrixName }] : []),
+            ...(this.rep ? [{ k: 'Repeat of ' + this.rep.ncName, v: this.capa === ESCALATE ? 'Escalate to CAPA (CQ Initiate CAPA)'
+                : (this.capa === LINK ? 'Linked to ' + this.rep.capaName : 'Not escalated') + ': ' + this.capaReason.trim() }] : []),
             { k: 'Links', v: this.invReq && this.linkCount ? this.chosenLinks.map((v) => v.name).join(', ') + ' (research only)' : 'None' }
         ];
     }
@@ -559,7 +649,11 @@ export default class CqTriageAssistant extends LightningElement {
                 investigate: this.invReq,
                 investigationDue: this.invDue,
                 investigationApproval: this.invReq && this.invAppr,
-                matrixId: this.needMatrix ? this.matrixId : null
+                matrixId: this.needMatrix ? this.matrixId : null,
+                repeatOfId: this.rep ? this.rep.ncId : null,
+                repeatCapaId: this.rep ? this.rep.capaId : null,
+                repeatDecision: this.rep ? this.capa : null,
+                repeatReason: this.capaNeedsReason ? this.capaReason.trim() : null
             }) });
             if (t && t.created && t.created.length) { rows.push({ k: 'Created', v: 'Containment ' + t.created.join(', ') }); }
             if (t && t.moved) { rows.push({ k: 'Next', v: 'Moved to Disposition / Investigate' }); }

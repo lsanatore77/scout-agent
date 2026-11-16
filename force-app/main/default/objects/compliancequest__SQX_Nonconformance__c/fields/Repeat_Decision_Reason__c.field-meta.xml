@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Repeat_Decision_Reason__c</fullName>
+    <label>Repeat Decision Reason</label>
+    <description>Why the repeat was not escalated to a CAPA (CQ.AI Triage).</description>
+    <required>false</required>
+    <type>TextArea</type>
+</CustomField>

@@ -25,6 +25,7 @@ public with sharing class CqInvestigationHistory {
     }
     public class Dismissed {
         @AuraEnabled public Id id; @AuraEnabled public String recordId; @AuraEnabled public String name; @AuraEnabled public String reason;
+        @AuraEnabled public Boolean atTriage = false;    // marked Not the Same Problem in triage, before the investigation
     }
     public class View {
         @AuraEnabled public Date startDate; @AuraEnabled public String partNumber;
@@ -38,24 +39,41 @@ public with sharing class CqInvestigationHistory {
     @AuraEnabled
     public static View getHistory(Id recordId) {
         Id invId = CqInvestigationWorkspace.investigationFor(recordId);
-        View v = new View();
-        for (Schema.PicklistEntry p : Investigation_Hypothesis__c.Category__c.getDescribe().getPicklistValues()) { if (p.isActive()) { v.categories.add(p.getValue()); } }
         compliancequest__SQX_Investigation__c inv = [SELECT compliancequest__SQX_Nonconformance__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId];
-        if (inv.compliancequest__SQX_Nonconformance__c == null) { return v; }
+        if (inv.compliancequest__SQX_Nonconformance__c == null) { View v = new View(); v.categories = categories(); return v; }
+        return rank(inv.compliancequest__SQX_Nonconformance__c, invId);
+    }
+
+    /** The same ranking for an NC that has no investigation yet (triage). */
+    public static View forNc(Id ncId) { return rank(ncId, null); }
+
+    static List<String> categories() {
+        List<String> out = new List<String>();
+        for (Schema.PicklistEntry p : Investigation_Hypothesis__c.Category__c.getDescribe().getPicklistValues()) { if (p.isActive()) { out.add(p.getValue()); } }
+        return out;
+    }
+
+    static View rank(Id ncId, Id invId) {
+        View v = new View();
+        v.categories = categories();
         compliancequest__SQX_Nonconformance__c nc = [
             SELECT Id, compliancequest__SQX_Part__c, compliancequest__SQX_Part__r.compliancequest__Part_Number__c, compliancequest__Lot_Number__c,
                    compliancequest__NC_Title__c, compliancequest__Description__c, compliancequest__SQX_Defect_Code__c,
                    compliancequest__Occurrence_Date__c, compliancequest__Aware_Date__c, CreatedDate
-            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :inv.compliancequest__SQX_Nonconformance__c];
+            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId];
         v.partNumber = nc.compliancequest__SQX_Part__r == null ? null : nc.compliancequest__SQX_Part__r.compliancequest__Part_Number__c;
         v.startDate = nc.compliancequest__Occurrence_Date__c != null ? toDate(nc.compliancequest__Occurrence_Date__c)
             : nc.compliancequest__Aware_Date__c != null ? toDate(nc.compliancequest__Aware_Date__c) : nc.CreatedDate.date();
 
-        // what the user marked Not Relevant on this investigation
+        // what the user marked Not Relevant on this investigation, or Not the Same Problem in this NC's triage
         Set<String> gone = new Set<String>();
-        for (Investigation_Not_Relevant__c d : [SELECT Id, Record_Id__c, Record_Name__c, Reason__c FROM Investigation_Not_Relevant__c WHERE Investigation__c = :invId ORDER BY CreatedDate]) {
+        List<Investigation_Not_Relevant__c> marked = invId == null
+            ? [SELECT Id, Record_Id__c, Record_Name__c, Reason__c, Nonconformance__c FROM Investigation_Not_Relevant__c WHERE Nonconformance__c = :ncId ORDER BY CreatedDate]
+            : [SELECT Id, Record_Id__c, Record_Name__c, Reason__c, Nonconformance__c FROM Investigation_Not_Relevant__c
+               WHERE Investigation__c = :invId OR Nonconformance__c = :ncId ORDER BY CreatedDate];
+        for (Investigation_Not_Relevant__c d : marked) {
             Dismissed x = new Dismissed();
-            x.id = d.Id; x.recordId = d.Record_Id__c; x.name = d.Record_Name__c; x.reason = d.Reason__c;
+            x.id = d.Id; x.recordId = d.Record_Id__c; x.name = d.Record_Name__c; x.reason = d.Reason__c; x.atTriage = d.Nonconformance__c != null;
             v.dismissed.add(x);
             if (d.Record_Id__c != null) { gone.add(d.Record_Id__c.left(15)); }
         }
@@ -122,11 +140,11 @@ public with sharing class CqInvestigationHistory {
                 if (!causes.containsKey(rc.compliancequest__SQX_Investigation__c)) { causes.put(rc.compliancequest__SQX_Investigation__c, new List<compliancequest__SQX_Root_Cause__c>()); }
                 causes.get(rc.compliancequest__SQX_Investigation__c).add(rc);
             }
-            for (Id ncId : invOfNc.keySet()) {
-                List<compliancequest__SQX_Root_Cause__c> list1 = causes.get(invOfNc.get(ncId));
+            for (Id ncId2 : invOfNc.keySet()) {
+                List<compliancequest__SQX_Root_Cause__c> list1 = causes.get(invOfNc.get(ncId2));
                 if (list1 == null || list1.isEmpty()) { continue; }
                 compliancequest__SQX_Root_Cause__c rc = list1[0];
-                Item it = byId.get(ncId);
+                Item it = byId.get(ncId2);
                 it.causeHead = rc.compliancequest__Category__c + (rc.compliancequest__SQX_Root_Cause_Code__r == null ? '' : ' · ' + rc.compliancequest__SQX_Root_Cause_Code__r.Name);
                 it.causeNote = rc.compliancequest__Description__c;
                 it.category = rc.compliancequest__Category__c;
@@ -149,7 +167,7 @@ public with sharing class CqInvestigationHistory {
                 if (!efr.containsKey(r.compliancequest__SQX_CAPA__c)) { efr.put(r.compliancequest__SQX_CAPA__c, r); }
             }
         }
-        for (Id ncId : capaOfNc.keySet()) { fix(byId.get(ncId), capas.get(capaOfNc.get(ncId)), efr); }
+        for (Id ncId2 : capaOfNc.keySet()) { fix(byId.get(ncId2), capas.get(capaOfNc.get(ncId2)), efr); }
         for (Id cId : capaIds) {
             Item it = byId.get(cId);
             compliancequest__SQX_CAPA__c c = capas.get(cId);
@@ -171,7 +189,8 @@ public with sharing class CqInvestigationHistory {
 
         // hypotheses made from these records
         Map<String, Integer> hyp = new Map<String, Integer>();
-        for (Investigation_Hypothesis__c h : [SELECT Number__c, Source_Record_Id__c FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId AND Source_Record_Id__c != null ORDER BY Number__c]) {
+        for (Investigation_Hypothesis__c h : invId == null ? new List<Investigation_Hypothesis__c>()
+                : [SELECT Number__c, Source_Record_Id__c FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId AND Source_Record_Id__c != null ORDER BY Number__c]) {
             String k = h.Source_Record_Id__c.left(15);
             if (!hyp.containsKey(k) && h.Number__c != null) { hyp.put(k, h.Number__c.intValue()); }
         }
