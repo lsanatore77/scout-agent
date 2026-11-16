@@ -11,6 +11,7 @@ Working ideas from Lou, 16 Nov 2026. Nothing here is decided or built yet.
 - How the review itself is performed is still being worked out. The 25 Oct mockup and mock_events_v2 (Event Review: what it becomes, CQ.AI suggests, confirm) are the starting point.
 
 ## Decided (16 Nov 2026)
+- **Quality Event stays its own object, not Case.** Case is the inspiration: we replicate what is needed (queues, team, escalation, a clock) inside Quality Event, so it ships as part of CQ, not as Salesforce standard Case.
 - **Queues:** built to handle several review queues, but start with one.
 - **Give it back:** a reviewer who took ownership and initiated can give the event back; it returns to the queue for anyone in the group to take.
 - **E-signature:** the Reviewed e-signature belongs at this step, and comes in with the approvals work.
@@ -20,6 +21,5 @@ Lou: an event works like a Salesforce Case: queues, a case team working it toget
 What Case has that we would otherwise build: queues and assignment rules, case teams (roles on one record), escalation rules (reassign or notify when it sits too long), Omni-Channel routing, and entitlements with milestones (a clock, which fits the complaint clock from the aware date).
 
 ## Open questions
-- **Build on Case or keep Quality Event?** Quality Event is a custom object today (intake writes to it). Moving events onto a Case record type would give queues, teams, escalation and milestones for free; staying custom means building those, but keeps events apart from any customer-service cases a company already runs. To decide before Event Review is built.
 - Can a reviewer pass an event straight to a named person, or only back to the queue?
 - Does Take Ownership and Initiate change the event's status (for example to In Review)?
