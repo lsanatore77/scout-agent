@@ -331,11 +331,12 @@
                         <template if:true={hasPlans}>
                             <div class="tblwrap">
                                 <table class="tbl">
-                                    <thead><tr><th>Action Plan</th><th>Type</th><th>Owner</th><th>Due</th><th></th></tr></thead>
+                                    <thead><tr><th>Title</th><th>Description</th><th>Type</th><th>Owner</th><th>Due</th><th></th></tr></thead>
                                     <tbody>
                                         <template for:each={planRows} for:item="p">
                                             <tr key={p.key}>
-                                                <td class="wide"><div class="strong">{p.title}</div><template if:true={p.unsaved}><div class="note sm0">Not saved yet</div></template></td>
+                                                <td class="ttl"><div class="strong">{p.title}</div><template if:true={p.unsaved}><div class="note sm0">Not saved yet</div></template></td>
+                                                <td class="wide">{p.descText}</td>
                                                 <td class="nowrap">{p.type}</td>
                                                 <td class="nowrap">{p.ownerText}</td>
                                                 <td class="nowrap">{p.dueText}</td>
@@ -347,7 +348,8 @@
                             </div>
                         </template>
                         <template if:false={hasPlans}><p class="note">No actions yet. Add one for each thing to be done.</p></template>
-                        <div class="splitline top8"><button class="btn sm" onclick={handleAddPlan}>+ Add Action</button></div>
+                        <div class="splitline top8"><button class="btn sm" onclick={handleAddPlan}>+ Add Action</button><span class="grow"></span><button class="btn sm" onclick={handlePlanDoc} title="Build an FDA warning letter response or an 8D customer report from these actions">Create Action Plan Document</button></div>
+                        <template if:true={planDocNote}><div class="ownbox top8"><strong>Action Plan Document:</strong> {planDocNote}</div></template>
                         <div class="ownbox top16"><strong>What happens to these:</strong> they are saved as CQ action plans on the investigation. When the investigation is complete, the NC moves to Implement and CQ turns them into actions with their owners and due dates.</div>
                         <template if:true={notice}><div class="okbox">{notice}</div></template>
                     </template>
@@ -412,8 +414,11 @@
                             <button class="modal-x" aria-label="Close" onclick={handlePlanFormCancel}>&times;</button>
                         </header>
                         <div class="modal-body">
-                            <label class="fl"><span>What Is to Be Done *</span>
-                                <textarea class="ta planta" rows="2" value={planForm.title} data-f="title" oninput={handlePlanFormInput} placeholder="For example, replace the locating pin on the fixture"></textarea>
+                            <label class="fl"><span>Title *</span>
+                                <input class="ta planta" type="text" maxlength="255" value={planForm.title} data-f="title" oninput={handlePlanFormInput} placeholder="For example, replace the locating pin on fixture BF-02">
+                            </label>
+                            <label class="fl"><span>Description</span>
+                                <textarea class="ta plandesc" rows="3" value={planForm.description} data-f="description" oninput={handlePlanFormInput} placeholder="What will be done, where, and how you will know it worked"></textarea>
                             </label>
                             <div class="fl"><span>Type *</span>
                                 <div class="opts tight">

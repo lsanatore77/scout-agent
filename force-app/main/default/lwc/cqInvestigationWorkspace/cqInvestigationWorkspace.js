@@ -69,7 +69,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
 
     initForms() {
-        this.plans = (this.v.plans || []).map((p) => ({ key: 'p' + (this.keySeq++), id: p.id, title: p.title, type: p.type, due: p.due, userId: p.userId, userName: p.userName }));
+        this.plans = (this.v.plans || []).map((p) => ({ key: 'p' + (this.keySeq++), id: p.id, title: p.title, description: p.description, type: p.type, due: p.due, userId: p.userId, userName: p.userName }));
         this.plansDirty = false;
         this.conclusion = this.v.conclusion;
         this.summary = this.v.summary || '';
@@ -227,11 +227,13 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
 
     // ---- step 5: Actions: a table of the planned actions; Add Action and Edit open a popup
     get planRows() {
-        return this.plans.map((p, i) => ({ key: p.key, idx: i, title: p.title, type: p.type || '\u2014',
+        return this.plans.map((p, i) => ({ key: p.key, idx: i, title: p.title, descText: this.planDesc(p), type: p.type || '\u2014',
             ownerText: p.userName || (p.userId ? 'Chosen' : 'You'), dueText: this.dateText(p.due), unsaved: !p.id }));
     }
     get hasPlans() { return this.plans.length > 0; }
-    planForm;              // the Add Action / Edit popup: { idx (null for a new action), title, type, due, userId, userName }
+    /** CQ fills an empty description with the title, so the same text is not shown twice. */
+    planDesc(p) { return p.description && p.description.trim() !== (p.title || '').trim() ? p.description : ''; }
+    planForm;              // the Add Action / Edit popup: { idx (null for a new action), title, description, type, due, userId, userName }
     @wire(getRecord, { recordId: '$planUserId', fields: ['User.Name'] })
     wiredPlanUser({ data }) {
         if (data && this.planForm && this.planForm.userId === data.id) { this.planForm = { ...this.planForm, userName: data.fields.Name.value }; }
@@ -246,20 +248,20 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
     get planFormBlocker() {
         const f = this.planForm || {};
-        if (!(f.title || '').trim()) { return 'Say what is to be done'; }
+        if (!(f.title || '').trim()) { return 'Give it a title'; }
         if (!f.type) { return 'Choose a type'; }
         if (!f.due) { return 'Enter a due date'; }
         return '';
     }
     get cantSavePlanForm() { return !!this.planFormBlocker; }
     handleAddPlan() {
-        this.planForm = { idx: null, title: '', type: null, due: this.todayIso(30), userId: null, userName: null };
+        this.planForm = { idx: null, title: '', description: '', type: null, due: this.todayIso(30), userId: null, userName: null };
         this.planFocus = true;
     }
     handleEditPlan(event) {
         const i = Number(event.currentTarget.dataset.i);
         const p = this.plans[i];
-        this.planForm = { idx: i, title: p.title, type: p.type, due: p.due, userId: p.userId, userName: p.userName };
+        this.planForm = { idx: i, title: p.title, description: this.planDesc(p), type: p.type, due: p.due, userId: p.userId, userName: p.userName };
         this.planFocus = true;
     }
     handlePlanFormInput(event) { this.planForm = { ...this.planForm, [event.currentTarget.dataset.f]: event.target.value }; }
@@ -273,7 +275,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handlePlanFormSave() {
         if (this.cantSavePlanForm) { return; }
         const f = this.planForm;
-        const row = { title: f.title.trim(), type: f.type, due: f.due, userId: f.userId, userName: f.userId ? f.userName : null };
+        const row = { title: f.title.trim(), description: (f.description || '').trim(), type: f.type, due: f.due, userId: f.userId, userName: f.userId ? f.userName : null };
         if (f.idx === null) {
             this.plans = [...this.plans, { key: 'p' + (this.keySeq++), id: null, ...row }];
         } else {
@@ -284,6 +286,9 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         this.error = undefined;
         this.notice = undefined;
     }
+    /** Placeholder: the Action Plan Document (an FDA warning letter response or an 8D customer report) is not built yet. */
+    planDocNote;
+    handlePlanDoc() { this.planDocNote = 'Not built yet. It will turn these actions into an FDA warning letter response or an 8D customer report.'; }
     handleRemovePlan(event) {
         const i = Number(event.currentTarget.dataset.i);
         this.plans = this.plans.filter((p, j) => j !== i);
@@ -294,14 +299,14 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         for (let i = 0; i < this.plans.length; i++) {
             const p = this.plans[i];
             const name = 'Action ' + (i + 1) + ': ';
-            if (!(p.title || '').trim()) { return name + 'say what is to be done'; }
+            if (!(p.title || '').trim()) { return name + 'give it a title'; }
             if (!p.type) { return name + 'choose a type'; }
             if (!p.due) { return name + 'enter a due date'; }
         }
         return null;
     }
     planPayload() {
-        return JSON.stringify(this.plans.map((p) => ({ id: p.id, title: (p.title || '').trim(), type: p.type, due: p.due, userId: p.userId })));
+        return JSON.stringify(this.plans.map((p) => ({ id: p.id, title: (p.title || '').trim(), description: (p.description || '').trim(), type: p.type, due: p.due, userId: p.userId })));
     }
     async handleSaveActions() {
         if (this.cantSaveActions) { return; }
@@ -309,7 +314,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         this.error = undefined;
         try {
             const saved = await saveActions({ recordId: this.v.investigationId, payload: this.planPayload() });
-            this.plans = saved.map((p) => ({ key: 'p' + (this.keySeq++), id: p.id, title: p.title, type: p.type, due: p.due, userId: p.userId, userName: p.userName }));
+            this.plans = saved.map((p) => ({ key: 'p' + (this.keySeq++), id: p.id, title: p.title, description: p.description, type: p.type, due: p.due, userId: p.userId, userName: p.userName }));
             this.plansDirty = false;
             this.notice = 'Saved as ' + this.plural(saved.length, 'CQ action plan', 'CQ action plans') + ' on ' + this.v.investigationName + '.';
         } catch (e) {
@@ -537,10 +542,13 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     planFocus = false;
     renderedCallback() {
         if (this.planFocus) {
-            const pt = this.template.querySelector('textarea.planta');
+            const pt = this.template.querySelector('.planta');
+            const pd = this.template.querySelector('textarea.plandesc');
             if (pt) {
                 this.planFocus = false;
-                pt.value = (this.planForm && this.planForm.title) || '';     // the value binding alone can leave it empty on open
+                // the value binding alone can leave them empty on open
+                pt.value = (this.planForm && this.planForm.title) || '';
+                if (pd) { pd.value = (this.planForm && this.planForm.description) || ''; }
                 pt.focus();
             }
         }
