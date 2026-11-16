@@ -130,6 +130,7 @@
 .tbl th { padding: 8px 12px; background: #f3f3f3; text-align: left; font-weight: 600; white-space: nowrap; }
 .tbl td { padding: 10px 12px; border-top: 1px solid #e5e5e5; vertical-align: top; }
 .tbl th.center, .tbl td.center { width: 1%; text-align: center; }
+.tbl thead tr, .tbl thead th, .tbl thead th.center { background: #f3f3f3; }
 .tbl td.wide { width: 100%; min-width: 200px; }
 .nowrap { white-space: nowrap; }
 .strong { font-weight: 700; }
