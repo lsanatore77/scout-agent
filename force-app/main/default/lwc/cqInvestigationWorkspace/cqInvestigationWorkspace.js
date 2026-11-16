@@ -4,6 +4,7 @@ import { notifyRecordUpdateAvailable, getRecord } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqInvestigationWorkspace.getView';
 import saveActions from '@salesforce/apex/CqInvestigationWorkspace.saveActions';
 import completeInvestigation from '@salesforce/apex/CqInvestigationWorkspace.completeInvestigation';
+import suggestSummary from '@salesforce/apex/CqInvestigationSummary.suggest';
 import getChanges from '@salesforce/apex/CqInvestigationChanges.getChanges';
 import addChange from '@salesforce/apex/CqInvestigationChanges.addChange';
 import addHypothesis from '@salesforce/apex/CqInvestigationChanges.addHypothesis';
@@ -50,7 +51,11 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     plansDirty = false;
     conclusion;
     summary = '';
-    summaryDrafted = false;
+    sumWriting = false;    // CQ.AI Suggested Summary: the prompt template is writing
+    sumWritten;            // the text CQ.AI wrote last, to tell whether it was edited since
+    sumError;
+    sumConfirm = false;    // Write It Again over edited text asks first
+    sumFill = false;
     saving = false;
     result;                // what Complete Investigation did
     waiting = false;       // CQ finishes the submission a few seconds later
@@ -73,7 +78,9 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         this.plansDirty = false;
         this.conclusion = this.v.conclusion;
         this.summary = this.v.summary || '';
-        this.summaryDrafted = false;
+        this.sumWritten = undefined;
+        this.sumConfirm = false;
+        this.sumError = undefined;
     }
 
     get ready() { return !!this.v; }
@@ -329,23 +336,40 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         return (this.v.conclusions || []).map((c) => ({ label: c, pressed: String(this.conclusion === c), cls: 'opt' + (this.conclusion === c ? ' on' : '') }));
     }
     handleConclusion(event) { this.conclusion = event.currentTarget.dataset.c; this.error = undefined; }
-    handleSummary(event) { this.summary = event.target.value; this.summaryDrafted = false; this.error = undefined; }
-    get draftSummary() {
-        const v = this.v;
-        const paras = [];
-        paras.push((v.description || v.title || '').trim());
-        if (v.dispositionText) { paras.push('Disposition: ' + v.dispositionText + '.'); }
-        const causes = v.causes || [];
-        if (causes.length) {
-            paras.push('Root cause: ' + causes.map((c) => [c.category, c.code].filter((x) => x).join(', ') + (c.description ? ': ' + c.description : '')).join('; ') + '.');
-        }
-        const acts = this.plans.filter((p) => (p.title || '').trim());
-        if (acts.length) { paras.push('Actions: ' + acts.map((p) => p.title.trim() + (p.type ? ' (' + p.type + ')' : '')).join('; ') + '.'); }
-        return paras.filter((p) => p).join('\n\n');
+    handleSummary(event) { this.summary = event.target.value; this.sumConfirm = false; this.error = undefined; }
+    // CQ.AI Suggested Summary: the prompt template writes Problem, Containment, Hypotheses, Root Cause and Actions
+    // from the investigation; the actions on screen are sent too, so unsaved ones are included
+    get sumLabel() { return this.sumWriting ? 'Writing\u2026' : this.sumWritten !== undefined ? 'Write It Again' : 'CQ.AI Suggested Summary'; }
+    get sumNote() {
+        if (this.sumWriting) { return null; }
+        return this.sumWritten !== undefined ? 'Written by CQ.AI from this investigation. Read it and edit before you complete.'
+            : 'Written from the NC, disposition, hypotheses, root causes and actions.';
     }
-    handleDraft() { this.summary = this.draftSummary; this.summaryDrafted = true; this.error = undefined; }
-    get canDraft() { return !!this.draftSummary; }
-    get cantDraft() { return !this.canDraft; }
+    get showSumBox() { return !this.sumWriting; }
+    handleSuggestSummary() {
+        const now = (this.summary || '').trim();
+        const edited = now && now !== (this.sumWritten || '').trim();
+        if (edited) { this.sumConfirm = true; return; }
+        this.writeSummary();
+    }
+    handleSumReplace() { this.writeSummary(); }
+    handleSumKeep() { this.sumConfirm = false; }
+    async writeSummary() {
+        this.sumConfirm = false;
+        this.sumError = undefined;
+        this.error = undefined;
+        this.sumWriting = true;
+        try {
+            const text = await suggestSummary({ recordId: this.v.investigationId, actionsPayload: this.planPayload() });
+            this.summary = text;
+            this.sumWritten = text;
+        } catch (e) {
+            this.sumError = this.msg(e, 'CQ.AI could not write the summary just now. Try again, or write it yourself.');
+        } finally {
+            this.sumWriting = false;
+            this.sumFill = true;
+        }
+    }
     get recurWarn() {
         const r = this.recurrence;
         if (!r) { return null; }
@@ -541,6 +565,10 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     hypFocus = false;
     planFocus = false;
     renderedCallback() {
+        if (this.sumFill) {
+            const st = this.template.querySelector('textarea.summary');
+            if (st) { this.sumFill = false; st.value = this.summary || ''; }
+        }
         if (this.planFocus) {
             const pt = this.template.querySelector('.planta');
             const pd = this.template.querySelector('textarea.plandesc');
@@ -804,7 +832,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
     get cantSaveActions() { return this.saving || !this.plansDirty || !!this.planBlocker(); }
     get saveActionsLabel() { return this.saving ? 'Saving…' : 'Save Actions'; }
-    get cantComplete() { return this.saving || !!this.conclusionBlocker(); }
+    get cantComplete() { return this.saving || this.sumWriting || !!this.conclusionBlocker(); }
     get cantBack() { return this.step === 0; }
     get cantNext() { return this.step >= STEPS.length - 1; }
     get nextCls() { return 'btn' + (this.cantNext ? '' : ' primary'); }
@@ -815,7 +843,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         this.seen = { ...this.seen, [i]: true };
         this.error = undefined;
         this.notice = undefined;
-        if (i === 5 && !(this.summary || '').trim() && this.canDraft) { this.handleDraft(); }
+        if (i === 5) { this.sumFill = true; } // the value binding alone can leave the box empty when the step opens
     }
     handleStep(event) { if (!this.isDone) { this.go(Number(event.currentTarget.dataset.i)); } }
     handleBack() { if (this.step > 0) { this.go(this.step - 1); } }

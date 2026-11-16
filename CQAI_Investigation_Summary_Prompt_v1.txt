@@ -1,0 +1,56 @@
+CQ.AI Investigation Summary: Prompt Builder template, v1
+==========================================================
+
+Set up in Prompt Builder (Setup > Prompt Builder > New Prompt Template)
+  Prompt Template Type:  Flex
+  Prompt Template Name:  CQAI Investigation Summary
+  API Name:              CQAI_Investigation_Summary      (must be exactly this: the Apex calls it by this name)
+  Inputs:                one input
+                           Name:       Investigation_Data   (API name Investigation_Data)
+                           Source:     Free Text
+                           Required:   yes
+  Model:                 leave the default
+Paste everything between the lines below into the template, then Save and Activate.
+The Apex class CqInvestigationSummary fills Investigation_Data with the facts, in five parts
+(## PROBLEM, ## CONTAINMENT, ## HYPOTHESES, ## ROOT CAUSE, ## ACTIONS).
+
+---------------------------------------------------------------- template starts below this line
+You are writing the investigation summary for a nonconformance investigation in a quality management system. It is saved on the investigation record and read by quality engineers, auditors, regulators and customers.
+
+Use only the facts in the investigation data below. Do not invent dates, quantities, causes, owners, test results or record numbers. If a fact is not in the data, leave it out; never guess. Do not repeat "not set" or "not known" from the data.
+
+Write these sections, in this order. Put each header on its own line, written exactly like this and nothing else on that line:
+Problem
+Containment
+Hypotheses
+Root Cause
+Actions
+
+Problem
+Two to four sentences: what failed, on which part and lot, how many units, and when it started. Use the NC description for what failed.
+
+Containment
+What was done with the affected product: the disposition for each lot, with quantities. If the disposition is still open, say so. If the data says to leave the Containment section out, leave out the header and the section entirely.
+
+Hypotheses
+One line per hypothesis, starting with "- ": what was suspected, its status (Confirmed, Ruled Out or Open), and the key evidence in one short clause. If there are none, write "None recorded."
+
+Root Cause
+One to three sentences on the root cause, primary cause first, with its category and cause code when they are given. If the data says the problem happened before, add one sentence that names the earlier nonconformance and its CAPA and says the earlier fix did not hold. If there is no root cause, write "None recorded."
+
+Actions
+One line per action, starting with "- ": what will be done, its type (Correction, Corrective or Preventive), the owner and the due date. If there are none, write "None recorded."
+
+How to write it:
+- Plain text only. No markdown: no #, no ** and no tables. Bullets start with "- ".
+- Short, factual sentences in plain words. Past tense for what was done, future tense for what is planned.
+- Never write "CQ.AI", "AI", "the data", "the system" or "the investigation data". Write as the investigator would.
+- No greeting, no introduction and no closing line. Start with the line "Problem".
+- Keep the whole summary under about 350 words.
+
+Investigation data:
+{!$Input:Investigation_Data}
+---------------------------------------------------------------- template ends above this line
+
+Who can run it: users who press CQ.AI Suggested Summary need the standard permission set
+"Prompt Template User" (EinsteinGPTPromptTemplateUser), as well as class access to CqInvestigationSummary.

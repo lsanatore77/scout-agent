@@ -31,7 +31,7 @@ Every class a component or agent calls (`@AuraEnabled`, `@InvocableMethod`, `@Re
 | Ask CQ.AI | AskCqAgents, AskCqService, AskCqWorkspaceController | Base |
 | NC triage | CqTriageController, CqTriageAssistant, CqTriageContainment, CqTriageDraft, CqTriageLinks, CqTriageNext, CqTriagePhoto, CqTriageRisk | Quality |
 | NC disposition | CqDispositionWorkspace | Quality |
-| NC investigation | CqInvestigationWorkspace, CqInvestigationChanges, CqInvestigationHistory | Quality |
+| NC investigation | CqInvestigationWorkspace, CqInvestigationChanges, CqInvestigationHistory, CqInvestigationSummary | Quality (+ the standard Prompt Template User set for CqInvestigationSummary) |
 | NC triage, the repeat | CqTriageRepeat | Quality |
 | Agents' context | CqQualityAgentContext (CQAI_Quality), CqFieldActionAgentContext (CQAI_Field_Action) | the agent's set |
 | Field actions | CqFieldActionReview, CqFieldActionScope, CqFieldActionStrategy, CqFieldActionLots, CqFieldActionRecovery, CqFieldActionTasks, CqLotStock, CqFarCommittee | Field Actions User (+ Approvals for CqFarCommittee) |
@@ -108,6 +108,10 @@ Read only: Root Cause, Root Cause Code, NC Action, Change Order, Controlled Docu
 ## Change Log
 
 Newest first.
+
+### 16 Nov 2026
+- **CqInvestigationSummary** (new): CQ.AI Suggested Summary on the Investigation Conclusion step. Apex access; reads what the Investigation, Disposition, Find the Cause and Check History screens read; runs the Prompt Builder template `CQAI_Investigation_Summary`, so users also need the standard permission set **Prompt Template User** (EinsteinGPTPromptTemplateUser). Lou Admin already has it. Set: Quality.
+- **CqInvestigationWorkspace**: Investigation Summary is now saved as simple HTML (CQ's field is rich text) and read back as plain text. No new access.
 
 ### 15 Nov 2026
 - **CqInvestigationCause** (new): Apex access; Investigation Hypothesis Read and Edit; Investigation Evidence Create, Read, Edit and Delete (and its fields); Root Cause Create and Edit (with Cause Role); 5W2H Create and Edit; Investigation Tool Create; Why Create, Edit and Delete; Root Cause Code, Category and Sub-Category Read; read of the CQ records that can be linked as evidence (NC, CAPA, Change Order, Document, Equipment, Calibration, Inspection, Supplier Deviation). Set: Quality.

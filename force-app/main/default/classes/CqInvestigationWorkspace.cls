@@ -79,7 +79,7 @@ public with sharing class CqInvestigationWorkspace {
         View v = new View();
         v.investigationId = inv.Id; v.investigationName = inv.Name;
         v.status = inv.compliancequest__Status__c; v.stage = inv.compliancequest__Record_Stage__c;
-        v.conclusion = inv.compliancequest__Conclusion__c; v.summary = inv.compliancequest__Investigation_Summary__c;
+        v.conclusion = inv.compliancequest__Conclusion__c; v.summary = CqInvestigationSummary.toPlain(inv.compliancequest__Investigation_Summary__c);
         v.completedBy = inv.compliancequest__Completed_By__c; v.completedOn = inv.compliancequest__Completed_On__c;
         v.isComplete = inv.compliancequest__Status__c == 'Completed';
         v.inApproval = inv.compliancequest__Status__c == 'In Approval';
@@ -249,7 +249,7 @@ public with sharing class CqInvestigationWorkspace {
             }
             // 2. the conclusion and summary; then any open analysis tool, since CQ refuses to submit with one open
             update new compliancequest__SQX_Investigation__c(Id = invId, compliancequest__Conclusion__c = conclusion,
-                compliancequest__Investigation_Summary__c = summary);
+                compliancequest__Investigation_Summary__c = CqInvestigationSummary.toHtml(summary));
             for (compliancequest__SQX_Investigation_Tool__c t : [
                     SELECT Id, Name FROM compliancequest__SQX_Investigation_Tool__c
                     WHERE compliancequest__SQX_Investigation__c = :invId AND compliancequest__Status__c != 'Complete']) {

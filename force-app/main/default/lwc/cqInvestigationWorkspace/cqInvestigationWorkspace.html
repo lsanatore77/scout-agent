@@ -367,12 +367,17 @@
                         <template if:true={recurWarn}><div class="warnbox">{recurWarn}</div></template>
                         <template if:true={noCauseWarn}><div class="warnbox">Confirmed usually means the root cause is known, but no root cause is recorded on this investigation yet.</div></template>
                         <label class="fl top16"><span>Investigation Summary *</span>
-                            <textarea class="ta summary" rows="9" value={summary} onchange={handleSummary}></textarea>
+                            <template if:true={showSumBox}><textarea class="ta summary" rows="9" value={summary} onchange={handleSummary} placeholder="Write the summary, or use CQ.AI Suggested Summary."></textarea></template>
+                            <template if:true={sumWriting}><div class="sumbusy"><span class="pspin"></span>CQ.AI is writing the summary&hellip;</div></template>
                         </label>
                         <div class="splitline top8">
-                            <button class="btn sm" onclick={handleDraft} disabled={cantDraft}>Draft from the Steps Before</button>
-                            <template if:true={summaryDrafted}><span class="note">Drafted from the NC, disposition, root causes and actions. Edit before you complete.</span></template>
+                            <button class="btn sm ibtn" onclick={handleSuggestSummary} disabled={sumWriting}><lightning-icon icon-name="utility:summary" size="xx-small" class="ruleicon" alternative-text=""></lightning-icon>{sumLabel}</button>
+                            <template if:true={sumNote}><span class="note">{sumNote}</span></template>
                         </div>
+                        <template if:true={sumConfirm}>
+                            <div class="warnbox sumask"><span class="grow">Replace the summary in the box with a new one from CQ.AI?</span><button class="btn sm" onclick={handleSumReplace}>Replace It</button><button class="btn sm" onclick={handleSumKeep}>Keep Mine</button></div>
+                        </template>
+                        <template if:true={sumError}><div class="errbox">{sumError}</div></template>
                         <div class="ownbox top16"><strong>On {completeLabel}:</strong> {onCompleteText}</div>
                     </template>
 
