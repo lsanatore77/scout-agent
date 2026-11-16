@@ -170,3 +170,5 @@ textarea.ta.summary { min-height: 200px; line-height: 1.5; }
 /* a little space between the date labels and the shaded 14 days */
 .tl-tick { margin-top: -10px; }
 .tl-shade { margin-top: 3px; height: 20px; }
+/* boxes worded from the records by rule: the summary icon in CQ.AI purple, not the CQ.AI star */
+.ruleicon { --slds-c-icon-color-foreground-default: #4a2fc0; }

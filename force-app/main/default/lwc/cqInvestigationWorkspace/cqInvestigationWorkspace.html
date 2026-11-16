@@ -67,7 +67,7 @@
                                 </div>
                             </div>
                             <div class="sugbox">
-                                <div class="sughead"><span class="star">&#10022;</span> Where This Stands</div>
+                                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> Where This Stands</div>
                                 <div class="whyv">{standsText}</div>
                                 <template if:true={gapsText}><div class="whyv"><strong>Gaps:</strong> {gapsText}</div></template>
                                 <div class="whyv"><strong>Next:</strong> {nextText}</div>
@@ -99,7 +99,7 @@
                         <template if:true={wcLoading}><div class="spinwrap"><lightning-spinner alternative-text="Reading the changes" size="small" class="spin"></lightning-spinner><span class="muted">Reading the changes CQ holds…</span></div></template>
                         <template if:true={wcReady}>
                             <div class="sugbox">
-                                <div class="sughead"><span class="star">&#10022;</span> What Stands Out</div>
+                                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
                                 <div class="whyv">{standOut}</div>
                             </div>
                             <div class="lookback">
