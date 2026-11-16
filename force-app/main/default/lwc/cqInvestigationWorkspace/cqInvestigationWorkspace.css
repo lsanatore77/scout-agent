@@ -64,6 +64,8 @@
 .tbl th { padding: 8px 12px; background: #f3f3f3; text-align: left; font-weight: 600; white-space: nowrap; }
 .tbl td { padding: 10px 12px; border-top: 1px solid #e5e5e5; vertical-align: top; }
 .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tbl td.wide { width: 100%; min-width: 220px; }
+.plainbtn { padding: 0; border: none; background: none; font-family: inherit; }
 .yours { padding: 12px 14px; border-radius: 10px; border: 1px solid #dde1e6; min-width: 0; }
 .triaged { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: #ebf7e6; color: #2e844a; font-weight: 600; margin-bottom: 8px; }
 .flist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; line-height: 1.5; }
@@ -197,4 +199,8 @@ textarea.ta.summary { min-height: 200px; line-height: 1.5; }
 .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 60vh; overflow-y: auto; }
 .modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid #e5e5e5; background: #f3f3f3; }
 .fromcard { padding: 10px 12px; border-radius: 8px; border: 1px solid #e5e5e5; background: #fafbfc; display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
-textarea.ta.hypta { min-height: 72px; line-height: 1.45; resize: vertical; }
+textarea.ta.hypta, textarea.ta.planta { min-height: 72px; line-height: 1.45; resize: vertical; }
+/* Add Action popup: the Owner search list opens below the box, so the popup does not clip it */
+.modal.popov { overflow: visible; }
+.modal.popov .modal-body { overflow: visible; max-height: none; }
+.modal.popov .modal-foot { border-radius: 0 0 8px 8px; }

@@ -1,6 +1,6 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
-import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
+import { notifyRecordUpdateAvailable, getRecord } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqInvestigationWorkspace.getView';
 import saveActions from '@salesforce/apex/CqInvestigationWorkspace.saveActions';
 import completeInvestigation from '@salesforce/apex/CqInvestigationWorkspace.completeInvestigation';
@@ -69,7 +69,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
 
     initForms() {
-        this.plans = (this.v.plans || []).map((p) => ({ key: 'p' + (this.keySeq++), id: p.id, title: p.title, type: p.type, due: p.due, userId: p.userId }));
+        this.plans = (this.v.plans || []).map((p) => ({ key: 'p' + (this.keySeq++), id: p.id, title: p.title, type: p.type, due: p.due, userId: p.userId, userName: p.userName }));
         this.plansDirty = false;
         this.conclusion = this.v.conclusion;
         this.summary = this.v.summary || '';
@@ -225,35 +225,63 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get pinLabel() { return this.showCause ? 'Add to Evidence' : null; }
     handleAskPin(event) { const c = this.template.querySelector('c-cq-investigation-cause'); if (c) { c.pin(event.detail); } }
 
-    // ---- step 5: Actions
+    // ---- step 5: Actions: a table of the planned actions; Add Action and Edit open a popup
     get planRows() {
-        const types = this.v.planTypes || [];
-        return this.plans.map((p, i) => ({ ...p, idx: i,
-            typeOpts: types.map((t) => ({ label: t, pressed: String(p.type === t), cls: 'opt sm' + (p.type === t ? ' on' : '') })) }));
+        return this.plans.map((p, i) => ({ key: p.key, idx: i, title: p.title, type: p.type || '\u2014',
+            ownerText: p.userName || (p.userId ? 'Chosen' : 'You'), dueText: this.dateText(p.due), unsaved: !p.id }));
     }
     get hasPlans() { return this.plans.length > 0; }
-    editPlan(i, fn) {
-        this.plans = this.plans.map((p, j) => (j === i ? fn({ ...p }) : p));
-        this.plansDirty = true;
-        this.error = undefined;
-        this.notice = undefined;
+    planForm;              // the Add Action / Edit popup: { idx (null for a new action), title, type, due, userId, userName }
+    @wire(getRecord, { recordId: '$planUserId', fields: ['User.Name'] })
+    wiredPlanUser({ data }) {
+        if (data && this.planForm && this.planForm.userId === data.id) { this.planForm = { ...this.planForm, userName: data.fields.Name.value }; }
     }
-    handlePlanType(event) {
-        const t = event.currentTarget.dataset.type;
-        this.editPlan(Number(event.currentTarget.dataset.i), (p) => { p.type = t; return p; });
+    get planUserId() { return this.planForm && this.planForm.userId ? this.planForm.userId : undefined; }
+    get planFormOpen() { return !!this.planForm; }
+    get planFormTitle() { return this.planForm && this.planForm.idx !== null ? 'Edit Action' : 'Add Action'; }
+    get planFormSaveLabel() { return this.planForm && this.planForm.idx !== null ? 'Save Action' : 'Add Action'; }
+    get planFormTypes() {
+        const t = this.planForm ? this.planForm.type : null;
+        return (this.v.planTypes || []).map((x) => ({ label: x, pressed: String(t === x), cls: 'opt sm' + (t === x ? ' on' : '') }));
     }
-    handlePlanField(event) {
-        const k = event.currentTarget.dataset.f;
-        const val = event.target.value;
-        this.editPlan(Number(event.currentTarget.dataset.i), (p) => { p[k] = val; return p; });
+    get planFormBlocker() {
+        const f = this.planForm || {};
+        if (!(f.title || '').trim()) { return 'Say what is to be done'; }
+        if (!f.type) { return 'Choose a type'; }
+        if (!f.due) { return 'Enter a due date'; }
+        return '';
     }
-    handlePlanOwner(event) {
-        const id = event.detail ? event.detail.recordId : null;
-        this.editPlan(Number(event.currentTarget.dataset.i), (p) => { p.userId = id; return p; });
-    }
+    get cantSavePlanForm() { return !!this.planFormBlocker; }
     handleAddPlan() {
-        this.plans = [...this.plans, { key: 'p' + (this.keySeq++), id: null, title: '', type: null, due: this.todayIso(30), userId: null }];
+        this.planForm = { idx: null, title: '', type: null, due: this.todayIso(30), userId: null, userName: null };
+        this.planFocus = true;
+    }
+    handleEditPlan(event) {
+        const i = Number(event.currentTarget.dataset.i);
+        const p = this.plans[i];
+        this.planForm = { idx: i, title: p.title, type: p.type, due: p.due, userId: p.userId, userName: p.userName };
+        this.planFocus = true;
+    }
+    handlePlanFormInput(event) { this.planForm = { ...this.planForm, [event.currentTarget.dataset.f]: event.target.value }; }
+    handlePlanFormType(event) { this.planForm = { ...this.planForm, type: event.currentTarget.dataset.type }; }
+    handlePlanFormOwner(event) {
+        const id = event.detail ? event.detail.recordId : null;
+        this.planForm = { ...this.planForm, userId: id, userName: id ? this.planForm.userName : null };
+    }
+    handlePlanFormCancel() { this.planForm = undefined; }
+    handlePlanFormKey(event) { if (event.key === 'Escape') { this.handlePlanFormCancel(); } }
+    handlePlanFormSave() {
+        if (this.cantSavePlanForm) { return; }
+        const f = this.planForm;
+        const row = { title: f.title.trim(), type: f.type, due: f.due, userId: f.userId, userName: f.userId ? f.userName : null };
+        if (f.idx === null) {
+            this.plans = [...this.plans, { key: 'p' + (this.keySeq++), id: null, ...row }];
+        } else {
+            this.plans = this.plans.map((p, j) => (j === f.idx ? { ...p, ...row } : p));
+        }
         this.plansDirty = true;
+        this.planForm = undefined;
+        this.error = undefined;
         this.notice = undefined;
     }
     handleRemovePlan(event) {
@@ -281,7 +309,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         this.error = undefined;
         try {
             const saved = await saveActions({ recordId: this.v.investigationId, payload: this.planPayload() });
-            this.plans = saved.map((p) => ({ key: 'p' + (this.keySeq++), id: p.id, title: p.title, type: p.type, due: p.due, userId: p.userId }));
+            this.plans = saved.map((p) => ({ key: 'p' + (this.keySeq++), id: p.id, title: p.title, type: p.type, due: p.due, userId: p.userId, userName: p.userName }));
             this.plansDirty = false;
             this.notice = 'Saved as ' + this.plural(saved.length, 'CQ action plan', 'CQ action plans') + ' on ' + this.v.investigationName + '.';
         } catch (e) {
@@ -506,7 +534,16 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get hypOpen() { return !!this.hypForm; }
     get hypFromHasHref() { return !!(this.hypForm && this.hypForm.fromHref); }
     hypFocus = false;
+    planFocus = false;
     renderedCallback() {
+        if (this.planFocus) {
+            const pt = this.template.querySelector('textarea.planta');
+            if (pt) {
+                this.planFocus = false;
+                pt.value = (this.planForm && this.planForm.title) || '';     // the value binding alone can leave it empty on open
+                pt.focus();
+            }
+        }
         if (!this.hypFocus) { return; }
         const ta = this.template.querySelector('textarea.hypta');
         if (!ta) { return; }

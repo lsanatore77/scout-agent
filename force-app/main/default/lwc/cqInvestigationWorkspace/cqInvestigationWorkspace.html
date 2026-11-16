@@ -328,29 +328,22 @@
                     <template if:true={showActions}>
                         <h3 class="q">Actions</h3>
                         <p class="p">A correction fixes what is broken now; a corrective action removes the cause; a preventive action stops it happening elsewhere.</p>
-                        <template for:each={planRows} for:item="p">
-                            <div key={p.key} class="drow">
-                                <div class="fields">
-                                    <label class="fl growf"><span>What Is to Be Done *</span>
-                                        <input class="ta" type="text" value={p.title} placeholder="For example, replace the locating pin on the fixture" data-i={p.idx} data-f="title" onchange={handlePlanField}>
-                                    </label>
-                                    <button class="btn sm rm" data-i={p.idx} onclick={handleRemovePlan}>Remove</button>
-                                </div>
-                                <div class="fields">
-                                    <div class="fl"><span>Type *</span>
-                                        <div class="opts tight">
-                                            <template for:each={p.typeOpts} for:item="t">
-                                                <button key={t.label} class={t.cls} data-i={p.idx} data-type={t.label} aria-pressed={t.pressed} onclick={handlePlanType}>{t.label}</button>
-                                            </template>
-                                        </div>
-                                    </div>
-                                    <div class="fl owner"><span>Owner</span>
-                                        <lightning-record-picker label="Owner" variant="label-hidden" object-api-name="User" placeholder="You, if left empty" value={p.userId} data-i={p.idx} onchange={handlePlanOwner}></lightning-record-picker>
-                                    </div>
-                                    <label class="fl"><span>Due *</span>
-                                        <input class="ta date" type="date" value={p.due} data-i={p.idx} data-f="due" onchange={handlePlanField}>
-                                    </label>
-                                </div>
+                        <template if:true={hasPlans}>
+                            <div class="tblwrap">
+                                <table class="tbl">
+                                    <thead><tr><th>Action</th><th>Type</th><th>Owner</th><th>Due</th><th></th></tr></thead>
+                                    <tbody>
+                                        <template for:each={planRows} for:item="p">
+                                            <tr key={p.key}>
+                                                <td class="wide"><div class="strong">{p.title}</div><template if:true={p.unsaved}><div class="note sm0">Not saved yet</div></template></td>
+                                                <td class="nowrap">{p.type}</td>
+                                                <td class="nowrap">{p.ownerText}</td>
+                                                <td class="nowrap">{p.dueText}</td>
+                                                <td class="nowrap"><button class="smalllink plainbtn" data-i={p.idx} onclick={handleEditPlan}>Edit</button><span class="note sm0"> &middot; </span><button class="smalllink plainbtn" data-i={p.idx} onclick={handleRemovePlan}>Remove</button></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
                             </div>
                         </template>
                         <template if:false={hasPlans}><p class="note">No actions yet. Add one for each thing to be done.</p></template>
@@ -410,6 +403,42 @@
                     <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
                     <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
                 </footer>
+            </template>
+            <template if:true={planFormOpen}>
+                <div class="modal-back" onkeydown={handlePlanFormKey}>
+                    <section class="modal popov" role="dialog" aria-modal="true" aria-labelledby="plan-head">
+                        <header class="modal-head">
+                            <h2 id="plan-head" class="modal-title">{planFormTitle}</h2>
+                            <button class="modal-x" aria-label="Close" onclick={handlePlanFormCancel}>&times;</button>
+                        </header>
+                        <div class="modal-body">
+                            <label class="fl"><span>What Is to Be Done *</span>
+                                <textarea class="ta planta" rows="2" value={planForm.title} data-f="title" oninput={handlePlanFormInput} placeholder="For example, replace the locating pin on the fixture"></textarea>
+                            </label>
+                            <div class="fl"><span>Type *</span>
+                                <div class="opts tight">
+                                    <template for:each={planFormTypes} for:item="t">
+                                        <button key={t.label} class={t.cls} data-type={t.label} aria-pressed={t.pressed} onclick={handlePlanFormType}>{t.label}</button>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="fields">
+                                <div class="fl owner"><span>Owner</span>
+                                    <lightning-record-picker label="Owner" variant="label-hidden" object-api-name="User" placeholder="You, if left empty" value={planForm.userId} onchange={handlePlanFormOwner}></lightning-record-picker>
+                                </div>
+                                <label class="fl"><span>Due *</span>
+                                    <input class="ta date" type="date" value={planForm.due} data-f="due" onchange={handlePlanFormInput}>
+                                </label>
+                            </div>
+                            <div class="note sm0">A correction fixes what is broken now; a corrective action removes the cause; a preventive action stops it happening elsewhere. Save Actions saves it to CQ.</div>
+                        </div>
+                        <footer class="modal-foot">
+                            <span class="blocker">{planFormBlocker}</span>
+                            <button class="btn" onclick={handlePlanFormCancel}>Cancel</button>
+                            <button class="btn primary" onclick={handlePlanFormSave} disabled={cantSavePlanForm}>{planFormSaveLabel}</button>
+                        </footer>
+                    </section>
+                </div>
             </template>
             <template if:true={hypOpen}>
                 <div class="modal-back" onkeydown={handleHypKey}>
