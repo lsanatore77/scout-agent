@@ -26,3 +26,8 @@ Not now; at some point. Kept so packaging is a known list, not a discovery.
 - What makes the hand-over cheap: keep names namespace-neutral (no prefix written out in strings, field paths, agent scripts or prompt references), keep setup data in an install script or Custom Metadata, and keep installs to demo orgs so no customer data needs migrating.
 - On their side: our fields on CQ objects become native CQ fields (no extension dependency), and CQ's code standards, coverage, security review and release schedule apply.
 - CQ may also rename objects, fields and classes to their own conventions. That is a find-and-replace across the source, so keep a name map (docs/data_model_log.md and tools/data_model.py already list every object and field), keep API names consistent, and keep wording in labels rather than in code.
+
+## When to do what (decided 16 Nov 2026)
+- Habits from now on: queries run as the user, with sharing and permission checks; no hard-coded record IDs; no namespace prefix written out in names; keep the logs current.
+- Wait until ComplianceQuest shows real interest: Custom Labels for screen text, replacing the dev shortcuts, Custom Metadata, the scratch-org build and install script, matching CQ's conventions, security review.
+- The read-through audit (security and shortcuts) fits the planned cleanup pause after Event Review; findings go on this list.
