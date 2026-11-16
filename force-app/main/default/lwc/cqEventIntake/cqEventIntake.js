@@ -4,6 +4,9 @@ import getSetup from '@salesforce/apex/CqEventIntake.getSetup';
 import submitReport from '@salesforce/apex/CqEventIntake.submitReport';
 import getTrend from '@salesforce/apex/CqEventIntake.getTrend';
 import quickLog from '@salesforce/apex/CqEventIntake.quickLog';
+import getLots from '@salesforce/apex/CqEventLots.getLots';
+
+const NOT_KNOWN = 'NOT_KNOWN';
 
 const PART_DISPLAY = { primaryField: 'compliancequest__Part_Number__c', additionalFields: ['Name'] };
 const PART_MATCH = { primaryField: { fieldPath: 'compliancequest__Part_Number__c' }, additionalFields: [{ fieldPath: 'Name' }] };
@@ -26,6 +29,7 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
     partId;
     lot = '';
     units = '';
+    lots = [];             // lot numbers CQ has for the chosen part
     answers = {};          // questionId -> answer
     sent;                  // { id, name, urgent }
 
@@ -33,6 +37,7 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
     catId;
     qPartId;
     qLot = '';
+    qLots = [];
     qty = 1;
     note = '';
     trend;                 // CqEventIntake.Trend for the chosen category and part
@@ -63,7 +68,21 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
     get showForm() { return this.isReport && !this.sent; }
     get showSent() { return this.isReport && !!this.sent; }
     handleField(event) { this[event.currentTarget.dataset.f] = event.target.value; this.error = undefined; }
-    handlePart(event) { this.partId = event.detail ? event.detail.recordId : null; }
+    handlePart(event) {
+        this.partId = event.detail ? event.detail.recordId : null;
+        this.lot = '';
+        this.loadLots(this.partId).then((l) => { this.lots = l; });
+    }
+    handleLot(event) { this.lot = event.detail.value; }
+    async loadLots(partId) {
+        if (!partId) { return []; }
+        try { return await getLots({ partId }); } catch (e) { this.error = this.msg(e, 'Could not read the lots.'); return []; }
+    }
+    options(list) { return [...list.map((l) => ({ label: l, value: l })), { label: 'Not Known', value: NOT_KNOWN }]; }
+    lotValue(v) { return v && v !== NOT_KNOWN ? v : ''; }
+    get lotOptions() { return this.options(this.lots); }
+    get noLots() { return !this.partId; }
+    get lotPlaceholder() { return this.partId ? 'Choose a lot' : 'Lot (choose the part first)'; }
     get questions() {
         return (this.setup.questions || []).map((q, i) => {
             const a = this.answers[q.id];
@@ -111,7 +130,7 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
         this.error = undefined;
         try {
             const payload = {
-                title: this.title.trim(), problem: this.problem.trim(), partId: this.partId, lot: this.lot, units: this.units,
+                title: this.title.trim(), problem: this.problem.trim(), partId: this.partId, lot: this.lotValue(this.lot), units: this.units,
                 answers: Object.keys(this.answers).map((k) => ({ questionId: k, answer: this.answers[k] }))
             };
             this.sent = await submitReport({ payload: JSON.stringify(payload) });
@@ -124,7 +143,8 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
     get sentTitle() { return this.sent ? this.sent.name + ' Sent for Review' + (this.sent.urgent ? ' as Urgent' : '') : ''; }
     handleAnother() {
         this.sent = undefined;
-        this.problem = ''; this.title = ''; this.partId = null; this.lot = ''; this.units = ''; this.answers = {};
+        this.problem = ''; this.title = ''; this.partId = null; this.lot = ''; this.lots = []; this.units = ''; this.answers = {};
+        const pk = this.template.querySelector('c-cq-part-picker.rpart'); if (pk) { pk.clear(); }
     }
     handleOpenEvent(event) {
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: event.currentTarget.dataset.id, objectApiName: 'Quality_Event__c', actionName: 'view' } });
@@ -137,7 +157,17 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
     get hasCats() { return (this.setup.categories || []).length > 0; }
     get cat() { return (this.setup.categories || []).find((c) => c.id === this.catId); }
     handleCat(event) { this.catId = event.currentTarget.dataset.id; this.logged = undefined; this.refreshTrend(); }
-    handleQPart(event) { this.qPartId = event.detail ? event.detail.recordId : null; this.logged = undefined; this.refreshTrend(); }
+    handleQPart(event) {
+        this.qPartId = event.detail ? event.detail.recordId : null;
+        this.logged = undefined;
+        this.qLot = '';
+        this.loadLots(this.qPartId).then((l) => { this.qLots = l; });
+        this.refreshTrend();
+    }
+    handleQLot(event) { this.qLot = event.detail.value; }
+    get qLotOptions() { return this.options(this.qLots); }
+    get noQLots() { return !this.qPartId; }
+    get qLotPlaceholder() { return this.qPartId ? 'Lot (optional)' : 'Lot (choose the part first)'; }
     handleQField(event) { this[event.currentTarget.dataset.f] = event.target.value; }
     handleDec() { if (this.qty > 1) { this.qty = Number(this.qty) - 1; } }
     handleInc() { this.qty = Number(this.qty) + 1; }
@@ -193,7 +223,7 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
         this.busy = true;
         this.error = undefined;
         try {
-            this.logged = await quickLog({ categoryId: this.catId, partId: this.qPartId, lot: this.qLot, quantity: Number(this.qty), note: this.note });
+            this.logged = await quickLog({ categoryId: this.catId, partId: this.qPartId, lot: this.lotValue(this.qLot), quantity: Number(this.qty), note: this.note });
             this.trend = this.logged.trend;
             if (this.logged.triggered) { this.trend = await getTrend({ categoryId: this.catId, partId: this.qPartId }); }
             this.qty = 1;

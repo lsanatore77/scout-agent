@@ -31,10 +31,9 @@
                                 <input class="ta" type="text" maxlength="255" data-f="title" oninput={handleField} placeholder="A short name for the problem">
                             </label>
                             <div class="fl"><span class="qn">Product</span>
-                                <lightning-record-picker label="Part" variant="label-hidden" object-api-name="compliancequest__SQX_Part__c" placeholder="Search part number or name"
-                                    display-info={partDisplay} matching-info={partMatch} onchange={handlePart}></lightning-record-picker>
+                                <c-cq-part-picker class="rpart" onchange={handlePart}></c-cq-part-picker>
                                 <div class="two">
-                                    <input class="ta" type="text" maxlength="80" data-f="lot" oninput={handleField} placeholder="Lot">
+                                    <lightning-combobox class="lotbox" label="Lot" variant="label-hidden" placeholder={lotPlaceholder} options={lotOptions} value={lot} disabled={noLots} onchange={handleLot}></lightning-combobox>
                                     <input class="ta" type="number" min="0" data-f="units" oninput={handleField} placeholder="Units affected">
                                 </div>
                                 <span class="note">Leave blank if no product was affected.</span>
@@ -95,10 +94,9 @@
                                 <span class="note">Only categories your quality team approved for trend-only logging appear here. Anything else needs a Full Report.</span>
                             </div>
                             <div class="fl"><span class="qn">2. Which part, and how many? *</span>
-                                <lightning-record-picker label="Part" variant="label-hidden" object-api-name="compliancequest__SQX_Part__c" placeholder="Search part number or name"
-                                    display-info={partDisplay} matching-info={partMatch} onchange={handleQPart}></lightning-record-picker>
+                                <c-cq-part-picker class="qpart" onchange={handleQPart}></c-cq-part-picker>
                                 <div class="two">
-                                    <input class="ta" type="text" maxlength="80" data-f="qLot" oninput={handleQField} placeholder="Lot (optional)">
+                                    <lightning-combobox class="lotbox" label="Lot" variant="label-hidden" placeholder={qLotPlaceholder} options={qLotOptions} value={qLot} disabled={noQLots} onchange={handleQLot}></lightning-combobox>
                                     <div class="stepper">
                                         <button class="btn sm" onclick={handleDec} disabled={cantDec} aria-label="One fewer">&minus;</button>
                                         <span class="qty">{qty}</span>

@@ -1,0 +1,17 @@
+:host { display: block; }
+.wrap { position: relative; }
+.box { position: relative; }
+.in { box-sizing: border-box; width: 100%; min-height: 40px; padding: 8px 34px 8px 10px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 14px; color: #1a1d21; }
+.in:focus { outline: none; border-color: #1d5fd1; box-shadow: 0 0 0 1px #1d5fd1; }
+.sicon { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); --slds-c-icon-color-foreground-default: #5b6470; }
+.picked { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 6px 0 10px; border-radius: 4px; border: 1px solid #c4cad2; background: #f5f9ff; }
+.plabel { flex: 1 1 auto; min-width: 0; font-size: 14px; font-weight: 600; color: #1a1d21; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.x { width: 28px; height: 28px; border: none; border-radius: 4px; background: none; font-size: 18px; line-height: 1; color: #5b6470; cursor: pointer; }
+.x:hover { background: #e8f0fd; color: #1d5fd1; }
+.list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); max-height: 320px; overflow-y: auto; border-radius: 6px; border: 1px solid #dde1e6; background: #fff; box-shadow: 0 6px 18px rgba(26, 29, 33, .12); }
+.lhead { padding: 8px 12px 4px; font-size: 12px; font-weight: 700; color: #5b6470; text-transform: uppercase; letter-spacing: .03em; }
+.row { display: flex; flex-direction: column; gap: 1px; padding: 8px 12px; cursor: pointer; }
+.row:hover { background: #f5f9ff; }
+.pn { font-size: 14px; font-weight: 600; color: #1a1d21; }
+.pname { font-size: 12px; color: #5b6470; }
+.empty { padding: 8px 12px 12px; font-size: 13px; color: #5b6470; }

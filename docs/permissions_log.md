@@ -129,3 +129,4 @@ Newest first.
 - **CqDispositionWorkspace** (new): Apex access; Disposition Create and Edit; Impacted Part/Lot and Nonconformance Read. Set: Quality.
 - **CqTriageNext**: now creates draft Dispositions at Complete Triage and changes the NC owner from the queue to the person completing triage. Set: Quality.
 - **Approvals (planned)**: approving or rejecting in our screens edits CQ Approval Steps and closes CQ Approvals. Set: Approvals.
+- **CqEventLots** and **CqEventParts** (new, 16 Nov 2026, Report a Problem): Apex access; Part and Lot Info Read (lots for the chosen part; Suggested Parts and part search); Quality Event, Nonconformance and Complaint Read for the Part field (Suggested Parts = parts most recently used on those). Queries run in user mode. New component cqPartPicker (not exposed) replaces lightning-record-picker on both tabs. Set: Quality.
