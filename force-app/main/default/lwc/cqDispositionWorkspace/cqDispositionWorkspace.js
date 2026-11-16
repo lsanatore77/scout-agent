@@ -125,6 +125,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get noLots() { return this.lotCount === 0; }
     get approvalText() { return this.v.needsApproval ? 'Required' : 'Not Required'; }
     get suggestHeadline() {
+        if (!this.v.suggestType || this.totalLeft === 0) { return 'Nothing to Dispose'; }
         const open = (this.v.lots || []).filter((l) => l.left > 0);
         if (open.length === 1) { return this.v.suggestType + ' ' + this.units(open[0].left) + ' of Lot ' + open[0].lot; }
         return this.v.suggestType + ' ' + this.units(this.totalLeft);
@@ -285,7 +286,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
         const total = types.reduce((a, t) => a + by[t], 0);
         const chosen = types.map((t) => t + ' ' + this.fmt(by[t]));
         const sug = this.suggestedAtSave || this.v.suggestType;
-        if (sug) {
+        if (sug && total > 0) {
             const said = types.length === 1 && types[0] === sug ? ' · As Decided'
                 : chosen.length ? ' · You Chose ' + (chosen.length > 1 ? chosen.slice(0, -1).join(', ') + ' and ' + chosen[chosen.length - 1] : chosen[0]) : '';
             rows.push({ key: 'sug', k: 'CQ.AI Suggested', v: sug + ' ' + this.fmt(total) + said });

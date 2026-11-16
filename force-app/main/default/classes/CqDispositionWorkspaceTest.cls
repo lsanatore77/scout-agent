@@ -45,6 +45,16 @@ private class CqDispositionWorkspaceTest {
     }
 
     @IsTest
+    static void nothingToDispose() {
+        Id ncId = makeNc();
+        delete [SELECT Id FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :ncId];
+        CqDispositionWorkspace.View v = CqDispositionWorkspace.getView(ncId);
+        System.assert(v.lots.isEmpty(), 'no lots');
+        System.assertEquals(null, v.suggestType, 'nothing to dispose: no suggestion');
+        System.assert(v.suggestWhy.contains('nothing to dispose'), v.suggestWhy);
+    }
+
+    @IsTest
     static void viewAndComplete() {
         Id ncId = makeNc();
         CqTriageNext.createDraftDispositions(ncId, Date.today().addDays(5));

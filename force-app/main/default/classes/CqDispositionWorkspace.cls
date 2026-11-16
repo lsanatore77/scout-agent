@@ -118,6 +118,10 @@ public with sharing class CqDispositionWorkspace {
             }
         }
         suggest(v);
+        if (v.lots.isEmpty()) {
+            v.suggestType = null;
+            v.suggestWhy = 'This NC has no impacted parts or lots, so there is nothing to dispose.';
+        }
         return v;
     }
 

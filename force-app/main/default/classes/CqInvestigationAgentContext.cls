@@ -220,7 +220,8 @@ public with sharing class CqInvestigationAgentContext {
         try {
             CqDispositionWorkspace.View v = CqDispositionWorkspace.getView(ncId);
             l.add('The CQ.AI Disposition workspace has two steps: Disposition at a Glance and Dispose by Lot. Due ' + d(v.dispDue) + '. Approval needed: ' + yn(v.needsApproval) + '. Complete: ' + yn(v.isComplete) + '.');
-            l.add('CQ.AI Suggests ' + s(v.suggestType) + '. Why: ' + s(v.suggestWhy));
+            if (v.suggestType == null) { l.add('No disposition is suggested: ' + s(v.suggestWhy)); }
+            else { l.add('CQ.AI Suggests ' + s(v.suggestType) + '. Why: ' + s(v.suggestWhy)); }
             l.add('Disposition types: ' + String.join(v.types, ', ') + '.');
             for (CqDispositionWorkspace.Lot t : v.lots) {
                 l.add('- Lot ' + s(t.lot) + ' of ' + s(t.partName) + ': ' + n(t.impacted) + ' impacted, ' + n(t.disposed) + ' disposed, ' + n(t.left) + ' left.');
