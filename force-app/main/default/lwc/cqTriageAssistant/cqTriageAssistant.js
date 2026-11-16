@@ -23,6 +23,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', '
 const ESCALATE = 'Escalate to CAPA';
 const LINK = 'Link to Earlier CAPA';
 const NOT_NEEDED = 'Not Needed';
+const LINK_PAGE = 5;   // investigations a page on Next Steps
 
 /**
  * Triage Assistant: containment, data check, risk, investigation links. CQ.AI suggests, the triager decides.
@@ -66,6 +67,8 @@ export default class CqTriageAssistant extends LightningElement {
     lk;
     picks = {};
     extra = [];
+    sugPage = 0;
+    otherPage = 0;
     linkError;
     summary = [];
     nx;                 // Next Steps: CQ.AI suggestions, default dates and approval matrices
@@ -247,7 +250,7 @@ export default class CqTriageAssistant extends LightningElement {
         this.acts = {}; this.noActionWhy = ''; this.due = this.inDays(5); this.showAdd = false; this.added = [];
         this.data = ''; this.asks = {}; this.askNote = '';
         if (this.rk) { this.sev = this.rk.severity; this.lik = this.rk.likelihood; }
-        this.picks = {}; this.extra = []; this.summary = [];
+        this.picks = {}; this.extra = []; this.summary = []; this.sugPage = 0; this.otherPage = 0;
         this.disp = ''; this.dispAppr = false; this.inv = ''; this.invAppr = false; this.capa = ''; this.capaReason = '';
         if (this.nx) { this.dispDue = this.nx.dispDue; this.invDue = this.nx.invDue; this.matrixId = this.nx.defaultMatrixId; }
         this.preselect();
@@ -460,6 +463,28 @@ export default class CqTriageAssistant extends LightningElement {
     get hasSug() { return this.sugItems.length > 0; }
     get hasOther() { return this.otherItems.length > 0; }
     get noLinks() { return this.linksReady && !this.linkItems.length; }
+    /** One page of a list, and its page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one. */
+    pager(list, page, w) {
+        const n = Math.max(1, Math.ceil(list.length / LINK_PAGE));
+        const cur = Math.min(page, n - 1);
+        const keep = [];
+        for (let i = 0; i < n; i++) { if (n <= 7 || i === 0 || i === n - 1 || Math.abs(i - cur) <= 2) { keep.push(i); } }
+        const items = [];
+        keep.forEach((i, k) => {
+            if (k > 0 && i - keep[k - 1] > 1) { items.push({ key: w + 'g' + i, text: '…', cls: 'pg gap', off: true, label: 'More pages' }); }
+            const on = i === cur;
+            items.push({ key: w + 'p' + i, p: String(i), text: String(i + 1), cls: 'pg' + (on ? ' on' : ''), off: on, current: on ? 'page' : 'false', label: 'Page ' + (i + 1) });
+        });
+        return { w, cur, n, has: list.length > LINK_PAGE, shown: list.slice(cur * LINK_PAGE, (cur + 1) * LINK_PAGE), items, prevOff: cur === 0, nextOff: cur >= n - 1 };
+    }
+    get sugPg() { return this.pager(this.sugItems, this.sugPage, 'sug'); }
+    get otherPg() { return this.pager(this.otherItems, this.otherPage, 'other'); }
+    handleLinkPage(event) {
+        const d = event.currentTarget.dataset;
+        const pg = d.w === 'sug' ? this.sugPg : this.otherPg;
+        const p = d.p === 'prev' ? pg.cur - 1 : d.p === 'next' ? pg.cur + 1 : Number(d.p);
+        this[d.w + 'Page'] = Math.max(0, Math.min(pg.n - 1, p));
+    }
     get otherLabel() { return 'Other Investigations on This Part (' + this.otherItems.length + ')'; }
     get chosenLinks() { return this.linkItems.filter((v) => v.on && !v.linked); }
     get linkCount() { return this.chosenLinks.length; }
@@ -485,6 +510,7 @@ export default class CqTriageAssistant extends LightningElement {
                 } else {
                     this.extra = [...this.extra, { ...v, mine: true }];
                     this.picks = { ...this.picks, [v.id]: true };
+                    this.sugPage = Math.ceil(this.sugItems.length / LINK_PAGE) - 1;   // show the one just added
                 }
             } catch (e) {
                 this.linkError = (e && e.body && e.body.message) || 'Could not add that investigation.';

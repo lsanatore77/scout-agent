@@ -125,6 +125,13 @@
 .ownbox { margin: 6px 0 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid #dde1e6; background: #fafbfc; font-size: 13px; line-height: 1.45; color: #3d4550; }
 .ownbox strong { color: #1a1d21; }
 .invlist { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.pager { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 8px; }
+.pages { display: inline-flex; align-items: center; gap: 2px; }
+.pg { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 22px; padding: 0 3px; box-sizing: border-box; border: none; background: none; color: #8a94a3; font: inherit; font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; }
+.pg:hover { color: #1d5fd1; }
+.pg:disabled { color: #c4cad2; cursor: default; }
+.pg.gap:disabled { color: #8a94a3; }
+.pg.on, .pg.on:disabled { color: #1d5fd1; font-weight: 700; }
 .act.inv { align-items: flex-start; }
 .act.inv .tick { margin-top: 2px; }
 .act.inv .pill { flex: none; white-space: nowrap; }
