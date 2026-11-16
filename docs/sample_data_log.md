@@ -14,3 +14,9 @@ Sample records made in cqse-golden--dev for demos and testing. Each new record's
 Test records to clean up: CHG-000004 and WI-2210 drafts were rolled back in dry runs and do not exist; NC-000170 (TEST) and its investigation INV-96 are real.
 
 Validation rules turned off by Lou on 15 Nov 2026 to set past effective dates: Change Order Ensure_EffecDate_CanNotBe_PastDate (compliancequest) and Controlled Document CQPLM_Ensure_EffecDate_CanNotBe_PastDate (cqext). Turn both back on afterwards.
+
+## 15 Nov 2026 · Check History story for NC-000153
+- NC-000172 (new, Closed 20 Jun 2026): Hub bond leak at pressure test on PTCA-1000, lot BRFULL-0512, occurred 12 May 2026. Description set through Description_RT (CQ copies the rich-text field into Description, so setting Description alone is cleared).
+- INV-0000000099 (new, Completed) on NC-000172: Confirmed; root cause Machine, Fixture worn or damaged, "Worn locating pin on fixture BF-02", Verified.
+- CAPA-000018 (new, Closed 18 Jun 2026): Replace BF-02 locating pin; the preventive maintenance plan was not changed. Linked from NC-000172.
+- Numbers NC-000171 and CAPA-000017 were used up by dry runs and do not exist.
