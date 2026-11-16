@@ -23,7 +23,8 @@ What Case has that we would otherwise build: queues and assignment rules, case t
 ## The clock (Lou likes it, 16 Nov 2026; to design)
 - Starts at the event's **aware date**, not when it was typed in or picked up.
 - Targets per kind of event, set in setup (for example: urgent reviewed within 1 day, others within 5; a complaint's reporting deadline counted from the aware date).
-- Shown on the queue and the reviewer's own list as time left, amber when close, red when overdue, and used for the escalation (notify, then reassign).
+- Shown on the queue and the reviewer's own list as time left, amber when close, red when overdue.
+- **Decided:** when the clock runs out, the event escalates **automatically** (a scheduled job checks the clocks; no one has to press anything). What escalation does (notify whom, reassign to whom, how many levels) is still to design.
 
 ## Open questions
 - Can a reviewer pass an event straight to a named person, or only back to the queue?
