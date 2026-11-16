@@ -19,3 +19,9 @@ Not now; at some point. Kept so packaging is a known list, not a discovery.
 - Hard-coded CQ picklist values and activity codes (submit, takeownershipandinitiate, Closed).
 - Record-type and app names referenced by name.
 - The Report a Problem tab (created by hand in dev).
+
+## Purpose of the enablement package, and CQ adoption (decided 16 Nov 2026)
+- The `enablement` package is for our work and demos (CQ's development team and leadership), not for wide customer installs.
+- If CQ adopts it, they repackage our source under their own namespace (compliancequest) in their packaging org. A namespace cannot be changed on a managed package and an upgrade cannot move components between namespaces (verify before relying on this), so it is a source hand-over, not a package upgrade.
+- What makes the hand-over cheap: keep names namespace-neutral (no prefix written out in strings, field paths, agent scripts or prompt references), keep setup data in an install script or Custom Metadata, and keep installs to demo orgs so no customer data needs migrating.
+- On their side: our fields on CQ objects become native CQ fields (no extension dependency), and CQ's code standards, coverage, security review and release schedule apply.
