@@ -1,4 +1,5 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import getCause from '@salesforce/apex/CqInvestigationCause.getCause';
 import setStatus from '@salesforce/apex/CqInvestigationCause.setStatus';
 import saveFit from '@salesforce/apex/CqInvestigationCause.saveFit';
@@ -8,8 +9,12 @@ import deleteEvidence from '@salesforce/apex/CqInvestigationCause.deleteEvidence
 import saveWhys from '@salesforce/apex/CqInvestigationCause.saveWhys';
 import saveRootCauses from '@salesforce/apex/CqInvestigationCause.saveRootCauses';
 import findRecords from '@salesforce/apex/CqInvestigationCause.findRecords';
+import addHypothesis from '@salesforce/apex/CqInvestigationChanges.addHypothesis';
 
-const TABS = [{ key: 'hyp', label: 'Hypotheses' }, { key: 'isnot', label: 'Is / Is Not' }, { key: 'why', label: '5 Why' }, { key: 'roots', label: 'Root Causes' }];
+const NC_NAME = 'compliancequest__SQX_Investigation__c.compliancequest__SQX_Nonconformance__r.Name';
+const NC_TITLE = 'compliancequest__SQX_Investigation__c.compliancequest__SQX_Nonconformance__r.compliancequest__NC_Title__c';
+const NC_LOT = 'compliancequest__SQX_Investigation__c.compliancequest__SQX_Nonconformance__r.compliancequest__Lot_Number__c';
+const TABS = [{ key: 'hyp', label: 'Hypotheses' }, { key: 'isnot', label: 'Is / Is Not' }, { key: 'why', label: '5 Why' }, { key: 'fish', label: 'Fishbone' }, { key: 'roots', label: 'Root Causes' }];
 const TEST_TYPES = ['Measure or Inspect', 'Compare', 'Reproduce', 'Remove the Cause', 'Check Records'];
 const SUPPORTS = [{ v: 'For', label: 'Supports It' }, { v: 'Against', label: 'Goes Against It' }, { v: 'Inconclusive', label: 'Inconclusive' }];
 const TEST_FOR = { Machine: 'Measure or Inspect', Method: 'Compare', Materials: 'Check Records', Measurement: 'Measure or Inspect', People: 'Check Records', 'Environment (Nature)': 'Check Records' };
@@ -19,8 +24,9 @@ const TAG_CLS = { 'From CQ': 'tag', 'Test Done': 'tag ok', 'Test Planned': 'tag 
 
 /**
  * Find the Cause, step 4 of the CQ.AI Investigation workspace: Hypotheses (with CQ.AI Suggests, the root cause
- * checks, evidence and How Do You Know?), Is / Is Not (CQ's 5W2H), 5 Why (CQ's own 5 Why tool and Why records)
- * and Root Causes (saved as CQ root causes with a Role). CQ.AI Suggests comes from rules over the evidence;
+ * checks, evidence and How Do You Know?), Is / Is Not (CQ's 5W2H), 5 Why (CQ's own 5 Why tool and Why records),
+ * Fishbone (a view of the hypotheses on their category's bone, not saved to CQ) and Root Causes (saved as CQ root
+ * causes with a Role). CQ.AI Suggests comes from rules over the evidence;
  * the person decides Confirmed or Ruled Out.
  *
  * Events: addhyp (a suggested hypothesis to add with the workspace's popup), causestate (footer blocker and the
@@ -49,6 +55,10 @@ export default class CqInvestigationCause extends LightningElement {
     focusForm = false;
 
     connectedCallback() { this.load(); }
+
+    // the NC, for the head of the fishbone
+    @wire(getRecord, { recordId: '$recordId', optionalFields: [NC_NAME, NC_TITLE, NC_LOT] }) inv;
+    ncField(f) { return this.inv && this.inv.data ? getFieldValue(this.inv.data, f) : null; }
 
     async load() {
         try {
@@ -131,6 +141,7 @@ export default class CqInvestigationCause extends LightningElement {
     get onIs() { return this.tab === 'isnot'; }
     get onWhy() { return this.tab === 'why'; }
     get onRoots() { return this.tab === 'roots'; }
+    get onFish() { return this.tab === 'fish'; }
     get hasHyps() { return this.v && this.v.hyps.length > 0; }
     get noHyps() { return !this.hasHyps; }
 
@@ -381,6 +392,10 @@ export default class CqInvestigationCause extends LightningElement {
             const want = el.dataset.val === undefined ? '' : el.dataset.val;
             if (el.value !== want) { el.value = want; }
         });
+        if (this.focusNew) {
+            const ta = this.template.querySelector('textarea.newta');
+            if (ta) { this.focusNew = false; ta.focus(); }
+        }
         if (!this.focusForm) { return; }
         const el = this.template.querySelector('.modal [data-first]');
         if (!el) { return; }
@@ -523,6 +538,71 @@ export default class CqInvestigationCause extends LightningElement {
     get whyToolHref() { return this.whyHyp && this.whyHyp.toolId ? this.href(this.whyHyp.toolId) : null; }
     get whyToolName() { return this.whyHyp ? this.whyHyp.toolName : null; }
     get problemText() { return this.v.problem || 'No description on the NC.'; }
+
+    // ================================================================ Fishbone
+    get fishCats() {
+        const cats = [...(this.v.categories || [])];
+        this.v.hyps.forEach((h) => { if (h.category && !cats.includes(h.category)) { cats.push(h.category); } });
+        return cats;
+    }
+    bone(cat, top) {
+        const items = this.v.hyps.filter((h) => h.category === cat).map((h) => ({
+            key: h.id, label: this.hname(h) + ' · ' + this.short(h.title),
+            title: this.hname(h) + ': ' + h.title, status: h.status,
+            cls: 'cause ' + (h.status === 'Confirmed' ? 'ok' : h.status === 'Ruled Out' ? 'out' : 'open'), pillCls: STATUS_CLS[h.status] || 'chip'
+        }));
+        return { key: cat, cat, items, top, bottom: !top };
+    }
+    get fishTop() { const c = this.fishCats; return c.slice(0, Math.ceil(c.length / 2)).map((x) => this.bone(x, true)); }
+    get fishBottom() { const c = this.fishCats; return c.slice(Math.ceil(c.length / 2)).map((x) => this.bone(x, false)); }
+    get fishHead() { return this.ncField(NC_TITLE) || 'The problem'; }
+    get fishHeadSub() { const lot = this.ncField(NC_LOT); return [this.ncField(NC_NAME), lot ? 'lot ' + lot : null].filter((x) => x).join(' · '); }
+    get fishStandsOut() {
+        const cats = this.fishCats;
+        const used = cats.filter((c) => this.v.hyps.some((h) => h.category === c));
+        const empty = cats.filter((c) => !used.includes(c));
+        const join = (a) => (a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0]);
+        if (!used.length) { return 'No hypotheses yet. Add one on any bone.'; }
+        return 'Hypotheses sit on ' + join(used) + '.' + (empty.length ? ' ' + join(empty) + (empty.length === 1 ? ' has' : ' have') + ' none yet.' : ' Every category has at least one.');
+    }
+
+    // + Add a Hypothesis on a bone: the same popup as Add as Hypothesis, with the category set
+    hypNew;
+    handleFishAdd(event) { this.hypNew = { category: event.currentTarget.dataset.c, title: '' }; this.focusNew = true; this.error = undefined; this.notice = undefined; }
+    focusNew = false;
+    get hypNewOpen() { return !!this.hypNew; }
+    get hypNewCats() {
+        const c = this.hypNew ? this.hypNew.category : null;
+        return this.fishCats.map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
+    }
+    handleNewTitle(event) { this.hypNew = { ...this.hypNew, title: event.target.value }; }
+    handleNewCat(event) { this.hypNew = { ...this.hypNew, category: event.currentTarget.dataset.c }; }
+    handleNewCancel() { this.hypNew = undefined; }
+    handleNewKey(event) { if (event.key === 'Escape') { this.hypNew = undefined; } }
+    get hypNewBlocker() {
+        if (!this.hypNew) { return null; }
+        if (!(this.hypNew.title || '').trim()) { return 'Say what the possible cause is'; }
+        if (!this.hypNew.category) { return 'Choose a category'; }
+        return null;
+    }
+    get cantAddNew() { return this.saving || !!this.hypNewBlocker; }
+    async handleNewSave() {
+        if (this.cantAddNew) { return; }
+        const f = this.hypNew;
+        this.saving = true;
+        this.error = undefined;
+        try {
+            const n = await addHypothesis({ recordId: this.recordId, payload: JSON.stringify({ title: f.title.trim(), category: f.category, sourceName: 'Added by You' }) });
+            this.hypNew = undefined;
+            await this.load();
+            this.notice = 'Added as H' + n + ' on ' + f.category + '.';
+        } catch (e) {
+            this.error = this.msg(e, 'The hypothesis was not saved.');
+        } finally {
+            this.saving = false;
+            this.sendState();
+        }
+    }
 
     // ================================================================ Root Causes
     get rootRows() {

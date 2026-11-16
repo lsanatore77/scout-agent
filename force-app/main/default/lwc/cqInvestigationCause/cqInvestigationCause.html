@@ -189,6 +189,43 @@
             </template>
         </template>
 
+        <!-- Fishbone -->
+        <template if:true={onFish}>
+            <p class="p">Every hypothesis on its category&rsquo;s bone, with its status. Use it to see which categories nobody has looked at yet.</p>
+            <div class="fish">
+                <div class="fishbody">
+                    <div class="bones">
+                        <template for:each={fishTop} for:item="b">
+                            <div key={b.key} class="bone top">
+                                <div class="bonecat">{b.cat}</div>
+                                <template for:each={b.items} for:item="c">
+                                    <div key={c.key} class={c.cls} title={c.title}><span class="ctext">{c.label}</span><span class={c.pillCls}>{c.status}</span></div>
+                                </template>
+                                <button class="addc" data-c={b.cat} onclick={handleFishAdd}>+ Add a Hypothesis</button>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="spine" aria-hidden="true"><span class="spineline"></span><span class="spinehead"></span></div>
+                    <div class="bones">
+                        <template for:each={fishBottom} for:item="b">
+                            <div key={b.key} class="bone bottom">
+                                <template for:each={b.items} for:item="c">
+                                    <div key={c.key} class={c.cls} title={c.title}><span class="ctext">{c.label}</span><span class={c.pillCls}>{c.status}</span></div>
+                                </template>
+                                <button class="addc" data-c={b.cat} onclick={handleFishAdd}>+ Add a Hypothesis</button>
+                                <div class="bonecat">{b.cat}</div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="fishhead">{fishHead}<div class="note sm0">{fishHeadSub}</div></div>
+            </div>
+            <div class="sugbox top16">
+                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                <div class="whyv">{fishStandsOut}</div>
+            </div>
+        </template>
+
         <!-- Root Causes -->
         <template if:true={onRoots}>
             <div class="sugbox">
@@ -243,6 +280,36 @@
 
         <template if:true={notice}><div class="okbox">{notice}</div></template>
         <template if:true={error}><div class="errbox">{error}</div></template>
+
+        <!-- + Add a Hypothesis from the fishbone -->
+        <template if:true={hypNewOpen}>
+            <div class="modal-back" onkeydown={handleNewKey}>
+                <section class="modal" role="dialog" aria-modal="true" aria-labelledby="nh-head">
+                    <header class="modal-head">
+                        <h2 id="nh-head" class="modal-title">Add a Hypothesis</h2>
+                        <button class="modal-x" aria-label="Close" onclick={handleNewCancel}>&times;</button>
+                    </header>
+                    <div class="modal-body">
+                        <label class="fl"><span>Hypothesis *</span>
+                            <textarea class="ta newta" rows="3" value={hypNew.title} data-val={hypNew.title} oninput={handleNewTitle} placeholder="For example, second-shift operators were not trained on WI-2210 Rev D"></textarea>
+                        </label>
+                        <div class="fl"><span>Category *</span>
+                            <div class="opts tight">
+                                <template for:each={hypNewCats} for:item="c">
+                                    <button key={c.label} class={c.cls} aria-pressed={c.pressed} data-c={c.label} onclick={handleNewCat}>{c.label}</button>
+                                </template>
+                            </div>
+                        </div>
+                        <div class="note sm0">It starts Open; test it on the Hypotheses tab.</div>
+                    </div>
+                    <footer class="modal-foot">
+                        <span class="blocker">{hypNewBlocker}</span>
+                        <button class="btn" onclick={handleNewCancel}>Cancel</button>
+                        <button class="btn primary" onclick={handleNewSave} disabled={cantAddNew}>Add Hypothesis</button>
+                    </footer>
+                </section>
+            </div>
+        </template>
 
         <!-- the evidence popup -->
         <template if:true={formOpen}>

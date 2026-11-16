@@ -134,3 +134,23 @@ textarea.ta.whyta:focus { border-color: #c4cad2; background: #fff; }
 .picked { padding: 8px 10px; border-radius: 6px; background: #fafbfc; border: 1px solid #dde1e6; }
 textarea.ta.pin { min-height: 110px; line-height: 1.45; }
 .plainbtn.gap { margin-left: 6px; }
+/* Fishbone */
+.fish { display: flex; gap: 14px; align-items: stretch; padding: 14px; border-radius: 10px; border: 1px solid #dde1e6; background: #fafbfc; }
+.fishbody { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.bones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.bone { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 8px; border: 1px solid #e5e5e5; background: #fff; min-height: 110px; }
+.bone.bottom { justify-content: flex-end; }
+.bonecat { font-weight: 700; font-size: 13px; }
+.cause { display: flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 6px; font-size: 12px; line-height: 1.3; border: 1px solid #f2d3a8; background: #fff; }
+.cause .ctext { flex: 1; min-width: 0; }
+.cause.ok { border-color: #b7e1c1; background: #ebf7e6; color: #2e844a; }
+.cause.out { border-color: #e5e5e5; background: #f3f3f3; color: #5b6470; }
+.cause.out .ctext { text-decoration: line-through; }
+.addc { align-self: flex-start; padding: 4px 8px; border: 1px dashed #c4cad2; border-radius: 6px; background: transparent; font: inherit; font-size: 12px; color: #1d5fd1; cursor: pointer; }
+.addc:hover { background: #f5f9ff; }
+.spine { display: flex; align-items: center; }
+.spineline { flex: 1; height: 3px; background: #5b6470; }
+.spinehead { flex: none; width: 0; height: 0; border-top: 12px solid transparent; border-bottom: 12px solid transparent; border-left: 16px solid #5b6470; }
+.fishhead { flex: none; width: 190px; align-self: center; padding: 12px; border-radius: 8px; border: 2px solid #b42318; background: #fdecea; font-weight: 700; line-height: 1.35; }
+textarea.ta.newta { min-height: 72px; line-height: 1.45; resize: vertical; }
+@media (max-width: 760px) { .fish { flex-direction: column; } .fishhead { width: auto; } .bones { grid-template-columns: 1fr; } }
