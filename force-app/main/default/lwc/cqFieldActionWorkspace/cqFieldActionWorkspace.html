@@ -119,7 +119,7 @@
                                             <template if:true={r.isSig}>
                                                 <tr key={r.key} class={r.rowCls} data-id={r.id} onclick={handleSigToggle} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
                                                     <td class="chcol"><button class="chevbtn" aria-expanded={r.expanded} aria-label={r.rule}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></td>
-                                                    <td class="sigcell"><div class="strong nowrap">{r.rule}</div><div class="sghead"><span class={r.pillCls}>{r.strength}</span></div><div class="rk">{r.sub}</div></td>
+                                                    <td class="sigcell"><div class="sghead"><span class="strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="rk">{r.sub}</div></td>
                                                     <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="rk">{r.why}</div></template></td>
                                                     <td class="num">{r.n}</td>
                                                 </tr>
@@ -164,7 +164,7 @@
                                                 <template if:true={r.isSig}>
                                                     <tr key={r.key} class={r.rowCls} data-id={r.id} onclick={handleSigToggle} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
                                                         <td class="chcol"><button class="chevbtn" aria-expanded={r.expanded} aria-label={r.rule}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></td>
-                                                        <td class="sigcell"><div class="strong nowrap">{r.rule}</div><div class="sghead"><span class={r.pillCls}>{r.strength}</span></div><div class="rk">{r.sub}</div></td>
+                                                        <td class="sigcell"><div class="sghead"><span class="strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="rk">{r.sub}</div></td>
                                                         <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="rk">{r.why}</div></template></td>
                                                         <td class="num">{r.n}</td>
                                                     </tr>

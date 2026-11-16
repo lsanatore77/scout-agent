@@ -276,8 +276,8 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const rows = [];
         list.forEach((s) => {
             const open = !!this.openSig[s.id];
-            rows.push({ key: 's' + s.id, isSig: true, id: s.id, rule: s.rule, pillCls: s.pillCls, strength: s.strength, sub: s.meta,
-                label: s.label, why: s.why, n: s.total,
+            rows.push({ key: 's' + s.id, isSig: true, id: s.id, rule: s.rule, pillCls: s.pillCls, strength: s.strength, sub: (s.meta || '').replace(/-/g, '\u2011'),   // lots and dates never break at the hyphen
+                label: s.label, why: this.notRepeated(s.label, s.why), n: s.total,
                 expanded: open ? 'true' : 'false', chevCls: 'chev' + (open ? ' open' : ''),
                 rowCls: 'srow' + (this.hotSig === s.id ? ' hot' : '') + (open ? ' isopen' : '') });
             if (open) {
@@ -286,6 +286,11 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             }
         });
         return rows;
+    }
+    /** The grey line without its first sentence when the headline already starts with it ("6 Reviews." under "6 Reviews on This Part"). */
+    notRepeated(label, why) {
+        const m = /^([^.]+)\.\s+(.*)$/.exec(why || '');
+        return m && (label || '').toLowerCase().startsWith(m[1].trim().toLowerCase()) ? m[2] : why;
     }
     get signalRows() { return this.sigRows(this.signals); }
     get moreSignalRows() { return this.sigRows(this.moreSignals); }

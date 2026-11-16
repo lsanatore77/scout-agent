@@ -201,11 +201,13 @@
 .tbl th.num, .tbl td.num { text-align: right; white-space: nowrap; }
 .tbl td.wide { width: 100%; min-width: 180px; }
 .tbl .chcol { width: 1%; padding-right: 0; }
-.tbl td.sigcell { min-width: 170px; }
+.tbl td.sigcell { min-width: 200px; }
 .nowrap { white-space: nowrap; }
 .strong { font-weight: 700; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-.sghead { margin: 4px 0 2px; }
+.sghead { display: flex; align-items: center; gap: 8px; white-space: nowrap; margin-bottom: 4px; }
+/* the Assess level tag shares its name with the Reviewer Assessment layout, so it states its own display */
+.spill.assess { display: inline-flex; gap: 0; }
 .stbl .srow { cursor: pointer; }
 .stbl .srow.hot td { background: #f5f8fd; }
 .chevbtn { padding: 0; border: none; background: none; cursor: pointer; }
