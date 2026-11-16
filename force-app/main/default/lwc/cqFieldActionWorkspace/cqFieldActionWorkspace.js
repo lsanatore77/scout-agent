@@ -188,6 +188,11 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     renderedCallback() {
         const m = this.template.querySelector('.main');
         if (m) { m.classList.toggle('viewonly', !!this.waiting && (this.step === ASSESS || this.step === REC)); }
+        // a value binding can leave a text box empty on first draw: fill each box from its field unless someone is typing in it
+        this.template.querySelectorAll('textarea[data-f], input[type="text"][data-f]').forEach((el) => {
+            const want = this[el.dataset.f] || '';
+            if (el !== this.template.activeElement && el.value !== want) { el.value = want; }
+        });
     }
     get is5() { return this.open && this.step === COMMITTEE; }
     get showResumed() { return this.resumed && this.live; }
