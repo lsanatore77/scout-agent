@@ -15,6 +15,11 @@ Working ideas from Lou, 16 Nov 2026. Nothing here is decided or built yet.
 - **Give it back:** a reviewer who took ownership and initiated can give the event back; it returns to the queue for anyone in the group to take.
 - **E-signature:** the Reviewed e-signature belongs at this step, and comes in with the approvals work.
 
+## Think of an event like a case (16 Nov 2026)
+Lou: an event works like a Salesforce Case: queues, a case team working it together, and escalation when it waits too long.
+What Case has that we would otherwise build: queues and assignment rules, case teams (roles on one record), escalation rules (reassign or notify when it sits too long), Omni-Channel routing, and entitlements with milestones (a clock, which fits the complaint clock from the aware date).
+
 ## Open questions
+- **Build on Case or keep Quality Event?** Quality Event is a custom object today (intake writes to it). Moving events onto a Case record type would give queues, teams, escalation and milestones for free; staying custom means building those, but keeps events apart from any customer-service cases a company already runs. To decide before Event Review is built.
 - Can a reviewer pass an event straight to a named person, or only back to the queue?
 - Does Take Ownership and Initiate change the event's status (for example to In Review)?
