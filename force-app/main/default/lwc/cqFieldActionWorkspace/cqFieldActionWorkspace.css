@@ -95,7 +95,7 @@
 .sig { margin-top: 8px; border: 1px solid #dde1e6; border-radius: 10px; background: #fff; }
 .sig > summary { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
 .sgb { display: flex; flex-direction: column; gap: 4px; flex: 1 1 auto; min-width: 0; }
-.chev { flex: none; width: 12px; font-size: 18px; line-height: 1; color: #5b6470; text-align: center; transition: transform .15s; }
+.chev { display: inline-block; flex: none; width: 12px; font-size: 18px; line-height: 1; color: #5b6470; text-align: center; transition: transform .15s; }
 .sig[open] > summary .chev { transform: rotate(90deg); }
 .cnt { flex: none; }
 .lot { flex: none; align-self: center; padding: 2px 8px; border-radius: 999px; background: #eef2f7; color: #3d4550; font-size: 11px; font-weight: 600; white-space: nowrap; }
