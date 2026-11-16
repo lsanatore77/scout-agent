@@ -162,3 +162,8 @@ textarea.ta.summary { min-height: 200px; line-height: 1.5; }
 .big2 { font-size: 15px; }
 .hyprow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1px solid #dde1e6; }
 .spinwrap { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+/* the timeline's lot marks share the class "lot" with the lot cards above: keep the card padding and border off them */
+.tl-dot.lot, .tl-line.lot, .lg.lot { padding: 0; margin-bottom: 0; display: inline-block; gap: 0; }
+.tl-line.lot, .lg.lot { border: none; border-radius: 0; }
+.tl-box.lot { display: block; margin-bottom: 0; }
+.tl-text::first-letter { text-transform: uppercase; }
