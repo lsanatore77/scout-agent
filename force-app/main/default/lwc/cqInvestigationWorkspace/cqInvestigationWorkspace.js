@@ -7,6 +7,9 @@ import completeInvestigation from '@salesforce/apex/CqInvestigationWorkspace.com
 import getChanges from '@salesforce/apex/CqInvestigationChanges.getChanges';
 import addChange from '@salesforce/apex/CqInvestigationChanges.addChange';
 import addHypothesis from '@salesforce/apex/CqInvestigationChanges.addHypothesis';
+import getHistory from '@salesforce/apex/CqInvestigationHistory.getHistory';
+import markNotRelevant from '@salesforce/apex/CqInvestigationHistory.markNotRelevant';
+import restoreRecord from '@salesforce/apex/CqInvestigationHistory.restore';
 
 const STEPS = ['Investigation at a Glance', 'What Changed', 'Check History', 'Find the Cause', 'Actions', 'Conclusion'];
 // Ask CQ.AI ready questions for each step (no commas: the popover splits on them)
@@ -30,8 +33,9 @@ const POLL_TRIES = 8;
 /**
  * CQ.AI Investigation workspace: the investigation's record header, then six steps in the page.
  * Built: Investigation at a Glance, What Changed (timeline of changes CQ holds, changes added by hand,
- * Add as Hypothesis), Actions and Conclusion with Complete Investigation. Check History and Find the Cause
- * show what CQ already holds and are built next.
+ * Add as Hypothesis), Check History (past records ranked like the Product History Review, and the problem
+ * that happened before after a fix), Actions and Conclusion with Complete Investigation. Find the Cause shows
+ * what CQ already holds and is built next.
  * Steps can be opened in any order.
  */
 export default class CqInvestigationWorkspace extends NavigationMixin(LightningElement) {
@@ -52,7 +56,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     waiting = false;       // CQ finishes the submission a few seconds later
     keySeq = 0;
 
-    connectedCallback() { this.load(true); }
+    connectedCallback() { this.load(true); this.loadHistory(); }
 
     async load(first) {
         try {
@@ -116,7 +120,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         const subs = [
             done || this.step !== 0 ? 'Reviewed' : 'Start Here',
             this.changedSub || (this.seen[1] || done ? 'Reviewed' : 'Not Reviewed'),
-            this.seen[2] || done ? 'Reviewed' : 'Not Reviewed',
+            this.historySub || (this.seen[2] || done ? 'Reviewed' : 'Not Reviewed'),
             causes ? this.plural(causes, 'Root Cause', 'Root Causes') : 'No Root Cause Yet',
             this.plans.length ? this.plural(this.plans.length, 'Action', 'Actions') + (this.plansDirty ? ' · Not Saved' : '') : 'No Actions Yet',
             done ? (this.v.conclusion || this.conclusion || 'Submitted') + ' · ' + this.doneWord : this.conclusion || 'Not Concluded'
@@ -154,6 +158,12 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         if (!gaps.length) { return null; }
         const s = gaps.length > 1 ? gaps.slice(0, -1).join(', ') + ' and ' + gaps[gaps.length - 1] : gaps[0];
         return s.charAt(0).toUpperCase() + s.slice(1) + '.';
+    }
+    get recurGlance() {
+        const r = this.recurrence;
+        if (!r) { return null; }
+        return 'This happened before: ' + r.name + ' (' + this.mdIso(r.day) + ') had the same problem, and ' + r.capaName
+            + (this.isEffective(r) ? ' was marked effective on ' + this.mdIso(r.efrDate) + ', yet it came back.' : ' did not stop it coming back.');
     }
     get nextText() {
         if (!(this.v.causes || []).length) { return 'Review What Changed and Check History, then record the cause in Find the Cause.'; }
@@ -289,6 +299,13 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handleDraft() { this.summary = this.draftSummary; this.summaryDrafted = true; this.error = undefined; }
     get canDraft() { return !!this.draftSummary; }
     get cantDraft() { return !this.canDraft; }
+    get recurWarn() {
+        const r = this.recurrence;
+        if (!r) { return null; }
+        const fixes = this.plans.some((p) => p.type === 'Corrective' || p.type === 'Preventive');
+        if (fixes) { return null; }
+        return 'This problem happened before (' + r.name + ') and ' + r.capaName + ' did not hold. Plan a corrective or preventive action that deals with why, or escalate to a CAPA.';
+    }
     get noCauseWarn() { return this.conclusion === 'Confirmed' && !(this.v.causes || []).length; }
     get completeLabel() {
         if (this.saving) { return this.v.needsApproval ? 'Submitting…' : 'Completing…'; }
@@ -472,19 +489,24 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handleHypCat(event) { this.hypForm = { ...this.hypForm, category: event.currentTarget.dataset.c }; }
     get hypCatOpts() {
         const c = this.hypForm ? this.hypForm.category : null;
-        return (this.wc ? this.wc.categories : []).map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
+        const cats = this.wc ? this.wc.categories : this.hist ? this.hist.categories : [];
+        return cats.map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
     }
     get cantAddHyp() { return this.wcSaving || !this.hypForm || !(this.hypForm.title || '').trim() || !this.hypForm.category; }
     async handleHypSave() {
         if (this.cantAddHyp) { return; }
         this.wcSaving = true;
         try {
+            const from = this.hypForm.from;
             const n = await addHypothesis({ recordId: this.recordId, payload: JSON.stringify(this.hypForm) });
-            this.wcNotice = 'Added as H' + n + '. Test it in Find the Cause.';
+            const note = 'Added as H' + n + '. Test it in Find the Cause.';
+            if (from === 'hist') { this.histNotice = note; } else { this.wcNotice = note; }
             this.hypForm = undefined;
-            await this.loadChanges();
+            const loads = [this.loadHistory(true)];
+            if (this.wc) { loads.push(this.loadChanges()); }
+            await Promise.all(loads);
         } catch (e) {
-            this.wcError = this.msg(e, 'The hypothesis was not saved.');
+            if (this.hypForm && this.hypForm.from === 'hist') { this.histError = this.msg(e, 'The hypothesis was not saved.'); } else { this.wcError = this.msg(e, 'The hypothesis was not saved.'); }
         } finally {
             this.wcSaving = false;
         }
@@ -540,6 +562,147 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             status: h.status, statusCls: h.status === 'Confirmed' ? 'chip ok' : h.status === 'Ruled Out' ? 'chip' : 'chip warn', source: h.source }));
     }
     get hasHyps() { return this.hypRows.length > 0; }
+
+    // ---- step 3: Check History
+    hist;                  // CqInvestigationHistory.View
+    histLoading = false;
+    histError;
+    histNotice;
+    histShowOthers = false;
+    histBusy = false;
+
+    async loadHistory(quiet) {
+        if (!quiet) { this.histLoading = true; }
+        this.histError = undefined;
+        try {
+            this.hist = await getHistory({ recordId: this.recordId });
+        } catch (e) {
+            this.histError = this.msg(e, 'Could not read the history.');
+        } finally {
+            this.histLoading = false;
+        }
+    }
+    get histReady() { return !!this.hist && !this.histLoading; }
+    mdIso(iso) { return iso ? this.md(iso) : '—'; }
+    isEffective(i) { return !!(i && i.efrResolution && i.efrResolution.indexOf('Effective') >= 0 && i.efrResolution.indexOf('Ineffective') < 0); }
+    get recurrence() { return this.hist && this.hist.recurrences.length ? this.hist.recurrences[0] : null; }
+    get historySub() {
+        if (!this.hist) { return null; }
+        const n = this.hist.items.length;
+        return (this.recurrence ? '1 Fix Didn’t Hold · ' : '') + (n ? n + ' to Review' : 'Nothing Similar');
+    }
+    get histStandOut() {
+        const h = this.hist;
+        if (!h) { return null; }
+        const lines = [];
+        const r = this.recurrence;
+        if (r) {
+            lines.push('One past case on this part had the same problem: ' + r.name + ' (' + this.mdIso(r.day) + ')' + (r.causeNote ? ', caused by ' + r.causeNote.charAt(0).toLowerCase() + r.causeNote.slice(1) : '') + '.');
+            lines.push('Its fix (' + r.capaName + ')' + (this.isEffective(r) ? ' was marked effective on ' + this.mdIso(r.efrDate) + ',' : ' closed') + ' yet the problem is back.');
+        }
+        const open = h.items.filter((i) => i.type === 'Nonconformance' && i !== r && (i.status === 'Open' || i.status === 'Draft'));
+        if (open.length) { lines.push(this.joinAnd(open.map((i) => i.name)) + (open.length === 1 ? ' is' : ' are') + ' still open on a similar problem.'); }
+        const ins = h.items.filter((i) => i.type === 'Inspection');
+        if (ins.length) { lines.push(ins.length + (ins.length === 1 ? ' inspection' : ' inspections') + ' on this part failed.'); }
+        if (!lines.length) { lines.push(h.items.length ? h.items.length + ' past records match this problem.' : 'Nothing in CQ matches this problem on this part.'); }
+        return lines.join(' ');
+    }
+    get recurBoxes() {
+        return (this.hist ? this.hist.recurrences : []).map((r) => ({
+            key: 'rec:' + r.key, ncName: r.name, ncHref: this.href(r.recordId), capaName: r.capaName, capaHref: this.href(r.capaId),
+            text1: ' had the same problem on ' + this.mdIso(r.day) + (r.causeNote ? ', traced to ' + r.causeNote.charAt(0).toLowerCase() + r.causeNote.slice(1) : '') + '. ',
+            text2: ' (' + (r.capaTitle || 'CAPA') + ') closed' + (r.capaClosed ? ' on ' + this.mdIso(r.capaClosed) : '') + ', but the problem came back on ' + this.mdIso(this.hist.startDate) + '.',
+            histKey: r.key, efrCls: this.isEffective(r) ? 'lh redtext' : 'lh', effective: this.isEffective(r), efrName: r.efrName, efrHref: r.efrId ? this.href(r.efrId) : null,
+            efrText: r.efrId ? (this.isEffective(r)
+                ? ' marked ' + r.capaName + ' ' + r.efrResolution + ' on ' + this.mdIso(r.efrDate) + ', yet the same problem came back on ' + this.mdIso(this.hist.startDate) + '.'
+                : ' rated ' + r.capaName + ' ' + r.efrResolution + ' on ' + this.mdIso(r.efrDate) + '.') : null,
+            noReview: !r.efrId,
+            added: r.hypothesis ? '✓ Added as H' + r.hypothesis : null, canAdd: !r.hypothesis
+        }));
+    }
+    get hasRecur() { return this.recurBoxes.length > 0; }
+    histRow(i) {
+        const open = this.hypForm && this.hypForm.key === 'h:' + i.key;
+        let cause = i.causeHead;
+        let causeNote = i.causeNote;
+        if (!cause) {
+            cause = i.investigationName ? 'Not found yet' : 'None recorded';
+            causeNote = i.investigationName ? i.investigationName + ' is ' + (i.causeNote || 'open') : null;
+        }
+        let fix = null;
+        let fixNote;
+        if (i.capaId) {
+            fix = i.capaName;
+            const bits = [i.capaStatus + (i.capaClosed ? ' ' + this.mdIso(i.capaClosed) : '')];
+            if (i.efrId) { bits.push((this.isEffective(i) ? 'marked effective ' : i.efrResolution + ' ') + this.mdIso(i.efrDate) + ' (' + i.efrName + ')'); }
+            fixNote = bits.join('; ');
+        } else {
+            fixNote = i.status === 'Closed' || i.status === 'Complete' ? 'Closed, no CAPA' : i.status;
+        }
+        return {
+            key: i.key, formKey: i.key + ':form', name: i.name, href: this.href(i.recordId),
+            sub: (i.status || '') + (i.day ? ' · ' + this.mdIso(i.day) : ''), what: i.whatHappened,
+            cause, causeNote, causeIsNone: !i.causeHead, invHref: i.investigationId ? this.href(i.investigationId) : null,
+            fix, fixHref: i.capaId ? this.href(i.capaId) : null, capaTitle: i.capaTitle, fixNote, effective: this.isEffective(i),
+            matchText: (i.colour || 'Grey') + ' · ' + (i.score || 0), matchCls: 'chip m-' + (i.colour || 'Grey').toLowerCase(), why: i.why,
+            added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null, canAdd: !i.hypothesis && !open, open
+        };
+    }
+    get histRows() { return this.hist ? this.hist.items.map((i) => this.histRow(i)) : []; }
+    get hasHistRows() { return this.histRows.length > 0; }
+    get otherRows() { return this.hist ? this.hist.others.map((i) => this.histRow(i)) : []; }
+    get otherCount() { return this.hist ? this.hist.others.length : 0; }
+    get hasOthers() { return this.otherCount > 0; }
+    get othersLabel() { return this.histShowOthers ? 'Hide Them' : 'Show Them'; }
+    get othersText() {
+        const eg = this.hist ? this.hist.others.slice(0, 2).map((i) => i.name + ' ' + (i.whatHappened || '').split(':')[0].toLowerCase()) : [];
+        return 'on ' + (this.hist && this.hist.partNumber ? this.hist.partNumber : 'this part') + ' match the part only, not the problem' + (eg.length ? ' (for example ' + eg.join(', ') + ')' : '') + '.';
+    }
+    handleToggleOthers() { this.histShowOthers = !this.histShowOthers; }
+    get dismissedRows() { return this.hist ? this.hist.dismissed.map((d) => ({ key: d.id, id: d.id, name: d.name })) : []; }
+    get hasDismissed() { return this.dismissedRows.length > 0; }
+    findHist(key) {
+        const all = this.hist ? [...this.hist.items, ...this.hist.others] : [];
+        return all.find((x) => x.key === key);
+    }
+    handleHistHypOpen(event) {
+        const i = this.findHist(event.currentTarget.dataset.key);
+        if (!i) { return; }
+        const what = (i.whatHappened || i.name).split(':')[0];
+        const cause = i.causeNote && i.causeHead ? i.causeNote : what;
+        this.hypForm = { from: 'hist', key: 'h:' + i.key, title: cause.charAt(0).toUpperCase() + cause.slice(1) + ', as in ' + i.name, category: i.category,
+            sourceId: i.recordId, sourceName: i.name };
+        this.histNotice = undefined;
+        this.histError = undefined;
+    }
+    async handleNotRelevant(event) {
+        const i = this.findHist(event.currentTarget.dataset.key);
+        if (!i || this.histBusy) { return; }
+        this.histBusy = true;
+        try {
+            await markNotRelevant({ recordId: this.recordId, targetId: i.recordId, targetName: i.name, reason: null });
+            this.histNotice = i.name + ' marked Not Relevant. Restore it below if that was a mistake.';
+            await this.loadHistory(true);
+        } catch (e) {
+            this.histError = this.msg(e, 'It was not saved.');
+        } finally {
+            this.histBusy = false;
+        }
+    }
+    async handleRestore(event) {
+        const id = event.currentTarget.dataset.id;
+        if (this.histBusy) { return; }
+        this.histBusy = true;
+        try {
+            await restoreRecord({ dismissedId: id });
+            this.histNotice = undefined;
+            await this.loadHistory(true);
+        } catch (e) {
+            this.histError = this.msg(e, 'It was not restored.');
+        } finally {
+            this.histBusy = false;
+        }
+    }
 
     // ---- footer
     get blocker() {

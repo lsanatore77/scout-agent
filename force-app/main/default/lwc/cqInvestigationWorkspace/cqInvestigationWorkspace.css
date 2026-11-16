@@ -172,3 +172,18 @@ textarea.ta.summary { min-height: 200px; line-height: 1.5; }
 .tl-shade { margin-top: 3px; height: 20px; }
 /* boxes worded from the records by rule: the summary icon in CQ.AI purple, not the CQ.AI star */
 .ruleicon { --slds-c-icon-color-foreground-default: #4a2fc0; }
+/* Check History */
+.recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid #f2d3a8; background: #fffbf5; display: flex; flex-direction: column; gap: 8px; }
+.recur-head { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #7a4100; }
+.lh { line-height: 1.5; }
+.redtext { color: #b42318; font-weight: 600; }
+.redlink { color: #b42318; font-weight: 600; text-decoration: underline; }
+.top8x { margin-top: 2px; align-items: center; }
+.linkbtn { display: inline-flex; align-items: center; text-decoration: none; color: #1a1d21; }
+.chip.m-red { background: #fdecea; color: #b42318; }
+.chip.m-yellow { background: #fef1e6; color: #7a4100; }
+.chip.m-grey { background: #eef0f3; color: #5b6470; }
+.actcol { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.smalllink { font-size: 12px; color: #1d5fd1; cursor: pointer; }
+.smalllink:hover { text-decoration: underline; }
+.dismissed { display: inline-flex; align-items: center; gap: 6px; }

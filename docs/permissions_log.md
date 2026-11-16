@@ -31,7 +31,7 @@ Every class a component or agent calls (`@AuraEnabled`, `@InvocableMethod`, `@Re
 | Ask CQ.AI | AskCqAgents, AskCqService, AskCqWorkspaceController | Base |
 | NC triage | CqTriageController, CqTriageAssistant, CqTriageContainment, CqTriageDraft, CqTriageLinks, CqTriageNext, CqTriagePhoto, CqTriageRisk | Quality |
 | NC disposition | CqDispositionWorkspace | Quality |
-| NC investigation | CqInvestigationWorkspace, CqInvestigationChanges | Quality |
+| NC investigation | CqInvestigationWorkspace, CqInvestigationChanges, CqInvestigationHistory | Quality |
 | Agents' context | CqQualityAgentContext (CQAI_Quality), CqFieldActionAgentContext (CQAI_Field_Action) | the agent's set |
 | Field actions | CqFieldActionReview, CqFieldActionScope, CqFieldActionStrategy, CqFieldActionLots, CqFieldActionRecovery, CqFieldActionTasks, CqLotStock, CqFarCommittee | Field Actions User (+ Approvals for CqFarCommittee) |
 | Signals | CqSignalJob | Admin |
@@ -50,6 +50,7 @@ Every class a component or agent calls (`@AuraEnabled`, `@InvocableMethod`, `@Re
 | Signal__c, Signal_Event__c, Signal_Rule__c, Quality_Event__c | Read; Signal_Rule__c Edit for admins | Field Actions User / Admin |
 | PHR_Lead__c | Read, Create, Edit | PHR Lead Access |
 | Investigation_Hypothesis__c, Investigation_Change__c | Read, Create, Edit (all fields) | Quality |
+| Investigation_Not_Relevant__c | Read, Create, Delete (all fields) | Quality |
 | PHR_Report_Setting__mdt | Read | Base |
 
 ### Our Fields on CQ Objects
@@ -109,6 +110,7 @@ Newest first.
 
 ### 15 Nov 2026
 - **CqInvestigationChanges** (new, What Changed step): Apex access; Investigation Hypothesis and Investigation Change Read, Create, Edit; reads change orders, controlled documents, part revisions, assemblies, supplier deviations, lots, equipment and calibrations. The two new objects have no permission set yet: Apex reads and writes them, but users need object and field access in CQ.AI Quality to see them in reports and record pages. Set: Quality.
+- **CqInvestigationHistory** (new, Check History step): Apex access; reuses PhrQmsRelevance (Nonconformance, CAPA, Change Order and Inspection Read); reads Investigations, Root Causes, Effectiveness Reviews and the bill of materials; Investigation Not Relevant Read, Create and Delete; Investigation Hypothesis Read. Set: Quality.
 - **CqInvestigationWorkspace** (new): Apex access; Investigation Edit; Action Plan Create, Edit and Delete; Investigation Tool Edit; Response and Response Inclusion Create and Edit; Root Cause, NC Action, Disposition and Nonconformance Read. Users also need the User object in the Owner picker. Set: Quality.
 - Log started from the repo and the dev org. Two permission sets exist in the repo (Field Actions User, PHR Lead Access); nothing yet covers NC triage, disposition, Ask CQ.AI or approvals.
 - **CqDispositionWorkspace** (new): Apex access; Disposition Create and Edit; Impacted Part/Lot and Nonconformance Read. Set: Quality.

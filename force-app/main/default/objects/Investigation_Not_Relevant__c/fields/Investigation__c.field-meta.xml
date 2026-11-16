@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Investigation__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The investigation the record was marked Not Relevant for.</description>
+    <label>Investigation</label>
+    <referenceTo>compliancequest__SQX_Investigation__c</referenceTo>
+    <relationshipLabel>Not Relevant Records</relationshipLabel>
+    <relationshipName>Not_Relevant_Records</relationshipName>
+    <type>Lookup</type>
+</CustomField>

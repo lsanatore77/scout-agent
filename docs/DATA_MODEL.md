@@ -11,6 +11,7 @@ Newest first. Add a line here whenever an object or field is created, changed or
 ### 15 Nov 2026
 - **New object Investigation Hypothesis** (`Investigation_Hypothesis__c`, HYP-0000): a possible cause tested in the CQ.AI Investigation workspace. Fields: Investigation (lookup to CQ Investigation), Number (H1, H2 ... within the investigation), Hypothesis, Category (CQ's root cause categories), Status (Open, Confirmed, Ruled Out), Source (name), Source Record Id (the CQ change order, document, deviation or calibration it came from), Investigation Change (lookup). Made by Add as Hypothesis on the What Changed step; Find the Cause will confirm or rule them out and save confirmed ones as CQ root causes.
 - **New object Investigation Change** (`Investigation_Change__c`, IC-0000): a change added by hand on the What Changed step (not held in CQ). Fields: Investigation (lookup), What Changed, Change Date, Category (CQ's root cause categories plus Other), Where Found, Link or Reference.
+- **New object Investigation Not Relevant** (`Investigation_Not_Relevant__c`, INR-0000): a past record the investigator marked Not Relevant on the Check History step, so it drops off the list for that investigation. Fields: Investigation (lookup, related list Not Relevant Records), Record Id (18), Record Name, Reason. Restore deletes it.
 
 ### 14 Nov 2026
 - **CAPA (CQ object `compliancequest__SQX_CAPA__c`)**: added Field Action (lookup to Field Action, relationship CAPAs) and the record type **CAPA - Field Action** (`CAPA_Field_Action`). A field action's Closure step creates a skeleton CAPA of this type (title, part, field action, Target Due Date 60 days out) and links it back in the field action's CAPA field.
@@ -302,6 +303,17 @@ A possible cause being tested in the CQ.AI Investigation workspace. Made from a 
 | `Source_Record_Id__c` | Source Record Id | Text | 18 chars | The CQ record it came from (change order, document, deviation, calibration), if any. |
 | `Status__c` | Status | Picklist | Open, Confirmed, Ruled Out | Open while it is being tested; Confirmed or Ruled Out once decided. |
 | `Title__c` | Hypothesis | Text | 255 chars | The possible cause, in a sentence. |
+
+### Investigation Not Relevant (`Investigation_Not_Relevant__c`)
+
+A past record marked Not Relevant on the Check History step of the CQ.AI Investigation workspace, so it drops off that investigation's history list. Holds the record's Id and name and an optional reason. Restore deletes it.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Investigation__c` | Investigation | Lookup | to compliancequest__SQX_Investigation__c | The investigation the record was marked Not Relevant for. |
+| `Reason__c` | Reason | Text | 255 chars | Why it is not relevant, optional. |
+| `Record_Id__c` | Record Id | Text | 18 chars | The Id of the NC, CAPA or inspection marked Not Relevant. |
+| `Record_Name__c` | Record | Text | 80 chars | The name of the record, for example NC-000162. |
 
 ### Lot Shipment (`Lot_Shipment__c`)
 

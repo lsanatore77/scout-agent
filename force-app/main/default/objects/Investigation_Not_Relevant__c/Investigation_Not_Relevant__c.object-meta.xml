@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A past record marked Not Relevant on the Check History step of the CQ.AI Investigation workspace, so it drops off that investigation's history list. Holds the record's Id and name and an optional reason. Restore deletes it.</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Investigation Not Relevant</label>
+    <nameField>
+        <displayFormat>INR-{0000}</displayFormat>
+        <label>Investigation Not Relevant Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Investigation Not Relevant</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>
