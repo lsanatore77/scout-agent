@@ -125,6 +125,15 @@
 .ownbox { margin: 6px 0 14px; padding: 10px 12px; border-radius: 8px; border: 1px solid #dde1e6; background: #fafbfc; font-size: 13px; line-height: 1.45; color: #3d4550; }
 .ownbox strong { color: #1a1d21; }
 .invlist { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.tblwrap { overflow-x: auto; margin-top: 8px; border: 1px solid #dde1e6; border-radius: 8px; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { padding: 8px 12px; background: #f3f3f3; text-align: left; font-weight: 600; white-space: nowrap; }
+.tbl td { padding: 10px 12px; border-top: 1px solid #e5e5e5; vertical-align: top; }
+.tbl th.center, .tbl td.center { text-align: center; }
+.tbl td.wide { min-width: 200px; }
+.nowrap { white-space: nowrap; }
+.strong { font-weight: 700; }
+.cb { width: 18px; height: 18px; margin: 0; }
 .pager { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 8px; }
 .pages { display: inline-flex; align-items: center; gap: 2px; }
 .pg { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 22px; padding: 0 3px; box-sizing: border-box; border: none; background: none; color: #8a94a3; font: inherit; font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; }
