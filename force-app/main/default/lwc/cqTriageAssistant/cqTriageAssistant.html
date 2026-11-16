@@ -138,9 +138,20 @@
                     <template if:true={is1}>
                         <h3 class="q">Data Check</h3>
                         <p class="p">What was reported, and is it enough to send on? Photos and a description may be all you get.</p>
-                        <template for:each={dataRows} for:item="r">
-                            <div key={r.key} class={r.cls}><span class="ic">{r.icon}</span><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
-                        </template>
+                        <div class="tblwrap" style="margin-top: 0">
+                            <table class="tbl">
+                                <thead><tr><th class="center">Status</th><th>Data</th><th>Recorded</th></tr></thead>
+                                <tbody>
+                                    <template for:each={dataRows} for:item="r">
+                                        <tr key={r.key}>
+                                            <td class="center"><template if:true={r.ok}><span class="ic" style="width: 24px; margin: 0 auto">&#10003;</span></template><template if:false={r.ok}><span class="warn"><span class="ic" style="width: 24px; margin: 0 auto">!</span></span></template></td>
+                                            <td class="nowrap" style="color: #5b6470">{r.k}</td>
+                                            <td class="wide strong">{r.v}</td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
                         <div class="opts">
                             <template for:each={dataOpts} for:item="o">
                                 <button key={o.id} class={o.cls} data-id={o.id} onclick={handleData}>{o.label}</button>
