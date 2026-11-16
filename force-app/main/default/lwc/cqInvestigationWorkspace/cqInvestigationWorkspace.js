@@ -4,6 +4,9 @@ import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqInvestigationWorkspace.getView';
 import saveActions from '@salesforce/apex/CqInvestigationWorkspace.saveActions';
 import completeInvestigation from '@salesforce/apex/CqInvestigationWorkspace.completeInvestigation';
+import getChanges from '@salesforce/apex/CqInvestigationChanges.getChanges';
+import addChange from '@salesforce/apex/CqInvestigationChanges.addChange';
+import addHypothesis from '@salesforce/apex/CqInvestigationChanges.addHypothesis';
 
 const STEPS = ['Investigation at a Glance', 'What Changed', 'Check History', 'Find the Cause', 'Actions', 'Conclusion'];
 // Ask CQ.AI ready questions for each step (no commas: the popover splits on them)
@@ -17,12 +20,18 @@ const ASK = {
     'Investigation Complete': 'What is still open on this NC?,Summarize this investigation'
 };
 const POLL_MS = 2000;
+const LOOK_BACK = [14, 30, 60, 90];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const LANE_H = 58;       // height of one row of timeline labels
+const LABEL_W = 24;      // width of a timeline label, as a percent of the track
+const RATING_CLS = { 'Could Explain It': 'chip warn', 'Worth a Look': 'chip ai', 'The Affected Lot': 'chip', Unlikely: 'chip' };
 const POLL_TRIES = 8;
 
 /**
  * CQ.AI Investigation workspace: the investigation's record header, then six steps in the page.
- * Stage 1 builds Investigation at a Glance, Actions and Conclusion with Complete Investigation;
- * What Changed, Check History and Find the Cause show what CQ already holds and are built next.
+ * Built: Investigation at a Glance, What Changed (timeline of changes CQ holds, changes added by hand,
+ * Add as Hypothesis), Actions and Conclusion with Complete Investigation. Check History and Find the Cause
+ * show what CQ already holds and are built next.
  * Steps can be opened in any order.
  */
 export default class CqInvestigationWorkspace extends NavigationMixin(LightningElement) {
@@ -106,7 +115,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         const causes = (this.v.causes || []).length;
         const subs = [
             done || this.step !== 0 ? 'Reviewed' : 'Start Here',
-            this.seen[1] || done ? 'Reviewed' : 'Not Reviewed',
+            this.changedSub || (this.seen[1] || done ? 'Reviewed' : 'Not Reviewed'),
             this.seen[2] || done ? 'Reviewed' : 'Not Reviewed',
             causes ? this.plural(causes, 'Root Cause', 'Root Causes') : 'No Root Cause Yet',
             this.plans.length ? this.plural(this.plans.length, 'Action', 'Actions') + (this.plansDirty ? ' · Not Saved' : '') : 'No Actions Yet',
@@ -299,6 +308,239 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         return null;
     }
 
+    // ---- step 2: What Changed
+    wc;                    // CqInvestigationChanges.View
+    wcDays = 30;
+    wcLoading = false;
+    wcError;
+    hypForm;               // { key, title, category, sourceId, sourceName }
+    changeForm;            // { whatChanged, changeDate, category, whereFound, reference }
+    wcSaving = false;
+    wcNotice;
+
+    async loadChanges() {
+        this.wcLoading = true;
+        this.wcError = undefined;
+        try {
+            this.wc = await getChanges({ recordId: this.recordId, days: this.wcDays });
+        } catch (e) {
+            this.wcError = this.msg(e, 'Could not read the changes.');
+        } finally {
+            this.wcLoading = false;
+        }
+    }
+    get wcReady() { return !!this.wc && !this.wcLoading; }
+    get lookBackOpts() {
+        return LOOK_BACK.map((d) => ({ d, label: d + ' Days', pressed: String(d === this.wcDays), cls: 'opt sm' + (d === this.wcDays ? ' on' : '') }));
+    }
+    handleLookBack(event) {
+        const d = Number(event.currentTarget.dataset.d);
+        if (d === this.wcDays) { return; }
+        this.wcDays = d;
+        this.hypForm = undefined;
+        this.loadChanges();
+    }
+    dn(iso) { const p = iso.split('-'); return Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2])) / 86400000; }
+    md(iso) { if (!iso) { return '—'; } const p = iso.split('-'); return MONTHS[Number(p[1]) - 1] + ' ' + Number(p[2]); }
+    get startText() { return this.wc ? this.md(this.wc.startDate) : ''; }
+    get startFromText() { return this.wc ? (this.wc.startFrom === 'Occurrence Date' ? "the NC's Occurrence Date" : this.wc.startFrom === 'Aware Date' ? "the NC's Aware Date" : 'the day the NC was created') : ''; }
+    get changedSub() {
+        if (!this.wc) { return null; }
+        const could = this.wc.items.filter((i) => i.rating === 'Could Explain It').length;
+        const h = this.wc.hypotheses.length;
+        return could + ' Could Explain It' + (h ? ' · ' + h + (h === 1 ? ' Hypothesis' : ' Hypotheses') : '');
+    }
+    get standOut() {
+        if (!this.wc) { return null; }
+        const items = this.wc.items;
+        const could = items.filter((i) => i.rating === 'Could Explain It');
+        const lines = [];
+        if (could.length) {
+            const named = could.map((i) => i.name + ' (' + (i.inEffect ? 'since ' : '') + this.md(i.day) + ')');
+            lines.push(could.length + (could.length === 1 ? ' change lands' : ' changes land') + ' within 14 days of the start: ' + this.joinAnd(named) + '.');
+        } else {
+            lines.push('Nothing CQ holds changed in the 14 days before the start.');
+        }
+        const dev = items.filter((i) => i.inEffect && i.rating !== 'Could Explain It');
+        if (dev.length) { lines.push(dev.length + (dev.length === 1 ? ' supplier deviation was' : ' supplier deviations were') + ' already in effect on the part or its components.'); }
+        const lot = items.find((i) => i.kind === 'lot' && i.day);
+        if (lot) { lines.push(lot.name + ' was built ' + this.md(lot.day) + '.'); }
+        const cal = items.find((i) => i.kind === 'calibration');
+        if (cal) { lines.push(cal.name.replace(' Calibration', '') + ': ' + cal.whatChanged.charAt(0).toLowerCase() + cal.whatChanged.slice(1) + '.'); }
+        return lines.join(' ');
+    }
+    joinAnd(a) { return a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0]; }
+
+    // the timeline: dots and labels for dated changes, a band for each deviation in effect, the start marker
+    get timeline() {
+        const v = this.wc;
+        if (!v) { return null; }
+        const from = this.dn(v.windowStart);
+        const to = this.dn(v.startDate) + 2;
+        const span = to - from;
+        const pct = (iso) => Math.max(0, Math.min(100, ((this.dn(iso) - from) / span) * 100));
+        const step = v.days <= 14 ? 3 : v.days <= 30 ? 7 : v.days <= 60 ? 14 : 21;
+        const ticks = [];
+        for (let d = 0; d <= span - 2; d += step) {
+            const dt = new Date((from + d) * 86400000);
+            ticks.push({ key: 't' + d, label: MONTHS[dt.getUTCMonth()] + ' ' + dt.getUTCDate(), x: (d / span) * 100 });
+        }
+        const events = v.items.filter((i) => i.onTimeline && !i.inEffect).map((i) => ({
+            key: i.key, x: pct(i.day), head: this.md(i.day) + ' · ' + i.name.replace(/^Lot /, ''),
+            text: i.kind === 'lot' ? 'The affected lot is built' : this.shortText(i.whatChanged), kind: i.kind === 'lot' ? 'lot' : 'change' }));
+        events.push({ key: 'start', x: pct(v.startDate), head: this.md(v.startDate) + ' · Problem Starts', text: 'Start (' + v.startFrom + ')', kind: 'start' });
+        events.sort((a, b) => a.x - b.x);
+        // lay labels into lanes: up 1, down 1, up 2, down 2 ... the first lane where it does not overlap
+        const lanes = {};
+        const order = ['u1', 'd1', 'u2', 'd2', 'u3', 'd3'];
+        events.forEach((e) => {
+            e.right = e.x > 55;
+            const lo = e.right ? e.x - LABEL_W : e.x;
+            const hi = e.right ? e.x : e.x + LABEL_W;
+            e.lane = order.find((l) => !(lanes[l] || []).some((r) => lo < r[1] && hi > r[0])) || 'u3';
+            (lanes[e.lane] = lanes[e.lane] || []).push([lo - 1, hi + 1]);
+        });
+        const ups = Math.max(1, ...events.filter((e) => e.lane[0] === 'u').map((e) => Number(e.lane[1])));
+        const downs = Math.max(0, ...events.filter((e) => e.lane[0] === 'd').map((e) => Number(e.lane[1])));
+        const bandsIn = v.items.filter((i) => i.inEffect);
+        const bandTop = ups * LANE_H + 6;
+        const axis = bandTop + bandsIn.length * 22 + 28;
+        const bands = bandsIn.map((i, k) => {
+            const a = pct(i.day < v.windowStart ? v.windowStart : i.day);
+            const b = i.untilDay && i.untilDay < v.startDate ? pct(i.untilDay) : 100;
+            return { key: i.key, style: 'top: ' + (bandTop + k * 22) + 'px; left: ' + a + '%; width: ' + Math.max(b - a, 2) + '%;',
+                label: i.name + ' · in effect ' + this.md(i.day) + (i.untilDay ? ' to ' + this.md(i.untilDay) : '') };
+        });
+        const closeA = pct(this.isoAdd(v.startDate, -14) < v.windowStart ? v.windowStart : this.isoAdd(v.startDate, -14));
+        return {
+            height: 'height: ' + (axis + 16 + downs * LANE_H) + 'px;',
+            axis: 'top: ' + axis + 'px;',
+            shade: 'top: ' + (axis - 13) + 'px; left: ' + closeA + '%; width: ' + (pct(v.startDate) - closeA) + '%;',
+            ticks: ticks.map((t) => ({ ...t, style: 'top: ' + (axis - 18) + 'px; left: ' + t.x + '%;' + (t.x === 0 ? '' : ' transform: translateX(-50%);') })),
+            bands,
+            events: events.map((e) => {
+                const up = e.lane[0] === 'u';
+                const n = Number(e.lane[1]);
+                const top = up ? (ups - n) * LANE_H : axis + 16 + (n - 1) * LANE_H;
+                const lineTop = up ? top + 44 : axis + 6;
+                const lineH = up ? axis - lineTop : top - axis - 6;
+                return { key: e.key, kLine: 'l:' + e.key, kDot: 'd:' + e.key, head: e.head, text: e.text,
+                    dot: 'top: ' + (axis - 7) + 'px; left: ' + e.x + '%;', dotCls: 'tl-dot ' + e.kind,
+                    line: 'top: ' + lineTop + 'px; height: ' + Math.max(lineH, 0) + 'px; left: ' + e.x + '%;', lineCls: 'tl-line ' + e.kind,
+                    box: 'top: ' + top + 'px; ' + (e.right ? 'right: ' + (100 - e.x) + '%; margin-right: -10px; text-align: right;' : 'left: ' + e.x + '%; margin-left: -10px;'),
+                    boxCls: 'tl-box ' + e.kind };
+            })
+        };
+    }
+    isoAdd(iso, days) { const d = new Date((this.dn(iso) + days) * 86400000); return d.toISOString().slice(0, 10); }
+    shortText(t) { if (!t) { return ''; } const s = t.split(': ').pop(); return s.length > 60 ? s.slice(0, 57) + '…' : s; }
+    get hasBands() { return this.timeline && this.timeline.bands.length > 0; }
+
+    get changeRows() {
+        if (!this.wc) { return []; }
+        const start = this.dn(this.wc.startDate);
+        return this.wc.items.map((i) => {
+            const before = i.day ? start - this.dn(i.day) : null;
+            let rel;
+            if (i.inEffect) { rel = 'In effect' + (i.untilDay && i.untilDay < this.wc.startDate ? ' until ' + this.md(i.untilDay) : ' throughout'); }
+            else if (i.rating === 'Unlikely') { rel = 'Unchanged'; }
+            else if (before === null) { rel = ''; }
+            else if (before === 0) { rel = 'The start date'; }
+            else { rel = before + (before === 1 ? ' day before' : ' days before'); }
+            const open = this.hypForm && this.hypForm.key === i.key;
+            return {
+                key: i.key, formKey: i.key + ':form', name: i.name, href: i.recordId && !i.byHand ? this.href(i.recordId) : null, byHand: i.byHand,
+                hasHref: !!(i.recordId && !i.byHand), category: i.category, whatChanged: i.whatChanged, foundIn: i.foundIn,
+                whenText: i.inEffect ? 'Since ' + this.md(i.day) : this.md(i.day), rel, rating: i.rating, ratingCls: RATING_CLS[i.rating] || 'chip',
+                added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null,
+                canAdd: !i.hypothesis && i.rating !== 'The Affected Lot' && i.rating !== 'Unlikely' && !open, open
+            };
+        });
+    }
+    get hasChanges() { return this.wc && this.wc.items.length > 0; }
+
+    // Add as Hypothesis: an inline form under the row, prefilled from the change
+    handleHypOpen(event) {
+        const i = this.wc.items.find((x) => x.key === event.currentTarget.dataset.key);
+        const t = this.shortText(i.whatChanged);
+        this.hypForm = { key: i.key, title: t.charAt(0).toUpperCase() + t.slice(1) + (i.byHand ? '' : ' (' + i.name + ')'), category: i.category, sourceId: i.recordId, sourceName: i.name };
+        this.wcError = undefined;
+        this.wcNotice = undefined;
+    }
+    handleHypCancel() { this.hypForm = undefined; }
+    handleHypTitle(event) { this.hypForm = { ...this.hypForm, title: event.target.value }; }
+    handleHypCat(event) { this.hypForm = { ...this.hypForm, category: event.currentTarget.dataset.c }; }
+    get hypCatOpts() {
+        const c = this.hypForm ? this.hypForm.category : null;
+        return (this.wc ? this.wc.categories : []).map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
+    }
+    get cantAddHyp() { return this.wcSaving || !this.hypForm || !(this.hypForm.title || '').trim() || !this.hypForm.category; }
+    async handleHypSave() {
+        if (this.cantAddHyp) { return; }
+        this.wcSaving = true;
+        try {
+            const n = await addHypothesis({ recordId: this.recordId, payload: JSON.stringify(this.hypForm) });
+            this.wcNotice = 'Added as H' + n + '. Test it in Find the Cause.';
+            this.hypForm = undefined;
+            await this.loadChanges();
+        } catch (e) {
+            this.wcError = this.msg(e, 'The hypothesis was not saved.');
+        } finally {
+            this.wcSaving = false;
+        }
+    }
+
+    // + Add a Change
+    handleChangeOpen() {
+        this.changeForm = { whatChanged: '', changeDate: this.wc ? this.wc.startDate : null, category: null, whereFound: '', reference: '' };
+        this.wcNotice = undefined;
+    }
+    handleChangeCancel() { this.changeForm = undefined; }
+    handleChangeField(event) { this.changeForm = { ...this.changeForm, [event.currentTarget.dataset.f]: event.target.value }; }
+    handleChangeCat(event) { this.changeForm = { ...this.changeForm, category: event.currentTarget.dataset.c }; }
+    get changeCatOpts() {
+        const c = this.changeForm ? this.changeForm.category : null;
+        return (this.wc ? this.wc.changeCategories : []).map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
+    }
+    get changeBlocker() {
+        const f = this.changeForm;
+        if (!f) { return null; }
+        if (!(f.whatChanged || '').trim()) { return 'Say what changed'; }
+        if (!f.changeDate) { return 'Enter when'; }
+        if (!f.category) { return 'Choose a category'; }
+        return null;
+    }
+    get cantSaveChange() { return this.wcSaving || !!this.changeBlocker; }
+    get cantSaveChangeHyp() { return this.cantSaveChange || this.changeForm.category === 'Other'; }
+    handleChangeSave() { this.saveChange(false); }
+    handleChangeSaveHyp() { this.saveChange(true); }
+    async saveChange(withHyp) {
+        if (withHyp ? this.cantSaveChangeHyp : this.cantSaveChange) { return; }
+        this.wcSaving = true;
+        this.wcError = undefined;
+        const f = this.changeForm;
+        try {
+            const id = await addChange({ recordId: this.recordId, payload: JSON.stringify(f) });
+            let note = 'Change saved.';
+            if (withHyp) {
+                const n = await addHypothesis({ recordId: this.recordId, payload: JSON.stringify({ title: f.whatChanged, category: f.category, sourceId: id, sourceName: 'Added by You' }) });
+                note = 'Change saved and added as H' + n + '.';
+            }
+            this.changeForm = undefined;
+            this.wcNotice = note;
+            await this.loadChanges();
+        } catch (e) {
+            this.wcError = this.msg(e, 'The change was not saved.');
+        } finally {
+            this.wcSaving = false;
+        }
+    }
+    get hypRows() {
+        return (this.wc ? this.wc.hypotheses : []).map((h) => ({ key: h.id, label: 'H' + h.num + (h.category ? ' · ' + h.category : ''), title: h.title,
+            status: h.status, statusCls: h.status === 'Confirmed' ? 'chip ok' : h.status === 'Ruled Out' ? 'chip' : 'chip warn', source: h.source }));
+    }
+    get hasHyps() { return this.hypRows.length > 0; }
+
     // ---- footer
     get blocker() {
         if (this.showActions) { return this.planBlocker(); }
@@ -313,6 +555,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get nextCls() { return 'btn' + (this.cantNext ? '' : ' primary'); }
 
     go(i) {
+        if (i === 1 && !this.wc && !this.wcLoading) { this.loadChanges(); }
         this.step = i;
         this.seen = { ...this.seen, [i]: true };
         this.error = undefined;

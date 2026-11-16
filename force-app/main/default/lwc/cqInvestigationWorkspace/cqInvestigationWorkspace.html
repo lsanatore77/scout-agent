@@ -93,10 +93,154 @@
                         </div>
                     </template>
 
-                    <!-- 2 What Changed (stage 3) -->
+                    <!-- 2 What Changed -->
                     <template if:true={showChanged}>
                         <h3 class="q">What Changed</h3>
-                        <div class="ownbox">Coming next: every change CQ knows about on this part, its documents, lots and suppliers in the weeks before the problem started, on a timeline, with Add as Hypothesis. For now, note what you find in the summary.</div>
+                        <template if:true={wcLoading}><div class="spinwrap"><lightning-spinner alternative-text="Reading the changes" size="small" class="spin"></lightning-spinner><span class="muted">Reading the changes CQ holds…</span></div></template>
+                        <template if:true={wcReady}>
+                            <div class="sugbox">
+                                <div class="sughead"><span class="star">&#10022;</span> What Stands Out</div>
+                                <div class="whyv">{standOut}</div>
+                            </div>
+                            <div class="lookback">
+                                <span class="strong">Look Back</span>
+                                <template for:each={lookBackOpts} for:item="o">
+                                    <button key={o.d} class={o.cls} data-d={o.d} aria-pressed={o.pressed} onclick={handleLookBack}>{o.label}</button>
+                                </template>
+                                <span class="muted">before the start date, {startText} ({startFromText})</span>
+                            </div>
+                            <div class="card">
+                                <div class="lab">Changes Around the Start Date</div>
+                                <div class="tl" style={timeline.height}>
+                                    <template for:each={timeline.bands} for:item="b">
+                                        <div key={b.key} class="tl-band" style={b.style}>{b.label}</div>
+                                    </template>
+                                    <span class="tl-shade" style={timeline.shade}></span>
+                                    <span class="tl-axis" style={timeline.axis}></span>
+                                    <template for:each={timeline.ticks} for:item="t">
+                                        <span key={t.key} class="tl-tick" style={t.style}>{t.label}</span>
+                                    </template>
+                                    <template for:each={timeline.events} for:item="e">
+                                        <span key={e.kLine} class={e.lineCls} style={e.line}></span>
+                                    </template>
+                                    <template for:each={timeline.events} for:item="e">
+                                        <span key={e.kDot} class={e.dotCls} style={e.dot}></span>
+                                    </template>
+                                    <template for:each={timeline.events} for:item="e">
+                                        <div key={e.key} class={e.boxCls} style={e.box}><div class="tl-head">{e.head}</div><div class="tl-text">{e.text}</div></div>
+                                    </template>
+                                </div>
+                                <div class="tl-legend">
+                                    <span><span class="lg change">&#9679;</span> Change on the part or its documents</span>
+                                    <span><span class="lg lot">&#9679;</span> Lot</span>
+                                    <template if:true={hasBands}><span><span class="lg band">&#9632;</span> In effect across the period</span></template>
+                                    <span class="lg-shade">Shaded: the 14 days before the start</span>
+                                </div>
+                            </div>
+                            <template if:true={hasChanges}>
+                                <div class="tblwrap">
+                                    <table class="tbl">
+                                        <thead><tr><th>Change</th><th>What Changed</th><th>When</th><th>Found In</th><th>CQ.AI Says</th><th></th></tr></thead>
+                                        <tbody>
+                                            <template for:each={changeRows} for:item="r">
+                                                <tr key={r.key}>
+                                                    <td>
+                                                        <template if:true={r.hasHref}><a class="link" href={r.href} target="_blank">{r.name}</a></template>
+                                                        <template if:true={r.byHand}><span class="chip">Added by You</span><div class="note">{r.category}</div></template>
+                                                    </td>
+                                                    <td>{r.whatChanged}</td>
+                                                    <td class="nowrap"><div class="strong">{r.whenText}</div><div class="note sm0">{r.rel}</div></td>
+                                                    <td class="muted">{r.foundIn}</td>
+                                                    <td><span class={r.ratingCls}>{r.rating}</span></td>
+                                                    <td class="nowrap">
+                                                        <template if:true={r.added}><span class="added">{r.added}</span></template>
+                                                        <template if:true={r.canAdd}><button class="btn sm" data-key={r.key} onclick={handleHypOpen}>Add as Hypothesis</button></template>
+                                                    </td>
+                                                </tr>
+                                                <template if:true={r.open}>
+                                                    <tr key={r.formKey} class="formrow">
+                                                        <td colspan="6">
+                                                            <div class="hypform">
+                                                                <label class="fl"><span>Hypothesis *</span>
+                                                                    <input class="ta" type="text" value={hypForm.title} onchange={handleHypTitle}>
+                                                                </label>
+                                                                <div class="fl"><span>Category *</span>
+                                                                    <div class="opts tight">
+                                                                        <template for:each={hypCatOpts} for:item="c">
+                                                                            <button key={c.label} class={c.cls} data-c={c.label} aria-pressed={c.pressed} onclick={handleHypCat}>{c.label}</button>
+                                                                        </template>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="opts tight">
+                                                                    <button class="btn sm primary" onclick={handleHypSave} disabled={cantAddHyp}>Add Hypothesis</button>
+                                                                    <button class="btn sm" onclick={handleHypCancel}>Cancel</button>
+                                                                    <span class="note sm0">It starts Open; you test it in Find the Cause.</span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </template>
+                            <template if:false={hasChanges}><p class="note">CQ holds no changes on this part in the window. Try a longer Look Back, or add what you found by hand.</p></template>
+
+                            <template if:false={changeForm}>
+                                <div class="notincq">
+                                    <span class="strong">Not in CQ:</span>
+                                    <span class="grow muted">fixture maintenance, operator assignments and line moves come from systems not connected to CQ. Add what you find by hand.</span>
+                                    <button class="btn sm" onclick={handleChangeOpen}>+ Add a Change</button>
+                                </div>
+                            </template>
+                            <template if:true={changeForm}>
+                                <div class="addchange">
+                                    <div class="strong big2">Add a Change</div>
+                                    <div class="fields">
+                                        <label class="fl growf"><span>What Changed *</span>
+                                            <input class="ta" type="text" value={changeForm.whatChanged} data-f="whatChanged" onchange={handleChangeField} placeholder="For example, locating pin not checked after the fixture move">
+                                        </label>
+                                        <label class="fl"><span>When *</span>
+                                            <input class="ta date" type="date" value={changeForm.changeDate} data-f="changeDate" onchange={handleChangeField}>
+                                        </label>
+                                    </div>
+                                    <div class="fl"><span>Category *</span>
+                                        <div class="opts tight">
+                                            <template for:each={changeCatOpts} for:item="c">
+                                                <button key={c.label} class={c.cls} data-c={c.label} aria-pressed={c.pressed} onclick={handleChangeCat}>{c.label}</button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="fields">
+                                        <label class="fl growf"><span>Where Found</span>
+                                            <input class="ta" type="text" value={changeForm.whereFound} data-f="whereFound" onchange={handleChangeField} placeholder="For example, maintenance log, line 3">
+                                        </label>
+                                        <label class="fl growf"><span>Link or Reference</span>
+                                            <input class="ta" type="text" value={changeForm.reference} data-f="reference" onchange={handleChangeField} placeholder="Optional">
+                                        </label>
+                                    </div>
+                                    <div class="opts tight">
+                                        <button class="btn primary" onclick={handleChangeSave} disabled={cantSaveChange}>Save Change</button>
+                                        <button class="btn" onclick={handleChangeSaveHyp} disabled={cantSaveChangeHyp}>Save and Add as Hypothesis</button>
+                                        <button class="btn" onclick={handleChangeCancel}>Cancel</button>
+                                        <span class="blocker">{changeBlocker}</span>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template if:true={hasHyps}>
+                                <div class="card">
+                                    <div class="lab">Hypotheses So Far</div>
+                                    <template for:each={hypRows} for:item="h">
+                                        <div key={h.key} class="hyprow"><span class="note sm0 strong">{h.label}</span><span class="grow strong">{h.title}</span><span class={h.statusCls}>{h.status}</span></div>
+                                    </template>
+                                    <div class="note">Each one starts Open. You test them in Find the Cause, where Confirmed hypotheses become CQ root causes.</div>
+                                </div>
+                            </template>
+                            <template if:true={wcNotice}><div class="okbox">{wcNotice}</div></template>
+                        </template>
+                        <template if:true={wcError}><div class="errbox">{wcError}</div></template>
                     </template>
 
                     <!-- 3 Check History (stage 3) -->

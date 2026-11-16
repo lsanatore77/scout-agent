@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A possible cause being tested in the CQ.AI Investigation workspace. Made from a change on the What Changed step (or by hand in Find the Cause). Open until it is Confirmed or Ruled Out; a confirmed hypothesis is saved as a CQ root cause.</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Investigation Hypothesis</label>
+    <nameField>
+        <displayFormat>HYP-{0000}</displayFormat>
+        <label>Investigation Hypothesis Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Investigation Hypotheses</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

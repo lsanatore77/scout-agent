@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Source_Name__c</fullName>
+    <description>The name of the record or change it came from, for example CHG-000005.</description>
+    <label>Source</label>
+    <length>255</length>
+    <type>Text</type>
+</CustomField>

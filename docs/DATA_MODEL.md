@@ -8,6 +8,10 @@ Every object and field this project adds to the org. Built from the metadata in 
 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
+### 15 Nov 2026
+- **New object Investigation Hypothesis** (`Investigation_Hypothesis__c`, HYP-0000): a possible cause tested in the CQ.AI Investigation workspace. Fields: Investigation (lookup to CQ Investigation), Number (H1, H2 ... within the investigation), Hypothesis, Category (CQ's root cause categories), Status (Open, Confirmed, Ruled Out), Source (name), Source Record Id (the CQ change order, document, deviation or calibration it came from), Investigation Change (lookup). Made by Add as Hypothesis on the What Changed step; Find the Cause will confirm or rule them out and save confirmed ones as CQ root causes.
+- **New object Investigation Change** (`Investigation_Change__c`, IC-0000): a change added by hand on the What Changed step (not held in CQ). Fields: Investigation (lookup), What Changed, Change Date, Category (CQ's root cause categories plus Other), Where Found, Link or Reference.
+
 ### 14 Nov 2026
 - **CAPA (CQ object `compliancequest__SQX_CAPA__c`)**: added Field Action (lookup to Field Action, relationship CAPAs) and the record type **CAPA - Field Action** (`CAPA_Field_Action`). A field action's Closure step creates a skeleton CAPA of this type (title, part, field action, Target Due Date 60 days out) and links it back in the field action's CAPA field.
 - **Field Action**: Other Records is no longer shown on the Closure step (the field stays for now). The CAPA check blocks closing only until a CAPA is linked; the CAPA's own status does not hold the field action open.
@@ -270,6 +274,34 @@ The Field Action object records one field action for a product problem: a correc
 | `Verdict_By__c` | Verdict By | Lookup | to User | Who confirmed the verdict. |
 | `Verdict_On__c` | Verdict On | DateTime |  | When the verdict was confirmed. |
 | `Verdict__c` | Verdict | Picklist | Effective, Not Effective | Whether the field action was effective. |
+
+### Investigation Change (`Investigation_Change__c`)
+
+A change added by hand on the What Changed step of the CQ.AI Investigation workspace: something that changed before the problem started and is not in CQ (fixture maintenance, operator assignments, line moves). Shown on the timeline with the changes CQ holds.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Category__c` | Category | Picklist | People, Machine, Method, Environment (Nature), Materials, Measurement, Other | The kind of change, using CQ's root cause categories, plus Other. |
+| `Change_Date__c` | Change Date | Date |  | When the change happened. |
+| `Investigation__c` | Investigation | Lookup | to compliancequest__SQX_Investigation__c | The investigation this change was found for. |
+| `Reference__c` | Link or Reference | Text | 255 chars | A link or document reference, optional. |
+| `What_Changed__c` | What Changed | Text | 255 chars | What changed, in a sentence. |
+| `Where_Found__c` | Where Found | Text | 255 chars | Where the change was found, for example the maintenance log for line 3. |
+
+### Investigation Hypothesis (`Investigation_Hypothesis__c`)
+
+A possible cause being tested in the CQ.AI Investigation workspace. Made from a change on the What Changed step (or by hand in Find the Cause). Open until it is Confirmed or Ruled Out; a confirmed hypothesis is saved as a CQ root cause.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Category__c` | Category | Picklist | People, Machine, Method, Environment (Nature), Materials, Measurement | CQ's root cause category for this cause. |
+| `Investigation_Change__c` | Investigation Change | Lookup | to Investigation_Change__c | The change added by hand that it came from, if any. |
+| `Investigation__c` | Investigation | Lookup | to compliancequest__SQX_Investigation__c | The investigation this hypothesis belongs to. |
+| `Number__c` | Number | Number | 4,0 | The hypothesis number within the investigation, shown as H1, H2 and so on. |
+| `Source_Name__c` | Source | Text | 255 chars | The name of the record or change it came from, for example CHG-000005. |
+| `Source_Record_Id__c` | Source Record Id | Text | 18 chars | The CQ record it came from (change order, document, deviation, calibration), if any. |
+| `Status__c` | Status | Picklist | Open, Confirmed, Ruled Out | Open while it is being tested; Confirmed or Ruled Out once decided. |
+| `Title__c` | Hypothesis | Text | 255 chars | The possible cause, in a sentence. |
 
 ### Lot Shipment (`Lot_Shipment__c`)
 

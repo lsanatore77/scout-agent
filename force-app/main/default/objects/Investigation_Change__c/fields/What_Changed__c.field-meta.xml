@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>What_Changed__c</fullName>
+    <description>What changed, in a sentence.</description>
+    <label>What Changed</label>
+    <length>255</length>
+    <type>Text</type>
+</CustomField>

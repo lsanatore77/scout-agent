@@ -2,6 +2,10 @@
 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
+### 15 Nov 2026
+- **New object Investigation Hypothesis** (`Investigation_Hypothesis__c`, HYP-0000): a possible cause tested in the CQ.AI Investigation workspace. Fields: Investigation (lookup to CQ Investigation), Number (H1, H2 ... within the investigation), Hypothesis, Category (CQ's root cause categories), Status (Open, Confirmed, Ruled Out), Source (name), Source Record Id (the CQ change order, document, deviation or calibration it came from), Investigation Change (lookup). Made by Add as Hypothesis on the What Changed step; Find the Cause will confirm or rule them out and save confirmed ones as CQ root causes.
+- **New object Investigation Change** (`Investigation_Change__c`, IC-0000): a change added by hand on the What Changed step (not held in CQ). Fields: Investigation (lookup), What Changed, Change Date, Category (CQ's root cause categories plus Other), Where Found, Link or Reference.
+
 ### 14 Nov 2026
 - **CAPA (CQ object `compliancequest__SQX_CAPA__c`)**: added Field Action (lookup to Field Action, relationship CAPAs) and the record type **CAPA - Field Action** (`CAPA_Field_Action`). A field action's Closure step creates a skeleton CAPA of this type (title, part, field action, Target Due Date 60 days out) and links it back in the field action's CAPA field.
 - **Field Action**: Other Records is no longer shown on the Closure step (the field stays for now). The CAPA check blocks closing only until a CAPA is linked; the CAPA's own status does not hold the field action open.

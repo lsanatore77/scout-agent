@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A change added by hand on the What Changed step of the CQ.AI Investigation workspace: something that changed before the problem started and is not in CQ (fixture maintenance, operator assignments, line moves). Shown on the timeline with the changes CQ holds.</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Investigation Change</label>
+    <nameField>
+        <displayFormat>IC-{0000}</displayFormat>
+        <label>Investigation Change Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Investigation Changes</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

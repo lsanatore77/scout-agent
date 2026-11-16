@@ -31,7 +31,7 @@ Every class a component or agent calls (`@AuraEnabled`, `@InvocableMethod`, `@Re
 | Ask CQ.AI | AskCqAgents, AskCqService, AskCqWorkspaceController | Base |
 | NC triage | CqTriageController, CqTriageAssistant, CqTriageContainment, CqTriageDraft, CqTriageLinks, CqTriageNext, CqTriagePhoto, CqTriageRisk | Quality |
 | NC disposition | CqDispositionWorkspace | Quality |
-| NC investigation | CqInvestigationWorkspace | Quality |
+| NC investigation | CqInvestigationWorkspace, CqInvestigationChanges | Quality |
 | Agents' context | CqQualityAgentContext (CQAI_Quality), CqFieldActionAgentContext (CQAI_Field_Action) | the agent's set |
 | Field actions | CqFieldActionReview, CqFieldActionScope, CqFieldActionStrategy, CqFieldActionLots, CqFieldActionRecovery, CqFieldActionTasks, CqLotStock, CqFarCommittee | Field Actions User (+ Approvals for CqFarCommittee) |
 | Signals | CqSignalJob | Admin |
@@ -49,6 +49,7 @@ Every class a component or agent calls (`@AuraEnabled`, `@InvocableMethod`, `@Re
 | Lot_Shipment__c, Lot_Stock__c | Read (loaded from the ERP) | Field Actions User; the ERP integration user needs Create and Edit |
 | Signal__c, Signal_Event__c, Signal_Rule__c, Quality_Event__c | Read; Signal_Rule__c Edit for admins | Field Actions User / Admin |
 | PHR_Lead__c | Read, Create, Edit | PHR Lead Access |
+| Investigation_Hypothesis__c, Investigation_Change__c | Read, Create, Edit (all fields) | Quality |
 | PHR_Report_Setting__mdt | Read | Base |
 
 ### Our Fields on CQ Objects
@@ -84,7 +85,7 @@ Users get these from their CQ permission sets today; listed so the CQ role we re
 | Task | Create | CqFieldActionTasks |
 | Files (ContentVersion, ContentDocumentLink) | Create | CqTriagePhoto, PHR report actions |
 
-Read only: Root Cause, Root Cause Code, NC Action, Part, Lot Info, Impacted Part/Lot, Approval Matrix, Job Function and User Job Function, Inspection, Change Order, Controlled Document, Complaint Task, Root Cause, Linked Investigation, assembly and part revision (CQPLM), batch measurements (CQEBR).
+Read only: Root Cause, Root Cause Code, NC Action, Change Order, Controlled Document, Supplier Deviation, Equipment, Calibration, PLM Part Revision, Assembly and Assembly Line Item, Part, Lot Info, Impacted Part/Lot, Approval Matrix, Job Function and User Job Function, Inspection, Change Order, Controlled Document, Complaint Task, Root Cause, Linked Investigation, assembly and part revision (CQPLM), batch measurements (CQEBR).
 
 ### Credentials, Pages, Apps and Agents
 
@@ -107,6 +108,7 @@ Read only: Root Cause, Root Cause Code, NC Action, Part, Lot Info, Impacted Part
 Newest first.
 
 ### 15 Nov 2026
+- **CqInvestigationChanges** (new, What Changed step): Apex access; Investigation Hypothesis and Investigation Change Read, Create, Edit; reads change orders, controlled documents, part revisions, assemblies, supplier deviations, lots, equipment and calibrations. The two new objects have no permission set yet: Apex reads and writes them, but users need object and field access in CQ.AI Quality to see them in reports and record pages. Set: Quality.
 - **CqInvestigationWorkspace** (new): Apex access; Investigation Edit; Action Plan Create, Edit and Delete; Investigation Tool Edit; Response and Response Inclusion Create and Edit; Root Cause, NC Action, Disposition and Nonconformance Read. Users also need the User object in the Owner picker. Set: Quality.
 - Log started from the repo and the dev org. Two permission sets exist in the repo (Field Actions User, PHR Lead Access); nothing yet covers NC triage, disposition, Ask CQ.AI or approvals.
 - **CqDispositionWorkspace** (new): Apex access; Disposition Create and Edit; Impacted Part/Lot and Nonconformance Read. Set: Quality.
