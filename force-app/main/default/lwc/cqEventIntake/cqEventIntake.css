@@ -37,7 +37,7 @@ textarea.ta.big { min-height: 180px; line-height: 1.45; resize: vertical; }
 .whyv { line-height: 1.45; color: #3d4550; }
 .lab { font-size: 12px; font-weight: 700; color: #5b6470; text-transform: uppercase; letter-spacing: .03em; }
 .count { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-.big { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bignum { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .muted { color: #5b6470; }
 .bar { height: 8px; border-radius: 4px; background: #eef0f3; overflow: hidden; }
 .bar i { display: block; height: 100%; }
