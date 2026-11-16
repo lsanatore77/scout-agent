@@ -158,29 +158,6 @@
                                                         <template if:true={r.canAdd}><button class="btn sm" data-key={r.key} onclick={handleHypOpen}>Add as Hypothesis</button></template>
                                                     </td>
                                                 </tr>
-                                                <template if:true={r.open}>
-                                                    <tr key={r.formKey} class="formrow">
-                                                        <td colspan="6">
-                                                            <div class="hypform">
-                                                                <label class="fl"><span>Hypothesis *</span>
-                                                                    <input class="ta" type="text" value={hypForm.title} onchange={handleHypTitle}>
-                                                                </label>
-                                                                <div class="fl"><span>Category *</span>
-                                                                    <div class="opts tight">
-                                                                        <template for:each={hypCatOpts} for:item="c">
-                                                                            <button key={c.label} class={c.cls} data-c={c.label} aria-pressed={c.pressed} onclick={handleHypCat}>{c.label}</button>
-                                                                        </template>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="opts tight">
-                                                                    <button class="btn sm primary" onclick={handleHypSave} disabled={cantAddHyp}>Add Hypothesis</button>
-                                                                    <button class="btn sm" onclick={handleHypCancel}>Cancel</button>
-                                                                    <span class="note sm0">It starts Open; you test it in Find the Cause.</span>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </template>
                                             </template>
                                         </tbody>
                                     </table>
@@ -295,29 +272,6 @@
                                                         </div>
                                                     </td>
                                                 </tr>
-                                                <template if:true={r.open}>
-                                                    <tr key={r.formKey} class="formrow">
-                                                        <td colspan="6">
-                                                            <div class="hypform">
-                                                                <label class="fl"><span>Hypothesis *</span>
-                                                                    <input class="ta" type="text" value={hypForm.title} onchange={handleHypTitle}>
-                                                                </label>
-                                                                <div class="fl"><span>Category *</span>
-                                                                    <div class="opts tight">
-                                                                        <template for:each={hypCatOpts} for:item="c">
-                                                                            <button key={c.label} class={c.cls} data-c={c.label} aria-pressed={c.pressed} onclick={handleHypCat}>{c.label}</button>
-                                                                        </template>
-                                                                    </div>
-                                                                </div>
-                                                                <div class="opts tight">
-                                                                    <button class="btn sm primary" onclick={handleHypSave} disabled={cantAddHyp}>Add Hypothesis</button>
-                                                                    <button class="btn sm" onclick={handleHypCancel}>Cancel</button>
-                                                                    <span class="note sm0">It starts Open; you test it in Find the Cause.</span>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                </template>
                                             </template>
                                         </tbody>
                                     </table>
@@ -489,6 +443,39 @@
                     <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
                     <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
                 </footer>
+            </template>
+            <template if:true={hypOpen}>
+                <div class="modal-back" onkeydown={handleHypKey}>
+                    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="hyp-head">
+                        <header class="modal-head">
+                            <h2 id="hyp-head" class="modal-title">Add as Hypothesis</h2>
+                            <button class="modal-x" aria-label="Close" onclick={handleHypCancel}>&times;</button>
+                        </header>
+                        <div class="modal-body">
+                            <div class="fromcard">
+                                <div class="note sm0">From</div>
+                                <div><template if:true={hypFromHasHref}><a class="link" href={hypForm.fromHref} target="_blank">{hypForm.fromName}</a></template><template if:false={hypFromHasHref}><span class="strong">{hypForm.fromName}</span></template> &middot; {hypForm.fromText}</div>
+                                <template if:true={hypForm.fromSub}><div class="note sm0">{hypForm.fromSub}</div></template>
+                            </div>
+                            <label class="fl"><span>Hypothesis *</span>
+                                <textarea class="ta hypta" rows="3" value={hypForm.title} oninput={handleHypTitle}></textarea>
+                            </label>
+                            <div class="fl"><span>Category *</span>
+                                <div class="opts tight">
+                                    <template for:each={hypCatOpts} for:item="c">
+                                        <button key={c.label} class={c.cls} data-c={c.label} aria-pressed={c.pressed} onclick={handleHypCat}>{c.label}</button>
+                                    </template>
+                                </div>
+                            </div>
+                            <div class="note sm0">It starts Open; you test it in Find the Cause.</div>
+                        </div>
+                        <footer class="modal-foot">
+                            <span class="blocker">{hypBlocker}</span>
+                            <button class="btn" onclick={handleHypCancel}>Cancel</button>
+                            <button class="btn primary" onclick={handleHypSave} disabled={cantAddHyp}>Add Hypothesis</button>
+                        </footer>
+                    </section>
+                </div>
             </template>
         </div>
     </template>

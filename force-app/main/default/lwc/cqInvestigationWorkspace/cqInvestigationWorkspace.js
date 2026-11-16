@@ -464,41 +464,64 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             else if (before === null) { rel = ''; }
             else if (before === 0) { rel = 'The start date'; }
             else { rel = before + (before === 1 ? ' day before' : ' days before'); }
-            const open = this.hypForm && this.hypForm.key === i.key;
             return {
-                key: i.key, formKey: i.key + ':form', name: i.name, href: i.recordId && !i.byHand ? this.href(i.recordId) : null, byHand: i.byHand,
+                key: i.key, name: i.name, href: i.recordId && !i.byHand ? this.href(i.recordId) : null, byHand: i.byHand,
                 hasHref: !!(i.recordId && !i.byHand), category: i.category, whatChanged: i.whatChanged, foundIn: i.foundIn,
                 whenText: i.inEffect ? 'Since ' + this.md(i.day) : this.md(i.day), rel, rating: i.rating, ratingCls: RATING_CLS[i.rating] || 'chip',
                 added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null,
-                canAdd: !i.hypothesis && i.rating !== 'The Affected Lot' && i.rating !== 'Unlikely' && !open, open
+                canAdd: !i.hypothesis && i.rating !== 'The Affected Lot' && i.rating !== 'Unlikely'
             };
         });
     }
     get hasChanges() { return this.wc && this.wc.items.length > 0; }
 
-    // Add as Hypothesis: an inline form under the row, prefilled from the change
+    // Add as Hypothesis: a popup, prefilled from the change
     handleHypOpen(event) {
         const i = this.wc.items.find((x) => x.key === event.currentTarget.dataset.key);
         const t = this.shortText(i.whatChanged);
-        this.hypForm = { key: i.key, title: t.charAt(0).toUpperCase() + t.slice(1) + (i.byHand ? '' : ' (' + i.name + ')'), category: i.category, sourceId: i.recordId, sourceName: i.name };
+        this.hypForm = { key: i.key, title: t.charAt(0).toUpperCase() + t.slice(1) + (i.byHand ? '' : ' (' + i.name + ')'), category: i.category, sourceId: i.recordId, sourceName: i.name,
+            fromName: i.byHand ? 'Added by You' : i.name, fromHref: i.recordId && !i.byHand ? this.href(i.recordId) : null, fromText: i.whatChanged,
+            fromSub: [i.foundIn, i.rating].filter((x) => x).join(' \u00b7 ') };
+        this.hypFocus = true;
         this.wcError = undefined;
         this.wcNotice = undefined;
     }
     handleHypCancel() { this.hypForm = undefined; }
     handleHypTitle(event) { this.hypForm = { ...this.hypForm, title: event.target.value }; }
+    handleHypKey(event) { if (event.key === 'Escape') { this.handleHypCancel(); } }
+    get hypOpen() { return !!this.hypForm; }
+    get hypFromHasHref() { return !!(this.hypForm && this.hypForm.fromHref); }
+    hypFocus = false;
+    renderedCallback() {
+        if (!this.hypFocus) { return; }
+        const ta = this.template.querySelector('textarea.hypta');
+        if (!ta) { return; }
+        this.hypFocus = false;
+        ta.focus();
+        const n = ta.value.length;
+        try { ta.setSelectionRange(n, n); } catch (e) { /* not all inputs allow it */ }
+    }
     handleHypCat(event) { this.hypForm = { ...this.hypForm, category: event.currentTarget.dataset.c }; }
     get hypCatOpts() {
         const c = this.hypForm ? this.hypForm.category : null;
         const cats = this.wc ? this.wc.categories : this.hist ? this.hist.categories : [];
         return cats.map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
     }
-    get cantAddHyp() { return this.wcSaving || !this.hypForm || !(this.hypForm.title || '').trim() || !this.hypForm.category; }
+    get hypBlocker() {
+        const f = this.hypForm;
+        if (!f) { return null; }
+        const t = (f.title || '').trim();
+        if (!t || t.endsWith(':')) { return 'Finish the hypothesis'; }
+        if (!f.category) { return 'Choose a category'; }
+        return null;
+    }
+    get cantAddHyp() { return this.wcSaving || !!this.hypBlocker; }
     async handleHypSave() {
         if (this.cantAddHyp) { return; }
         this.wcSaving = true;
         try {
             const from = this.hypForm.from;
-            const n = await addHypothesis({ recordId: this.recordId, payload: JSON.stringify(this.hypForm) });
+            const n = await addHypothesis({ recordId: this.recordId, payload: JSON.stringify({ title: this.hypForm.title.trim(), category: this.hypForm.category, sourceId: this.hypForm.sourceId, sourceName: this.hypForm.sourceName }) });
             const note = 'Added as H' + n + '. Test it in Find the Cause.';
             if (from === 'hist') { this.histNotice = note; } else { this.wcNotice = note; }
             this.hypForm = undefined;
@@ -622,7 +645,6 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
     get hasRecur() { return this.recurBoxes.length > 0; }
     histRow(i) {
-        const open = this.hypForm && this.hypForm.key === 'h:' + i.key;
         let cause = i.causeHead;
         let causeNote = i.causeNote;
         if (!cause) {
@@ -640,12 +662,12 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             fixNote = i.status === 'Closed' || i.status === 'Complete' ? 'Closed, no CAPA' : i.status;
         }
         return {
-            key: i.key, formKey: i.key + ':form', name: i.name, href: this.href(i.recordId),
+            key: i.key, name: i.name, href: this.href(i.recordId),
             sub: (i.status || '') + (i.day ? ' · ' + this.mdIso(i.day) : ''), what: i.whatHappened,
             cause, causeNote, causeIsNone: !i.causeHead, invHref: i.investigationId ? this.href(i.investigationId) : null,
             fix, fixHref: i.capaId ? this.href(i.capaId) : null, capaTitle: i.capaTitle, fixNote, effective: this.isEffective(i),
             matchText: (i.colour || 'Grey') + ' · ' + (i.score || 0), matchCls: 'chip m-' + (i.colour || 'Grey').toLowerCase(), why: i.why,
-            added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null, canAdd: !i.hypothesis && !open, open
+            added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null, canAdd: !i.hypothesis
         };
     }
     get histRows() { return this.hist ? this.hist.items.map((i) => this.histRow(i)) : []; }
@@ -668,12 +690,19 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handleHistHypOpen(event) {
         const i = this.findHist(event.currentTarget.dataset.key);
         if (!i) { return; }
-        const what = (i.whatHappened || i.name).split(':')[0];
-        const cause = i.causeNote && i.causeHead ? i.causeNote : what;
-        this.hypForm = { from: 'hist', key: 'h:' + i.key, title: cause.charAt(0).toUpperCase() + cause.slice(1) + ', as in ' + i.name, category: i.category,
-            sourceId: i.recordId, sourceName: i.name };
+        this.hypForm = { from: 'hist', key: 'h:' + i.key, title: this.histHypTitle(i), category: i.category, sourceId: i.recordId, sourceName: i.name,
+            fromName: i.name, fromHref: this.href(i.recordId), fromText: i.whatHappened,
+            fromSub: i.causeHead ? 'Root cause: ' + i.causeHead + (i.causeNote ? ' \u00b7 ' + i.causeNote : '') : null };
+        this.hypFocus = true;
         this.histNotice = undefined;
         this.histError = undefined;
+    }
+    /** With a recorded cause, the cause itself; otherwise a start the investigator finishes (the cursor is left at the end). */
+    histHypTitle(i) {
+        if (i.causeHead && i.causeNote) { return i.causeNote.charAt(0).toUpperCase() + i.causeNote.slice(1) + ', as in ' + i.name; }
+        const lot = /lot (\S+)/i.exec(i.whatHappened || '');
+        if (i.type === 'Inspection') { return 'Same failure as ' + i.name + (lot ? ' (lot ' + lot[1].replace(/[,.;]$/, '') + ')' : '') + ': '; }
+        return 'Same problem as ' + i.name + ': ';
     }
     async handleNotRelevant(event) {
         const i = this.findHist(event.currentTarget.dataset.key);
