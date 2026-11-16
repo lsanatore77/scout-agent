@@ -68,13 +68,20 @@
                                 </template>
                             </div>
                             <div class="col">
-                                <template for:each={actions} for:item="a">
-                                    <button key={a.id} class={a.cls} data-id={a.id} onclick={handleAct} aria-pressed={a.pressed}>
-                                        <span class="tick">{a.tick}</span>
-                                        <span class="rt"><span class="rv">{a.label}</span><span class="rk">{a.why}</span></span>
-                                        <template if:true={a.cq}><c-cq-ai-why variant="star" subject={a.label} tail=" here?"></c-cq-ai-why></template>
-                                    </button>
-                                </template>
+                                <div class="tblwrap" style="margin-top: 0">
+                                    <table class="tbl">
+                                        <thead><tr><th class="center">Select</th><th>Action</th><th></th></tr></thead>
+                                        <tbody>
+                                            <template for:each={actions} for:item="a">
+                                                <tr key={a.id}>
+                                                    <td class="center"><input type="checkbox" class="cb" data-id={a.id} checked={a.on} onchange={handleAct} aria-label={a.label}></td>
+                                                    <td class="wide"><div class="strong">{a.label}</div><div class="isum">{a.why}</div></td>
+                                                    <td class="nowrap"><template if:true={a.cq}><c-cq-ai-why variant="pill" subject={a.label} tail=" here?"></c-cq-ai-why></template></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
                                 <template if:true={hasActs}>
                                     <label class="fl">Due Date for the Ticked Actions *
                                         <input class="ta date" type="date" data-f="due" value={due} onchange={handleInput} />
