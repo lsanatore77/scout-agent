@@ -167,3 +167,6 @@ textarea.ta.summary { min-height: 200px; line-height: 1.5; }
 .tl-line.lot, .lg.lot { border: none; border-radius: 0; }
 .tl-box.lot { display: block; margin-bottom: 0; }
 .tl-text::first-letter { text-transform: uppercase; }
+/* a little space between the date labels and the shaded 14 days */
+.tl-tick { margin-top: -10px; }
+.tl-shade { margin-top: 3px; height: 20px; }
