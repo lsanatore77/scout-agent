@@ -1,6 +1,11 @@
 CQ.AI Investigation Summary: Prompt Builder template, v1
 ==========================================================
 
+Status in the dev org (cqse-golden--dev), 16 Nov 2026: CREATED and ACTIVE through the Prompt Builder
+Connect API (template 0hfW4000000jaVZIAY, active version 2 = 3vNW400000029iLMAQ, Template Format
+FormulaExpression). Version 1 is an unused Draft in Jinja format; it can be deleted in Prompt Builder.
+For another org, set it up by hand as below.
+
 Set up in Prompt Builder (Setup > Prompt Builder > New Prompt Template)
   Prompt Template Type:  Flex
   Prompt Template Name:  CQAI Investigation Summary
@@ -10,6 +15,7 @@ Set up in Prompt Builder (Setup > Prompt Builder > New Prompt Template)
                            Source:     Free Text
                            Required:   yes
   Model:                 leave the default
+  Template format:       the standard {!$Input:...} merge fields (not Jinja)
 Paste everything between the lines below into the template, then Save and Activate.
 The Apex class CqInvestigationSummary fills Investigation_Data with the facts, in five parts
 (## PROBLEM, ## CONTAINMENT, ## HYPOTHESES, ## ROOT CAUSE, ## ACTIONS).
