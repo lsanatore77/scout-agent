@@ -77,6 +77,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     saving = false;
     showAll = {};        // signal id -> true once the reviewer asks for every record
     hotSig = '';         // the signal under the pointer, lit in the list and the chart together
+    openSig = {};        // signal id -> true while its records are shown under it in the table
     hazard = '';
     level = '';
     checks = {};
@@ -266,8 +267,31 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
             label: titleCase(s.label),
             why: titleCase(s.why),
             count: n + ' record' + (n === 1 ? '' : 's'),
+            total: n,
             sigCls: 'sig' + (this.hotSig === s.id ? ' hot' : ''),
             records: rest ? all.slice(0, PAGE) : all, hasRest: rest > 0, restLabel: 'Show ' + rest + ' More' };
+    }
+    /** The signals as table rows: each signal, then (when opened) its records and the Show More row under it. */
+    sigRows(list) {
+        const rows = [];
+        list.forEach((s) => {
+            const open = !!this.openSig[s.id];
+            rows.push({ key: 's' + s.id, isSig: true, id: s.id, rule: s.rule, pillCls: s.pillCls, strength: s.strength, sub: s.meta,
+                label: s.label, why: s.why, n: s.total,
+                expanded: open ? 'true' : 'false', chevCls: 'chev' + (open ? ' open' : ''),
+                rowCls: 'srow' + (this.hotSig === s.id ? ' hot' : '') + (open ? ' isopen' : '') });
+            if (open) {
+                s.records.forEach((r) => rows.push({ key: 'r' + s.id + r.id, isRec: true, id: r.id, name: r.name, line: r.line, meta: r.meta, sameLot: r.sameLot }));
+                if (s.hasRest) { rows.push({ key: 'm' + s.id, isRest: true, id: s.id, restLabel: s.restLabel }); }
+            }
+        });
+        return rows;
+    }
+    get signalRows() { return this.sigRows(this.signals); }
+    get moreSignalRows() { return this.sigRows(this.moreSignals); }
+    handleSigToggle(event) {
+        const id = event.currentTarget.dataset.id;
+        this.openSig = { ...this.openSig, [id]: !this.openSig[id] };
     }
     handleSigOver(event) { this.hotSig = event.currentTarget.dataset.id; }
     handleSigOut() { this.hotSig = ''; }

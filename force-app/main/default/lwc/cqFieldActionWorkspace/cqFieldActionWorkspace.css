@@ -192,3 +192,22 @@
 @media (max-width: 1100px) { .assess { grid-template-columns: 1fr; } }
 /* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
 .btn:not(.xs), .segb, .opt { padding-bottom: 3px; }
+/* Signals and Evidence as a nested table, in the Root Causes table style */
+.tblwrap { overflow-x: auto; margin-top: 8px; border: 1px solid #dde1e6; border-radius: 8px; }
+.sigl > .tblwrap:first-child { margin-top: 0; }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl thead tr, .tbl th { padding: 8px 12px; background: #f3f3f3; text-align: left; font-weight: 600; white-space: nowrap; }
+.tbl td { padding: 10px 12px; border-top: 1px solid #e5e5e5; vertical-align: top; }
+.tbl th.num, .tbl td.num { text-align: right; white-space: nowrap; }
+.tbl td.wide { width: 100%; min-width: 180px; }
+.tbl .chcol { width: 1%; padding-right: 0; }
+.tbl td.sigcell { min-width: 170px; }
+.nowrap { white-space: nowrap; }
+.strong { font-weight: 700; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.sghead { margin: 4px 0 2px; }
+.stbl .srow { cursor: pointer; }
+.stbl .srow.hot td { background: #f5f8fd; }
+.chevbtn { padding: 0; border: none; background: none; cursor: pointer; }
+.chev.open { transform: rotate(90deg); }
+.stbl .evrow td { padding: 8px 12px; border-top: 1px solid #eceff2; }

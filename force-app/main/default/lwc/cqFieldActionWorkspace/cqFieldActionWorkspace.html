@@ -110,24 +110,37 @@
                         <p class="p">Patterns CQ.AI has found across complaints, nonconformances and reviews on this part. Every signal is shown, and the committee sees the same set.</p>
                         <div class="sigcols">
                         <div class="sigl">
-                        <template for:each={signals} for:item="s">
-                            <details key={s.id} class={s.sigCls} data-id={s.id} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
-                                <summary>
-                                    <span class="chev" aria-hidden="true">&#8250;</span>
-                                    <span class="sgb">
-                                        <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
-                                        <span class="sgl">{s.label}</span>
-                                        <template if:true={s.why}><span class="rk">{s.why}</span></template>
-                                    </span>
-                                    <span class="rk cnt">{s.count}</span>
-                                </summary>
-                                <template for:each={s.records} for:item="r">
-                                    <div key={r.id} class="evt">
-                                        <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span><template if:true={r.sameLot}><span class="lot">This Lot</span></template>
-                                    </div>
-                                </template>
-                                <template if:true={s.hasRest}><div class="evt"><button class="link" data-id={s.id} onclick={handleShowAll}>{s.restLabel}</button></div></template>
-                            </details>
+                        <template if:true={hasSignals}>
+                            <div class="tblwrap">
+                                <table class="tbl stbl">
+                                    <thead><tr><th class="chcol"><span class="sr">Open</span></th><th>Signal</th><th>What We See</th><th class="num">Records</th></tr></thead>
+                                    <tbody>
+                                        <template for:each={signalRows} for:item="r">
+                                            <template if:true={r.isSig}>
+                                                <tr key={r.key} class={r.rowCls} data-id={r.id} onclick={handleSigToggle} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
+                                                    <td class="chcol"><button class="chevbtn" aria-expanded={r.expanded} aria-label={r.rule}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></td>
+                                                    <td class="sigcell"><div class="strong nowrap">{r.rule}</div><div class="sghead"><span class={r.pillCls}>{r.strength}</span></div><div class="rk">{r.sub}</div></td>
+                                                    <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="rk">{r.why}</div></template></td>
+                                                    <td class="num">{r.n}</td>
+                                                </tr>
+                                            </template>
+                                            <template if:true={r.isRec}>
+                                                <tr key={r.key} class="evrow">
+                                                    <td></td>
+                                                    <td colspan="2"><div><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="rk">{r.meta}</div></td>
+                                                    <td class="num"><template if:true={r.sameLot}><span class="lot">This Lot</span></template></td>
+                                                </tr>
+                                            </template>
+                                            <template if:true={r.isRest}>
+                                                <tr key={r.key} class="evrow">
+                                                    <td></td>
+                                                    <td colspan="3"><button class="link" data-id={r.id} onclick={handleShowAll}>{r.restLabel}</button></td>
+                                                </tr>
+                                            </template>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
                         </template>
                         <template if:false={hasSignals}>
                             <p class="note">No signals at Assess or above on this part or lot.</p>
@@ -143,25 +156,36 @@
                         <template if:true={hasMore}>
                             <details class="know">
                                 <summary>{moreLabel}</summary>
-                                <template for:each={moreSignals} for:item="s">
-                                    <details key={s.id} class="sig">
-                                        <summary>
-                                            <span class="chev" aria-hidden="true">&#8250;</span>
-                                            <span class="sgb">
-                                                <span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.meta}</span></span>
-                                                <span class="sgl">{s.label}</span>
-                                                <template if:true={s.why}><span class="rk">{s.why}</span></template>
-                                            </span>
-                                            <span class="rk cnt">{s.count}</span>
-                                        </summary>
-                                        <template for:each={s.records} for:item="r">
-                                            <div key={r.id} class="evt">
-                                                <span class="rt"><span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span><template if:true={r.sameLot}><span class="lot">This Lot</span></template>
-                                            </div>
-                                        </template>
-                                        <template if:true={s.hasRest}><div class="evt"><button class="link" data-id={s.id} onclick={handleShowAll}>{s.restLabel}</button></div></template>
-                                    </details>
-                                </template>
+                                <div class="tblwrap">
+                                    <table class="tbl stbl">
+                                        <thead><tr><th class="chcol"><span class="sr">Open</span></th><th>Signal</th><th>What We See</th><th class="num">Records</th></tr></thead>
+                                        <tbody>
+                                            <template for:each={moreSignalRows} for:item="r">
+                                                <template if:true={r.isSig}>
+                                                    <tr key={r.key} class={r.rowCls} data-id={r.id} onclick={handleSigToggle} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
+                                                        <td class="chcol"><button class="chevbtn" aria-expanded={r.expanded} aria-label={r.rule}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></td>
+                                                        <td class="sigcell"><div class="strong nowrap">{r.rule}</div><div class="sghead"><span class={r.pillCls}>{r.strength}</span></div><div class="rk">{r.sub}</div></td>
+                                                        <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="rk">{r.why}</div></template></td>
+                                                        <td class="num">{r.n}</td>
+                                                    </tr>
+                                                </template>
+                                                <template if:true={r.isRec}>
+                                                    <tr key={r.key} class="evrow">
+                                                        <td></td>
+                                                        <td colspan="2"><div><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="rk">{r.meta}</div></td>
+                                                        <td class="num"><template if:true={r.sameLot}><span class="lot">This Lot</span></template></td>
+                                                    </tr>
+                                                </template>
+                                                <template if:true={r.isRest}>
+                                                    <tr key={r.key} class="evrow">
+                                                        <td></td>
+                                                        <td colspan="3"><button class="link" data-id={r.id} onclick={handleShowAll}>{r.restLabel}</button></td>
+                                                    </tr>
+                                                </template>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
                             </details>
                         </template>
                         </div>
