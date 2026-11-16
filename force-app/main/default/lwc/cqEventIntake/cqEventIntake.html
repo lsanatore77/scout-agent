@@ -1,0 +1,148 @@
+<template>
+    <template if:true={loadError}><div class="errbox">{loadError}</div></template>
+    <template if:true={ready}>
+        <div class="box">
+            <header class="hl">
+                <div class="hl-top">
+                    <div class="hl-who">
+                        <span class="hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Quality Event"></lightning-icon></span>
+                        <div class="hl-name">
+                            <span class="hl-obj">Quality Event &middot; New</span>
+                            <span class="hl-title">Report a Problem</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <div class="main">
+                <div class="tabs" role="tablist">
+                    <button class={reportTabCls} data-t="report" role="tab" onclick={handleTab}>Full Report</button>
+                    <button class={quickTabCls} data-t="quick" role="tab" onclick={handleTab}>Quick Log (Trend Only)</button>
+                </div>
+
+                <!-- Full Report -->
+                <template if:true={showForm}>
+                    <p class="p">Describe the problem on the left and answer the quick questions on the right. The event reviewer decides what it becomes.</p>
+                    <div class="cols">
+                        <div>
+                            <label class="fl"><span class="qn">Problem Statement *</span>
+                                <textarea class="ta big" rows="7" data-f="problem" oninput={handleField} placeholder="What happened, in your own words."></textarea>
+                            </label>
+                            <label class="fl"><span class="qn">Title *</span>
+                                <input class="ta" type="text" maxlength="255" data-f="title" oninput={handleField} placeholder="A short name for the problem">
+                            </label>
+                            <div class="fl"><span class="qn">Product</span>
+                                <lightning-record-picker label="Part" variant="label-hidden" object-api-name="compliancequest__SQX_Part__c" placeholder="Search part number or name"
+                                    display-info={partDisplay} matching-info={partMatch} onchange={handlePart}></lightning-record-picker>
+                                <div class="two">
+                                    <input class="ta" type="text" maxlength="80" data-f="lot" oninput={handleField} placeholder="Lot">
+                                    <input class="ta" type="number" min="0" data-f="units" oninput={handleField} placeholder="Units affected">
+                                </div>
+                                <span class="note">Leave blank if no product was affected.</span>
+                            </div>
+                            <div class="note">{capturedText}</div>
+                        </div>
+                        <div>
+                            <template for:each={questions} for:item="q">
+                                <div key={q.id} class="fl">
+                                    <span class="qn">{q.label}</span>
+                                    <template if:true={q.isChoice}>
+                                        <div class="opts">
+                                            <template for:each={q.opts} for:item="o">
+                                                <button key={o.key} class={o.cls} data-q={o.qid} data-v={o.label} aria-pressed={o.pressed} onclick={handleAnswer}>{o.label}</button>
+                                            </template>
+                                        </div>
+                                    </template>
+                                    <template if:true={q.isText}><input class="ta" type="text" data-q={q.id} oninput={handleAnswer}></template>
+                                    <template if:true={q.isNumber}><input class="ta narrow" type="number" data-q={q.id} oninput={handleAnswer}></template>
+                                    <template if:true={q.isDate}><input class="ta narrow" type="date" data-q={q.id} onchange={handleAnswer}></template>
+                                    <template if:true={q.help}><span class="note">{q.help}</span></template>
+                                </div>
+                            </template>
+                            <template if:true={urgent}><div class="warnbox"><strong>{urgentText}</strong></div></template>
+                        </div>
+                    </div>
+                    <div class="plainbox top16">
+                        <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text=""></lightning-icon> What CQ.AI Prepares for the Reviewer</div>
+                        <div class="whyv">A proposed path (nonconformance, complaint, add to an open record, or not a quality issue) with why, open records on the same part and problem, similar past events and what they became, and the urgency from your answers. The reviewer confirms or changes it; your answers carry into whatever it becomes.</div>
+                    </div>
+                </template>
+                <template if:true={showSent}>
+                    <div class="sentrow">
+                        <span class="okdot">&#10003;</span>
+                        <div class="grow">
+                            <div class="q nom">{sentTitle}</div>
+                            <div class="note sm0">Thanks. You're done. An event reviewer decides what it becomes.</div>
+                        </div>
+                        <button class="btn" data-id={sent.id} onclick={handleOpenEvent}>Open {sent.name}</button>
+                        <button class="btn primary" onclick={handleAnother}>Report Another</button>
+                    </div>
+                </template>
+
+                <!-- Quick Log -->
+                <template if:true={isQuick}>
+                    <p class="p">Quick log creates a normal NC marked trend only, closed with the category's disposition. No triage or investigation unless the count reaches the limit.</p>
+                    <div class="cols">
+                        <div>
+                            <div class="fl"><span class="qn">1. What was it? *</span>
+                                <template if:true={hasCats}>
+                                    <div class="grid">
+                                        <template for:each={cats} for:item="c">
+                                            <button key={c.id} class={c.cls} data-id={c.id} aria-pressed={c.pressed} onclick={handleCat}><b>{c.name}</b><span>{c.description}</span></button>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:false={hasCats}><span class="note">No categories are approved for quick logging yet.</span></template>
+                                <span class="note">Only categories your quality team approved for trend-only logging appear here. Anything else needs a Full Report.</span>
+                            </div>
+                            <div class="fl"><span class="qn">2. Which part, and how many? *</span>
+                                <lightning-record-picker label="Part" variant="label-hidden" object-api-name="compliancequest__SQX_Part__c" placeholder="Search part number or name"
+                                    display-info={partDisplay} matching-info={partMatch} onchange={handleQPart}></lightning-record-picker>
+                                <div class="two">
+                                    <input class="ta" type="text" maxlength="80" data-f="qLot" oninput={handleQField} placeholder="Lot (optional)">
+                                    <div class="stepper">
+                                        <button class="btn sm" onclick={handleDec} disabled={cantDec} aria-label="One fewer">&minus;</button>
+                                        <span class="qty">{qty}</span>
+                                        <button class="btn sm" onclick={handleInc} aria-label="One more">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <label class="fl"><span class="qn">Note</span>
+                                <input class="ta" type="text" maxlength="255" data-f="note" oninput={handleQField} placeholder="Optional">
+                            </label>
+                        </div>
+                        <div class="plainbox trendbox">
+                            <div class="lab">{trendHead}</div>
+                            <template if:true={showCount}>
+                                <div class="count"><span class="big">{totalText}</span> <span class="muted">{ofText}</span></div>
+                                <div class="bar"><i style={barStyle}></i></div>
+                            </template>
+                            <div class="whyv">{trendNote}</div>
+                            <template if:true={cat}>
+                                <div class="lab top8">Category Rule</div>
+                                <div class="drow"><span class="dk">Disposition</span><span class="dv">{ruleDisposition}</span></div>
+                                <div class="drow"><span class="dk">Opens an event at</span><span class="dv">{ruleOpens}</span></div>
+                                <div class="drow"><span class="dk">Approved by</span><span class="dv">{ruleApproved}</span></div>
+                            </template>
+                        </div>
+                    </div>
+                    <template if:true={logged}><div class="okbox">{loggedText}</div></template>
+                    <template if:true={showTriggered}><div class="warnbox top8"><strong>Limit reached:</strong>{triggeredText} <button class="smalllink plainbtn" data-id={logged.eventId} onclick={handleOpenEvent}>Open {logged.eventName}</button></div></template>
+                </template>
+
+                <template if:true={error}><div class="errbox">{error}</div></template>
+            </div>
+            <template if:true={showForm}>
+                <footer class="foot">
+                    <span class="blocker">{reportBlocker}</span>
+                    <button class="btn primary" onclick={handleSend} disabled={cantSend}>{sendLabel}</button>
+                </footer>
+            </template>
+            <template if:true={isQuick}>
+                <footer class="foot">
+                    <span class="blocker">{quickBlocker}</span>
+                    <button class="btn primary" onclick={handleLog} disabled={cantLog}>{logLabel}</button>
+                </footer>
+            </template>
+        </div>
+    </template>
+</template>

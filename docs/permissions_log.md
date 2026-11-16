@@ -110,6 +110,7 @@ Read only: Root Cause, Root Cause Code, NC Action, Change Order, Controlled Docu
 Newest first.
 
 ### 16 Nov 2026
+- **CqEventIntake** (new) and the **Report a Problem** tab (component cqEventIntake): Apex access; Quality Event and Event Answer Create; Event Question and Quick Log Category Read; Nonconformance Create and Edit (a quick log creates and closes an NC, and links NCs to a Trend event); Part Read for the part search. Set: CQ.AI Quality, plus tab visibility.
 - **CQ.AI Quality** (`CQAI_Quality`, new permission set, assigned to Lou Admin): started with event intake only. Event Question, Event Answer and Quick Log Category Create, Read, Edit and Delete; Quality Event Create, Read and Edit; read and edit on all their fields and on the NC's Quick Log, Quick Log Category and Trend Event. Triage, disposition and investigation access will be added to it as planned.
 - **CqInvestigationSummary** (new): CQ.AI Suggested Summary on the Investigation Conclusion step. Apex access; reads what the Investigation, Disposition, Find the Cause and Check History screens read; runs the Prompt Builder template `CQAI_Investigation_Summary`, so users also need the standard permission set **Prompt Template User** (EinsteinGPTPromptTemplateUser). Lou Admin already has it. Set: Quality.
 - **CqInvestigationWorkspace**: Investigation Summary is now saved as simple HTML (CQ's field is rich text) and read back as plain text. No new access.

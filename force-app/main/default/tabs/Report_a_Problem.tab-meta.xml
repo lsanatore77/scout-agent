@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>CQ.AI Report a Problem: Full Report sends a Quality Event for review; Quick Log logs a trend-only NC.</description>
+    <label>Report a Problem</label>
+    <lwcComponent>cqEventIntake</lwcComponent>
+    <motif>Custom53: Bell</motif>
+</CustomTab>
