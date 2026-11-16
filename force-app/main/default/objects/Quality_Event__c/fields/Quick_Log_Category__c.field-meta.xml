@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Quick_Log_Category__c</fullName><label>Quick Log Category</label><description>For a Trend event: the category that reached its limit.</description><type>Lookup</type><referenceTo>Quick_Log_Category__c</referenceTo><relationshipLabel>Trend Events</relationshipLabel><relationshipName>Trend_Events</relationshipName><deleteConstraint>SetNull</deleteConstraint></CustomField>

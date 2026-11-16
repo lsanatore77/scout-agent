@@ -2,6 +2,10 @@
 
 Sample records made in cqse-golden--dev for demos and testing. Each new record's description starts with SAMPLE DATA where the object has one.
 
+## 16 Nov 2026 · Event intake setup
+- Event Questions EQ-001 to EQ-005: the four standard questions (Where Found, Product Affected, Injury, Safety Risk roles) and one extra, "Which test or inspection found it?" (no role). These are setup, not test data.
+- Quick Log Categories: Broken Screw (10 in 30 days, same part), Cosmetic Scratch (15, same part), Label Smudge (10, all parts), Damaged Carton (12, all parts), approved by Lou Admin. Setup, from the 25 Oct design.
+
 ## 15 Nov 2026 · What Changed story for NC-000153 (hub bond leak, part PTCA-1000)
 - NC-000153: Occurrence Date set to 31 Oct 2026 (it was empty; reported 2 Nov); Equipment set to BF-02.
 - CHG-000005 (new change order on PTCA-1000): Move bonding fixture BF-02 to the second-shift line. Submitted 10 Oct, Target Completion 17 Oct, Effective 17 Oct (set with the past-date validation rule turned off).

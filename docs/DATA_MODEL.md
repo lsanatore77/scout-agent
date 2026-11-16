@@ -8,6 +8,13 @@ Every object and field this project adds to the org. Built from the metadata in 
 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
+### 16 Nov 2026
+- **New object Event Question** (`Event_Question__c`, EQ-000): the quick questions on Report a Problem, set per company. Fields: Order, Question, Answer Type (Yes or No, Choice, Text, Number, Date), Choices (semicolon separated), Role (Where Found, Product Affected, Injury, Safety Risk, None: what CQ.AI reads), Urgent When (answers that make the event urgent), Help Text, Required, Active. Seeded with the four standard questions and one extra ("Which test or inspection found it?").
+- **New object Event Answer** (`Event_Answer__c`, EA-00000): one answer per question on an event, master-detail to Quality Event (related list Answers). Fields: Event Question (lookup), Question Text, Role and Order as asked, Answer.
+- **New object Quick Log Category** (`Quick_Log_Category__c`): the known low-risk issues allowed on Quick Log. Fields: Description, Disposition, Limit, Days, Scope (Same Part, All Parts), Active, Approved By (User), Approved On. Seeded with Broken Screw, Cosmetic Scratch, Label Smudge, Damaged Carton.
+- **Quality Event**: added Units Affected, Event Type (Report, Trend), Urgent, Product Affected (Yes, No), Quick Log Category (lookup, for Trend events), Sent On. Status gained Waiting for Review (New, Waiting for Review, Reviewed, Closed).
+- **Nonconformance** (CQ object, our fields): Quick Log (checkbox), Quick Log Category (lookup, related list Quick Log NCs), Trend Event (lookup to Quality Event, related list Trend NCs). A quick-log NC is created and closed at once (Status and Stage Closed, Close Date today, closure comment with the category's disposition).
+
 ### 15 Nov 2026
 - **New object Investigation Evidence** (`Investigation_Evidence__c`, IEV-0000): evidence for a hypothesis or a why on the Find the Cause step. Fields: Investigation (lookup), Hypothesis (lookup, related list Evidence), Why (lookup to CQ's Why), Kind (Test, CQ Record, Ask CQ.AI), Test Type (Measure or Inspect, Compare, Reproduce, Remove the Cause, Check Records), Supports (For, Against, Inconclusive), Status (Planned, Done), Detail, Result, Record Id, Record Name, Owner (User), Due Date, Done On. Files attach to the record.
 - **Investigation Hypothesis**: added How Do You Know? (becomes the CQ root cause's Justification), Is Not Fit (JSON: which Is / Is Not rows it fits or does not), Five Why Tool (lookup to the CQ 5 Why investigation tool made for it), Root Cause (lookup to the CQ root cause it was saved as).
@@ -78,9 +85,12 @@ Objects and fields from earlier work are listed below; their history is in git (
 | `Field_Action_Review_On__c` | Field Action Review Set On | DateTime |  |  |
 | `Field_Action_Review_Reason__c` | Field Action Review Reason | LongTextArea | 2000 chars | Why this nonconformance was sent for field action review. |
 | `Field_Action_Review__c` | Field Action Review | Picklist | Not Needed, Sent for Review | Set at triage: whether this nonconformance was sent to the recall coordinator for field action review. |
+| `Quick_Log_Category__c` | Quick Log Category | Lookup | to Quick_Log_Category__c | The quick-log category this NC was logged under. |
+| `Quick_Log__c` | Quick Log | Checkbox |  | Logged on Quick Log for trending only and closed at once with the category's disposition. |
 | `Repeat_Decision_Reason__c` | Repeat Decision Reason | TextArea |  | Why the repeat was not escalated to a CAPA (CQ.AI Triage). |
 | `Repeat_Decision__c` | Repeat Decision | Picklist | Escalate to CAPA, Link to Earlier CAPA, Not Needed | What triage decided for a problem that happened before after a CAPA closed (CQ.AI Triage). |
 | `Repeat_Of__c` | Repeat Of | Lookup | to compliancequest__SQX_Nonconformance__c | The earlier NC with the same problem whose CAPA closed, found at triage (CQ.AI Triage). |
+| `Trend_Event__c` | Trend Event | Lookup | to Quality_Event__c | The Trend event opened when this NC's category reached its limit. |
 | `Triage_By__c` | Triaged By | Lookup | to User |  |
 | `Triage_Draft__c` | Triage Draft | LongTextArea | 20000 chars | Work in progress in the Triage workspace, so a triager can leave and pick up where they left off. Cleared when triage is completed. |
 | `Triage_Notes__c` | Triage Notes | LongTextArea | 5000 chars | What the triager decided at each step of the Triage Assistant. |
@@ -138,6 +148,35 @@ Custom fields on existing objects found in the dev org (snapshot 14 Nov 2026) th
 | `cqext__SQX_Risk_Acceptability__c` | `Waiver__c` | 2026-09-03 |
 
 ## Objects this project created
+
+### Event Answer (`Event_Answer__c`)
+
+The Event Answer object records each answer given on Report a Problem, as a child of its Quality Event. It keeps the question text, role and order as asked, so rewording a question later does not change old events. Commonly used for event review and reporting.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Answer__c` | Answer | LongTextArea | 4000 chars | The answer as given. |
+| `Event_Question__c` | Event Question | Lookup | to Event_Question__c | The question that was asked. |
+| `Order__c` | Order | Number | 4,0 | The question's order when it was asked. |
+| `Quality_Event__c` | Quality Event | MasterDetail | to Quality_Event__c | The event this answer belongs to. |
+| `Question_Text__c` | Question Text | Text | 255 chars | The question exactly as it was asked, kept if the question is reworded later. |
+| `Role__c` | Role | Text | 40 chars | The question's role when it was asked. |
+
+### Event Question (`Event_Question__c`)
+
+The Event Question object holds the quick questions a company asks on Report a Problem, set by its quality team. Each has an Order, Answer Type, Choices, Urgent When answers and a Role that CQ.AI reads, so questions can be reworded without changing CQ.AI. Commonly used for configurable event intake.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Active__c` | Active | Checkbox |  | Only active questions are asked. |
+| `Answer_Type__c` | Answer Type | Picklist | Yes or No, Choice, Text, Number, Date | How the question is answered. |
+| `Choices__c` | Choices | Text | 255 chars | For Choice: the choices, separated by semicolons, in order. |
+| `Help_Text__c` | Help Text | Text | 255 chars | A short line shown under the question. |
+| `Order__c` | Order | Number | 4,0 | Where the question appears on Report a Problem, lowest first. |
+| `Question__c` | Question | Text | 255 chars | The question as the reporter sees it. |
+| `Required__c` | Required | Checkbox |  | The reporter must answer it before sending. |
+| `Role__c` | Role | Picklist | Where Found, Product Affected, Injury, Safety Risk, None | What CQ.AI reads the answer as. Rewording a question keeps its role; questions with no role are saved and shown but do not steer the suggestion. |
+| `Urgent_When__c` | Urgent When | Text | 255 chars | Answers that make the event urgent, separated by semicolons. |
 
 ### Field Action Customer (`Field_Action_Customer__c`)
 
@@ -430,16 +469,37 @@ Placeholder for the event intake record: the first report of a possible quality 
 |---|---|---|---|---|
 | `Aware_Date__c` | Aware Date | DateTime |  |  |
 | `Complaint__c` | Complaint | Lookup | to compliancequest__SQX_Complaint__c |  |
+| `Event_Type__c` | Event Type | Picklist | Report, Trend | Report: sent from Report a Problem. Trend: opened by CQ when a quick-log category reached its limit. |
 | `Injury__c` | Was Anyone Injured? | Picklist | Yes, No, Not Known |  |
 | `Lot_Number__c` | Lot Number | Text | 80 chars |  |
 | `Nonconformance__c` | Nonconformance | Lookup | to compliancequest__SQX_Nonconformance__c |  |
 | `Part__c` | Part | Lookup | to compliancequest__SQX_Part__c |  |
 | `Problem_Statement__c` | Problem Statement | LongTextArea | 32768 chars |  |
+| `Product_Affected__c` | Product Affected | Picklist | Yes, No | The answer to the Product Affected question. |
+| `Quick_Log_Category__c` | Quick Log Category | Lookup | to Quick_Log_Category__c | For a Trend event: the category that reached its limit. |
 | `Reported_By__c` | Reported By | Lookup | to User |  |
 | `Safety_Risk__c` | Is There a Safety Risk? | Picklist | Yes, No, Not Known |  |
-| `Status__c` | Status | Picklist | New, Reviewed, Closed |  |
+| `Sent_On__c` | Sent On | Date |  | When the reporter sent it for review. |
+| `Status__c` | Status | Picklist | New, Waiting for Review, Reviewed, Closed | New while being written, Waiting for Review once sent, then Reviewed or Closed. |
 | `Title__c` | Title | Text | 255 chars |  |
+| `Units_Affected__c` | Units Affected | Number | 10,0 | How many units the reporter says are affected. |
+| `Urgent__c` | Urgent | Checkbox |  | An answer marked Urgent When was given (an injury or a safety risk). Urgent events are reviewed first. |
 | `Where_Found__c` | Where Was It Found? | Picklist | In Our Plant, At a Customer, At a Supplier, Not Known |  |
+
+### Quick Log Category (`Quick_Log_Category__c`)
+
+The Quick Log Category object lists the known, low-risk issues a company allows to be logged for trending only, like a broken screw. Each has a Disposition, a Limit over a number of Days (by part or all parts) that opens a Trend event, and who approved it. Commonly used for trend-only NC logging.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Active__c` | Active | Checkbox |  | Only active categories appear on Quick Log. |
+| `Approved_By__c` | Approved By | Lookup | to User | Who in the quality team approved the category for trend-only logging. |
+| `Approved_On__c` | Approved On | Date |  | When the category was approved. |
+| `Days__c` | Days | Number | 4,0 | The window, in days, that the limit counts over. |
+| `Description__c` | Description | Text | 255 chars | What the issue is, shown under the category name on Quick Log. |
+| `Disposition__c` | Disposition | Text | 255 chars | What is done with the item, written on each quick-log NC as it closes. |
+| `Limit__c` | Limit | Number | 5,0 | How many quick logs in the window open a Trend event for review. |
+| `Scope__c` | Scope | Picklist | Same Part, All Parts | What the count is grouped by: the same part, or all parts. |
 
 ### Signal Event (`Signal_Event__c`)
 

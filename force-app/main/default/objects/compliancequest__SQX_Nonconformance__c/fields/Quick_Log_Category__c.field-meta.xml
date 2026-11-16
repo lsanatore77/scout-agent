@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Quick_Log_Category__c</fullName><label>Quick Log Category</label><description>The quick-log category this NC was logged under.</description><type>Lookup</type><referenceTo>Quick_Log_Category__c</referenceTo><relationshipLabel>Quick Log NCs</relationshipLabel><relationshipName>Quick_Log_NCs</relationshipName><deleteConstraint>SetNull</deleteConstraint></CustomField>

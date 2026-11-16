@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>CQ.AI Quality module: event intake (Report a Problem, Quick Log) for now; triage, disposition and investigation access is added as the set is built out.</description>
+    <fieldPermissions><editable>true</editable><field>Event_Answer__c.Event_Question__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Answer__c.Question_Text__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Answer__c.Role__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Answer__c.Order__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Answer__c.Answer__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Order__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Answer_Type__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Choices__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Role__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Urgent_When__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Help_Text__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Required__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Active__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Units_Affected__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Event_Type__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Urgent__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Product_Affected__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Quick_Log_Category__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Sent_On__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Status__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Title__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Problem_Statement__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Where_Found__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Injury__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Safety_Risk__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Aware_Date__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Part__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Lot_Number__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Reported_By__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Nonconformance__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quality_Event__c.Complaint__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quick_Log_Category__c.Description__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quick_Log_Category__c.Disposition__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quick_Log_Category__c.Limit__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quick_Log_Category__c.Days__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quick_Log_Category__c.Scope__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quick_Log_Category__c.Active__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quick_Log_Category__c.Approved_By__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Quick_Log_Category__c.Approved_On__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>compliancequest__SQX_Nonconformance__c.Quick_Log__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>compliancequest__SQX_Nonconformance__c.Quick_Log_Category__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>compliancequest__SQX_Nonconformance__c.Trend_Event__c</field><readable>true</readable></fieldPermissions>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>CQ.AI Quality</label>
+    <objectPermissions><allowCreate>true</allowCreate><allowDelete>true</allowDelete><allowEdit>true</allowEdit><allowRead>true</allowRead><modifyAllRecords>false</modifyAllRecords><object>Event_Answer__c</object><viewAllRecords>false</viewAllRecords></objectPermissions>
+    <objectPermissions><allowCreate>true</allowCreate><allowDelete>true</allowDelete><allowEdit>true</allowEdit><allowRead>true</allowRead><modifyAllRecords>false</modifyAllRecords><object>Event_Question__c</object><viewAllRecords>false</viewAllRecords></objectPermissions>
+    <objectPermissions><allowCreate>true</allowCreate><allowDelete>false</allowDelete><allowEdit>true</allowEdit><allowRead>true</allowRead><modifyAllRecords>false</modifyAllRecords><object>Quality_Event__c</object><viewAllRecords>false</viewAllRecords></objectPermissions>
+    <objectPermissions><allowCreate>true</allowCreate><allowDelete>true</allowDelete><allowEdit>true</allowEdit><allowRead>true</allowRead><modifyAllRecords>false</modifyAllRecords><object>Quick_Log_Category__c</object><viewAllRecords>false</viewAllRecords></objectPermissions>
+</PermissionSet>

@@ -2,6 +2,13 @@
 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
+### 16 Nov 2026
+- **New object Event Question** (`Event_Question__c`, EQ-000): the quick questions on Report a Problem, set per company. Fields: Order, Question, Answer Type (Yes or No, Choice, Text, Number, Date), Choices (semicolon separated), Role (Where Found, Product Affected, Injury, Safety Risk, None: what CQ.AI reads), Urgent When (answers that make the event urgent), Help Text, Required, Active. Seeded with the four standard questions and one extra ("Which test or inspection found it?").
+- **New object Event Answer** (`Event_Answer__c`, EA-00000): one answer per question on an event, master-detail to Quality Event (related list Answers). Fields: Event Question (lookup), Question Text, Role and Order as asked, Answer.
+- **New object Quick Log Category** (`Quick_Log_Category__c`): the known low-risk issues allowed on Quick Log. Fields: Description, Disposition, Limit, Days, Scope (Same Part, All Parts), Active, Approved By (User), Approved On. Seeded with Broken Screw, Cosmetic Scratch, Label Smudge, Damaged Carton.
+- **Quality Event**: added Units Affected, Event Type (Report, Trend), Urgent, Product Affected (Yes, No), Quick Log Category (lookup, for Trend events), Sent On. Status gained Waiting for Review (New, Waiting for Review, Reviewed, Closed).
+- **Nonconformance** (CQ object, our fields): Quick Log (checkbox), Quick Log Category (lookup, related list Quick Log NCs), Trend Event (lookup to Quality Event, related list Trend NCs). A quick-log NC is created and closed at once (Status and Stage Closed, Close Date today, closure comment with the category's disposition).
+
 ### 15 Nov 2026
 - **New object Investigation Evidence** (`Investigation_Evidence__c`, IEV-0000): evidence for a hypothesis or a why on the Find the Cause step. Fields: Investigation (lookup), Hypothesis (lookup, related list Evidence), Why (lookup to CQ's Why), Kind (Test, CQ Record, Ask CQ.AI), Test Type (Measure or Inspect, Compare, Reproduce, Remove the Cause, Check Records), Supports (For, Against, Inconclusive), Status (Planned, Done), Detail, Result, Record Id, Record Name, Owner (User), Due Date, Done On. Files attach to the record.
 - **Investigation Hypothesis**: added How Do You Know? (becomes the CQ root cause's Justification), Is Not Fit (JSON: which Is / Is Not rows it fits or does not), Five Why Tool (lookup to the CQ 5 Why investigation tool made for it), Root Cause (lookup to the CQ root cause it was saved as).
