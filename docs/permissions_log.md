@@ -31,6 +31,7 @@ Every class a component or agent calls (`@AuraEnabled`, `@InvocableMethod`, `@Re
 | Ask CQ.AI | AskCqAgents, AskCqService, AskCqWorkspaceController | Base |
 | NC triage | CqTriageController, CqTriageAssistant, CqTriageContainment, CqTriageDraft, CqTriageLinks, CqTriageNext, CqTriagePhoto, CqTriageRisk | Quality |
 | NC disposition | CqDispositionWorkspace | Quality |
+| NC investigation | CqInvestigationWorkspace | Quality |
 | Agents' context | CqQualityAgentContext (CQAI_Quality), CqFieldActionAgentContext (CQAI_Field_Action) | the agent's set |
 | Field actions | CqFieldActionReview, CqFieldActionScope, CqFieldActionStrategy, CqFieldActionLots, CqFieldActionRecovery, CqFieldActionTasks, CqLotStock, CqFarCommittee | Field Actions User (+ Approvals for CqFarCommittee) |
 | Signals | CqSignalJob | Admin |
@@ -71,6 +72,10 @@ Users get these from their CQ permission sets today; listed so the CQ role we re
 | Nonconformance | Edit (submit, complete triage, triage fields, owner) | CqTriage* |
 | Containment | Create | CqTriageAssistant, CqTriageContainment |
 | Disposition | Create, Edit (complete) | CqTriageNext, CqDispositionWorkspace |
+| Investigation | Edit (open, conclusion, summary) | CqInvestigationWorkspace |
+| Action Plan | Create, Edit, Delete | CqInvestigationWorkspace |
+| Investigation Tool | Edit (complete) | CqInvestigationWorkspace |
+| Response, Response Inclusion | Create, Edit (submit) | CqInvestigationWorkspace (Disposition approval later) |
 | NC Investigation (link) | Create | CqTriageLinks |
 | Investigation | Edit (draft summary) | SaveDraftInvestigationSummary, PhrReportLink |
 | Product History Review, PHR Answer, Related Product | Edit / Create | PHR classes |
@@ -79,7 +84,7 @@ Users get these from their CQ permission sets today; listed so the CQ role we re
 | Task | Create | CqFieldActionTasks |
 | Files (ContentVersion, ContentDocumentLink) | Create | CqTriagePhoto, PHR report actions |
 
-Read only: Part, Lot Info, Impacted Part/Lot, Approval Matrix, Job Function and User Job Function, Inspection, Change Order, Controlled Document, Complaint Task, Root Cause, Linked Investigation, assembly and part revision (CQPLM), batch measurements (CQEBR).
+Read only: Root Cause, Root Cause Code, NC Action, Part, Lot Info, Impacted Part/Lot, Approval Matrix, Job Function and User Job Function, Inspection, Change Order, Controlled Document, Complaint Task, Root Cause, Linked Investigation, assembly and part revision (CQPLM), batch measurements (CQEBR).
 
 ### Credentials, Pages, Apps and Agents
 
@@ -102,6 +107,7 @@ Read only: Part, Lot Info, Impacted Part/Lot, Approval Matrix, Job Function and 
 Newest first.
 
 ### 15 Nov 2026
+- **CqInvestigationWorkspace** (new): Apex access; Investigation Edit; Action Plan Create, Edit and Delete; Investigation Tool Edit; Response and Response Inclusion Create and Edit; Root Cause, NC Action, Disposition and Nonconformance Read. Users also need the User object in the Owner picker. Set: Quality.
 - Log started from the repo and the dev org. Two permission sets exist in the repo (Field Actions User, PHR Lead Access); nothing yet covers NC triage, disposition, Ask CQ.AI or approvals.
 - **CqDispositionWorkspace** (new): Apex access; Disposition Create and Edit; Impacted Part/Lot and Nonconformance Read. Set: Quality.
 - **CqTriageNext**: now creates draft Dispositions at Complete Triage and changes the NC owner from the queue to the person completing triage. Set: Quality.

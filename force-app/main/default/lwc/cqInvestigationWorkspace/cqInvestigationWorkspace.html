@@ -1,0 +1,235 @@
+<template>
+    <template if:true={loadError}><div class="err">{loadError}</div></template>
+    <template if:true={ready}>
+        <div class="box">
+            <header class="hl">
+                <div class="hl-top">
+                    <div class="hl-who">
+                        <span class="hl-icon"><lightning-icon icon-name="standard:search" size="medium" alternative-text="Investigation"></lightning-icon></span>
+                        <div class="hl-name">
+                            <span class="hl-obj">Investigation</span>
+                            <span class="hl-title">{v.investigationName}</span>
+                        </div>
+                    </div>
+                    <div class="hl-actions">
+                        <c-ask-cq-popover record-id={v.investigationId} agent-name="CQAI_Quality" placeholder="Ask about this investigation…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
+                        <button class="btn" onclick={handleEdit}>Edit</button>
+                    </div>
+                </div>
+                <div class="hl-fields">
+                    <div class="f"><span class="k">Nonconformance</span>
+                        <template if:true={v.ncId}><a class="v link" href={ncHref} target="_blank">{v.ncName}</a></template>
+                        <template if:false={v.ncId}><span class="v">&mdash;</span></template>
+                    </div>
+                    <div class="f"><span class="k">Part</span>
+                        <template if:true={v.partId}><a class="v link" href={partHref} target="_blank">{v.partNumber}</a></template>
+                        <template if:false={v.partId}><span class="v">&mdash;</span></template>
+                    </div>
+                    <div class="f"><span class="k">Lot</span><span class="v">{lotText}</span></div>
+                    <div class="f"><span class="k">Status</span><span class="v">{statusText}</span></div>
+                    <div class="f"><span class="k">Risk</span><span class={riskCls}>{riskText}</span></div>
+                    <div class="f"><span class="k">Investigation Due</span><span class="v">{dueText}</span></div>
+                    <div class="f"><span class="k">Owner</span><span class="v">{ownerText}</span></div>
+                </div>
+            </header>
+
+            <div class="body">
+                <nav class="steps" aria-label="Investigation Steps">
+                    <div class="steps-title"><span class="star">&#10022;</span> CQ.AI Investigation Steps</div>
+                    <template for:each={steps} for:item="s">
+                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep}>
+                            <span class="mark">
+                                <template if:true={s.done}>&#10003;</template>
+                                <template if:true={s.notDone}>{s.n}</template>
+                            </span>
+                            <span class="txt">
+                                <span class="lbl">{s.label}</span>
+                                <span class="ssub">{s.sub}</span>
+                            </span>
+                        </button>
+                    </template>
+                    <div class="progress">{progress}</div>
+                </nav>
+
+                <div class="main">
+                    <!-- 1 Investigation at a Glance -->
+                    <template if:true={showGlance}>
+                        <h3 class="q">Investigation at a Glance</h3>
+                        <div class="cols wide">
+                            <div class="sugbox plain">
+                                <div class="lab">The Problem</div>
+                                <p class="prob">{problemText}</p>
+                                <div class="tiles">
+                                    <div class="tile"><div class="tl">Risk</div><div class={riskCls}>{riskText}</div></div>
+                                    <div class="tile"><div class="tl">Units Affected</div><div class="tv">{unitsText}</div></div>
+                                    <div class="tile"><div class="tl">Disposition</div><div class="tv">{dispTile}</div></div>
+                                    <div class="tile"><div class="tl">Approval</div><div class="tv">{approvalText}</div></div>
+                                </div>
+                            </div>
+                            <div class="sugbox">
+                                <div class="sughead"><span class="star">&#10022;</span> Where This Stands</div>
+                                <div class="whyv">{standsText}</div>
+                                <template if:true={gapsText}><div class="whyv"><strong>Gaps:</strong> {gapsText}</div></template>
+                                <div class="whyv"><strong>Next:</strong> {nextText}</div>
+                            </div>
+                        </div>
+                        <div class="lab top16">What We Already Know</div>
+                        <div class="tblwrap">
+                            <table class="tbl">
+                                <thead><tr><th>Source</th><th>What It Says</th><th>Status</th></tr></thead>
+                                <tbody>
+                                    <template for:each={knownRows} for:item="r">
+                                        <tr key={r.key}>
+                                            <td class="strong">
+                                                <template if:true={r.hasHref}><a class="link" href={r.href} target="_blank">{r.source}</a></template>
+                                                <template if:false={r.hasHref}>{r.source}</template>
+                                            </td>
+                                            <td>{r.says}</td>
+                                            <td><span class={r.chipCls}>{r.chip}</span></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </template>
+
+                    <!-- 2 What Changed (stage 3) -->
+                    <template if:true={showChanged}>
+                        <h3 class="q">What Changed</h3>
+                        <div class="ownbox">Coming next: every change CQ knows about on this part, its documents, lots and suppliers in the weeks before the problem started, on a timeline, with Add as Hypothesis. For now, note what you find in the summary.</div>
+                    </template>
+
+                    <!-- 3 Check History (stage 3) -->
+                    <template if:true={showHistory}>
+                        <h3 class="q">Check History</h3>
+                        <div class="ownbox">Coming next: past records ranked by how closely they match this NC, with the same relevance ranking as the Product History Review, and what fixed them before.</div>
+                    </template>
+
+                    <!-- 4 Find the Cause (stage 2): what CQ holds today -->
+                    <template if:true={showCause}>
+                        <h3 class="q">Find the Cause</h3>
+                        <div class="ownbox">Coming next: hypotheses with evidence, Cause Map, Fishbone, 5-Why and Is / Is Not views, and Set as Primary Root Cause. Below are the root causes and tools already on this investigation in CQ.</div>
+                        <div class="lab top16">Root Causes</div>
+                        <template if:true={hasCauses}>
+                            <div class="tblwrap">
+                                <table class="tbl">
+                                    <thead><tr><th>Category</th><th>Code</th><th>Description</th><th>Verified</th></tr></thead>
+                                    <tbody>
+                                        <template for:each={causeRows} for:item="c">
+                                            <tr key={c.key}>
+                                                <td class="strong"><a class="link" href={c.href} target="_blank">{c.category}</a></td>
+                                                <td>{c.code}</td><td>{c.description}</td><td><span class={c.vCls}>{c.verified}</span></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+                        <template if:false={hasCauses}><p class="note">No root cause is recorded on this investigation yet.</p></template>
+                        <template if:true={hasTools}>
+                            <div class="lab top16">Analysis Tools</div>
+                            <div class="tblwrap">
+                                <table class="tbl">
+                                    <thead><tr><th>Tool</th><th>Type</th><th>Status</th></tr></thead>
+                                    <tbody>
+                                        <template for:each={toolRows} for:item="t">
+                                            <tr key={t.key}>
+                                                <td class="strong"><a class="link" href={t.href} target="_blank">{t.name}</a></td>
+                                                <td>{t.type}</td><td><span class={t.sCls}>{t.status}</span></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="note">Open tools are completed for you on Complete Investigation, since CQ needs every tool complete first.</p>
+                        </template>
+                    </template>
+
+                    <!-- 5 Actions -->
+                    <template if:true={showActions}>
+                        <h3 class="q">Actions</h3>
+                        <p class="p">A correction fixes what is broken now; a corrective action removes the cause; a preventive action stops it happening elsewhere.</p>
+                        <template for:each={planRows} for:item="p">
+                            <div key={p.key} class="drow">
+                                <div class="fields">
+                                    <label class="fl growf"><span>What Is to Be Done *</span>
+                                        <input class="ta" type="text" value={p.title} placeholder="For example, replace the locating pin on the fixture" data-i={p.idx} data-f="title" onchange={handlePlanField}>
+                                    </label>
+                                    <button class="btn sm rm" data-i={p.idx} onclick={handleRemovePlan}>Remove</button>
+                                </div>
+                                <div class="fields">
+                                    <div class="fl"><span>Type *</span>
+                                        <div class="opts tight">
+                                            <template for:each={p.typeOpts} for:item="t">
+                                                <button key={t.label} class={t.cls} data-i={p.idx} data-type={t.label} aria-pressed={t.pressed} onclick={handlePlanType}>{t.label}</button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <div class="fl owner"><span>Owner</span>
+                                        <lightning-record-picker label="Owner" variant="label-hidden" object-api-name="User" placeholder="You, if left empty" value={p.userId} data-i={p.idx} onchange={handlePlanOwner}></lightning-record-picker>
+                                    </div>
+                                    <label class="fl"><span>Due *</span>
+                                        <input class="ta date" type="date" value={p.due} data-i={p.idx} data-f="due" onchange={handlePlanField}>
+                                    </label>
+                                </div>
+                            </div>
+                        </template>
+                        <template if:false={hasPlans}><p class="note">No actions yet. Add one for each thing to be done.</p></template>
+                        <div class="splitline top8"><button class="btn sm" onclick={handleAddPlan}>+ Add Action</button></div>
+                        <div class="ownbox top16"><strong>What happens to these:</strong> they are saved as CQ action plans on the investigation. When the investigation is complete, the NC moves to Implement and CQ turns them into actions with their owners and due dates.</div>
+                        <template if:true={notice}><div class="okbox">{notice}</div></template>
+                    </template>
+
+                    <!-- 6 Conclusion -->
+                    <template if:true={showConclusion}>
+                        <h3 class="q">Conclusion</h3>
+                        <div class="fl"><span>Conclusion *</span>
+                            <div class="opts tight">
+                                <template for:each={conclusionOpts} for:item="c">
+                                    <button key={c.label} class={c.cls} data-c={c.label} aria-pressed={c.pressed} onclick={handleConclusion}>{c.label}</button>
+                                </template>
+                            </div>
+                        </div>
+                        <template if:true={noCauseWarn}><div class="warnbox">Confirmed usually means the root cause is known, but no root cause is recorded on this investigation yet.</div></template>
+                        <label class="fl top16"><span>Investigation Summary *</span>
+                            <textarea class="ta summary" rows="9" value={summary} onchange={handleSummary}></textarea>
+                        </label>
+                        <div class="splitline top8">
+                            <button class="btn sm" onclick={handleDraft} disabled={cantDraft}>Draft from the Steps Before</button>
+                            <template if:true={summaryDrafted}><span class="note">Drafted from the NC, disposition, root causes and actions. Edit before you complete.</span></template>
+                        </div>
+                        <div class="ownbox top16"><strong>On {completeLabel}:</strong> {onCompleteText}</div>
+                    </template>
+
+                    <!-- done -->
+                    <template if:true={showDone}>
+                        <div class="donehead">
+                            <template if:true={doneOk}><span class="okdot">&#10003;</span></template>
+                            <template if:true={waiting}><lightning-spinner alternative-text="Waiting for CQ" size="small" class="spin"></lightning-spinner></template>
+                            <h3 class="q nom">{doneHeading}</h3>
+                        </div>
+                        <template if:true={waiting}><p class="p">CQ finishes this in the background; it takes a few seconds.</p></template>
+                        <template if:true={stillWaiting}><div class="warnbox">CQ has not finished yet. Refresh the page in a minute to see the investigation complete.</div></template>
+                        <template for:each={doneRows} for:item="r">
+                            <div key={r.key} class="row slim"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
+                        </template>
+                        <div class="opts"><button class="btn primary" onclick={handleFinish}>Done</button></div>
+                    </template>
+
+                    <template if:true={error}><div class="errbox">{error}</div></template>
+                </div>
+            </div>
+
+            <template if:false={showDone}>
+                <footer class="foot">
+                    <span class="grow"></span>
+                    <span class="blocker">{blocker}</span>
+                    <template if:true={showActions}><button class="btn primary" onclick={handleSaveActions} disabled={cantSaveActions}>{saveActionsLabel}</button></template>
+                    <template if:true={showConclusion}><button class="btn primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
+                    <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
+                    <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
+                </footer>
+            </template>
+        </div>
+    </template>
+</template>
