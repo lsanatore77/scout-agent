@@ -26,3 +26,8 @@ Validation rules turned off by Lou on 15 Nov 2026 to set past effective dates: C
 - Numbers NC-000171 and CAPA-000017 were used up by dry runs and do not exist.
 - EFR-000001 (new effectiveness review on CAPA-000018): Complete, Closed-Effective on 22 Jul 2026, rating 4, "No hub bond leaks on BF-02 lots for 30 days after the pin was replaced." Shows the case of a CAPA marked effective whose problem came back. EFR-000000 was used up by a dry run.
 - NC-000174 (new, Draft, 15 Nov 2026): SAMPLE DATA. Hub bond leak at pressure test on PTCA-1000, lot BRFULL-1112, 2 defective, occurred today. For trying the triage repeat flag (it repeats NC-000172 after CAPA-000018 was marked effective). NC-000173 was used up by a dry run.
+
+## 16 Nov 2026: FA-0001 tidied for the CEO demo video
+- FA-0001 (a8uW40000009G3xIAE): Quantity Affected 240 -> 200 and Quantity Shipped 180 -> 155, to match the lot data (4 lots x 50 built; shipments 42 + 45 + 38 + 30 = 155; on hand 8 + 5 + 12 + 20 = 45).
+- Title now names all four lots: "Balloon may fail to deflate - CardioFlow 3.0, lots L26-0901 to L26-0922" (was "lot L26-0908").
+- Checked, left as is: the signal Status "New" is not shown on screen; scores of 1.0 are the Escalate cap by design; Trend "Steady" is what CqSignalJob computes when nothing changed since its last run (the job is not scheduled in dev).
