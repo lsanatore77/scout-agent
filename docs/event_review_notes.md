@@ -195,3 +195,8 @@ Seen in the real voice run ("three cardio flow balloons from 0908 were slow to d
 
 ### Addendum (from the "SO FAR CQ.AI HAS" panel screenshot)
 The panel already shows a ❓ "needs confirm" marker on Part and Units, but NOT on the inferred question answers (Where/Injured/Safety all show clean). So inferred guesses look like confirmed facts. Fix: carry needsConfirm onto any question answer the AI inferred (not explicitly stated by the reporter) so it shows the same ❓, and force an explicit confirm on safety/injury. Reuse the existing ❓ convention — no new UI pattern needed.
+
+### Confirmed + nit (mobile test, script 5 "Lot L26-0803 failed inspection", 2026-11-17 AM)
+- CONFIRMED: the conversational ASK-branch works. With too little to infer, CQ.AI asked "Where did this happen?", showed the choice chips, and listed all four required items in "Still need." Both halves (infer-and-finish AND ask-when-unsure) now proven on mobile via voice.
+- NIT: the lot displays lowercase ("l26-0803") in the read-back and the SO FAR panel. It normalizes to uppercase on save (lot-link trigger), but the live display should uppercase it too for consistency. Cheap fix in CqIntakeChat readback / the understood values.
+- Minor: "Where did this happen?" chips show 3 options (In Our Plant, At a Supplier, At a Customer) — confirm whether "Not Known" should be offered too, or is intentionally omitted.
