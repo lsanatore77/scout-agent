@@ -225,3 +225,7 @@ Belongs in the reviewer workspace decision-actions (the deferred build), not the
 
 ### Built: intake "Who was hurt?" follow-up (2026-11-17)
 When Injury is confirmed Yes, the chat now asks one more question — "Who was hurt?" (free text) — and captures the name as an Event_Answer (Role "Injured Person"). Only asked on injury = Yes; skipped otherwise. 6 Apex tests pass (new: asksWhoWasHurtOnlyWhenInjured). This feeds the reviewer's parallel Safety Event + Injury creation, which is still ahead (decision-actions build). Injury = Yes already escalates to Urgent (Urgent_When = "Yes" on the Injury question — verified in CqEventIntake.submitReport).
+
+### Confirmed + fix (EV-0006, injury flow end to end, 2026-11-17)
+- CONFIRMED live: injury flow works end to end on mobile. EV-0006: Injury=Yes, Safety=Yes, Units 5, Where In Our Plant, and **Urgent=true** (injury auto-escalated). "Who was hurt?" asked and answered (Joe Smith).
+- BUG FIXED: the LWC was appending EVERY input to the description, so the tap answers ("Yes","Yes") and the name ("Joe Smith") polluted the Problem Statement. Fix: in send(), only append free narrative to the description; a reply to a pending question is recorded as an answer only, never added to the narrative. Problem Statement is now the reporter's story alone. (EV-0006's statement is messy test data; new ones are clean.)

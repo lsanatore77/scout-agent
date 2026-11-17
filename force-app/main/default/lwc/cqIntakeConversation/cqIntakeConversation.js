@@ -46,11 +46,14 @@ export default class CqIntakeConversation extends LightningElement {
         if (!said || this.busy || this.done) { return; }
         this.pushMe(said);
         this.draft = '';
-        this.description = this.description ? this.description + ' ' + said : said;
         if (this.pendingQuestionId) {
+            // Answering a specific question: record the answer, keep it out of the narrative.
             this.answers = this.answers
                 .filter((a) => a.questionId !== this.pendingQuestionId)
                 .concat([{ questionId: this.pendingQuestionId, answer: said }]);
+        } else {
+            // Free description of what happened.
+            this.description = this.description ? this.description + ' ' + said : said;
         }
         this.turn();
     }
