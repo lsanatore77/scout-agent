@@ -276,3 +276,8 @@ This locks the question list = the audio-clip list for the audio build (deferred
 - WAV via `<audio>`/data URI on the Salesforce Android app WebView → **NotSupportedError** (confirmed on a verified-fresh "v2" build). So BOTH MP3 and WAV fail through the `<audio>` element — the whole HTMLMediaElement/data-URI media path is walled off in this WebView, not a codec issue.
 - v3 pivots to the **Web Audio API**: AudioContext + an AudioBuffer filled with PCM samples, played via AudioBufferSourceNode — no `<audio>` element, no file decoder. This is also exactly how a stored PCM clip would play for Option C. The probe reports AudioContext state and whether playback starts/finishes.
 - Cache lesson: the Salesforce mobile app's in-app "Clear cache" does NOT evict the running compiled LWC module; a **force-stop** of the app does. Added a visible "v{n}" marker on the Test sound button so a fresh build is unambiguous.
+
+## Audio probe RESOLVED — 2026-11-17 ✅
+- **Web Audio API WORKS in the Salesforce Android app WebView.** Confirmed on a verified-fresh "v3" build: AudioContext (state: running) + an AudioBuffer of PCM samples + AudioBufferSourceNode produced an audible beep.
+- Locked-in constraint for Option C: the `<audio>` element and file decoders (MP3, WAV via data URI) are blocked, but **raw PCM → AudioBuffer → AudioBufferSourceNode** plays. So clips are stored/served as PCM (or WAV we parse in JS for the PCM payload) and played via Web Audio — never via `<audio>`.
+- Also needed: media volume up (separate from ringer on Android) and a user gesture to start/resume the AudioContext (the tap on the prompt covers this).

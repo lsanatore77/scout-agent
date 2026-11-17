@@ -47,3 +47,16 @@ Every question CQ.AI asks in the intake chat is also read aloud, using audio **p
 
 ## Sequence
 Lock the final question set (text) first — the clips are generated from that exact wording. Then build this audio layer against the locked set.
+
+## CONFIRMED technical path (2026-11-17)
+Playback mechanism is settled by on-device testing in the Salesforce Android app:
+- **Do NOT use the `<audio>` element or MP3** — blocked in the app WebView (NotSupportedError), even for WAV.
+- **Use the Web Audio API**: base64 clip → bytes → PCM samples → `AudioContext.createBuffer` → `AudioBufferSourceNode`. Proven to play.
+- Store clips as **WAV (16-bit PCM mono)**; the LWC parses the WAV header in JS to get the sample rate + PCM and fills the AudioBuffer (no decoder, no `decodeAudioData` dependency).
+- Requires: a user gesture to create/resume the AudioContext (the tap that advances the chat covers this) and media volume up.
+
+### Build pieces
+1. **Storage** — one WAV clip per Event_Question (v1: English). A `Audio_Source_Text__c` field on the question records the text the clip speaks, for staleness detection. (Multi-language via a child object later.)
+2. **Apex** — when a Turn asks a question, also return `askAudio` (base64 of that one question's clip) when read-aloud is enabled.
+3. **LWC** — on an asking turn, decode + play via Web Audio; per-reporter mute toggle; one shared AudioContext opened on first gesture.
+4. **Clips** — the 9 fixed prompts need neutral voice clips (this build env has no TTS/no network, so they're sourced once and uploaded).
