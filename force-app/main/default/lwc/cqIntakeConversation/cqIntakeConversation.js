@@ -220,7 +220,12 @@ export default class CqIntakeConversation extends LightningElement {
             }
             if (dataOff < 0 || bits !== 16) { return null; }
             const bytesPerSample = 2;
-            const frames = Math.floor(dataLen / (bytesPerSample * channels));
+            // Clamp to the bytes actually present: a clip whose declared data length
+            // overruns the buffer still plays (just shorter) instead of throwing.
+            const available = Math.max(0, bytes.length - dataOff);
+            const usableLen = Math.min(dataLen, available);
+            const frames = Math.floor(usableLen / (bytesPerSample * channels));
+            if (frames <= 0) { return null; }
             const buf = ctx.createBuffer(channels, frames, rate);
             for (let ch = 0; ch < channels; ch++) {
                 const out = buf.getChannelData(ch);
