@@ -288,3 +288,11 @@ End-to-end read-aloud is wired on the Web Audio path proven earlier:
 - **Apex:** CqIntakeChat.Turn.askAudio returns the asked question's clip. 9/9 tests pass.
 - **LWC:** one AudioContext unlocked on the first Send (gesture); each asking turn plays its clip via a WAV→AudioBuffer parser (scans RIFF chunks, 16-bit PCM). A "🔊 Read aloud / 🔇 Muted" toggle (default on, shown on Android too) gates playback. TTS (speechSynthesis) remains a fallback for messages with no clip (browser/iOS only). Temp test button/tone removed.
 - **Next:** generate the real neutral-voice TTS clips (one-time cloud TTS → 16-bit PCM WAV) and load them in place of the placeholder; opening/ready messages can get clips later; admin-level default toggle later.
+
+## Real voice clips loaded — 2026-11-17 ✅🔊
+Read-aloud now speaks the real prompts (Windows built-in TTS voice, v1).
+- **Generation:** `tools/generate_prompt_clips.ps1` — Windows PowerShell + System.Speech voices the 9 prompts at 8 kHz 16-bit mono PCM, wraps each in a canonical WAV, base64s them, and writes one `clips.json` (key = exact question text). Zero installs. (Upgrade to a cloud TTS voice later by swapping the generator; same clips.json format.)
+- **Load:** user uploads `clips.json` to Salesforce Files; an Apex job reads the ContentVersion, parses the JSON, and sets Audio_Wav_Base64__c + Audio_Source_Text__c per question. File-based path = no hand-paste truncation (the earlier bulk-paste had mangled a clip).
+- **Verified:** all 9 stored lengths match the generator output exactly (e.g. "Where did this happen?"=41424, "Could anyone get hurt…"=89000). All under the 131072 field cap.
+- **Gotcha logged:** executeAnonymous via the MCP GET route turns '+' into spaces (URL decode), so Apex passed that way must avoid '+' (use String.join/String.format).
+- **Left:** remove the temporary on-screen audio diagnostic once playback of real clips is confirmed on device.
