@@ -159,3 +159,18 @@ Lou's clarification: this is the INTAKE chat, not the reviewer. The reporter des
 Chat bubbles (reporter right, CQ.AI left), quick-reply chips for choice questions, a live "So far CQ.AI has / Still need" panel, and "Send to a Reviewer" when ready. Includes a **Speak** mic button wired to the browser SpeechRecognition API — fills the input so the reporter reviews before sending; hidden when the browser doesn't support it. That's the first cut of the voice Lou wants.
 
 **Next on this:** LLM-phrased questions (instead of the question text verbatim) so it feels less like a form read aloud; confirm-the-part step when the match is fuzzy; and decide whether to auto-send on voice or always let them review. Lou testing tomorrow.
+
+## Direction: the conversational chat is for MOBILE (2026-11-17)
+
+Lou, after testing: "We don't need chat for desktop — the suggestions form already suffices. We need chat for mobile."
+
+So the two intakes split by device:
+- **Desktop → the suggestions form** (cqEventIntakeChat: describe → review suggestions → submit). Already good enough; leave it.
+- **Mobile → the conversational chat** (cqIntakeConversation: back-and-forth, read-back, one gap at a time). This is where the chat belongs, and where voice matters most (talking > thumb-typing a defect on the floor/in the field).
+
+Implications for the chat's next work:
+- Treat it as mobile-first: tune layout/tap targets for a phone, make sure it's in the mobile nav.
+- Voice is a real deliverable here, not a desktop afterthought. Desktop Lightning blocks the mic (iframe permission); the open question is whether the Salesforce mobile app's webview passes the mic through (iOS webview historically doesn't support the Web Speech API; Android maybe). Needs a real-device test; if the built-in speech API won't run in the app, fall back to a speech-to-text service.
+- Desktop refinements to the chat are no longer a priority (desktop uses the form).
+
+Status: text flow working; reviewer panel + chat deployed. Voice parked until tested on a phone.
