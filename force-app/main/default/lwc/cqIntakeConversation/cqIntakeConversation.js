@@ -34,7 +34,6 @@ export default class CqIntakeConversation extends LightningElement {
     readAloud = true;      // the reporter wants prompts read aloud
     audioCtx;              // one Web Audio context, unlocked on the first user gesture
     clipSrc;               // the clip currently playing, so a new prompt can stop the old one
-    audioDiag = '';        // TEMP: on-screen read-aloud diagnostics
 
     // Reach the speech engine however the sandbox exposes it (works where the platform supports it,
     // e.g. a real browser or iOS; the Salesforce Android app's WebView has no speech synthesis).
@@ -178,20 +177,17 @@ export default class CqIntakeConversation extends LightningElement {
     }
 
     playClip(b64) {
-        if (!this.readAloud) { this.audioDiag = 'muted (read-aloud off)'; return; }
-        if (!b64) { this.audioDiag = 'no clip on this turn'; return; }
-        if (!this.audioCtx) { this.audioDiag = 'no AudioContext (gesture never ran)'; return; }
+        if (!this.readAloud || !b64 || !this.audioCtx) { return; }
         try {
             const buf = this.wavToBuffer(this.audioCtx, b64);
-            if (!buf) { this.audioDiag = 'clip ' + b64.length + ' chars but could not parse WAV'; return; }
+            if (!buf) { return; }
             if (this.clipSrc) { try { this.clipSrc.stop(); } catch (e) { /* ignore */ } }
             const src = this.audioCtx.createBufferSource();
             src.buffer = buf;
             src.connect(this.audioCtx.destination);
             src.start();
             this.clipSrc = src;
-            this.audioDiag = 'played: ctx=' + this.audioCtx.state + ', ' + Math.round(buf.duration * 1000) + 'ms, ' + buf.sampleRate + 'Hz, clip ' + b64.length + ' chars';
-        } catch (e) { this.audioDiag = 'play error: ' + (e && e.message ? e.message : 'unknown'); }
+        } catch (e) { /* ignore */ }
     }
 
     // Decode a base64 PCM WAV into an AudioBuffer. Scans the RIFF chunks (so a clip with a
