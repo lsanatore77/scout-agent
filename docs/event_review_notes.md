@@ -84,3 +84,16 @@ Lou: intake is where we take AI out for a spin. CQ is good at making it work, no
 - NO-SCROLL RULE EXCEPTION (Lou): a conversation may scroll because it's append-only like a text thread — newest at bottom, nothing above shifts under a thumb. The no-scroll rule still holds for the reviewer's structured screens and the rest of the suite.
 - Two surfaces, one data model: FLOOR REPORTER = chat (v8); REVIEWER (desk) = structured no-scroll stepped screens (v6). "Review & Send" from the chat opens the v6 structured summary, or files straight off on the fast path.
 - TTS read-aloud of CQ.AI replies: still needs a real-phone check (SpeechSynthesis in the SF mobile webview). On-screen is certain.
+
+**KEYSTONE PROVEN (16 Nov): Apex can drive CQ's prompt templates natively.** executeAnonymous confirmed ConnectApi prompt-template classes exist and a full generation runs from Apex — no named-credential self-callout needed. Working pattern:
+  ConnectApi.EinsteinPromptTemplateGenerationsInput inp = new ConnectApi.EinsteinPromptTemplateGenerationsInput();
+  inp.isPreview = false;
+  ConnectApi.EinsteinLlmAdditionalConfigInput cfg = new ConnectApi.EinsteinLlmAdditionalConfigInput();
+  cfg.applicationName = 'PromptTemplateGenerationsInvocable';
+  inp.additionalConfig = cfg;
+  inp.inputParams = Map<String, ConnectApi.WrappedValue>  (key 'Input:<ApiName>', WrappedValue.value = String);
+  ConnectApi.EinsteinPromptTemplateGenerationsRepresentation r = ConnectApi.EinsteinLLM.generateMessagesForPromptTemplate('<DevName>', inp);
+  r.generations[0].text  -> the model's text (our templates return JSON).
+  NOTE: ConnectApi.EinsteinLLM is not callable in test context — CqEventExtract must isolate the generate() call behind a @TestVisible seam that returns canned JSON under Test.isRunningTest().
+  Build simplification: ONE Entity Extraction call can cover all intake fields (TITLE, PART, LOT, UNITS, WHERE FOUND, PRODUCT AFFECTED, INJURY, SAFETY RISK, DEFECT) by passing a rich Entities list with allowed values; no need to also call 5W2H for v1.
+- BUILD VERDICT: extraction engine = afternoon (known method + known JSON + existing CqEventParts resolution). Time sinks = chat LWC, on-phone voice capture, device testing. Multi-session; Lou knows.
