@@ -1,0 +1,100 @@
+<template>
+    <div class="shell">
+        <div class="hd">
+            <span class="hd-ico">EV</span>
+            <div><div class="hd-obj">Quality Event</div><div class="hd-ttl">Report an Event</div></div>
+        </div>
+
+        <template if:true={error}><div class="err">{error}</div></template>
+
+        <!-- DESCRIBE -->
+        <template if:true={isDescribe}>
+            <div class="body">
+                <h2 class="q">What happened?</h2>
+                <p class="p">Describe it the way you'd tell a coworker. CQ.AI fills in the rest.</p>
+                <textarea class="ta" rows="5" value={description} onchange={handleDesc} oninput={handleDesc}
+                    placeholder="e.g. Three CardioFlow balloons from lot 0908 were slow to deflate during final test. Nobody was hurt."></textarea>
+                <p class="hint">CQ.AI listens for the part and lot, how many, where you found it, and whether anyone was hurt.</p>
+            </div>
+            <div class="ft">
+                <span class="sp"></span>
+                <button class="btn primary" disabled={analyzeDisabled} onclick={handleAnalyze}>
+                    <template if:true={busy}>Reading…</template>
+                    <template if:false={busy}>Continue</template>
+                </button>
+            </div>
+        </template>
+
+        <!-- REVIEW -->
+        <template if:true={isReview}>
+            <div class="body">
+                <div class="said"><span class="said-lab">What you said</span>{saidText}</div>
+
+                <div class="band">Details CQ.AI Filled In</div>
+
+                <div class="fld">
+                    <label class="lab">Title</label>
+                    <input class="inp" type="text" value={title} onchange={handleTitle} />
+                </div>
+
+                <div class="fld">
+                    <label class="lab">Part</label>
+                    <template if:true={showPicker}>
+                        <c-cq-part-picker onchange={handlePartChange}></c-cq-part-picker>
+                        <template if:true={partRaw}><p class="src">CQ.AI heard "{partRaw}" — pick the matching part.</p></template>
+                    </template>
+                    <template if:false={showPicker}>
+                        <div class="picked"><span>{partLabel}</span><button class="link" onclick={changePart}>Change</button></div>
+                    </template>
+                </div>
+
+                <div class="two">
+                    <div class="fld"><label class="lab">Lot</label><input class="inp" type="text" value={lot} onchange={handleLot} /></div>
+                    <div class="fld"><label class="lab">Units Affected</label><input class="inp" type="number" value={units} onchange={handleUnits} /></div>
+                </div>
+                <template if:true={defect}><p class="src">Defect CQ.AI read: {defect}</p></template>
+
+                <div class="band">Questions</div>
+                <template for:each={rows} for:item="r">
+                    <div key={r.id} class="qq">
+                        <div class="qlabel">
+                            <span>{r.question}</span>
+                            <template if:true={r.badgeAi}><span class="tag ai">CQ.AI Suggests</span></template>
+                            <template if:true={r.badgeNeed}><span class="tag need">Your answer</span></template>
+                        </div>
+                        <template if:true={r.isChoice}>
+                            <div class="opts">
+                                <template for:each={r.opts} for:item="o">
+                                    <button key={o.key} class={o.cls} data-id={r.id} data-value={o.label} onclick={handlePickOpt}>{o.label}</button>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:true={r.isText}>
+                            <input class="inp" type="text" data-id={r.id} value={r.answer} onchange={handleTextAns} />
+                        </template>
+                    </div>
+                </template>
+            </div>
+            <div class="ft">
+                <button class="btn" onclick={handleBack}>Back</button>
+                <template if:true={hasMissing}><span class="blocker">{missingLabel}</span></template>
+                <span class="sp"></span>
+                <button class="btn primary" disabled={submitDisabled} onclick={handleSubmit}>
+                    <template if:true={busy}>Sending…</template>
+                    <template if:false={busy}>Send Report</template>
+                </button>
+            </div>
+        </template>
+
+        <!-- DONE -->
+        <template if:true={isDone}>
+            <div class="body done">
+                <div class="ok">✓</div>
+                <h2 class="q">Report sent</h2>
+                <p class="p"><b>{sent.name}</b> is now waiting for review.</p>
+                <template if:true={sent.urgent}><div class="urgent">Marked Urgent — the reviewer is alerted.</div></template>
+                <button class="btn primary" onclick={handleRestart}>Report Another</button>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,46 @@
+.shell { border: 1px solid #dddbda; border-radius: 0.75rem; overflow: hidden; background: #fff; max-width: 40rem; font-size: 0.875rem; color: #181818; }
+.hd { display: flex; align-items: center; gap: 0.625rem; padding: 0.625rem 1rem; background: #f3f3f3; border-bottom: 1px solid #e5e5e5; }
+.hd-ico { width: 1.75rem; height: 1.75rem; border-radius: 0.375rem; background: #e3743a; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; }
+.hd-obj { font-size: 0.6875rem; color: #5c6572; }
+.hd-ttl { font-size: 1rem; font-weight: 700; }
+
+.err { margin: 0.75rem 1rem 0; padding: 0.625rem 0.875rem; border-radius: 0.5rem; background: #fff8f7; border: 1px solid #f3c7c2; color: #ba0517; }
+
+.body { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.q { margin: 0; font-size: 1.125rem; font-weight: 700; }
+.p { margin: 0; color: #3d4550; line-height: 1.45; }
+.hint { margin: 0; font-size: 0.75rem; color: #5b6470; padding: 0.625rem 0.75rem; border-radius: 0.5rem; background: #fafbfc; border: 1px solid #e5e5e5; }
+.ta { box-sizing: border-box; width: 100%; padding: 0.625rem 0.75rem; border-radius: 0.5rem; border: 1px solid #c4cad2; font: inherit; font-size: 0.9375rem; line-height: 1.45; resize: vertical; }
+
+.said { padding: 0.625rem 0.75rem; border-radius: 0.5rem; background: #fafbfc; border: 1px solid #dde1e6; color: #3d4550; line-height: 1.45; }
+.said-lab { display: block; font-size: 0.6875rem; font-weight: 700; color: #5b6470; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.25rem; }
+
+.band { margin: 0.25rem -1rem; padding: 0.5rem 1rem; background: #eef1f5; border-top: 1px solid #dfe3e9; border-bottom: 1px solid #dfe3e9; font-size: 0.6875rem; font-weight: 700; color: #5c6572; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.fld { display: flex; flex-direction: column; gap: 0.375rem; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.lab { font-size: 0.75rem; font-weight: 700; color: #5c6572; }
+.inp { box-sizing: border-box; width: 100%; min-height: 2.5rem; padding: 0.5rem 0.625rem; border-radius: 0.375rem; border: 1px solid #c4cad2; font: inherit; font-size: 0.9375rem; }
+.picked { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.375rem; border: 1px solid #dde1e6; background: #fafbfc; font-weight: 600; }
+.src { margin: 0; font-size: 0.75rem; color: #5b6470; }
+.link { border: none; background: transparent; color: #1d5fd1; font: inherit; font-weight: 600; cursor: pointer; margin-left: auto; }
+
+.qq { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }
+.qlabel { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; font-size: 0.9375rem; font-weight: 700; }
+.tag { font-size: 0.6875rem; font-weight: 700; border-radius: 999px; padding: 0.125rem 0.5rem; }
+.tag.ai { color: #4a2fc0; background: #f1ecfe; }
+.tag.need { color: #7a4100; background: #fef1e6; }
+.opts { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.opt { min-height: 2.5rem; padding: 0 0.9375rem; border-radius: 0.25rem; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 0.875rem; font-weight: 600; color: #181818; cursor: pointer; }
+.opt.on { border: 2px solid #1d5fd1; background: #e8f0fd; color: #1d5fd1; }
+
+.ft { display: flex; align-items: center; gap: 0.625rem; padding: 0.875rem 1rem; border-top: 1px solid #eceff2; background: #fafaf9; }
+.ft .sp { flex: 1; }
+.blocker { color: #7a4100; font-weight: 600; font-size: 0.75rem; }
+.btn { min-height: 2.5rem; padding: 0 1rem; border-radius: 0.375rem; border: 1px solid #c4cad2; background: #fff; font: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+.btn.primary { background: #1d5fd1; border-color: #1d5fd1; color: #fff; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+
+.done { align-items: center; text-align: center; padding: 1.75rem 1rem; }
+.ok { width: 3rem; height: 3rem; border-radius: 50%; background: #ebf7e6; color: #2e844a; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; }
+.urgent { padding: 0.5rem 0.875rem; border-radius: 0.5rem; background: #fef1e6; color: #7a4100; font-weight: 600; }
