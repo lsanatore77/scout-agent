@@ -70,6 +70,35 @@ private class CqIntakeChatTest {
     }
 
     @IsTest
+    static void safetyIsAlwaysAsked() {
+        // A required Safety question, and extraction DID produce a value for it.
+        Event_Question__c safety = new Event_Question__c(Active__c = true, Required__c = true, Order__c = 2,
+            Question__c = 'Could anyone get hurt, or is product safety at risk?', Answer_Type__c = 'Yes or No', Role__c = 'Safety Risk');
+        insert safety;
+
+        CqEventExtract.mockJson = '{"DEFECT":{"value":"cracked hub"},"WHERE FOUND":{"value":"In Our Plant"},"SAFETY RISK":{"value":"No"}}';
+        Event_Question__c where1 = [SELECT Id FROM Event_Question__c WHERE Role__c = 'Where Found'];
+        String state = JSON.serialize(new Map<String, Object>{
+            'description' => 'cracked hub found in our plant',
+            'answers' => new List<Object>{ new Map<String, Object>{ 'questionId' => where1.Id, 'answer' => 'In Our Plant' } }
+        });
+
+        Test.startTest();
+        CqIntakeChat.Turn t = CqIntakeChat.respond(state);
+        Test.stopTest();
+
+        System.assertEquals(false, t.ready, 'safety must be asked even though the AI guessed it');
+        System.assertEquals('Safety Risk', t.askKey);
+        System.assertEquals(safety.Id, t.askQuestionId);
+        System.assertEquals('No', t.askSuggested, 'the AI guess is offered as a default to confirm');
+        Boolean safetyFlagged = false;
+        for (CqIntakeChat.Field f : t.understood) {
+            if (f.key == 'Safety Risk') { safetyFlagged = f.needsConfirm; }
+        }
+        System.assert(safetyFlagged, 'the unconfirmed safety guess wears the needs-confirm mark');
+    }
+
+    @IsTest
     static void blankDescriptionFallsBackToOpening() {
         Test.startTest();
         CqIntakeChat.Turn t = CqIntakeChat.respond(JSON.serialize(new Map<String, Object>{ 'description' => '' }));
