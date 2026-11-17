@@ -7,21 +7,16 @@ No passwords or secrets in this file.
 - **lou@cqplay.golden.dev** (Lou Sanatore, System Administrator): spare way in. Set up Salesforce Authenticator on it too, so it can fix the main user if that one gets stuck.
 
 ## Sign-in method
-- Password, then approve on **Salesforce Authenticator** (phone). Same for the computer, the Salesforce mobile app and the CLI.
-- Backup (optional): One-Time Password Authenticator, a 6-digit code in the same app.
-- Geolocation auto-approve is on in the org, so logins from a trusted place may approve themselves.
-
-## Passkeys: say no
-- The org has passkey options locked on (built-in authenticator and security key are greyed out in Session Settings, because MFA is required for all logins).
-- After a login, Salesforce, Windows Hello or the browser may offer to create a passkey. Click Not Now, Skip or Cancel.
-- Why: the Salesforce mobile app cannot use passkeys, and a passkey saved on one device makes the login stall on another. Once a passkey exists, Salesforce asks for it first.
-- Do not turn on "Allow passwordless login with passkeys".
+- **Admins must use a passkey.** Salesforce now requires phishing-resistant MFA (a passkey) for users with admin-level rights. It reached sandboxes in June 2026 and production in July 2026. That is why the passkey options are greyed out and why login shows "Your account requires a passkey" if none is registered. Do not delete the passkey.
+- **Desktop:** password, then the passkey saved on **this Windows PC (Windows Hello)**. When creating it, choose this Windows device, not a phone or security key, so Windows can always find it.
+- **Salesforce mobile app:** password, then approve in **Salesforce Authenticator**. Salesforce says the mobile app login does not change with the passkey rule.
+- **CLI:** `sf org open -o <alias>` uses the saved session.
+- Backup (optional): One-Time Password Authenticator, a 6-digit code in the Authenticator app.
 
 ## If a login gets stuck on "Choose a passkey"
-1. Get in another way: `sf org open -o <alias>` (uses the CLI's saved session), or log in as the spare user.
-2. Setup > Users > the stuck user > Passkeys related list > Del every entry.
-3. Check App Registration: Salesforce Authenticator says [Disconnect] (connected).
-4. Last resort: another admin clicks Generate next to Temporary Verification Code on the stuck user.
+1. Get in another way: `sf org open -o <alias>`, or log in as the spare user.
+2. Setup > Users > the stuck user > Passkeys list: delete the passkey that cannot be found, then log in again and create a new one on this Windows device.
+3. Last resort: another admin clicks Generate next to Temporary Verification Code on the stuck user.
 
 ## History
-- 16 Nov 2026: Built-In Authenticator #1 passkey appeared on lou@golden-dev.com at 5:58 pm CT (not added on purpose). Login on the computer and the phone app stalled on the passkey. Got in via CLI, deleted the passkey; Salesforce Authenticator confirmed connected.
+- 16 Nov 2026: Built-In Authenticator #1 passkey appeared on lou@golden-dev.com at 5:58 pm CT (not added on purpose). Login on the computer and the phone app stalled on the passkey. Got in via CLI and deleted the passkey; Salesforce then required a new one ("Your account requires a passkey"), because admin users must have one. Lesson: keep one passkey, saved on this Windows device.
