@@ -40,3 +40,20 @@ CQ already has a question engine we can sit our UI on:
 
 Direction (not decided): the Device Event questions come from CQ question sets (tasks) instead of our Event Questions; our intake shows the follow-ups inline as you answer (CQ shows one question at a time); reportability, report name and due days come from CQ's answer attributes, not from CQ.AI. Answers saved as a Script Execution and linked to the complaint when the event becomes one.
 To check before building: how CQ runs Decision Trees on a complaint (Decision Tree and DT Answer fields, and what creates the regulatory report); whether a Script Execution can exist before the complaint does; Task Type values for intake scripts.
+
+## Guiding principle and reusable AI (16 Nov)
+
+Lou: intake is where we take AI out for a spin. CQ is good at making it work, not at making it easy. So: CQ's engines underneath, our experience on top.
+
+**Voice first.** Lou uses speech on his phone because it is easier than typing. Intake headline: tap, say what happened, confirm. Use the standard **Convert Speech to Text** action (needs a ContentDocument ID for the audio).
+
+**Reusable pieces found (not tested yet):**
+- Salesforce standard actions: Extract Fields And Values From User Input (built to run before Update Record), Identify Record by Name (part from words), Convert Speech to Text, Get User Profile Details, Manage User Memory, Query Records / with Aggregate, Get Record Details, Summarize Record, Answer Questions with Knowledge / Agentic Retriever, Render LiveCard By Name, Slack messages. Only standard create is Create Case, so the Quality Event is still created by our Apex.
+- CQ prompt templates: CQSS 5W2H Extraction, CQSS Entity Extraction, CQSS Paraphraser, CQSS Dynamic Prompt.
+- CQ agent actions: Immediate Causes and Action Suggestion; Get Similar FMEA Details and Investigations; Get Similar Root Cause and Action Plan (both start from an Investigation).
+- CQSS Similarity (cqext classes, runs on CQ's AWS service). Settings flows exist for Controlled Doc, Defect Code, FMEA Detail, Investigation, Root Cause Code, PRD. None for NC, Complaint or Quality Event; we would add one following CQ's pattern. Ask CQ how data is handled given AWS.
+- CQ question engine (SQX_Task_Question__c etc.), see section above.
+- myCQ app (cqext, for lite users): Home has CQEE_Report_Issue, Recently Created Issues. Possible entry point for our intake. Need a screenshot of what Report Issue creates.
+- Our own pattern to copy: Controlled Document Agent and Scout Checklist (suggest each value, accept / edit / clear, save after one confirmation).
+
+**To test before deciding:** Extract Fields on Quality Event custom fields; CQ 5W2H template on the NC-000162 description; Waiver - Get Similar Records (ours) to see if it calls CQ Similarity.
