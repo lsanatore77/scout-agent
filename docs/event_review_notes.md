@@ -296,3 +296,9 @@ Read-aloud now speaks the real prompts (Windows built-in TTS voice, v1).
 - **Verified:** all 9 stored lengths match the generator output exactly (e.g. "Where did this happen?"=41424, "Could anyone get hurt…"=89000). All under the 131072 field cap.
 - **Gotcha logged:** executeAnonymous via the MCP GET route turns '+' into spaces (URL decode), so Apex passed that way must avoid '+' (use String.join/String.format).
 - **Left:** remove the temporary on-screen audio diagnostic once playback of real clips is confirmed on device.
+
+## Intake redesign: compose → compact report + chat — 2026-11-17
+Restructured cqIntakeConversation into two stages (approved from an interactive mockup):
+- **Compose:** one big "Tell me what happened" box. Speak fills it **live** (SpeechRecognition writes into the box as you talk); dictation **replaces** (never appends); a "↺ Clear & start over" link resets it; Submit is enabled once there's text.
+- **Chat:** on Submit the story compacts into a "Your report" card (with Edit) and CQ.AI asks only for the gaps — chips for choices, text+mic for text questions (mic only on text turns), read-aloud per prompt. When ready, a "Remembered something? Add it…" composer lets a later thought fold into the description (engine re-reads the whole thing); "Send to a Reviewer" finishes.
+- Opening AI bubble removed (the lead text is the prompt now); `start()` Apex no longer used by the component.

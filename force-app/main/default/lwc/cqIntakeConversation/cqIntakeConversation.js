@@ -1,19 +1,26 @@
 import { LightningElement, track } from 'lwc';
-import startChat from '@salesforce/apex/CqIntakeChat.start';
 import respond from '@salesforce/apex/CqIntakeChat.respond';
 import submitReport from '@salesforce/apex/CqEventIntake.submitReport';
 
-
+/**
+ * Intake in two stages:
+ *   compose  - one big box where the reporter tells the whole story (typed or spoken, live).
+ *   chat     - on Submit the story compacts into a "Your report" card and CQ.AI asks only for
+ *              what's still missing, one gap at a time. A later thought typed in the chat folds
+ *              back into the report (the engine re-reads the whole description each turn).
+ */
 export default class CqIntakeConversation extends LightningElement {
     @track messages = [];
     @track choices = [];
     @track understood = [];
     @track stillNeeded = [];
 
-    description = '';
+    stage = 'compose';     // compose (big box) -> chat (clarifying Q&A)
+    story = '';            // the big description box, compose stage
+    description = '';      // the narrative the engine reads; grows as details are added through chat
     answers = [];
     pendingQuestionId = null;
-    pendingFeedsDescription = false;   // the lot/part prompt: answer also joins the description
+    pendingFeedsDescription = false;   // the lot/part prompt: its answer is also description
 
     draftJson = null;
     ready = false;
@@ -22,21 +29,21 @@ export default class CqIntakeConversation extends LightningElement {
     sentName = '';
     sentUrgent = false;
 
-    draft = '';
+    draft = '';            // chat composer
     seq = 0;
     canSpeak = false;
     listening = false;
+    micTarget = 'story';   // where live dictation writes: 'story' | 'draft'
     micStatus = '';
-    micTone = 'idle';   // idle | live | good | bad
+    micTone = 'idle';      // idle | live | good | bad
     recognition;
 
-    canSpeakOut = false;   // the browser has speech synthesis (a TTS fallback for messages with no clip)
+    canSpeakOut = false;   // the browser has speech synthesis (TTS fallback for messages with no clip)
     readAloud = true;      // the reporter wants prompts read aloud
     audioCtx;              // one Web Audio context, unlocked on the first user gesture
     clipSrc;               // the clip currently playing, so a new prompt can stop the old one
 
-    // Reach the speech engine however the sandbox exposes it (works where the platform supports it,
-    // e.g. a real browser or iOS; the Salesforce Android app's WebView has no speech synthesis).
+    // Reach the speech engine however the sandbox exposes it.
     getSynth() {
         try { if (typeof window !== 'undefined' && window.speechSynthesis) { return window.speechSynthesis; } } catch (e) { /* ignore */ }
         try { if (typeof globalThis !== 'undefined' && globalThis.speechSynthesis) { return globalThis.speechSynthesis; } } catch (e) { /* ignore */ }
@@ -52,20 +59,36 @@ export default class CqIntakeConversation extends LightningElement {
 
     connectedCallback() {
         this.canSpeak = typeof (window.SpeechRecognition || window.webkitSpeechRecognition) === 'function';
-        if (this.canSpeak) { this.micStatus = 'Tap Speak to talk instead of typing.'; this.micTone = 'idle'; }
-
         const synth = this.getSynth();
         this.canSpeakOut = !!synth && !!this.getUtter('x');
-
-        startChat()
-            .then((t) => { this.pushAi(t.reply); this.speak(t.reply); })
-            .catch((e) => this.pushAi(this.msg(e)));
     }
 
     disconnectedCallback() {
         try { const s = this.getSynth(); if (s) { s.cancel(); } } catch (e) { /* ignore */ }
     }
 
+    // ---- compose stage ----
+    handleStoryInput(e) { this.story = e.target.value; }
+
+    clearStory() { this.stopListening(); this.story = ''; }
+
+    submitStory() {
+        const s = (this.story || '').trim();
+        if (!s || this.busy) { return; }
+        this.stopListening();
+        this.ensureAudio();   // first gesture unlocks Web Audio for the read-aloud clips
+        this.description = s;
+        // fresh conversation each time the story is (re)submitted
+        this.messages = []; this.answers = []; this.understood = []; this.stillNeeded = []; this.choices = [];
+        this.pendingQuestionId = null; this.pendingFeedsDescription = false;
+        this.ready = false; this.done = false; this.draftJson = null;
+        this.stage = 'chat';
+        this.turn();
+    }
+
+    editReport() { this.stopListening(); this.story = this.description; this.stage = 'compose'; }
+
+    // ---- chat composer ----
     handleInput(e) { this.draft = e.target.value; }
     handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.send(this.draft); } }
     handleSendClick() { this.send(this.draft); }
@@ -74,7 +97,7 @@ export default class CqIntakeConversation extends LightningElement {
     send(text) {
         const said = (text || '').trim();
         if (!said || this.busy || this.done) { return; }
-        this.ensureAudio();   // first gesture unlocks Web Audio for the clips
+        this.ensureAudio();
         this.pushMe(said);
         this.draft = '';
         if (this.pendingQuestionId) {
@@ -82,13 +105,13 @@ export default class CqIntakeConversation extends LightningElement {
             this.answers = this.answers
                 .filter((a) => a.questionId !== this.pendingQuestionId)
                 .concat([{ questionId: this.pendingQuestionId, answer: said }]);
-            // The lot/part prompt's answer is also more description, so the part/lot can resolve —
+            // The lot/part prompt's answer is also description, so the part/lot can resolve —
             // but a "no / don't know" shouldn't get appended to the reporter's narrative.
             if (this.pendingFeedsDescription && !this.isNegative(said)) {
                 this.description = this.description ? this.description + ' ' + said : said;
             }
         } else {
-            // Free description of what happened.
+            // A free thought in the chat folds into the report narrative.
             this.description = this.description ? this.description + ' ' + said : said;
         }
         this.turn();
@@ -132,14 +155,13 @@ export default class CqIntakeConversation extends LightningElement {
             .catch((e) => { this.pushAi(this.msg(e)); this.busy = false; });
     }
 
-    // ---- voice out ----
-
+    // ---- voice out (read aloud) ----
     speak(text) {
         if (!this.canSpeakOut || !this.readAloud || !text) { return; }
         try {
             const s = this.getSynth();
             if (!s) { return; }
-            s.cancel();   // don't let replies pile up
+            s.cancel();
             const u = this.getUtter(text);
             if (!u) { return; }
             u.lang = 'en-US';
@@ -165,7 +187,6 @@ export default class CqIntakeConversation extends LightningElement {
     // Read-aloud playback. The Salesforce mobile WebView blocks the <audio> element and
     // file decoders (MP3/WAV both NotSupportedError), so clips play through the Web Audio API:
     // the stored PCM WAV is parsed here and its samples are written into an AudioBuffer.
-    // The context must be created/resumed inside a user gesture (done in send()).
     ensureAudio() {
         try {
             if (!this.audioCtx) {
@@ -190,8 +211,7 @@ export default class CqIntakeConversation extends LightningElement {
         } catch (e) { /* ignore */ }
     }
 
-    // Decode a base64 PCM WAV into an AudioBuffer. Scans the RIFF chunks (so a clip with a
-    // LIST/INFO chunk still works) and reads 16-bit little-endian samples.
+    // Decode a base64 PCM WAV into an AudioBuffer. Scans the RIFF chunks and reads 16-bit samples.
     wavToBuffer(ctx, b64) {
         try {
             const bin = atob(b64);
@@ -216,8 +236,7 @@ export default class CqIntakeConversation extends LightningElement {
             }
             if (dataOff < 0 || bits !== 16) { return null; }
             const bytesPerSample = 2;
-            // Clamp to the bytes actually present: a clip whose declared data length
-            // overruns the buffer still plays (just shorter) instead of throwing.
+            // Clamp to the bytes actually present so a short/truncated clip still plays.
             const available = Math.max(0, bytes.length - dataOff);
             const usableLen = Math.min(dataLen, available);
             const frames = Math.floor(usableLen / (bytesPerSample * channels));
@@ -233,47 +252,40 @@ export default class CqIntakeConversation extends LightningElement {
         } catch (e) { return null; }
     }
 
-    // ---- voice ----
+    // ---- voice in (live dictation) ----
+    micStory() { this.listen('story'); }
+    micChat() { this.listen('draft'); }
 
-    handleMic() {
+    // Dictation REPLACES the target and fills it live as the reporter speaks.
+    listen(target) {
         if (!this.canSpeak) { return; }
         if (this.listening) { this.stopListening(); return; }
 
         const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
         this.recognition = new Rec();
         this.recognition.lang = 'en-US';
-        this.recognition.interimResults = true;   // show words as they come, and catch short phrases
-        this.recognition.continuous = false;
+        this.recognition.interimResults = true;
+        this.recognition.continuous = true;   // let a longer narrative run; Stop ends it
+        this.micTarget = target;
+        if (target === 'story') { this.story = ''; } else { this.draft = ''; }
 
-        let captured = '';   // everything finalized this session
+        let finalText = '';
+        this.listening = true;
+        this.setMic('live', 'Listening… speak now.');
 
-        this.setMic('live', 'Starting the microphone…');
-
-        this.recognition.onstart = () => { this.listening = true; this.setMic('live', 'Listening… speak now.'); };
-        this.recognition.onaudiostart = () => { this.setMic('live', 'Listening… I can hear the mic.'); };
-        this.recognition.onspeechstart = () => { this.setMic('live', 'Got your voice—keep going…'); };
         this.recognition.onresult = (ev) => {
             let interim = '';
             for (let i = ev.resultIndex; i < ev.results.length; i++) {
                 const r = ev.results[i];
-                if (r.isFinal) { captured += (captured ? ' ' : '') + r[0].transcript.trim(); }
+                if (r.isFinal) { finalText += (finalText ? ' ' : '') + r[0].transcript.trim(); }
                 else { interim += r[0].transcript; }
             }
-            if (interim.trim()) { this.setMic('live', 'Hearing: “' + interim.trim() + '”…'); }
-            if (captured.trim()) { this.setMic('good', 'Got it: “' + captured.trim() + '” — check it, then hit Send.'); }
+            const text = (finalText + ' ' + interim).trim();
+            if (target === 'story') { this.story = text; } else { this.draft = text; }
+            this.setMic('live', interim.trim() ? ('Hearing: “' + interim.trim() + '”') : 'Listening…');
         };
-        this.recognition.onnomatch = () => { this.setMic('bad', 'Didn’t catch any words—tap Speak and talk clearly.'); };
         this.recognition.onerror = (ev) => { this.listening = false; this.setMic('bad', this.micError(ev && ev.error)); };
-        this.recognition.onend = () => {
-            this.listening = false;
-            const said = captured.trim();
-            if (said) {
-                this.draft = this.draft ? this.draft + ' ' + said : said;
-                this.setMic('good', 'Added: “' + said + '” — check it, then hit Send.');
-            } else if (this.micTone !== 'bad') {
-                this.setMic('bad', 'I didn’t catch anything—tap Speak and talk clearly.');
-            }
-        };
+        this.recognition.onend = () => { this.listening = false; if (this.micTone !== 'bad') { this.setMic('idle', 'Tap Speak to talk.'); } };
 
         try { this.recognition.start(); }
         catch (e) { this.listening = false; this.setMic('bad', 'Couldn’t start the mic—tap Speak to try again.'); }
@@ -282,14 +294,13 @@ export default class CqIntakeConversation extends LightningElement {
     stopListening() {
         this.listening = false;
         if (this.recognition) { try { this.recognition.stop(); } catch (e) { /* ignore */ } }
-        this.setMic('idle', 'Stopped. Tap Speak to talk again.');
     }
 
     micError(code) {
         switch (code) {
             case 'not-allowed':
             case 'service-not-allowed':
-                return 'Microphone is blocked. Allow mic access for this site in your browser, then tap Speak.';
+                return 'Microphone is blocked. Allow mic access for this site, then tap Speak.';
             case 'no-speech':
                 return 'I didn’t hear anything—tap Speak and talk a little louder.';
             case 'audio-capture':
@@ -318,23 +329,34 @@ export default class CqIntakeConversation extends LightningElement {
         return /\b(dont know|not sure|no idea|dont have|dunno|unknown)\b/.test(n);
     }
 
+    // ---- compose getters ----
+    get isCompose() { return this.stage === 'compose'; }
+    get isChat() { return this.stage === 'chat'; }
+    get hasStory() { return (this.story || '').trim().length > 0; }
+    get submitDisabled() { return this.busy || !this.hasStory; }
+    get bigboxClass() { return (this.listening && this.micTarget === 'story') ? 'bigbox live' : 'bigbox'; }
+    get storyMicClass() { return (this.listening && this.micTarget === 'story') ? 'btn speak on' : 'btn speak'; }
+    get storyMicLabel() { return (this.listening && this.micTarget === 'story') ? '■ Stop' : '🎙 Speak'; }
+    get showStoryMicStatus() { return this.canSpeak && this.listening && this.micTarget === 'story'; }
+
+    // ---- chat getters ----
     get hasChoices() { return this.choices.length > 0 && !this.done; }
     get hasUnderstood() { return this.understood.length > 0; }
     get hasStillNeeded() { return this.stillNeeded.length > 0 && !this.ready; }
+    get showQHeader() { return !this.ready && !this.done; }
     get showSubmit() { return this.ready && !this.done; }
     get inputDisabled() { return this.busy || this.done; }
     get inputPlaceholder() {
         if (this.pendingQuestionId) { return 'Type your answer…'; }
-        if (this.ready) { return 'Add anything else, or tap Send…'; }
-        return 'Type what happened…';
+        if (this.ready) { return 'Remembered something? Add it…'; }
+        return 'Type your answer…';
     }
-    // Voice only for free-text questions: when the turn offers tap choices (Yes/No or a
-    // pick list), hide the mic so the answer is a tap, not speech.
+    // Voice only for free-text turns: when a turn offers tap choices, hide the mic.
     get showMic() { return this.canSpeak && !this.hasChoices && !this.done; }
-    get showMicStatus() { return this.canSpeak && this.micStatus && !this.done && !this.hasChoices; }
+    get showMicStatus() { return this.canSpeak && this.micStatus && !this.done && !this.hasChoices && this.listening && this.micTarget === 'draft'; }
+    get micClass() { return (this.listening && this.micTarget === 'draft') ? 'mic listening' : 'mic'; }
+    get micLabel() { return (this.listening && this.micTarget === 'draft') ? 'Stop' : 'Speak'; }
+    get micStatusClass() { return 'micstatus ' + this.micTone; }
     get readAloudLabel() { return this.readAloud ? '🔊 Read aloud' : '🔇 Muted'; }
     get readAloudClass() { return this.readAloud ? 'sound on' : 'sound'; }
-    get micStatusClass() { return 'micstatus ' + this.micTone; }
-    get micClass() { return this.listening ? 'mic listening' : 'mic'; }
-    get micLabel() { return this.listening ? 'Stop' : 'Speak'; }
 }

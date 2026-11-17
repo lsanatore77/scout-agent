@@ -54,3 +54,30 @@
 .micstatus.good { color: #1a7f45; background: #effaf2; }
 .micstatus.bad { color: #8a4b00; background: #fff3e6; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* ---- compose stage: the big "tell your story" box ---- */
+.lead { font-size: 0.9375rem; color: #181818; }
+.lead b { font-weight: 600; }
+.bigbox { position: relative; border: 1.5px solid #c4cad2; border-radius: 0.75rem; background: #fff; }
+.bigbox.live { border-color: #4a2fc0; box-shadow: 0 0 0 3px #f3eefe; }
+.bigbox textarea { width: 100%; min-height: 150px; resize: vertical; border: 0; background: transparent; color: #181818; font: inherit; line-height: 1.5; padding: 0.75rem 0.85rem; outline: none; border-radius: 0.75rem; }
+.micstatus-in { display: flex; align-items: center; gap: 0.4375rem; font-size: 0.8125rem; color: #ba0517; background: #fff1ef; border-top: 1px solid #f3c7c2; padding: 0.4375rem 0.85rem; border-radius: 0 0 0.6875rem 0.6875rem; }
+.micstatus-in .pulse { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; flex: none; animation: pulse 1s ease-in-out infinite; }
+
+.boxfoot { display: flex; justify-content: flex-end; }
+.clearbtn { background: none; border: 0; color: #5b6470; font: inherit; font-size: 0.78rem; font-weight: 600; cursor: pointer; text-decoration: underline; }
+.clearbtn:hover { color: #181818; }
+
+.actions { display: flex; gap: 0.6rem; }
+.btn { flex: 1; min-height: 2.9rem; border-radius: 0.625rem; border: 0; font: inherit; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; }
+.btn.speak { flex: 0 0 42%; background: #f3eefe; color: #4a2fc0; border: 1px solid #c7bdeb; }
+.btn.speak.on { background: #ffe9e6; color: #ba0517; border-color: #f3c7c2; }
+.btn.primary { background: #4a2fc0; color: #fff; }
+.btn.primary:disabled { opacity: 0.5; cursor: default; }
+
+/* ---- the compact report card (after submit) ---- */
+.report { border: 1px solid #e3d9fb; background: #faf8ff; border-radius: 0.75rem; padding: 0.7rem 0.8rem; }
+.report .lbl { display: flex; align-items: center; font-size: 0.625rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #4a2fc0; margin-bottom: 0.3rem; }
+.report .edit { margin-left: auto; background: none; border: 0; color: #4a2fc0; font-weight: 600; font-size: 0.72rem; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.report .txt { font-size: 0.9375rem; color: #181818; line-height: 1.5; }
+.chat-h { font-size: 0.625rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #5b6470; }
