@@ -7,6 +7,10 @@
             <button class={readAloudClass} onclick={toggleReadAloud} title="Read each question aloud">{readAloudLabel}</button>
         </div>
 
+        <template if:true={audioDiag}>
+            <div class="diag">audio · {audioDiag}</div>
+        </template>
+
         <div class="stream">
             <template for:each={messages} for:item="m">
                 <div key={m.id} class={m.who} data-who={m.who}>
