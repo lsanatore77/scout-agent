@@ -4,13 +4,16 @@
             <span class="dot"></span>
             <span class="title">Report an Event</span>
             <span class="by">CQ.AI listens and fills in the form</span>
+            <template if:true={canSpeakOut}>
+                <button class={soundClass} onclick={toggleSpeak} title="Read questions aloud">{soundLabel}</button>
+            </template>
         </div>
 
         <div class="stream">
             <template for:each={messages} for:item="m">
                 <div key={m.id} class={m.who} data-who={m.who}>
                     <template if:true={m.isAi}><span class="tag">CQ.AI</span></template>
-                    <div class="bubble">{m.text}</div>
+                    <div class="bubble" data-id={m.id} onclick={handleReplay}>{m.text}</div>
                 </div>
             </template>
 

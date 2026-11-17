@@ -229,3 +229,11 @@ When Injury is confirmed Yes, the chat now asks one more question — "Who was h
 ### Confirmed + fix (EV-0006, injury flow end to end, 2026-11-17)
 - CONFIRMED live: injury flow works end to end on mobile. EV-0006: Injury=Yes, Safety=Yes, Units 5, Where In Our Plant, and **Urgent=true** (injury auto-escalated). "Who was hurt?" asked and answered (Joe Smith).
 - BUG FIXED: the LWC was appending EVERY input to the description, so the tap answers ("Yes","Yes") and the name ("Joe Smith") polluted the Problem Statement. Fix: in send(), only append free narrative to the description; a reply to a pending question is recorded as an answer only, never added to the narrative. Problem Statement is now the reporter's story alone. (EV-0006's statement is messy test data; new ones are clean.)
+
+### Built: read questions aloud (text-to-speech) (2026-11-17)
+cqIntakeConversation now speaks CQ.AI's replies with the browser's SpeechSynthesis (voice OUT) — the mirror of the Speak mic (voice IN):
+- No mic permission needed (it's audio out), so it should work where the mic didn't — likely desktop Lightning AND iOS, not just Android.
+- Speaks each AI turn (readback + question) as it appears. Toggle in the header: "🔊 Sound on / 🔇 Sound off" (persists for the session).
+- Tap any CQ.AI bubble to replay it. Cancels on navigate-away (disconnectedCallback) and before each new utterance.
+- Caveat: browser autoplay rules may silence the very first greeting until the first user tap; every question after an interaction speaks.
+No Apex change. To test: iPhone is the interesting one — TTS may work there even though the mic didn't.

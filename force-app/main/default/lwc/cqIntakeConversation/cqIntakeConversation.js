@@ -28,12 +28,20 @@ export default class CqIntakeConversation extends LightningElement {
     micTone = 'idle';   // idle | live | good | bad
     recognition;
 
+    canSpeakOut = false;   // the browser can read questions aloud
+    speakOut = true;       // the reporter wants it to
+
     connectedCallback() {
         this.canSpeak = typeof (window.SpeechRecognition || window.webkitSpeechRecognition) === 'function';
         if (this.canSpeak) { this.micStatus = 'Tap Speak to talk instead of typing.'; this.micTone = 'idle'; }
+        this.canSpeakOut = typeof window.speechSynthesis !== 'undefined';
         startChat()
-            .then((t) => { this.pushAi(t.reply); })
+            .then((t) => { this.pushAi(t.reply); this.speak(t.reply); })
             .catch((e) => this.pushAi(this.msg(e)));
+    }
+
+    disconnectedCallback() {
+        try { if (this.canSpeakOut) { window.speechSynthesis.cancel(); } } catch (e) { /* ignore */ }
     }
 
     handleInput(e) { this.draft = e.target.value; }
@@ -71,6 +79,7 @@ export default class CqIntakeConversation extends LightningElement {
                 this.ready = t.ready === true;
                 this.draftJson = t.draftJson || null;
                 this.pushAi(t.reply);
+                this.speak(t.reply);
                 this.busy = false;
             })
             .catch((e) => { this.pushAi(this.msg(e)); this.busy = false; });
@@ -84,13 +93,37 @@ export default class CqIntakeConversation extends LightningElement {
                 this.done = true;
                 this.sentName = sent.name;
                 this.sentUrgent = sent.urgent === true;
-                this.pushAi(
-                    'Sent. This is ' + sent.name + ', now waiting for a reviewer' +
-                    (sent.urgent ? ' — flagged urgent, so it goes to the top of the queue.' : '.')
-                );
+                const note = 'Sent. This is ' + sent.name + ', now waiting for a reviewer' +
+                    (sent.urgent ? ' — flagged urgent, so it goes to the top of the queue.' : '.');
+                this.pushAi(note);
+                this.speak(note);
                 this.busy = false;
             })
             .catch((e) => { this.pushAi(this.msg(e)); this.busy = false; });
+    }
+
+    // ---- voice out ----
+
+    speak(text) {
+        if (!this.canSpeakOut || !this.speakOut || !text) { return; }
+        try {
+            window.speechSynthesis.cancel();   // don't let replies pile up
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'en-US';
+            u.rate = 1;
+            window.speechSynthesis.speak(u);
+        } catch (e) { /* ignore */ }
+    }
+
+    toggleSpeak() {
+        this.speakOut = !this.speakOut;
+        if (!this.speakOut) { try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } }
+    }
+
+    handleReplay(e) {
+        const id = Number(e.currentTarget.dataset.id);
+        const m = this.messages.find((x) => x.id === id);
+        if (m && m.isAi) { this.speak(m.text); }
     }
 
     // ---- voice ----
@@ -180,6 +213,8 @@ export default class CqIntakeConversation extends LightningElement {
         return 'Type what happened…';
     }
     get showMicStatus() { return this.canSpeak && this.micStatus && !this.done; }
+    get soundLabel() { return this.speakOut ? '🔊 Sound on' : '🔇 Sound off'; }
+    get soundClass() { return this.speakOut ? 'sound on' : 'sound'; }
     get micStatusClass() { return 'micstatus ' + this.micTone; }
     get micClass() { return this.listening ? 'mic listening' : 'mic'; }
     get micLabel() { return this.listening ? 'Stop' : 'Speak'; }
