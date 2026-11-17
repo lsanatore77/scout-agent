@@ -205,3 +205,20 @@ The panel already shows a ❓ "needs confirm" marker on Part and Units, but NOT 
 - Script #6 ("couple of balloons from 0901..."): read-back now shows resolved part (PTCA-1000 · CardioFlow 3.0...) and canonical lot (L26-0901). Injury/safety now ASKED with the AI's guess as a one-tap default; panel marks the unconfirmed guesses with ❓.
 - Script #3 ("cracked hubs somebody could get hurt"): Safety correctly = Yes (last night it wrongly inferred No) and flagged ❓. Title "Cracked Hubs Present Safety Risk".
 - Observation: for #3 the model also guessed Injury = Yes — a conflation of "could get hurt" (potential/safety) with "was anyone injured" (actual). Always-ask catches it (reporter taps No), so no bad data lands. Reinforces that injury/safety must be human-confirmed. Low priority: could tighten the extraction prompt so "could get hurt" maps to safety, not injury — but confirmation already protects the record.
+
+## Injury = a second axis: Safety Event + Injury (design, 2026-11-17)
+
+Lou's insight on the explosion test (5 units exploded + a person's arm injured): a serious event can create TWO records, not one. CQ's model confirms it:
+- **cqext__SQX_Safety_Event__c** (Safety Event) — top-level personnel/EHS incident.
+- **cqext__SQX_Injury__c** (Injury) — child of a Safety Event; links the injured person via cqext__SQX_Name_Of_Employee__c → compliancequest__SQX_Personnel__c. (Also links cqext__SQX_Safety_Event__c.)
+- Product side stays NC / Complaint as today. Regulatory/MDR rides on the Complaint (SQX_Complaint_Regulatory__c; SQX_Canada_Report__c for Canada MDR).
+
+So the reviewer decision is really two axes:
+- **Product outcome:** New NC / New Complaint / Add to open record / Not a QE (what the panel has).
+- **Safety outcome (when Injury = Yes):** create a Safety Event + Injury for the hurt person — IN PARALLEL with the product outcome, not instead of it.
+
+Open design questions (for the reviewer decision-actions build):
+1. When Injury = Yes, auto-propose a Safety Event + Injury alongside the product outcome?
+2. The Injury needs WHO was hurt (Personnel). Add an intake follow-up "Who was hurt?" when injury = Yes (reporter names them; reviewer maps to Personnel), or leave the person for the reviewer?
+3. Confirm Safety Event required fields before building the create action.
+Belongs in the reviewer workspace decision-actions (the deferred build), not the intake — intake already captures injury = Yes correctly.
