@@ -237,3 +237,17 @@ cqIntakeConversation now speaks CQ.AI's replies with the browser's SpeechSynthes
 - Tap any CQ.AI bubble to replay it. Cancels on navigate-away (disconnectedCallback) and before each new utterance.
 - Caveat: browser autoplay rules may silence the very first greeting until the first user tap; every question after an interaction speaks.
 No Apex change. To test: iPhone is the interesting one — TTS may work there even though the mic didn't.
+
+## Read-aloud (text-to-speech) in the Salesforce mobile app — status & options (2026-11-17)
+Finding: the in-app component shows "Voice n/a" because window.speechSynthesis is undefined in the Salesforce Android app. The mic (SpeechRecognition) works; the speaker (SpeechSynthesis) does not. Added a globalThis/bare-global fallback + an on-screen diagnostic probe to confirm whether it's sandbox-hidden or genuinely absent (awaiting Lou's screenshot of the diag line).
+
+Two outcomes:
+- If the fallback reaches it (sandbox was only hiding window.X): cheap win, done.
+- If genuinely absent (Android System WebView has no SpeechSynthesis — a known Chromium WebView limitation): NO config/code tweak fixes it in-app.
+
+LARGER PROJECT (only if genuinely absent): server-side TTS.
+- Question text -> cloud TTS (Amazon Polly / Google Cloud TTS / Azure) via Apex callout.
+- Needs: Named Credential + External Credential (API key/secret), Apex HTTP callout, return audio (mp3/base64), play via HTML5 <audio> (WebView supports audio playback). Optional: cache audio per distinct question to cut cost/latency.
+- Cost: per-character TTS pricing. Scope: medium build, not a tweak.
+- Alternative: accept text-only questions in-app (reader reads on screen); voice INPUT already works, which is the bigger win. Revisit TTS for iPhone (different sandbox) when available.
+TODO: remove the temporary diag line from cqIntakeConversation once resolved.
