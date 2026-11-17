@@ -29,3 +29,14 @@ What Case has that we would otherwise build: queues and assignment rules, case t
 ## Open questions
 - Can a reviewer pass an event straight to a named person, or only back to the queue?
 - Does Take Ownership and Initiate change the event's status (for example to In Review)?
+
+## CQ's own dynamic questions (looked at 16 Nov 2026, for the Device Event follow-ups)
+CQ already has a question engine we can sit our UI on:
+- **Question** (`compliancequest__SQX_Task_Question__c`) belongs to a CQ **Task** (`SQX_Task__c`, Task Type e.g. Decision Tree, PHR). Record types Dynamic Question, Group Question, Simple Question. Answer types: radio options, picklist, text, date, datetime, number, custom component. Has Guide (help text) and Parent Question (groups).
+- **Answer Option** (`SQX_Answer_Option__c`): the choices. Each has **Next Question** (the branch: which question this answer leads to) and **Actionable** (the answer makes it a complaint).
+- **Answer Option Attribute** (`SQX_Answer_Option_Attribute__c`): what an answer means: **Reportable**, **Regulatory Body** (FDA, EMA, Health Canada, PMDA, TGA, Brazil), **Report Name** (US 30-Day MDR, EU 2/10/15/30-Day MIR, CA MDPR, AU MDIR...), **Report Type**, **Due In Days**, Country; it can also create tasks (assignee, job function).
+- Answers are recorded as **Script Execution** (linked to Complaint, Case or Complaint Task; Actionable; Non Actionable Reason) with **Script Responses** (question, answer option, response, sequence, comment), and linked to complaints by **Complaint Script Execution Link**. Decision Trees have their own Decision Tree and Decision Tree Answer records on the complaint.
+- Dev has one example, Task "FDA" (Decision Tree, 3 dynamic questions): death or serious injury? Yes = reportable, US 30-Day MDR, 30 days; No -> malfunction? No = not reportable; Yes -> likely to cause death or serious injury if it recurs? Yes = reportable 30-Day MDR; No = not reportable.
+
+Direction (not decided): the Device Event questions come from CQ question sets (tasks) instead of our Event Questions; our intake shows the follow-ups inline as you answer (CQ shows one question at a time); reportability, report name and due days come from CQ's answer attributes, not from CQ.AI. Answers saved as a Script Execution and linked to the complaint when the event becomes one.
+To check before building: how CQ runs Decision Trees on a complaint (Decision Tree and DT Answer fields, and what creates the regulatory report); whether a Script Execution can exist before the complaint does; Task Type values for intake scripts.
