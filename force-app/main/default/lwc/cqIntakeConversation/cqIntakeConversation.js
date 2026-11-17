@@ -78,8 +78,9 @@ export default class CqIntakeConversation extends LightningElement {
             this.answers = this.answers
                 .filter((a) => a.questionId !== this.pendingQuestionId)
                 .concat([{ questionId: this.pendingQuestionId, answer: said }]);
-            // The lot/part prompt's answer is also more description, so the part/lot can resolve.
-            if (this.pendingFeedsDescription) {
+            // The lot/part prompt's answer is also more description, so the part/lot can resolve —
+            // but a "no / don't know" shouldn't get appended to the reporter's narrative.
+            if (this.pendingFeedsDescription && !this.isNegative(said)) {
                 this.description = this.description ? this.description + ' ' + said : said;
             }
         } else {
@@ -229,6 +230,15 @@ export default class CqIntakeConversation extends LightningElement {
     pushAi(text) { if (text) { this.messages = this.messages.concat([{ id: ++this.seq, who: 'ai', text, isAi: true }]); } }
     pushMe(text) { this.messages = this.messages.concat([{ id: ++this.seq, who: 'me', text, isAi: false }]); }
     msg(e) { return (e && e.body && e.body.message) ? e.body.message : 'Something went wrong. Try again.'; }
+
+    // A "no / none / don't know" answer to the lot prompt: record it, but keep it out of the narrative.
+    isNegative(s) {
+        const n = (s || '').toLowerCase().replace(/[^a-z ]+/g, ' ').replace(/\s+/g, ' ').trim();
+        if (!n) { return false; }
+        const exact = ['no', 'none', 'nope', 'na', 'nan', 'unknown', 'dont know', 'do not know', 'not sure', 'no idea', 'dunno', 'no lot', 'no number', 'dont have one', 'dont have it'];
+        if (exact.indexOf(n) !== -1) { return true; }
+        return /\b(dont know|not sure|no idea|dont have|dunno|unknown)\b/.test(n);
+    }
 
     get hasChoices() { return this.choices.length > 0 && !this.done; }
     get hasUnderstood() { return this.understood.length > 0; }
