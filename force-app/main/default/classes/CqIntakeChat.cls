@@ -33,6 +33,7 @@ public with sharing class CqIntakeChat {
         @AuraEnabled public String askQuestion;
         @AuraEnabled public String askSuggested;    // the AI's guess for the pending question, if any
         @AuraEnabled public Boolean askFeedsDescription = false;   // the lot/part prompt: its answer is extra description
+        @AuraEnabled public String askAudio;    // base64 PCM WAV of the asked question, read aloud on the device
         @AuraEnabled public List<String> choices = new List<String>();
         @AuraEnabled public List<Field> understood = new List<Field>();
         @AuraEnabled public List<String> stillNeeded = new List<String>();
@@ -130,7 +131,7 @@ public with sharing class CqIntakeChat {
         // The next gap: required questions not yet answered. Safety/injury always count as a gap
         // until the reporter answers them, even when the AI produced a guess.
         List<Event_Question__c> active = [
-            SELECT Id, Order__c, Question__c, Answer_Type__c, Choices__c, Role__c, Help_Text__c, Required__c
+            SELECT Id, Order__c, Question__c, Answer_Type__c, Choices__c, Role__c, Help_Text__c, Required__c, Audio_Wav_Base64__c
             FROM Event_Question__c WHERE Active__c = true WITH USER_MODE ORDER BY Order__c
         ];
         Id injuryQId, whereQId;
@@ -178,6 +179,7 @@ public with sharing class CqIntakeChat {
             t.askQuestion = nextGap.Question__c;
             t.askSuggested = nextGuess;
             t.askFeedsDescription = (nextGap.Role__c == 'Lot Or Part');
+            t.askAudio = nextGap.Audio_Wav_Base64__c;   // the clip the device reads aloud for this prompt
             t.choices = choicesFor(nextGap);
             String tail = String.isNotBlank(nextGuess)
                 ? ' (From what you said I’d put ' + nextGuess + ' — tap to confirm or change.)'

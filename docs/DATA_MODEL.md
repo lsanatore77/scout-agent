@@ -170,6 +170,8 @@ The Event Question object holds the quick questions a company asks on Report a P
 |---|---|---|---|---|
 | `Active__c` | Active | Checkbox |  | Only active questions are asked. |
 | `Answer_Type__c` | Answer Type | Picklist | Yes or No, Choice, Text, Number, Date | How the question is answered. |
+| `Audio_Source_Text__c` | Audio Source Text | Text | 255 chars | The exact wording the stored audio clip speaks, so a reworded question whose clip is now stale can be detected and regenerated. |
+| `Audio_Wav_Base64__c` | Audio WAV (base64) | LongTextArea | 131072 chars | Base64 of this question's read-aloud clip, stored as a PCM WAV. Played in the intake chat through the Web Audio API because the Salesforce mobile WebView blocks the HTML audio element. Populated from pre-generated TTS. |
 | `Choices__c` | Choices | Text | 255 chars | For Choice: the choices, separated by semicolons, in order. |
 | `Help_Text__c` | Help Text | Text | 255 chars | A short line shown under the question. |
 | `Order__c` | Order | Number | 4,0 | Where the question appears on Report a Problem, lowest first. |

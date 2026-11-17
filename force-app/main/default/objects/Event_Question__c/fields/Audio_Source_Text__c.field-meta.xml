@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Audio_Source_Text__c</fullName>
+    <label>Audio Source Text</label>
+    <description>The exact wording the stored audio clip speaks, so a reworded question whose clip is now stale can be detected and regenerated.</description>
+    <inlineHelpText>The text the current audio clip says; if it no longer matches the question, regenerate the clip.</inlineHelpText>
+    <type>Text</type>
+    <length>255</length>
+</CustomField>

@@ -14,6 +14,8 @@
     <fieldPermissions><editable>true</editable><field>Event_Question__c.Help_Text__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Event_Question__c.Required__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Event_Question__c.Active__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Audio_Wav_Base64__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>Event_Question__c.Audio_Source_Text__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Quality_Event__c.Units_Affected__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Quality_Event__c.Event_Type__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Quality_Event__c.Urgent__c</field><readable>true</readable></fieldPermissions>

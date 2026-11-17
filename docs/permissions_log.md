@@ -130,3 +130,6 @@ Newest first.
 - **CqTriageNext**: now creates draft Dispositions at Complete Triage and changes the NC owner from the queue to the person completing triage. Set: Quality.
 - **Approvals (planned)**: approving or rejecting in our screens edits CQ Approval Steps and closes CQ Approvals. Set: Approvals.
 - **CqEventLots** and **CqEventParts** (new, 16 Nov 2026, Report a Problem): Apex access; Part and Lot Info Read (lots for the chosen part; Suggested Parts and part search); Quality Event, Nonconformance and Complaint Read for the Part field (Suggested Parts = parts most recently used on those). Queries run in user mode. New component cqPartPicker (not exposed) replaces lightning-record-picker on both tabs. Set: Quality.
+
+### 17 Nov 2026
+- **Intake read-aloud (audio)**: two new Event_Question fields — `Audio_Wav_Base64__c` (Long Text, base64 PCM WAV clip) and `Audio_Source_Text__c` (the text the clip speaks, for staleness). Read + Edit granted on both in **CQ.AI Quality** so the intake Apex (user mode) can return the clip and admins can populate/edit it. Clips play in the chat via the Web Audio API (the Salesforce mobile WebView blocks the HTML audio element + MP3/WAV file decoders).
