@@ -1,0 +1,64 @@
+<template>
+    <div class="wrap">
+        <template if:true={error}><div class="err">{error}</div></template>
+
+        <template if:true={hasReview}>
+            <div class="cols">
+                <!-- LEFT: the problem -->
+                <div class="card">
+                    <div class="cardhd">The Problem &middot; reported by {review.reportedBy}</div>
+                    <p class="stmt">{review.problem}</p>
+                    <div class="grid">
+                        <div class="f"><span class="k">Where</span><span class="v">{review.whereFound}</span></div>
+                        <div class="f"><span class="k">Product</span><span class="v">{review.partLine}</span></div>
+                        <div class="f"><span class="k">Lot</span><span class="v">{review.lot}</span></div>
+                        <div class="f"><span class="k">Units</span><span class="v">{review.units}</span></div>
+                        <div class="f"><span class="k">Urgent</span>
+                            <template if:true={review.urgent}><span class="v red">Yes</span></template>
+                            <template if:false={review.urgent}><span class="v">No</span></template>
+                        </div>
+                    </div>
+                    <div class="qa">
+                        <template for:each={review.answers} for:item="a">
+                            <div key={a.question} class="qarow"><span class="qk">{a.question}</span><span class="qv">{a.answer}</span></div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- RIGHT: CQ.AI suggests -->
+                <div class="ai">
+                    <div class="aihd">&#10022; CQ.AI Suggests: {review.suggestion.becomes}</div>
+                    <ul class="reasons">
+                        <template for:each={review.reasons} for:item="why">
+                            <li key={why}>{why}</li>
+                        </template>
+                    </ul>
+
+                    <div class="sub">Open Records on This Part</div>
+                    <template if:true={review.hasOpen}>
+                        <template for:each={review.openOnPart} for:item="o">
+                            <div key={o.id} class="rel"><b>{o.name}</b> &middot; {o.title} <span class="muted">({o.status} &middot; {o.note})</span></div>
+                        </template>
+                    </template>
+                    <template if:false={review.hasOpen}><div class="muted">None open on this part.</div></template>
+
+                    <div class="sub">Similar Events</div>
+                    <template if:true={review.hasSimilar}>
+                        <template for:each={review.similarEvents} for:item="s">
+                            <div key={s.id} class="rel"><b>{s.name}</b> &middot; {s.title} <span class="muted">({s.status})</span></div>
+                        </template>
+                    </template>
+                    <template if:false={review.hasSimilar}><div class="muted">None. Nothing reported on this part before.</div></template>
+                </div>
+            </div>
+
+            <div class="becomes">What should this event become?</div>
+            <div class="choices">
+                <template for:each={review.choices} for:item="c">
+                    <button key={c.key} class={c.cls} disabled>{c.label} <span class="cmark">{c.mark}</span></button>
+                </template>
+            </div>
+            <p class="note">Confirming a choice (create the NC or complaint, add to a record, or close it) is the next build. This panel is the review, read-only for now.</p>
+        </template>
+    </div>
+</template>

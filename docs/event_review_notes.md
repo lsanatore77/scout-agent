@@ -130,3 +130,18 @@ Lou: intake is where we take AI out for a spin. CQ is good at making it work, no
 - STILL TODO: review-time lot lookup in the LWC (show completed lot / candidate pick / not-found) using CqEventLotLink.resolve; then voice; chat styling; permissions.
 
 **BUILD: review-time lot lookup in the LWC (16 Nov).** cqEventIntakeChat now calls CqEventLotLink.resolve at review (and on lot edit): unique match -> shows "Lot {lot} -> {part} · linked from the lot" and fills part + completes the lot; several -> candidate buttons (pick lot -> sets part); none -> part picker + "that lot isn't in the system, reviewer will confirm". Same resolver the trigger uses, so reporter sees the link before saving; trigger is the backstop. Resources PATCHed (js 0RdW4000000b4KnKAI, html ...b4O1, css ...b4Pd).
+
+## Reviewer Event Review panel — built (from mock_events_v5)
+
+Built the heart of v5 first: the open-review panel, droppable on a Quality Event record page. No ownership model or new fields needed yet.
+
+**Apex `CqEventReview`** (01pW4000003UjZ3IAK) + `CqEventReviewTest` (01pW4000003UhSSIA0, 2 tests pass).
+`@AuraEnabled(cacheable=true) getReview(Id eventId)` → Review{problem card fields, answers, suggestion{becomes, reasons}, openOnPart, similarEvents}. All queries WITH USER_MODE.
+- suggest(): becomes = 'New Complaint' if Where Found == 'At a Customer', else 'New Nonconformance'; reasons drawn from Where/Product Affected/Safety/Injury.
+- openNcs(): open NCs on the same part (notes same-part vs same-part-same-lot).
+- similar(): other non-closed Quality Events on the same part.
+
+**LWC `cqEventReviewPanel`** (bundle 0RbW4000000SqzlKAC; js 0RdW4000000b4ZJKAY, html 0RdW4000000b4avKAA, css 0RdW4000000b4awKAA, js-meta 0RdW4000000b4cXKAQ). masterLabel "CQ.AI Event Review". Targets lightning__RecordPage [Quality_Event__c] + lightning__AppPage.
+Two columns: Problem card left (statement, Where/Product/Lot/Units/Urgent, reporter's answers) · CQ.AI Suggests right (becomes + reasons, Open Records on This Part, Similar Events). Below: the four choice buttons (New Nonconformance ✦ / New Complaint / Add to an Open Record / Not a Quality Issue) with the AI-suggested one marked. Buttons are disabled — read-only for now.
+
+**Deferred (the hard part):** the decision actions — confirming a choice actually creates the NC/Complaint, adds to an open record, or closes the event — and the queue/tabs/Take-Ownership wrapper from v5.
