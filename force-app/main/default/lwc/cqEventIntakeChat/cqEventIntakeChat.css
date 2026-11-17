@@ -23,6 +23,7 @@
 .inp { box-sizing: border-box; width: 100%; min-height: 2.5rem; padding: 0.5rem 0.625rem; border-radius: 0.375rem; border: 1px solid #c4cad2; font: inherit; font-size: 0.9375rem; }
 .picked { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.625rem; border-radius: 0.375rem; border: 1px solid #dde1e6; background: #fafbfc; font-weight: 600; }
 .src { margin: 0; font-size: 0.75rem; color: #5b6470; }
+.resolved { padding: 0.5rem 0.75rem; border-radius: 0.5rem; background: #eef4fe; border: 1px solid #cfe0fb; color: #1a4a8a; font-size: 0.8125rem; line-height: 1.4; }
 .link { border: none; background: transparent; color: #1d5fd1; font: inherit; font-weight: 600; cursor: pointer; margin-left: auto; }
 
 .qq { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid #f0f0f0; }

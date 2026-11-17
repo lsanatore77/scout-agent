@@ -7,7 +7,6 @@
 
         <template if:true={error}><div class="err">{error}</div></template>
 
-        <!-- DESCRIBE -->
         <template if:true={isDescribe}>
             <div class="body">
                 <h2 class="q">What happened?</h2>
@@ -19,13 +18,12 @@
             <div class="ft">
                 <span class="sp"></span>
                 <button class="btn primary" disabled={analyzeDisabled} onclick={handleAnalyze}>
-                    <template if:true={busy}>Reading…</template>
+                    <template if:true={busy}>Reading&hellip;</template>
                     <template if:false={busy}>Continue</template>
                 </button>
             </div>
         </template>
 
-        <!-- REVIEW -->
         <template if:true={isReview}>
             <div class="body">
                 <div class="said"><span class="said-lab">What you said</span>{saidText}</div>
@@ -38,19 +36,37 @@
                 </div>
 
                 <div class="fld">
+                    <label class="lab">Lot</label>
+                    <input class="inp" type="text" value={lot} onchange={handleLot} />
+                </div>
+
+                <template if:true={lotOne}>
+                    <div class="resolved">Lot <b>{lot}</b> &rarr; <b>{partLabel}</b> &middot; linked from the lot</div>
+                </template>
+                <template if:true={lotMany}>
+                    <p class="src">That lot matches a few — pick the right one:</p>
+                    <div class="opts">
+                        <template for:each={lotCands} for:item="c">
+                            <button key={c.lotName} class="opt" data-lot={c.lotName} onclick={handlePickCand}>{c.label}</button>
+                        </template>
+                    </div>
+                </template>
+
+                <div class="fld">
                     <label class="lab">Part</label>
                     <template if:true={showPicker}>
                         <c-cq-part-picker onchange={handlePartChange}></c-cq-part-picker>
-                        <template if:true={partRaw}><p class="src">CQ.AI heard "{partRaw}" — pick the matching part.</p></template>
+                        <template if:true={lotNone}><p class="src">That lot isn't in the system — the reviewer will confirm the part.</p></template>
+                        <template if:true={partRaw}><p class="src">CQ.AI heard "{partRaw}".</p></template>
                     </template>
                     <template if:false={showPicker}>
                         <div class="picked"><span>{partLabel}</span><button class="link" onclick={changePart}>Change</button></div>
                     </template>
                 </div>
 
-                <div class="two">
-                    <div class="fld"><label class="lab">Lot</label><input class="inp" type="text" value={lot} onchange={handleLot} /></div>
-                    <div class="fld"><label class="lab">Units Affected</label><input class="inp" type="number" value={units} onchange={handleUnits} /></div>
+                <div class="fld">
+                    <label class="lab">Units Affected</label>
+                    <input class="inp" type="number" value={units} onchange={handleUnits} />
                 </div>
                 <template if:true={defect}><p class="src">Defect CQ.AI read: {defect}</p></template>
 
@@ -80,19 +96,18 @@
                 <template if:true={hasMissing}><span class="blocker">{missingLabel}</span></template>
                 <span class="sp"></span>
                 <button class="btn primary" disabled={submitDisabled} onclick={handleSubmit}>
-                    <template if:true={busy}>Sending…</template>
+                    <template if:true={busy}>Sending&hellip;</template>
                     <template if:false={busy}>Send Report</template>
                 </button>
             </div>
         </template>
 
-        <!-- DONE -->
         <template if:true={isDone}>
             <div class="body done">
-                <div class="ok">✓</div>
+                <div class="ok">&check;</div>
                 <h2 class="q">Report sent</h2>
                 <p class="p"><b>{sent.name}</b> is now waiting for review.</p>
-                <template if:true={sent.urgent}><div class="urgent">Marked Urgent — the reviewer is alerted.</div></template>
+                <template if:true={sent.urgent}><div class="urgent">Marked Urgent &mdash; the reviewer is alerted.</div></template>
                 <button class="btn primary" onclick={handleRestart}>Report Another</button>
             </div>
         </template>
