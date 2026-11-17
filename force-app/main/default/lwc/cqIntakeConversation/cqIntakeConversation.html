@@ -11,7 +11,7 @@
         <template if:true={isCompose}>
             <p class="lead"><b>Tell me what happened.</b> Describe the problem in your own words &mdash; what went wrong, and which product or lot.</p>
             <div class={bigboxClass}>
-                <textarea rows="6" placeholder="Start typing, or tap Speak and talk&hellip;"
+                <textarea class="story" rows="6" placeholder="Start typing, or tap Speak and talk&hellip;"
                     value={story} oninput={handleStoryInput}></textarea>
                 <template if:true={showStoryMicStatus}>
                     <div class="micstatus-in"><span class="pulse"></span>{micStatus}</div>
@@ -61,7 +61,7 @@
             <!-- answer a text question, or add a later detail; voice only when there are no chips -->
             <template if:false={done}>
                 <div class="composer">
-                    <textarea class="box" rows="1" placeholder={inputPlaceholder}
+                    <textarea class="box draftbox" rows="1" placeholder={inputPlaceholder}
                         value={draft} oninput={handleInput} onkeydown={handleKey} disabled={inputDisabled}></textarea>
                     <template if:true={showMic}>
                         <button class={micClass} onclick={micChat} disabled={inputDisabled} title={micLabel}>{micLabel}</button>

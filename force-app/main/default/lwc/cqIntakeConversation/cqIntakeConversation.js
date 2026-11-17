@@ -70,7 +70,14 @@ export default class CqIntakeConversation extends LightningElement {
     // ---- compose stage ----
     handleStoryInput(e) { this.story = e.target.value; }
 
-    clearStory() { this.stopListening(); this.story = ''; }
+    clearStory() { this.stopListening(); this.story = ''; this.reflect('story'); }
+
+    // LWC does not reliably push a programmatic value change into a rendered <textarea>,
+    // so when dictation (or clear) changes the text, set the element's value directly too.
+    reflect(which) {
+        const ta = this.template.querySelector(which === 'story' ? 'textarea.story' : 'textarea.draftbox');
+        if (ta) { ta.value = (which === 'story' ? this.story : this.draft) || ''; }
+    }
 
     submitStory() {
         const s = (this.story || '').trim();
@@ -100,6 +107,7 @@ export default class CqIntakeConversation extends LightningElement {
         this.ensureAudio();
         this.pushMe(said);
         this.draft = '';
+        this.reflect('draft');
         if (this.pendingQuestionId) {
             // Answering a specific question: record the answer, keep it out of the narrative.
             this.answers = this.answers
@@ -282,6 +290,7 @@ export default class CqIntakeConversation extends LightningElement {
             }
             const text = (finalText + ' ' + interim).trim();
             if (target === 'story') { this.story = text; } else { this.draft = text; }
+            this.reflect(target);
             this.setMic('live', interim.trim() ? ('Hearing: “' + interim.trim() + '”') : 'Listening…');
         };
         this.recognition.onerror = (ev) => { this.listening = false; this.setMic('bad', this.micError(ev && ev.error)); };
