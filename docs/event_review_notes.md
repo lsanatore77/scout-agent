@@ -57,3 +57,5 @@ Lou: intake is where we take AI out for a spin. CQ is good at making it work, no
 - Our own pattern to copy: Controlled Document Agent and Scout Checklist (suggest each value, accept / edit / clear, save after one confirmation).
 
 **To test before deciding:** Extract Fields on Quality Event custom fields; CQ 5W2H template on the NC-000162 description; Waiver - Get Similar Records (ours) to see if it calls CQ Similarity.
+
+**Voice intake mockup (16 Nov):** v1 chosen (scratchpad mock_voice_v1). Three phone screens: Tap and Speak (big mic, live words, Type Instead), From What You Said (each answer with the words it came from, ✎ edit, × clear), Answer What Is Missing (only unanswered required questions, Device Event switch, Good to Know note). Lou: the voice screen is "awesome". v2 (styled like the document agent's review card) was rejected as too heavy for a phone. Open: whether to add a small "looks like EV-xxxx" note on screen 3.
