@@ -182,4 +182,4 @@ Lou tested on a real phone: tapped the Speak button in cqIntakeConversation insi
 So the mobile app's webview DOES pass the microphone through to the Web Speech API — the iframe restriction that blocks the Speak button on desktop Lightning does NOT apply in the mobile app. This is the opposite of the cautious prediction; mobile voice via our own Speak button is viable, no speech-to-text service needed as a fallback (at least on the device/OS Lou tested).
 
 Net: the mobile-first direction is proven. Desktop keeps the suggestions form; mobile gets the conversational chat with working voice. 
-TODO: note which phone OS Lou tested (iOS vs Android) to know coverage; test the other platform before relying on it broadly.
+Confirmed on: **Android** (webview passes the mic through with audio permission). **iOS: untested** — Apple's WKWebView has historically not supported the Web Speech API, so test on an iPhone before relying on voice for iOS users; if it fails there, add a fallback for iPhone only (e.g. native keyboard dictation into the text box), no rebuild needed.
