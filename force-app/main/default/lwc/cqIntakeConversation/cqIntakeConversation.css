@@ -40,3 +40,13 @@
 .go:disabled { opacity: 0.6; cursor: default; }
 .mic { min-height: 2.5rem; padding: 0 0.75rem; border-radius: 0.625rem; border: 1px solid #c4cad2; background: #fff; font: inherit; font-weight: 600; color: #4a2fc0; cursor: pointer; }
 .mic.listening { background: #ffe9e6; border-color: #f3c7c2; color: #ba0517; }
+
+.micstatus { display: flex; align-items: center; gap: 0.4375rem; font-size: 0.8125rem; padding: 0.375rem 0.5rem; border-radius: 0.5rem; }
+.micstatus .live-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: currentColor; flex: none; }
+.micstatus.idle { color: #5b6470; background: #f4f6f8; }
+.micstatus.idle .live-dot { opacity: 0.4; }
+.micstatus.live { color: #ba0517; background: #fff1ef; }
+.micstatus.live .live-dot { animation: pulse 1s ease-in-out infinite; }
+.micstatus.good { color: #1a7f45; background: #effaf2; }
+.micstatus.bad { color: #8a4b00; background: #fff3e6; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }

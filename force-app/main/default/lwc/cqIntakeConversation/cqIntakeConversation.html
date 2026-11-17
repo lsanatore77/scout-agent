@@ -68,6 +68,9 @@
                 </template>
                 <button class="go" onclick={handleSendClick} disabled={inputDisabled}>Send</button>
             </div>
+            <template if:true={showMicStatus}>
+                <div class={micStatusClass}><span class="live-dot"></span>{micStatus}</div>
+            </template>
         </template>
     </div>
 </template>
