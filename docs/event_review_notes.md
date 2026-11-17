@@ -200,3 +200,8 @@ The panel already shows a ❓ "needs confirm" marker on Part and Units, but NOT 
 - CONFIRMED: the conversational ASK-branch works. With too little to infer, CQ.AI asked "Where did this happen?", showed the choice chips, and listed all four required items in "Still need." Both halves (infer-and-finish AND ask-when-unsure) now proven on mobile via voice.
 - NIT: the lot displays lowercase ("l26-0803") in the read-back and the SO FAR panel. It normalizes to uppercase on save (lot-link trigger), but the live display should uppercase it too for consistency. Cheap fix in CqIntakeChat readback / the understood values.
 - Minor: "Where did this happen?" chips show 3 options (In Our Plant, At a Supplier, At a Customer) — confirm whether "Not Known" should be offered too, or is intentionally omitted.
+
+### Verified: always-ask + resolution fixes on mobile (2026-11-17 AM)
+- Script #6 ("couple of balloons from 0901..."): read-back now shows resolved part (PTCA-1000 · CardioFlow 3.0...) and canonical lot (L26-0901). Injury/safety now ASKED with the AI's guess as a one-tap default; panel marks the unconfirmed guesses with ❓.
+- Script #3 ("cracked hubs somebody could get hurt"): Safety correctly = Yes (last night it wrongly inferred No) and flagged ❓. Title "Cracked Hubs Present Safety Risk".
+- Observation: for #3 the model also guessed Injury = Yes — a conflation of "could get hurt" (potential/safety) with "was anyone injured" (actual). Always-ask catches it (reporter taps No), so no bad data lands. Reinforces that injury/safety must be human-confirmed. Low priority: could tighten the extraction prompt so "could get hurt" maps to safety, not injury — but confirmation already protects the record.
