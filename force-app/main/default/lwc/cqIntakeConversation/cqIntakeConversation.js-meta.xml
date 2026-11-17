@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>CQ.AI Report an Event</masterLabel>
+    <description>Conversational intake: the reporter describes a problem in their own words and CQ.AI asks for anything still missing, then sends it to a reviewer. Text now, voice-ready.</description>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightning__Tab</target>
+    </targets>
+</LightningComponentBundle>

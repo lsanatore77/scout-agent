@@ -1,0 +1,73 @@
+<template>
+    <div class="chat">
+        <div class="hd">
+            <span class="dot"></span>
+            <span class="title">Report an Event</span>
+            <span class="by">CQ.AI listens and fills in the form</span>
+        </div>
+
+        <div class="stream">
+            <template for:each={messages} for:item="m">
+                <div key={m.id} class={m.who} data-who={m.who}>
+                    <template if:true={m.isAi}><span class="tag">CQ.AI</span></template>
+                    <div class="bubble">{m.text}</div>
+                </div>
+            </template>
+
+            <template if:true={busy}>
+                <div class="ai"><span class="tag">CQ.AI</span><div class="bubble thinking">…</div></div>
+            </template>
+        </div>
+
+        <!-- quick replies for a choice question -->
+        <template if:true={hasChoices}>
+            <div class="chips">
+                <template for:each={choices} for:item="c">
+                    <button key={c.k} class="chip" data-value={c.value} onclick={handleChoice}>{c.value}</button>
+                </template>
+            </div>
+        </template>
+
+        <!-- what CQ.AI has understood so far -->
+        <template if:true={hasUnderstood}>
+            <div class="panel">
+                <div class="panelhd">So far CQ.AI has</div>
+                <div class="facts">
+                    <template for:each={understood} for:item="f">
+                        <span key={f.k} class="fact">
+                            <span class="fk">{f.label}</span>
+                            <span class="fv">{f.value}</span>
+                            <template if:true={f.needsConfirm}><span class="chk">?</span></template>
+                        </span>
+                    </template>
+                </div>
+                <template if:true={hasStillNeeded}>
+                    <div class="need">Still need:
+                        <template for:each={stillNeeded} for:item="s">
+                            <span key={s.k} class="needit">{s.text}</span>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- submit when ready -->
+        <template if:true={showSubmit}>
+            <div class="submitrow">
+                <button class="submit" onclick={handleSubmit} disabled={busy}>Send to a Reviewer</button>
+            </div>
+        </template>
+
+        <!-- input -->
+        <template if:false={done}>
+            <div class="composer">
+                <textarea class="box" rows="1" placeholder="Type what happened…"
+                    value={draft} oninput={handleInput} onkeydown={handleKey} disabled={inputDisabled}></textarea>
+                <template if:true={canSpeak}>
+                    <button class={micClass} onclick={handleMic} disabled={inputDisabled} title={micLabel}>{micLabel}</button>
+                </template>
+                <button class="go" onclick={handleSendClick} disabled={inputDisabled}>Send</button>
+            </div>
+        </template>
+    </div>
+</template>

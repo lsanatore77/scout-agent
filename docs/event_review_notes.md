@@ -145,3 +145,17 @@ Built the heart of v5 first: the open-review panel, droppable on a Quality Event
 Two columns: Problem card left (statement, Where/Product/Lot/Units/Urgent, reporter's answers) · CQ.AI Suggests right (becomes + reasons, Open Records on This Part, Similar Events). Below: the four choice buttons (New Nonconformance ✦ / New Complaint / Add to an Open Record / Not a Quality Issue) with the AI-suggested one marked. Buttons are disabled — read-only for now.
 
 **Deferred (the hard part):** the decision actions — confirming a choice actually creates the NC/Complaint, adds to an open record, or closes the event — and the queue/tabs/Take-Ownership wrapper from v5.
+
+## Conversational intake — started (new component, text now / voice-ready)
+
+Lou's clarification: this is the INTAKE chat, not the reviewer. The reporter describes a problem in their own words; CQ.AI reads it, says what it understood, and asks only for what's still missing — a real back-and-forth, not the suggestions form. Text for now; ideally the reporter can *speak* it. Confirmed: a new component, separate from cqEventIntakeChat (the describe→review→suggestions flow).
+
+**Apex `CqIntakeChat`** (01pW4000003UjlxIAC) + `CqIntakeChatTest` (01pW4000003UjnZIAS, 4 tests pass). Stateless turn engine — the LWC holds the conversation, sends the running description + direct answers each turn.
+- `start()` → opening prompt + reporter name.
+- `respond(String stateJson)` where stateJson = {description, answers:[{questionId, answer}]}. Each turn: re-reads the whole description via CqEventExtract (the proven CQSS entity-extraction prompt template), builds a readback ("Got it — a CardioFlow balloon, lot L26-0908, slow to deflate, 8 units."), finds the first required question not yet answered (extracted or given), and asks it conversationally with its choices. When nothing required is missing → ready=true + draftJson for CqEventIntake.submitReport.
+- Reuses the understanding engine rather than duplicating it, so the chat and the form stay in sync.
+
+**LWC `cqIntakeConversation`** (bundle 0RbW4000000Sr1NKAS; js 0RdW4000000b4e9KAA, html 0RdW4000000b4flKAA, css 0RdW4000000b4hNKAQ, js-meta 0RdW4000000b4izKAA). masterLabel "CQ.AI Report an Event". Targets AppPage/HomePage/Tab.
+Chat bubbles (reporter right, CQ.AI left), quick-reply chips for choice questions, a live "So far CQ.AI has / Still need" panel, and "Send to a Reviewer" when ready. Includes a **Speak** mic button wired to the browser SpeechRecognition API — fills the input so the reporter reviews before sending; hidden when the browser doesn't support it. That's the first cut of the voice Lou wants.
+
+**Next on this:** LLM-phrased questions (instead of the question text verbatim) so it feels less like a form read aloud; confirm-the-part step when the match is fuzzy; and decide whether to auto-send on voice or always let them review. Lou testing tomorrow.
