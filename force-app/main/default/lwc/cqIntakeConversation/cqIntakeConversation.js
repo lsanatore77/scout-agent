@@ -3,8 +3,6 @@ import startChat from '@salesforce/apex/CqIntakeChat.start';
 import respond from '@salesforce/apex/CqIntakeChat.respond';
 import submitReport from '@salesforce/apex/CqEventIntake.submitReport';
 
-// TEMP: a short tone, to prove the Salesforce webview can play a stored audio clip at all.
-const TEST_TONE = 'data:audio/mpeg;base64,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';
 
 export default class CqIntakeConversation extends LightningElement {
     @track messages = [];
@@ -159,15 +157,37 @@ export default class CqIntakeConversation extends LightningElement {
         if (m && m.isAi) { this.speak(m.text); }
     }
 
-    // TEMP: prove the webview can play a stored audio clip.
+    // TEMP: prove the webview can play a stored audio clip. Builds a real WAV
+    // in-browser (no network, no library) and plays it through the same <audio>
+    // decoder a stored clip would use. Mirrors the Option C path exactly.
+    buildToneWavUri() {
+        const rate = 8000;
+        const secs = 0.3;
+        const freq = 660;
+        const n = Math.floor(rate * secs);
+        const dataLen = n * 2;
+        const buf = new ArrayBuffer(44 + dataLen);
+        const dv = new DataView(buf);
+        const wr = (off, str) => { for (let i = 0; i < str.length; i++) { dv.setUint8(off + i, str.charCodeAt(i)); } };
+        wr(0, 'RIFF'); dv.setUint32(4, 36 + dataLen, true); wr(8, 'WAVE');
+        wr(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+        dv.setUint32(24, rate, true); dv.setUint32(28, rate * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+        wr(36, 'data'); dv.setUint32(40, dataLen, true);
+        for (let i = 0; i < n; i++) { dv.setInt16(44 + i * 2, Math.sin(2 * Math.PI * freq * i / rate) * 0.5 * 32767, true); }
+        const bytes = new Uint8Array(buf);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) { bin += String.fromCharCode(bytes[i]); }
+        return 'data:audio/wav;base64,' + btoa(bin);
+    }
+
     handleTestSound() {
         this.testSoundMsg = 'Playing a test tone…';
         try {
-            const a = new Audio(TEST_TONE);
+            const a = new Audio(this.buildToneWavUri());
             a.onended = () => { this.testSoundMsg = 'Tone finished — if you heard it, stored audio works here.'; };
-            a.onerror = () => { this.testSoundMsg = 'Could not play the tone (audio element error).'; };
+            a.onerror = () => { this.testSoundMsg = 'Could not play the WAV (audio element error — codec not supported).'; };
             const p = a.play();
-            if (p && p.catch) { p.catch((err) => { this.testSoundMsg = 'Playback was blocked: ' + (err && err.name ? err.name : 'unknown') + '.'; }); }
+            if (p && p.catch) { p.catch((err) => { this.testSoundMsg = 'Playback failed: ' + (err && err.name ? err.name : 'unknown') + '.'; }); }
         } catch (e) {
             this.testSoundMsg = 'No audio support: ' + (e && e.message ? e.message : 'unknown') + '.';
         }

@@ -266,3 +266,8 @@ Final intake question set locked (9 total): opener + 4 required (Where/Product/I
 - CqEventExtract skips 'Lot Or Part' role so it isn't treated as an entity.
 - 9 Apex tests pass (added asksCustomerWhenFoundAtACustomer, doesNotAskCustomerWhenInPlant, asksForLotWhenNoneAndFeedsDescription).
 This locks the question list = the audio-clip list for the audio build (deferred until these are tested).
+
+## Audio probe (Option C de-risk) — 2026-11-17
+- MP3 test tone (data URI) on Salesforce Android app WebView → **NotSupportedError**. That is a *codec/decode* failure, not the autoplay block (which would be NotAllowedError). So the webview can reach the `<audio>` element but will not decode MP3.
+- Pivot: WAV / PCM, which every browser decodes with no codec. Test tone is now **built in-browser** (deterministic sine → WAV bytes → base64 data URI → `new Audio()`), removing any hand-typed base64 and mirroring the real Option C path (Apex base64 → data URI → `<audio>`).
+- Next: if the WAV tone plays, Option C is viable with WAV-stored clips; build the storage model + Apex base64 return. If it also fails NotSupported, reassess (e.g. Web Audio decode, or a format probe).
