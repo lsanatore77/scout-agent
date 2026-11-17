@@ -8,7 +8,7 @@ No passwords or secrets in this file.
 
 ## Sign-in method
 - **Admins must use a passkey.** Salesforce now requires phishing-resistant MFA (a passkey) for users with admin-level rights. It reached sandboxes in June 2026 and production in July 2026. That is why the passkey options are greyed out and why login shows "Your account requires a passkey" if none is registered. Do not delete the passkey.
-- **Desktop:** password, then the passkey saved on **this Windows PC (Windows Hello)**. When creating it, choose this Windows device, not a phone or security key, so Windows can always find it.
+- **Desktop:** password, then the passkey saved on **this Windows PC (Windows Hello)**. Expect to enter the Windows PIN twice; that is normal for this org. Authenticator is not used on the desktop. When creating it, choose this Windows device, not a phone or security key, so Windows can always find it.
 - **Salesforce mobile app:** password, then approve in **Salesforce Authenticator**. Salesforce says the mobile app login does not change with the passkey rule.
 - **CLI:** `sf org open -o <alias>` uses the saved session.
 - Backup (optional): One-Time Password Authenticator, a 6-digit code in the Authenticator app.
