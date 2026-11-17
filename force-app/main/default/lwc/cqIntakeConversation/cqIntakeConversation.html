@@ -28,7 +28,29 @@
             </div>
         </template>
 
-        <!-- what CQ.AI has understood so far -->
+        <!-- input sits right under the conversation so the answer box is always in reach -->
+        <template if:false={done}>
+            <div class="composer">
+                <textarea class="box" rows="1" placeholder={inputPlaceholder}
+                    value={draft} oninput={handleInput} onkeydown={handleKey} disabled={inputDisabled}></textarea>
+                <template if:true={canSpeak}>
+                    <button class={micClass} onclick={handleMic} disabled={inputDisabled} title={micLabel}>{micLabel}</button>
+                </template>
+                <button class="go" onclick={handleSendClick} disabled={inputDisabled}>Send</button>
+            </div>
+            <template if:true={showMicStatus}>
+                <div class={micStatusClass}><span class="live-dot"></span>{micStatus}</div>
+            </template>
+        </template>
+
+        <!-- submit when ready -->
+        <template if:true={showSubmit}>
+            <div class="submitrow">
+                <button class="submit" onclick={handleSubmit} disabled={busy}>Send to a Reviewer</button>
+            </div>
+        </template>
+
+        <!-- what CQ.AI has understood so far (reference, below the action) -->
         <template if:true={hasUnderstood}>
             <div class="panel">
                 <div class="panelhd">So far CQ.AI has</div>
@@ -49,28 +71,6 @@
                     </div>
                 </template>
             </div>
-        </template>
-
-        <!-- submit when ready -->
-        <template if:true={showSubmit}>
-            <div class="submitrow">
-                <button class="submit" onclick={handleSubmit} disabled={busy}>Send to a Reviewer</button>
-            </div>
-        </template>
-
-        <!-- input -->
-        <template if:false={done}>
-            <div class="composer">
-                <textarea class="box" rows="1" placeholder="Type what happened…"
-                    value={draft} oninput={handleInput} onkeydown={handleKey} disabled={inputDisabled}></textarea>
-                <template if:true={canSpeak}>
-                    <button class={micClass} onclick={handleMic} disabled={inputDisabled} title={micLabel}>{micLabel}</button>
-                </template>
-                <button class="go" onclick={handleSendClick} disabled={inputDisabled}>Send</button>
-            </div>
-            <template if:true={showMicStatus}>
-                <div class={micStatusClass}><span class="live-dot"></span>{micStatus}</div>
-            </template>
         </template>
     </div>
 </template>

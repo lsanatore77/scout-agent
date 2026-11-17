@@ -171,6 +171,11 @@ export default class CqIntakeConversation extends LightningElement {
     get hasStillNeeded() { return this.stillNeeded.length > 0 && !this.ready; }
     get showSubmit() { return this.ready && !this.done; }
     get inputDisabled() { return this.busy || this.done; }
+    get inputPlaceholder() {
+        if (this.pendingQuestionId) { return 'Type your answer…'; }
+        if (this.ready) { return 'Add anything else, or tap Send…'; }
+        return 'Type what happened…';
+    }
     get showMicStatus() { return this.canSpeak && this.micStatus && !this.done; }
     get micStatusClass() { return 'micstatus ' + this.micTone; }
     get micClass() { return this.listening ? 'mic listening' : 'mic'; }
