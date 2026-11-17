@@ -30,18 +30,52 @@ export default class CqIntakeConversation extends LightningElement {
 
     canSpeakOut = false;   // the browser can read questions aloud
     speakOut = true;       // the reporter wants it to
+    diag = '';             // TEMP: what speech APIs this device actually exposes
+
+    // Reach the speech engine however the sandbox exposes it.
+    getSynth() {
+        try { if (typeof window !== 'undefined' && window.speechSynthesis) { return window.speechSynthesis; } } catch (e) { /* ignore */ }
+        try { if (typeof globalThis !== 'undefined' && globalThis.speechSynthesis) { return globalThis.speechSynthesis; } } catch (e) { /* ignore */ }
+        try { if (typeof speechSynthesis !== 'undefined' && speechSynthesis) { return speechSynthesis; } } catch (e) { /* ignore */ }
+        return null;
+    }
+    getUtter(text) {
+        try { if (typeof window !== 'undefined' && window.SpeechSynthesisUtterance) { return new window.SpeechSynthesisUtterance(text); } } catch (e) { /* ignore */ }
+        try { if (typeof globalThis !== 'undefined' && globalThis.SpeechSynthesisUtterance) { return new globalThis.SpeechSynthesisUtterance(text); } } catch (e) { /* ignore */ }
+        try { if (typeof SpeechSynthesisUtterance !== 'undefined') { return new SpeechSynthesisUtterance(text); } } catch (e) { /* ignore */ }
+        return null;
+    }
 
     connectedCallback() {
         this.canSpeak = typeof (window.SpeechRecognition || window.webkitSpeechRecognition) === 'function';
         if (this.canSpeak) { this.micStatus = 'Tap Speak to talk instead of typing.'; this.micTone = 'idle'; }
-        this.canSpeakOut = typeof window.speechSynthesis !== 'undefined';
+
+        const synth = this.getSynth();
+        this.canSpeakOut = !!synth && !!this.getUtter('x');
+        this.probe(synth);
+
         startChat()
             .then((t) => { this.pushAi(t.reply); this.speak(t.reply); })
             .catch((e) => this.pushAi(this.msg(e)));
     }
 
+    probe(synth) {
+        try {
+            const d = [];
+            d.push('win.ss=' + (typeof (window && window.speechSynthesis)));
+            d.push('g.ss=' + (typeof (globalThis && globalThis.speechSynthesis)));
+            d.push('win.ssu=' + (typeof (window && window.SpeechSynthesisUtterance)));
+            d.push('g.ssu=' + (typeof (globalThis && globalThis.SpeechSynthesisUtterance)));
+            let voices = 'n/a';
+            try { voices = synth && synth.getVoices ? String(synth.getVoices().length) : 'no-getVoices'; } catch (e) { voices = 'getVoices-threw'; }
+            d.push('voices=' + voices);
+            d.push('ua=' + ((navigator && navigator.userAgent) || '').slice(0, 150));
+            this.diag = d.join('  |  ');
+        } catch (e) { this.diag = 'probe failed: ' + (e && e.message); }
+    }
+
     disconnectedCallback() {
-        try { if (this.canSpeakOut) { window.speechSynthesis.cancel(); } } catch (e) { /* ignore */ }
+        try { const s = this.getSynth(); if (s) { s.cancel(); } } catch (e) { /* ignore */ }
     }
 
     handleInput(e) { this.draft = e.target.value; }
@@ -107,18 +141,21 @@ export default class CqIntakeConversation extends LightningElement {
     speak(text) {
         if (!this.canSpeakOut || !this.speakOut || !text) { return; }
         try {
-            window.speechSynthesis.cancel();   // don't let replies pile up
-            const u = new SpeechSynthesisUtterance(text);
+            const s = this.getSynth();
+            if (!s) { return; }
+            s.cancel();   // don't let replies pile up
+            const u = this.getUtter(text);
+            if (!u) { return; }
             u.lang = 'en-US';
             u.rate = 1;
-            window.speechSynthesis.speak(u);
+            s.speak(u);
         } catch (e) { /* ignore */ }
     }
 
     toggleSpeak() {
         if (!this.canSpeakOut) { return; }
         this.speakOut = !this.speakOut;
-        if (!this.speakOut) { try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } }
+        if (!this.speakOut) { try { const s = this.getSynth(); if (s) { s.cancel(); } } catch (e) { /* ignore */ } }
     }
 
     handleReplay(e) {
