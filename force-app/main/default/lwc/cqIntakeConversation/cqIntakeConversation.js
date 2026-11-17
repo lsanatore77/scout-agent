@@ -30,9 +30,9 @@ export default class CqIntakeConversation extends LightningElement {
 
     canSpeakOut = false;   // the browser can read questions aloud
     speakOut = true;       // the reporter wants it to
-    diag = '';             // TEMP: what speech APIs this device actually exposes
 
-    // Reach the speech engine however the sandbox exposes it.
+    // Reach the speech engine however the sandbox exposes it (works where the platform supports it,
+    // e.g. a real browser or iOS; the Salesforce Android app's WebView has no speech synthesis).
     getSynth() {
         try { if (typeof window !== 'undefined' && window.speechSynthesis) { return window.speechSynthesis; } } catch (e) { /* ignore */ }
         try { if (typeof globalThis !== 'undefined' && globalThis.speechSynthesis) { return globalThis.speechSynthesis; } } catch (e) { /* ignore */ }
@@ -52,26 +52,10 @@ export default class CqIntakeConversation extends LightningElement {
 
         const synth = this.getSynth();
         this.canSpeakOut = !!synth && !!this.getUtter('x');
-        this.probe(synth);
 
         startChat()
             .then((t) => { this.pushAi(t.reply); this.speak(t.reply); })
             .catch((e) => this.pushAi(this.msg(e)));
-    }
-
-    probe(synth) {
-        try {
-            const d = [];
-            d.push('win.ss=' + (typeof (window && window.speechSynthesis)));
-            d.push('g.ss=' + (typeof (globalThis && globalThis.speechSynthesis)));
-            d.push('win.ssu=' + (typeof (window && window.SpeechSynthesisUtterance)));
-            d.push('g.ssu=' + (typeof (globalThis && globalThis.SpeechSynthesisUtterance)));
-            let voices = 'n/a';
-            try { voices = synth && synth.getVoices ? String(synth.getVoices().length) : 'no-getVoices'; } catch (e) { voices = 'getVoices-threw'; }
-            d.push('voices=' + voices);
-            d.push('ua=' + ((navigator && navigator.userAgent) || '').slice(0, 150));
-            this.diag = d.join('  |  ');
-        } catch (e) { this.diag = 'probe failed: ' + (e && e.message); }
     }
 
     disconnectedCallback() {
@@ -251,12 +235,8 @@ export default class CqIntakeConversation extends LightningElement {
         return 'Type what happened…';
     }
     get showMicStatus() { return this.canSpeak && this.micStatus && !this.done; }
-    get soundLabel() {
-        if (!this.canSpeakOut) { return '🔇 Voice n/a'; }
-        return this.speakOut ? '🔊 Sound on' : '🔇 Sound off';
-    }
-    get soundClass() { return (this.canSpeakOut && this.speakOut) ? 'sound on' : 'sound'; }
-    get soundDisabled() { return !this.canSpeakOut; }
+    get soundLabel() { return this.speakOut ? '🔊 Sound on' : '🔇 Sound off'; }
+    get soundClass() { return this.speakOut ? 'sound on' : 'sound'; }
     get micStatusClass() { return 'micstatus ' + this.micTone; }
     get micClass() { return this.listening ? 'mic listening' : 'mic'; }
     get micLabel() { return this.listening ? 'Stop' : 'Speak'; }

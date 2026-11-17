@@ -251,3 +251,10 @@ LARGER PROJECT (only if genuinely absent): server-side TTS.
 - Cost: per-character TTS pricing. Scope: medium build, not a tweak.
 - Alternative: accept text-only questions in-app (reader reads on screen); voice INPUT already works, which is the bigger win. Revisit TTS for iPhone (different sandbox) when available.
 TODO: remove the temporary diag line from cqIntakeConversation once resolved.
+
+### Read-aloud: DEFINITIVE — Salesforce Android app has no TTS engine (2026-11-17)
+On-device probe (Samsung A16, SalesforceMobileSDK/14.0.0, Android):
+  win.ss=undefined | g.ss=undefined | win.ssu=undefined | g.ssu=undefined | voices=no-getVoices
+Every path (window, globalThis, bare) is undefined — SpeechSynthesis is genuinely absent from the Mobile SDK WebView, not sandbox-hidden. No code/setting fixes it in-app. Confirmed: in-app read-aloud = server-side TTS project (see options above) or nothing.
+
+DECISION: parked read-aloud. Cleaned up the component — removed the diagnostic line, and the sound toggle now only renders where the platform actually has TTS (so it's invisible in the Android app, and will appear + work automatically on a browser/iOS that supports it). getSynth/getUtter/speak retained for that case. Voice INPUT works on Android and remains the primary win. Next: 30-sec iPhone check (different engine) before any server-TTS build.

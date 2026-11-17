@@ -4,12 +4,10 @@
             <span class="dot"></span>
             <span class="title">Report an Event</span>
             <span class="by">CQ.AI listens and fills in the form</span>
-            <button class={soundClass} onclick={toggleSpeak} disabled={soundDisabled} title="Read questions aloud">{soundLabel}</button>
+            <template if:true={canSpeakOut}>
+                <button class={soundClass} onclick={toggleSpeak} title="Read questions aloud">{soundLabel}</button>
+            </template>
         </div>
-
-        <template if:true={diag}>
-            <div class="diag">{diag}</div>
-        </template>
 
         <div class="stream">
             <template for:each={messages} for:item="m">
