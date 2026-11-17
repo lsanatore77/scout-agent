@@ -116,6 +116,7 @@ export default class CqIntakeConversation extends LightningElement {
     }
 
     toggleSpeak() {
+        if (!this.canSpeakOut) { return; }
         this.speakOut = !this.speakOut;
         if (!this.speakOut) { try { window.speechSynthesis.cancel(); } catch (e) { /* ignore */ } }
     }
@@ -213,8 +214,12 @@ export default class CqIntakeConversation extends LightningElement {
         return 'Type what happened…';
     }
     get showMicStatus() { return this.canSpeak && this.micStatus && !this.done; }
-    get soundLabel() { return this.speakOut ? '🔊 Sound on' : '🔇 Sound off'; }
-    get soundClass() { return this.speakOut ? 'sound on' : 'sound'; }
+    get soundLabel() {
+        if (!this.canSpeakOut) { return '🔇 Voice n/a'; }
+        return this.speakOut ? '🔊 Sound on' : '🔇 Sound off';
+    }
+    get soundClass() { return (this.canSpeakOut && this.speakOut) ? 'sound on' : 'sound'; }
+    get soundDisabled() { return !this.canSpeakOut; }
     get micStatusClass() { return 'micstatus ' + this.micTone; }
     get micClass() { return this.listening ? 'mic listening' : 'mic'; }
     get micLabel() { return this.listening ? 'Stop' : 'Speak'; }
