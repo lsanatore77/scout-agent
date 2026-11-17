@@ -7,7 +7,12 @@
             <template if:true={canSpeakOut}>
                 <button class={soundClass} onclick={toggleSpeak} title="Read questions aloud">{soundLabel}</button>
             </template>
+            <button class="sound" onclick={handleTestSound} title="Play a test tone">🔈 Test sound</button>
         </div>
+
+        <template if:true={testSoundMsg}>
+            <div class="diag">{testSoundMsg}</div>
+        </template>
 
         <div class="stream">
             <template for:each={messages} for:item="m">
