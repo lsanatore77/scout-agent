@@ -174,3 +174,12 @@ Implications for the chat's next work:
 - Desktop refinements to the chat are no longer a priority (desktop uses the form).
 
 Status: text flow working; reviewer panel + chat deployed. Voice parked until tested on a phone.
+
+## CONFIRMED: voice works via the Speak button in the Salesforce MOBILE app (2026-11-17)
+
+Lou tested on a real phone: tapped the Speak button in cqIntakeConversation inside the Salesforce mobile app, spoke the problem, and it created **EV-0005** end to end — free speech → structured Quality Event, with the part (PTCA-1000 CardioFlow) and lot (L26-0908) linked from just "0908". 
+
+So the mobile app's webview DOES pass the microphone through to the Web Speech API — the iframe restriction that blocks the Speak button on desktop Lightning does NOT apply in the mobile app. This is the opposite of the cautious prediction; mobile voice via our own Speak button is viable, no speech-to-text service needed as a fallback (at least on the device/OS Lou tested).
+
+Net: the mobile-first direction is proven. Desktop keeps the suggestions form; mobile gets the conversational chat with working voice. 
+TODO: note which phone OS Lou tested (iOS vs Android) to know coverage; test the other platform before relying on it broadly.
