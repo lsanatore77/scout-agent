@@ -99,8 +99,10 @@ export default class CqIntakeConversation extends LightningElement {
         const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
         this.recognition = new Rec();
         this.recognition.lang = 'en-US';
-        this.recognition.interimResults = false;
+        this.recognition.interimResults = true;   // show words as they come, and catch short phrases
         this.recognition.continuous = false;
+
+        let captured = '';   // everything finalized this session
 
         this.setMic('live', 'Starting the microphone…');
 
@@ -108,15 +110,26 @@ export default class CqIntakeConversation extends LightningElement {
         this.recognition.onaudiostart = () => { this.setMic('live', 'Listening… I can hear the mic.'); };
         this.recognition.onspeechstart = () => { this.setMic('live', 'Got your voice—keep going…'); };
         this.recognition.onresult = (ev) => {
-            const said = ev.results[0][0].transcript;
-            this.draft = this.draft ? this.draft + ' ' + said : said;
-            this.setMic('good', 'Got it: “' + said + '” — check it, then hit Send.');
+            let interim = '';
+            for (let i = ev.resultIndex; i < ev.results.length; i++) {
+                const r = ev.results[i];
+                if (r.isFinal) { captured += (captured ? ' ' : '') + r[0].transcript.trim(); }
+                else { interim += r[0].transcript; }
+            }
+            if (interim.trim()) { this.setMic('live', 'Hearing: “' + interim.trim() + '”…'); }
+            if (captured.trim()) { this.setMic('good', 'Got it: “' + captured.trim() + '” — check it, then hit Send.'); }
         };
-        this.recognition.onnomatch = () => { this.setMic('bad', 'Didn’t catch any words—try again.'); };
+        this.recognition.onnomatch = () => { this.setMic('bad', 'Didn’t catch any words—tap Speak and talk clearly.'); };
         this.recognition.onerror = (ev) => { this.listening = false; this.setMic('bad', this.micError(ev && ev.error)); };
         this.recognition.onend = () => {
             this.listening = false;
-            if (this.micTone === 'live') { this.setMic('idle', 'Stopped listening. Tap Speak to try again.'); }
+            const said = captured.trim();
+            if (said) {
+                this.draft = this.draft ? this.draft + ' ' + said : said;
+                this.setMic('good', 'Added: “' + said + '” — check it, then hit Send.');
+            } else if (this.micTone !== 'bad') {
+                this.setMic('bad', 'I didn’t catch anything—tap Speak and talk clearly.');
+            }
         };
 
         try { this.recognition.start(); }
