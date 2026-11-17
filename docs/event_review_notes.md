@@ -281,3 +281,10 @@ This locks the question list = the audio-clip list for the audio build (deferred
 - **Web Audio API WORKS in the Salesforce Android app WebView.** Confirmed on a verified-fresh "v3" build: AudioContext (state: running) + an AudioBuffer of PCM samples + AudioBufferSourceNode produced an audible beep.
 - Locked-in constraint for Option C: the `<audio>` element and file decoders (MP3, WAV via data URI) are blocked, but **raw PCM → AudioBuffer → AudioBufferSourceNode** plays. So clips are stored/served as PCM (or WAV we parse in JS for the PCM payload) and played via Web Audio — never via `<audio>`.
 - Also needed: media volume up (separate from ringer on Android) and a user gesture to start/resume the AudioContext (the tap on the prompt covers this).
+
+## Audio pipeline built (placeholder clips) — 2026-11-17
+End-to-end read-aloud is wired on the Web Audio path proven earlier:
+- **Data:** Event_Question.Audio_Wav_Base64__c (base64 PCM WAV) + Audio_Source_Text__c (staleness); FLS in CQ.AI Quality; placeholder beep loaded on all 9 active questions.
+- **Apex:** CqIntakeChat.Turn.askAudio returns the asked question's clip. 9/9 tests pass.
+- **LWC:** one AudioContext unlocked on the first Send (gesture); each asking turn plays its clip via a WAV→AudioBuffer parser (scans RIFF chunks, 16-bit PCM). A "🔊 Read aloud / 🔇 Muted" toggle (default on, shown on Android too) gates playback. TTS (speechSynthesis) remains a fallback for messages with no clip (browser/iOS only). Temp test button/tone removed.
+- **Next:** generate the real neutral-voice TTS clips (one-time cloud TTS → 16-bit PCM WAV) and load them in place of the placeholder; opening/ready messages can get clips later; admin-level default toggle later.

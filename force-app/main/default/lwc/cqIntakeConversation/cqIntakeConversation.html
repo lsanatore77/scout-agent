@@ -4,15 +4,8 @@
             <span class="dot"></span>
             <span class="title">Report an Event</span>
             <span class="by">CQ.AI listens and fills in the form</span>
-            <template if:true={canSpeakOut}>
-                <button class={soundClass} onclick={toggleSpeak} title="Read questions aloud">{soundLabel}</button>
-            </template>
-            <button class="sound" onclick={handleTestSound} title="Play a test tone">🔈 Test sound v3</button>
+            <button class={readAloudClass} onclick={toggleReadAloud} title="Read each question aloud">{readAloudLabel}</button>
         </div>
-
-        <template if:true={testSoundMsg}>
-            <div class="diag">{testSoundMsg}</div>
-        </template>
 
         <div class="stream">
             <template for:each={messages} for:item="m">

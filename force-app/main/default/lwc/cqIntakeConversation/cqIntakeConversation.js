@@ -30,9 +30,10 @@ export default class CqIntakeConversation extends LightningElement {
     micTone = 'idle';   // idle | live | good | bad
     recognition;
 
-    canSpeakOut = false;   // the browser can read questions aloud
-    speakOut = true;       // the reporter wants it to
-    testSoundMsg = '';     // TEMP: result of the test-sound probe
+    canSpeakOut = false;   // the browser has speech synthesis (a TTS fallback for messages with no clip)
+    readAloud = true;      // the reporter wants prompts read aloud
+    audioCtx;              // one Web Audio context, unlocked on the first user gesture
+    clipSrc;               // the clip currently playing, so a new prompt can stop the old one
 
     // Reach the speech engine however the sandbox exposes it (works where the platform supports it,
     // e.g. a real browser or iOS; the Salesforce Android app's WebView has no speech synthesis).
@@ -73,6 +74,7 @@ export default class CqIntakeConversation extends LightningElement {
     send(text) {
         const said = (text || '').trim();
         if (!said || this.busy || this.done) { return; }
+        this.ensureAudio();   // first gesture unlocks Web Audio for the clips
         this.pushMe(said);
         this.draft = '';
         if (this.pendingQuestionId) {
@@ -106,7 +108,7 @@ export default class CqIntakeConversation extends LightningElement {
                 this.ready = t.ready === true;
                 this.draftJson = t.draftJson || null;
                 this.pushAi(t.reply);
-                this.speak(t.reply);
+                if (t.askAudio) { this.playClip(t.askAudio); } else { this.speak(t.reply); }
                 this.busy = false;
             })
             .catch((e) => { this.pushAi(this.msg(e)); this.busy = false; });
@@ -132,7 +134,7 @@ export default class CqIntakeConversation extends LightningElement {
     // ---- voice out ----
 
     speak(text) {
-        if (!this.canSpeakOut || !this.speakOut || !text) { return; }
+        if (!this.canSpeakOut || !this.readAloud || !text) { return; }
         try {
             const s = this.getSynth();
             if (!s) { return; }
@@ -145,10 +147,12 @@ export default class CqIntakeConversation extends LightningElement {
         } catch (e) { /* ignore */ }
     }
 
-    toggleSpeak() {
-        if (!this.canSpeakOut) { return; }
-        this.speakOut = !this.speakOut;
-        if (!this.speakOut) { try { const s = this.getSynth(); if (s) { s.cancel(); } } catch (e) { /* ignore */ } }
+    toggleReadAloud() {
+        this.readAloud = !this.readAloud;
+        if (!this.readAloud) {
+            try { const s = this.getSynth(); if (s) { s.cancel(); } } catch (e) { /* ignore */ }
+            if (this.clipSrc) { try { this.clipSrc.stop(); } catch (e) { /* ignore */ } }
+        }
     }
 
     handleReplay(e) {
@@ -157,41 +161,70 @@ export default class CqIntakeConversation extends LightningElement {
         if (m && m.isAi) { this.speak(m.text); }
     }
 
-    // TEMP: prove the webview can produce sound at all. The <audio> element path
-    // (data URI, MP3 and WAV) returns NotSupportedError in the Salesforce Android
-    // WebView, so this uses the Web Audio API: PCM samples written straight into an
-    // AudioBuffer and played with no file decoder. This is also the exact path a
-    // stored PCM clip would take for Option C.
-    handleTestSound() {
-        this.testSoundMsg = 'Trying Web Audio\u2026';
+    // Read-aloud playback. The Salesforce mobile WebView blocks the <audio> element and
+    // file decoders (MP3/WAV both NotSupportedError), so clips play through the Web Audio API:
+    // the stored PCM WAV is parsed here and its samples are written into an AudioBuffer.
+    // The context must be created/resumed inside a user gesture (done in send()).
+    ensureAudio() {
         try {
-            const Ctx = window.AudioContext || window.webkitAudioContext;
-            if (!Ctx) { this.testSoundMsg = 'No Web Audio in this webview (AudioContext missing).'; return; }
-            const ctx = new Ctx();
-            const play = () => {
-                const rate = ctx.sampleRate;
-                const n = Math.floor(rate * 0.4);
-                const buf = ctx.createBuffer(1, n, rate);
-                const ch = buf.getChannelData(0);
-                for (let i = 0; i < n; i++) { ch[i] = Math.sin(2 * Math.PI * 660 * i / rate) * 0.4; }
-                const src = ctx.createBufferSource();
-                src.buffer = buf;
-                src.connect(ctx.destination);
-                src.onended = () => {
-                    this.testSoundMsg = 'Web Audio finished (state: ' + ctx.state + ') \u2014 if you heard a beep, this is our path.';
-                    try { ctx.close(); } catch (e) { /* ignore */ }
-                };
-                src.start();
-                this.testSoundMsg = 'Web Audio playing\u2026 (state: ' + ctx.state + ')';
-            };
-            if (ctx.state === 'suspended' && ctx.resume) {
-                ctx.resume().then(play).catch((e) => { this.testSoundMsg = 'Web Audio resume blocked: ' + (e && e.name ? e.name : 'unknown') + '.'; });
-            } else {
-                play();
+            if (!this.audioCtx) {
+                const Ctx = window.AudioContext || window.webkitAudioContext;
+                if (Ctx) { this.audioCtx = new Ctx(); }
             }
-        } catch (e) {
-            this.testSoundMsg = 'Web Audio error: ' + (e && e.message ? e.message : 'unknown') + '.';
-        }
+            if (this.audioCtx && this.audioCtx.state === 'suspended' && this.audioCtx.resume) { this.audioCtx.resume(); }
+        } catch (e) { /* ignore */ }
+    }
+
+    playClip(b64) {
+        if (!this.readAloud || !b64 || !this.audioCtx) { return; }
+        try {
+            const buf = this.wavToBuffer(this.audioCtx, b64);
+            if (!buf) { return; }
+            if (this.clipSrc) { try { this.clipSrc.stop(); } catch (e) { /* ignore */ } }
+            const src = this.audioCtx.createBufferSource();
+            src.buffer = buf;
+            src.connect(this.audioCtx.destination);
+            src.start();
+            this.clipSrc = src;
+        } catch (e) { /* ignore */ }
+    }
+
+    // Decode a base64 PCM WAV into an AudioBuffer. Scans the RIFF chunks (so a clip with a
+    // LIST/INFO chunk still works) and reads 16-bit little-endian samples.
+    wavToBuffer(ctx, b64) {
+        try {
+            const bin = atob(b64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) { bytes[i] = bin.charCodeAt(i); }
+            const dv = new DataView(bytes.buffer);
+            if (bytes.length < 44 || dv.getUint32(0, false) !== 0x52494646) { return null; }  // 'RIFF'
+            let rate = 8000, channels = 1, bits = 16, dataOff = -1, dataLen = 0;
+            let p = 12;
+            while (p + 8 <= bytes.length) {
+                const id = dv.getUint32(p, false);
+                const size = dv.getUint32(p + 4, true);
+                const body = p + 8;
+                if (id === 0x666d7420) {          // 'fmt '
+                    channels = dv.getUint16(body + 2, true) || 1;
+                    rate = dv.getUint32(body + 4, true) || 8000;
+                    bits = dv.getUint16(body + 14, true) || 16;
+                } else if (id === 0x64617461) {   // 'data'
+                    dataOff = body; dataLen = size; break;
+                }
+                p = body + size + (size & 1);
+            }
+            if (dataOff < 0 || bits !== 16) { return null; }
+            const bytesPerSample = 2;
+            const frames = Math.floor(dataLen / (bytesPerSample * channels));
+            const buf = ctx.createBuffer(channels, frames, rate);
+            for (let ch = 0; ch < channels; ch++) {
+                const out = buf.getChannelData(ch);
+                for (let i = 0; i < frames; i++) {
+                    out[i] = dv.getInt16(dataOff + (i * channels + ch) * bytesPerSample, true) / 32768;
+                }
+            }
+            return buf;
+        } catch (e) { return null; }
     }
 
     // ---- voice ----
@@ -290,8 +323,8 @@ export default class CqIntakeConversation extends LightningElement {
         return 'Type what happened…';
     }
     get showMicStatus() { return this.canSpeak && this.micStatus && !this.done; }
-    get soundLabel() { return this.speakOut ? '🔊 Sound on' : '🔇 Sound off'; }
-    get soundClass() { return this.speakOut ? 'sound on' : 'sound'; }
+    get readAloudLabel() { return this.readAloud ? '🔊 Read aloud' : '🔇 Muted'; }
+    get readAloudClass() { return this.readAloud ? 'sound on' : 'sound'; }
     get micStatusClass() { return 'micstatus ' + this.micTone; }
     get micClass() { return this.listening ? 'mic listening' : 'mic'; }
     get micLabel() { return this.listening ? 'Stop' : 'Speak'; }
