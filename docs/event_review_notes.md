@@ -65,3 +65,12 @@ Lou: intake is where we take AI out for a spin. CQ is good at making it work, no
 - Sources: 5W2H template gives What/Where/How Many (PROVEN tonight via generations API, GPT-4o-mini, returns clean JSON); Part/Lot need Entity Extraction template or parse; Defect from CQSS Similarity on defect codes.
 - Design principle (Lou): minimize scrolling — each screen should fit one phoneful. Lever: collapse "What You Said" to a tappable one-line strip, tighten row spacing.
 - Open: AI-suggested answers shown pre-selected (fast) vs require an active confirm tap (deliberate, better for regulated). Carry same section-band header onto screen 3? (optional)
+
+**Voice intake v6 (16 Nov, current — supersedes v5):** scratchpad mock_voice_v6. Four no-scroll steps, Next/Back only, progress dots: (1) Speak; (2) Details CQ.AI Filled In — Part, Lot, Units (editable values; "What You Said" collapsed to a one-line View strip); (3) Questions — Where + Product (✦ CQ.AI Suggests) then Injury + Safety (Your answer), Next gated until answered; (4) Review & Send — plain summary (summary icon) + Looks Like EV-0002 + Send.
+- The fields-vs-questions break is now whole steps (values = step 2, questions = step 3).
+- STANDING DESIGN RULE (Lou, applies to whole suite, desktop + mobile): minimize scrolling. Prefer stepped screens with Next/Back, one screenful per step; scroll only when genuinely unavoidable. Buttons, not swipe (swipe risks accidental taps / OS back-gesture conflict / skipping required answers). Matches Field Action + Disposition workspaces.
+- BOTH CQ.AI engines PROVEN tonight against cqse-golden--dev via /einstein/prompt-templates/{devname}/generations (POST), GPT-4o-mini, temperature 0:
+  - CQSS_5W2H_Extraction_Prompt (inputs: Instruction_Prompt, Input_Example, Output_Example, Entities, Target_Data) → returned {"What":"CardioFlow balloons were slow to deflate","Where":"Final test","How Many":"3", When/Who/Why blank,"How":"Found during final test"}.
+  - CQSS_Entity_Extraction_Prompt (inputs: Description, Entities, Date_Entities, Reason_Required; output shape {ENTITY:{value,reason}}) → returned TITLE "CardioFlow Balloons Deflation Issue", PART "CardioFlow", LOT "0908", UNITS AFFECTED "3", DEFECT "Slow deflation during final test".
+  - Both return raw words; resolve PART/LOT to real records via Identify Record by Name / CqEventParts.search (part) + lot lookup.
+- Next build (not started): CqEventExtract Apex (call these templates, parse, map to question answers by role) + test; role-mapper; responsive stepped LWC for desktop+mobile.
