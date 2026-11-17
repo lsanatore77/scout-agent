@@ -258,3 +258,11 @@ On-device probe (Samsung A16, SalesforceMobileSDK/14.0.0, Android):
 Every path (window, globalThis, bare) is undefined — SpeechSynthesis is genuinely absent from the Mobile SDK WebView, not sandbox-hidden. No code/setting fixes it in-app. Confirmed: in-app read-aloud = server-side TTS project (see options above) or nothing.
 
 DECISION: parked read-aloud. Cleaned up the component — removed the diagnostic line, and the sound toggle now only renders where the platform actually has TTS (so it's invisible in the Android app, and will appear + work automatically on a browser/iOS that supports it). getSynth/getUtter/speak retained for that case. Voice INPUT works on Android and remains the primary win. Next: 30-sec iPhone check (different engine) before any server-TTS build.
+
+### Built: three conditional follow-up questions (2026-11-17)
+Final intake question set locked (9 total): opener + 4 required (Where/Product/Injury/Safety) + conditionals (Who-was-hurt if injured, Customer if At-a-Customer, Supplier if At-a-Supplier, Lot/Batch if none known).
+- Customer/Supplier: Role-based, extractable-or-asked, conditional on the effective Where value (answered OR inferred). Captured as a free-text name for the reviewer to map to the Account/Supplier record.
+- Lot/Batch prompt: Role 'Lot Or Part', NOT extracted (CqEventExtract skips it). Fires only when noPartNoLot. Turn.askFeedsDescription=true tells the LWC to append the answer to the description so part/lot resolution re-runs. Answered-once guard prevents re-asking.
+- CqEventExtract skips 'Lot Or Part' role so it isn't treated as an entity.
+- 9 Apex tests pass (added asksCustomerWhenFoundAtACustomer, doesNotAskCustomerWhenInPlant, asksForLotWhenNoneAndFeedsDescription).
+This locks the question list = the audio-clip list for the audio build (deferred until these are tested).

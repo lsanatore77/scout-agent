@@ -48,3 +48,10 @@ Validation rules turned off by Lou on 15 Nov 2026 to set past effective dates: C
 - Added picklist value **Injured Person** to Event_Question__c.Role__c (restricted picklist; now: Where Found, Product Affected, Injury, Safety Risk, Injured Person, None). Repo meta updated.
 - Created Event_Question__c "Who was hurt?" (id a9qW4000001bE1pIAE): Role=Injured Person, Answer_Type=Text, Required=false, Active=true, Order=5, Help="The name of the person who was injured, so a Safety Event can be raised."
 - Asked only when Injury is confirmed Yes (conditional in CqIntakeChat). Stored as a normal Event_Answer the reviewer reads. Captures the person for the future Safety Event + Injury creation (reviewer decision-actions build).
+
+## 2026-11-17 — Conditional follow-up questions (customer / supplier / lot)
+Added Role picklist values: Customer, Supplier, Lot Or Part. New Event_Question__c records (all Active, not Required, Text):
+- "Which customer?" (Role Customer, Order 1.1, id a9qW4000001bExtIAE) — asked when Where Found = At a Customer
+- "Which supplier?" (Role Supplier, Order 1.2, id a9qW4000001bEzVIAU) — asked when Where Found = At a Supplier
+- "Do you have a lot or batch number?" (Role Lot Or Part, Order 1.5, id a9qW4000001bF17IAE) — asked when neither lot nor part is known; its answer FEEDS the description so the part/lot resolves (askFeedsDescription).
+Required set unchanged (Where/Product/Injury/Safety stay required; Product Affected kept — the AI auto-fills when obvious, asks only when unclear).

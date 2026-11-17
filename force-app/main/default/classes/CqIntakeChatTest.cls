@@ -138,6 +138,72 @@ private class CqIntakeChatTest {
     }
 
     @IsTest
+    static void asksCustomerWhenFoundAtACustomer() {
+        Event_Question__c cust = new Event_Question__c(Active__c = true, Required__c = false, Order__c = 1.1,
+            Question__c = 'Which customer?', Answer_Type__c = 'Text', Role__c = 'Customer');
+        insert cust;
+        Event_Question__c where1 = [SELECT Id FROM Event_Question__c WHERE Role__c = 'Where Found'];
+
+        CqEventExtract.mockJson = '{"DEFECT":{"value":"leak"}}';
+        String state = JSON.serialize(new Map<String, Object>{
+            'description' => 'a leak reported by a customer',
+            'answers' => new List<Object>{ new Map<String, Object>{ 'questionId' => where1.Id, 'answer' => 'At a Customer' } }
+        });
+
+        Test.startTest();
+        CqIntakeChat.Turn t = CqIntakeChat.respond(state);
+        Test.stopTest();
+
+        System.assertEquals(false, t.ready);
+        System.assertEquals('Customer', t.askKey, 'at a customer -> asks which customer');
+        System.assertEquals(cust.Id, t.askQuestionId);
+    }
+
+    @IsTest
+    static void doesNotAskCustomerWhenInPlant() {
+        Event_Question__c cust = new Event_Question__c(Active__c = true, Required__c = false, Order__c = 1.1,
+            Question__c = 'Which customer?', Answer_Type__c = 'Text', Role__c = 'Customer');
+        insert cust;
+        Event_Question__c where1 = [SELECT Id FROM Event_Question__c WHERE Role__c = 'Where Found'];
+
+        CqEventExtract.mockJson = '{"DEFECT":{"value":"leak"}}';
+        String state = JSON.serialize(new Map<String, Object>{
+            'description' => 'a leak at final test',
+            'answers' => new List<Object>{ new Map<String, Object>{ 'questionId' => where1.Id, 'answer' => 'In Our Plant' } }
+        });
+
+        Test.startTest();
+        CqIntakeChat.Turn t = CqIntakeChat.respond(state);
+        Test.stopTest();
+
+        for (String s : t.stillNeeded) { System.assertNotEquals('Which customer?', s, 'in-plant -> never asks for a customer'); }
+    }
+
+    @IsTest
+    static void asksForLotWhenNoneAndFeedsDescription() {
+        Event_Question__c lot = new Event_Question__c(Active__c = true, Required__c = false, Order__c = 1.5,
+            Question__c = 'Do you have a lot or batch number?', Answer_Type__c = 'Text', Role__c = 'Lot Or Part');
+        insert lot;
+        Event_Question__c where1 = [SELECT Id FROM Event_Question__c WHERE Role__c = 'Where Found'];
+
+        // No PART and no LOT extracted from the description.
+        CqEventExtract.mockJson = '{"DEFECT":{"value":"bent pin"}}';
+        String state = JSON.serialize(new Map<String, Object>{
+            'description' => 'found a bent pin',
+            'answers' => new List<Object>{ new Map<String, Object>{ 'questionId' => where1.Id, 'answer' => 'In Our Plant' } }
+        });
+
+        Test.startTest();
+        CqIntakeChat.Turn t = CqIntakeChat.respond(state);
+        Test.stopTest();
+
+        System.assertEquals(false, t.ready);
+        System.assertEquals('Lot Or Part', t.askKey, 'no lot and no part -> asks for a lot/batch');
+        System.assertEquals(lot.Id, t.askQuestionId);
+        System.assertEquals(true, t.askFeedsDescription, 'the lot answer is treated as more description');
+    }
+
+    @IsTest
     static void blankDescriptionFallsBackToOpening() {
         Test.startTest();
         CqIntakeChat.Turn t = CqIntakeChat.respond(JSON.serialize(new Map<String, Object>{ 'description' => '' }));

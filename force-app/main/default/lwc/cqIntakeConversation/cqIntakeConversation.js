@@ -12,6 +12,7 @@ export default class CqIntakeConversation extends LightningElement {
     description = '';
     answers = [];
     pendingQuestionId = null;
+    pendingFeedsDescription = false;   // the lot/part prompt: answer also joins the description
 
     draftJson = null;
     ready = false;
@@ -77,6 +78,10 @@ export default class CqIntakeConversation extends LightningElement {
             this.answers = this.answers
                 .filter((a) => a.questionId !== this.pendingQuestionId)
                 .concat([{ questionId: this.pendingQuestionId, answer: said }]);
+            // The lot/part prompt's answer is also more description, so the part/lot can resolve.
+            if (this.pendingFeedsDescription) {
+                this.description = this.description ? this.description + ' ' + said : said;
+            }
         } else {
             // Free description of what happened.
             this.description = this.description ? this.description + ' ' + said : said;
@@ -94,6 +99,7 @@ export default class CqIntakeConversation extends LightningElement {
                 this.stillNeeded = (t.stillNeeded || []).map((s, i) => ({ k: 's' + i, text: s }));
                 this.choices = (t.choices || []).map((c, i) => ({ k: 'c' + i, value: c }));
                 this.pendingQuestionId = t.askQuestionId || null;
+                this.pendingFeedsDescription = t.askFeedsDescription === true;
                 this.ready = t.ready === true;
                 this.draftJson = t.draftJson || null;
                 this.pushAi(t.reply);

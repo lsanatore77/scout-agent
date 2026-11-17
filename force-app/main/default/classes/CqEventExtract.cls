@@ -46,7 +46,7 @@ public with sharing class CqEventExtract {
             'DEFECT (what went wrong, a few words)'
         };
         for (Event_Question__c q : questions) {
-            if (String.isBlank(q.Role__c) || q.Role__c == 'None') { continue; }
+            if (String.isBlank(q.Role__c) || q.Role__c == 'None' || q.Role__c == 'Lot Or Part') { continue; }
             List<String> choices = choicesFor(q);
             String key = q.Role__c.toUpperCase();
             entityDefs.add(choices.isEmpty() ? key : key + ' (answer: ' + allowedPhrase(choices) + ')');
@@ -81,7 +81,7 @@ public with sharing class CqEventExtract {
         addCore(res, 'defect', 'Defect', vals.get('DEFECT'), false);
 
         for (Event_Question__c q : questions) {
-            if (String.isBlank(q.Role__c) || q.Role__c == 'None') { continue; }
+            if (String.isBlank(q.Role__c) || q.Role__c == 'None' || q.Role__c == 'Lot Or Part') { continue; }
             String v = vals.get(q.Role__c.toUpperCase());
             if (String.isBlank(v)) {
                 if (q.Required__c) { res.stillNeeded.add(q.Question__c); }

@@ -32,6 +32,7 @@ public with sharing class CqIntakeChat {
         @AuraEnabled public Id askQuestionId;
         @AuraEnabled public String askQuestion;
         @AuraEnabled public String askSuggested;    // the AI's guess for the pending question, if any
+        @AuraEnabled public Boolean askFeedsDescription = false;   // the lot/part prompt: its answer is extra description
         @AuraEnabled public List<String> choices = new List<String>();
         @AuraEnabled public List<Field> understood = new List<Field>();
         @AuraEnabled public List<String> stillNeeded = new List<String>();
@@ -132,19 +133,33 @@ public with sharing class CqIntakeChat {
             SELECT Id, Order__c, Question__c, Answer_Type__c, Choices__c, Role__c, Help_Text__c, Required__c
             FROM Event_Question__c WHERE Active__c = true WITH USER_MODE ORDER BY Order__c
         ];
-        Id injuryQId;
-        for (Event_Question__c q : active) { if (q.Role__c == 'Injury') { injuryQId = q.Id; } }
+        Id injuryQId, whereQId;
+        for (Event_Question__c q : active) {
+            if (q.Role__c == 'Injury') { injuryQId = q.Id; }
+            if (q.Role__c == 'Where Found') { whereQId = q.Id; }
+        }
         // "Who was hurt?" is only asked once the reporter has confirmed an injury.
         Boolean injuryYes = injuryQId != null && 'Yes'.equalsIgnoreCase(answered.get(injuryQId));
+        // Where Found may be answered or inferred; the customer/supplier follow-ups key off its value.
+        String whereVal = whereQId == null ? null : (answered.containsKey(whereQId) ? answered.get(whereQId) : extractedByQ.get(whereQId));
+        // The lot/part prompt only fires when we have neither.
+        Boolean noPartNoLot = String.isBlank(lotRaw) && partId == null;
 
         Event_Question__c nextGap;
         String nextGuess;
         for (Event_Question__c q : active) {
             Boolean isGap;
-            if (q.Role__c == 'Injured Person') {
+            String role = q.Role__c;
+            if (role == 'Injured Person') {
                 isGap = injuryYes && !answered.containsKey(q.Id) && !extractedByQ.containsKey(q.Id);
+            } else if (role == 'Customer') {
+                isGap = 'At a Customer'.equalsIgnoreCase(whereVal) && !answered.containsKey(q.Id) && !extractedByQ.containsKey(q.Id);
+            } else if (role == 'Supplier') {
+                isGap = 'At a Supplier'.equalsIgnoreCase(whereVal) && !answered.containsKey(q.Id) && !extractedByQ.containsKey(q.Id);
+            } else if (role == 'Lot Or Part') {
+                isGap = noPartNoLot && !answered.containsKey(q.Id);
             } else if (q.Required__c) {
-                Boolean mustAsk = ALWAYS_ASK.contains(q.Role__c);
+                Boolean mustAsk = ALWAYS_ASK.contains(role);
                 isGap = !(answered.containsKey(q.Id) || (extractedByQ.containsKey(q.Id) && !mustAsk));
             } else {
                 isGap = false;
@@ -162,6 +177,7 @@ public with sharing class CqIntakeChat {
             t.askQuestionId = nextGap.Id;
             t.askQuestion = nextGap.Question__c;
             t.askSuggested = nextGuess;
+            t.askFeedsDescription = (nextGap.Role__c == 'Lot Or Part');
             t.choices = choicesFor(nextGap);
             String tail = String.isNotBlank(nextGuess)
                 ? ' (From what you said I’d put ' + nextGuess + ' — tap to confirm or change.)'
