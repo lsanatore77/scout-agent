@@ -192,3 +192,6 @@ Seen in the real voice run ("three cardio flow balloons from 0908 were slow to d
 2. **Read-back should show the RESOLVED part, not the raw spoken words.** It said "Cardio Flow Balloons (is that right?)" while the record correctly linked PTCA-1000 · CardioFlow 3.0. Show what it matched so the reporter can confirm the real part.
 3. **Tidy the problem statement.** Stored verbatim lowercase/no-punctuation ("three cardio flow balloons from 0908..."). Have CQ.AI lightly clean it into a readable sentence for the reviewer while keeping the reporter's meaning. (Pairs with the LLM-phrasing pass.)
 4. (Still queued) LLM-phrased follow-up questions; iPhone voice test.
+
+### Addendum (from the "SO FAR CQ.AI HAS" panel screenshot)
+The panel already shows a ❓ "needs confirm" marker on Part and Units, but NOT on the inferred question answers (Where/Injured/Safety all show clean). So inferred guesses look like confirmed facts. Fix: carry needsConfirm onto any question answer the AI inferred (not explicitly stated by the reporter) so it shows the same ❓, and force an explicit confirm on safety/injury. Reuse the existing ❓ convention — no new UI pattern needed.
