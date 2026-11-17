@@ -271,3 +271,8 @@ This locks the question list = the audio-clip list for the audio build (deferred
 - MP3 test tone (data URI) on Salesforce Android app WebView → **NotSupportedError**. That is a *codec/decode* failure, not the autoplay block (which would be NotAllowedError). So the webview can reach the `<audio>` element but will not decode MP3.
 - Pivot: WAV / PCM, which every browser decodes with no codec. Test tone is now **built in-browser** (deterministic sine → WAV bytes → base64 data URI → `new Audio()`), removing any hand-typed base64 and mirroring the real Option C path (Apex base64 → data URI → `<audio>`).
 - Next: if the WAV tone plays, Option C is viable with WAV-stored clips; build the storage model + Apex base64 return. If it also fails NotSupported, reassess (e.g. Web Audio decode, or a format probe).
+
+## Audio probe v2 → v3 — 2026-11-17
+- WAV via `<audio>`/data URI on the Salesforce Android app WebView → **NotSupportedError** (confirmed on a verified-fresh "v2" build). So BOTH MP3 and WAV fail through the `<audio>` element — the whole HTMLMediaElement/data-URI media path is walled off in this WebView, not a codec issue.
+- v3 pivots to the **Web Audio API**: AudioContext + an AudioBuffer filled with PCM samples, played via AudioBufferSourceNode — no `<audio>` element, no file decoder. This is also exactly how a stored PCM clip would play for Option C. The probe reports AudioContext state and whether playback starts/finishes.
+- Cache lesson: the Salesforce mobile app's in-app "Clear cache" does NOT evict the running compiled LWC module; a **force-stop** of the app does. Added a visible "v{n}" marker on the Test sound button so a fresh build is unambiguous.

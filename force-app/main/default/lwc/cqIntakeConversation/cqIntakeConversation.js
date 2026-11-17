@@ -157,39 +157,40 @@ export default class CqIntakeConversation extends LightningElement {
         if (m && m.isAi) { this.speak(m.text); }
     }
 
-    // TEMP: prove the webview can play a stored audio clip. Builds a real WAV
-    // in-browser (no network, no library) and plays it through the same <audio>
-    // decoder a stored clip would use. Mirrors the Option C path exactly.
-    buildToneWavUri() {
-        const rate = 8000;
-        const secs = 0.3;
-        const freq = 660;
-        const n = Math.floor(rate * secs);
-        const dataLen = n * 2;
-        const buf = new ArrayBuffer(44 + dataLen);
-        const dv = new DataView(buf);
-        const wr = (off, str) => { for (let i = 0; i < str.length; i++) { dv.setUint8(off + i, str.charCodeAt(i)); } };
-        wr(0, 'RIFF'); dv.setUint32(4, 36 + dataLen, true); wr(8, 'WAVE');
-        wr(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
-        dv.setUint32(24, rate, true); dv.setUint32(28, rate * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
-        wr(36, 'data'); dv.setUint32(40, dataLen, true);
-        for (let i = 0; i < n; i++) { dv.setInt16(44 + i * 2, Math.sin(2 * Math.PI * freq * i / rate) * 0.5 * 32767, true); }
-        const bytes = new Uint8Array(buf);
-        let bin = '';
-        for (let i = 0; i < bytes.length; i++) { bin += String.fromCharCode(bytes[i]); }
-        return 'data:audio/wav;base64,' + btoa(bin);
-    }
-
+    // TEMP: prove the webview can produce sound at all. The <audio> element path
+    // (data URI, MP3 and WAV) returns NotSupportedError in the Salesforce Android
+    // WebView, so this uses the Web Audio API: PCM samples written straight into an
+    // AudioBuffer and played with no file decoder. This is also the exact path a
+    // stored PCM clip would take for Option C.
     handleTestSound() {
-        this.testSoundMsg = 'Playing a test tone…';
+        this.testSoundMsg = 'Trying Web Audio\u2026';
         try {
-            const a = new Audio(this.buildToneWavUri());
-            a.onended = () => { this.testSoundMsg = 'Tone finished — if you heard it, stored audio works here.'; };
-            a.onerror = () => { this.testSoundMsg = 'Could not play the WAV (audio element error — codec not supported).'; };
-            const p = a.play();
-            if (p && p.catch) { p.catch((err) => { this.testSoundMsg = 'Playback failed: ' + (err && err.name ? err.name : 'unknown') + '.'; }); }
+            const Ctx = window.AudioContext || window.webkitAudioContext;
+            if (!Ctx) { this.testSoundMsg = 'No Web Audio in this webview (AudioContext missing).'; return; }
+            const ctx = new Ctx();
+            const play = () => {
+                const rate = ctx.sampleRate;
+                const n = Math.floor(rate * 0.4);
+                const buf = ctx.createBuffer(1, n, rate);
+                const ch = buf.getChannelData(0);
+                for (let i = 0; i < n; i++) { ch[i] = Math.sin(2 * Math.PI * 660 * i / rate) * 0.4; }
+                const src = ctx.createBufferSource();
+                src.buffer = buf;
+                src.connect(ctx.destination);
+                src.onended = () => {
+                    this.testSoundMsg = 'Web Audio finished (state: ' + ctx.state + ') \u2014 if you heard a beep, this is our path.';
+                    try { ctx.close(); } catch (e) { /* ignore */ }
+                };
+                src.start();
+                this.testSoundMsg = 'Web Audio playing\u2026 (state: ' + ctx.state + ')';
+            };
+            if (ctx.state === 'suspended' && ctx.resume) {
+                ctx.resume().then(play).catch((e) => { this.testSoundMsg = 'Web Audio resume blocked: ' + (e && e.name ? e.name : 'unknown') + '.'; });
+            } else {
+                play();
+            }
         } catch (e) {
-            this.testSoundMsg = 'No audio support: ' + (e && e.message ? e.message : 'unknown') + '.';
+            this.testSoundMsg = 'Web Audio error: ' + (e && e.message ? e.message : 'unknown') + '.';
         }
     }
 
