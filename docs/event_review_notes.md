@@ -112,3 +112,14 @@ Lou: intake is where we take AI out for a spin. CQ is good at making it work, no
 
 **MILESTONE — full intake loop PROVEN LIVE IN UI (16 Nov, ~11:20pm).** cqEventIntakeChat on an App Page ("Intake"). Typed the balloon+safety sentence -> CQ.AI filled Title "CardioFlow Balloons Slow Deflation Issue", Lot 0908, Units 3 (quantity hint held), Defect, Where Found=In Our Plant, Product Affected=Yes, Injury=No, Safety Risk=Yes -> Send -> created EV-0003 (a8wW4000003Jx5tIAC), Status Waiting for Review, Urgent=true (fired from Safety Risk), Problem Statement verbatim, 4 Event_Answer rows with correct roles. Record verified by query. Part was null = Lou didn't pick one (optional, correct behavior; part-picker SELECTION->bind not yet exercised, submit path proven).
 - NEXT: (a) exercise part-picker selection binds partId; (b) lot-first part resolution; (c) voice capture + phone test; (d) chat styling to v8; (e) permissions for lite users; (f) Send Now fast path + reviewer ask-back loop.
+
+**Part/Lot resolution — FINAL design (16 Nov, Lou approved):** Lot drives the part. The AI engine captures the lot; it does NOT fuzzy-match the part by name (that guessing is demoted to a rare last resort).
+- (a) Quality Event gets a lot -> part link AT SAVE (in submitReport), mirroring what CQ does on NC/Complaint (our Quality Event is custom, so we add it). Only when part is blank (don't override a part the user picked).
+- Lot match outcomes (handle, never block submit):
+  1. Lot clean / exact -> link part directly, no guessing.
+  2. Lot partial but unique (e.g. "0908" -> only L26-0908) -> complete the lot to the full name AND link the part.
+  3. Lot partial AND ambiguous (matches 2-3 lots, maybe different parts) -> short candidate pick-list at REVIEW time; picking the lot picks the part. This is the only "best guess" case; small and self-labeled because lot numbers are specific.
+  4. Lot matches nothing (typo or new lot not yet in system) -> keep lot as entered, part blank, flag for reviewer.
+- WHERE: review-time lot lookup in the LWC shows match/candidates/not-found so the reporter confirms the completed lot; save-time link in submitReport is the backstop for clean cases.
+- Lot object: compliancequest__SQX_Lot_Info__c (Name = lot number, compliancequest__Part_Number__c = part number key, compliancequest__Manufacturing_Date__c). Resolve: match lot Name (exact then LIKE) -> Part_Number -> SQX_Part__c.
+- NOTE: building this updates existing working classes (CqEventIntake.submitReport) + likely a new CqEventLots.resolve(); needs the Apex MetadataContainer update flow for existing classes, and a lot-insert pattern for tests (CqEventLotsTest currently inserts no lot).
