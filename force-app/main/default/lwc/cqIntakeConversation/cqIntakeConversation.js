@@ -328,7 +328,10 @@ export default class CqIntakeConversation extends LightningElement {
         if (this.ready) { return 'Add anything else, or tap Send…'; }
         return 'Type what happened…';
     }
-    get showMicStatus() { return this.canSpeak && this.micStatus && !this.done; }
+    // Voice only for free-text questions: when the turn offers tap choices (Yes/No or a
+    // pick list), hide the mic so the answer is a tap, not speech.
+    get showMic() { return this.canSpeak && !this.hasChoices && !this.done; }
+    get showMicStatus() { return this.canSpeak && this.micStatus && !this.done && !this.hasChoices; }
     get readAloudLabel() { return this.readAloud ? '🔊 Read aloud' : '🔇 Muted'; }
     get readAloudClass() { return this.readAloud ? 'sound on' : 'sound'; }
     get micStatusClass() { return 'micstatus ' + this.micTone; }

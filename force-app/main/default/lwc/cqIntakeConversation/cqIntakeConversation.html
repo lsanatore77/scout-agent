@@ -34,7 +34,7 @@
             <div class="composer">
                 <textarea class="box" rows="1" placeholder={inputPlaceholder}
                     value={draft} oninput={handleInput} onkeydown={handleKey} disabled={inputDisabled}></textarea>
-                <template if:true={canSpeak}>
+                <template if:true={showMic}>
                     <button class={micClass} onclick={handleMic} disabled={inputDisabled} title={micLabel}>{micLabel}</button>
                 </template>
                 <button class="go" onclick={handleSendClick} disabled={inputDisabled}>Send</button>
