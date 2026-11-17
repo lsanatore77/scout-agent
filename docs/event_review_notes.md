@@ -183,3 +183,12 @@ So the mobile app's webview DOES pass the microphone through to the Web Speech A
 
 Net: the mobile-first direction is proven. Desktop keeps the suggestions form; mobile gets the conversational chat with working voice. 
 Confirmed on: **Android** (webview passes the mic through with audio permission). **iOS: untested** — Apple's WKWebView has historically not supported the Web Speech API, so test on an iPhone before relying on voice for iOS users; if it fails there, add a fallback for iPhone only (e.g. native keyboard dictation into the text box), no rebuild needed.
+
+## Refinement list from mobile voice test of EV-0005 (2026-11-17)
+
+Seen in the real voice run ("three cardio flow balloons from 0908 were slow to deflate during final test nobody was hurt"):
+
+1. **Safety/injury should always be asked, never inferred (IMPORTANT, compliance).** The LLM extraction filled all four required answers from the description, so the chat jumped straight to "ready" without asking anything. It inferred Safety Risk = No from "nobody was hurt" — but "nobody was hurt" ≠ "nobody could get hurt." EV-0003 (typed, explicit "could be a safety risk") correctly got Safety = Yes. For a QMS, don't let the AI guess safety/injury. Plan: in CqIntakeChat, treat the safety (and likely injury) questions as always-ask even when extraction produced a value — surface the AI's guess as a default but make the reporter confirm. Ties to Lou's earlier "train people to say if there was an injury or not."
+2. **Read-back should show the RESOLVED part, not the raw spoken words.** It said "Cardio Flow Balloons (is that right?)" while the record correctly linked PTCA-1000 · CardioFlow 3.0. Show what it matched so the reporter can confirm the real part.
+3. **Tidy the problem statement.** Stored verbatim lowercase/no-punctuation ("three cardio flow balloons from 0908..."). Have CQ.AI lightly clean it into a readable sentence for the reviewer while keeping the reporter's meaning. (Pairs with the LLM-phrasing pass.)
+4. (Still queued) LLM-phrased follow-up questions; iPhone voice test.
