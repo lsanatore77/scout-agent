@@ -128,16 +128,28 @@ public with sharing class CqIntakeChat {
 
         // The next gap: required questions not yet answered. Safety/injury always count as a gap
         // until the reporter answers them, even when the AI produced a guess.
-        List<Event_Question__c> required = [
-            SELECT Id, Order__c, Question__c, Answer_Type__c, Choices__c, Role__c, Help_Text__c
-            FROM Event_Question__c WHERE Active__c = true AND Required__c = true WITH USER_MODE ORDER BY Order__c
+        List<Event_Question__c> active = [
+            SELECT Id, Order__c, Question__c, Answer_Type__c, Choices__c, Role__c, Help_Text__c, Required__c
+            FROM Event_Question__c WHERE Active__c = true WITH USER_MODE ORDER BY Order__c
         ];
+        Id injuryQId;
+        for (Event_Question__c q : active) { if (q.Role__c == 'Injury') { injuryQId = q.Id; } }
+        // "Who was hurt?" is only asked once the reporter has confirmed an injury.
+        Boolean injuryYes = injuryQId != null && 'Yes'.equalsIgnoreCase(answered.get(injuryQId));
+
         Event_Question__c nextGap;
         String nextGuess;
-        for (Event_Question__c q : required) {
-            Boolean mustAsk = ALWAYS_ASK.contains(q.Role__c);
-            Boolean have = answered.containsKey(q.Id) || (extractedByQ.containsKey(q.Id) && !mustAsk);
-            if (!have) {
+        for (Event_Question__c q : active) {
+            Boolean isGap;
+            if (q.Role__c == 'Injured Person') {
+                isGap = injuryYes && !answered.containsKey(q.Id) && !extractedByQ.containsKey(q.Id);
+            } else if (q.Required__c) {
+                Boolean mustAsk = ALWAYS_ASK.contains(q.Role__c);
+                isGap = !(answered.containsKey(q.Id) || (extractedByQ.containsKey(q.Id) && !mustAsk));
+            } else {
+                isGap = false;
+            }
+            if (isGap) {
                 t.stillNeeded.add(q.Question__c);
                 if (nextGap == null) { nextGap = q; nextGuess = extractedByQ.get(q.Id); }
             }

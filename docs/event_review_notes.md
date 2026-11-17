@@ -222,3 +222,6 @@ Open design questions (for the reviewer decision-actions build):
 2. The Injury needs WHO was hurt (Personnel). Add an intake follow-up "Who was hurt?" when injury = Yes (reporter names them; reviewer maps to Personnel), or leave the person for the reviewer?
 3. Confirm Safety Event required fields before building the create action.
 Belongs in the reviewer workspace decision-actions (the deferred build), not the intake — intake already captures injury = Yes correctly.
+
+### Built: intake "Who was hurt?" follow-up (2026-11-17)
+When Injury is confirmed Yes, the chat now asks one more question — "Who was hurt?" (free text) — and captures the name as an Event_Answer (Role "Injured Person"). Only asked on injury = Yes; skipped otherwise. 6 Apex tests pass (new: asksWhoWasHurtOnlyWhenInjured). This feeds the reviewer's parallel Safety Event + Injury creation, which is still ahead (decision-actions build). Injury = Yes already escalates to Urgent (Urgent_When = "Yes" on the Injury question — verified in CqEventIntake.submitReport).

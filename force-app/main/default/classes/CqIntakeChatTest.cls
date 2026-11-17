@@ -99,6 +99,45 @@ private class CqIntakeChatTest {
     }
 
     @IsTest
+    static void asksWhoWasHurtOnlyWhenInjured() {
+        Event_Question__c injury = new Event_Question__c(Active__c = true, Required__c = true, Order__c = 3,
+            Question__c = 'Was anyone injured?', Answer_Type__c = 'Yes or No', Role__c = 'Injury');
+        insert injury;
+        Event_Question__c who = new Event_Question__c(Active__c = true, Required__c = false, Order__c = 5,
+            Question__c = 'Who was hurt?', Answer_Type__c = 'Text', Role__c = 'Injured Person');
+        insert who;
+        Event_Question__c where1 = [SELECT Id FROM Event_Question__c WHERE Role__c = 'Where Found'];
+
+        CqEventExtract.mockJson = '{"DEFECT":{"value":"cut"}}';
+
+        // Injury = No -> it must NOT ask who was hurt, and nothing requires it.
+        String noInjury = JSON.serialize(new Map<String, Object>{
+            'description' => 'a small cut on the line',
+            'answers' => new List<Object>{
+                new Map<String, Object>{ 'questionId' => where1.Id, 'answer' => 'In Our Plant' },
+                new Map<String, Object>{ 'questionId' => injury.Id, 'answer' => 'No' } }
+        });
+        CqIntakeChat.Turn t1 = CqIntakeChat.respond(noInjury);
+        for (String s : t1.stillNeeded) { System.assertNotEquals('Who was hurt?', s, 'no injury -> never asks who'); }
+
+        // Injury = Yes -> it asks who was hurt.
+        String injured = JSON.serialize(new Map<String, Object>{
+            'description' => 'someone cut their hand',
+            'answers' => new List<Object>{
+                new Map<String, Object>{ 'questionId' => where1.Id, 'answer' => 'In Our Plant' },
+                new Map<String, Object>{ 'questionId' => injury.Id, 'answer' => 'Yes' } }
+        });
+        Test.startTest();
+        CqIntakeChat.Turn t2 = CqIntakeChat.respond(injured);
+        Test.stopTest();
+
+        System.assertEquals(false, t2.ready, 'who was hurt is still outstanding');
+        System.assertEquals('Injured Person', t2.askKey);
+        System.assertEquals(who.Id, t2.askQuestionId);
+        System.assertEquals('Who was hurt?', t2.askQuestion);
+    }
+
+    @IsTest
     static void blankDescriptionFallsBackToOpening() {
         Test.startTest();
         CqIntakeChat.Turn t = CqIntakeChat.respond(JSON.serialize(new Map<String, Object>{ 'description' => '' }));

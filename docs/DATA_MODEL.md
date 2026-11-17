@@ -175,7 +175,7 @@ The Event Question object holds the quick questions a company asks on Report a P
 | `Order__c` | Order | Number | 4,0 | Where the question appears on Report a Problem, lowest first. |
 | `Question__c` | Question | Text | 255 chars | The question as the reporter sees it. |
 | `Required__c` | Required | Checkbox |  | The reporter must answer it before sending. |
-| `Role__c` | Role | Picklist | Where Found, Product Affected, Injury, Safety Risk, None | What CQ.AI reads the answer as. Rewording a question keeps its role; questions with no role are saved and shown but do not steer the suggestion. |
+| `Role__c` | Role | Picklist | Where Found, Product Affected, Injury, Safety Risk, Injured Person, None | What CQ.AI reads the answer as. Rewording a question keeps its role; questions with no role are saved and shown but do not steer the suggestion. |
 | `Urgent_When__c` | Urgent When | Text | 255 chars | Answers that make the event urgent, separated by semicolons. |
 
 ### Field Action Customer (`Field_Action_Customer__c`)
