@@ -1,4 +1,17 @@
-@import 'c/cqStyles';
+/* Tokens inlined locally (self-contained) until the shared cqStyles module
+   has a clean deploy path. Keep these in sync with cqStyles. */
+:host {
+  --cq-fs-body: 0.9375rem; --cq-fs-meta: 0.8125rem; --cq-fs-micro: 0.6875rem; --cq-fs-btn: 0.875rem;
+  --cq-ink: #1b1f27; --cq-muted: #5b6470; --cq-faint: #8a93a0; --cq-bg: #ffffff; --cq-surface: #f6f7f9;
+  --cq-line: #e5e8ec; --cq-line-field: #c4cad2; --cq-link: #0b5cad;
+  --cq-accent: #4a2fc0; --cq-accent-soft: #f3eefe; --cq-accent-line: #e3d9fb;
+  --cq-crit-solid: #b3261e; --cq-crit-bg: #fdecec; --cq-crit-fg: #b3261e;
+  --cq-r-field: 0.375rem; --cq-r-card: 0.625rem; --cq-r-pill: 999px;
+}
+
+/* pill (solid, white text, centered) */
+.cq-pill { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; padding: 0.34rem 0.62rem 0.28rem; border-radius: var(--cq-r-pill); font-size: var(--cq-fs-micro); font-weight: 700; line-height: 1; color: #fff; white-space: nowrap; }
+.cq-pill.crit { background: var(--cq-crit-solid); }
 
 .wrap { font-size: var(--cq-fs-body); color: var(--cq-ink); }
 .err { padding: 0.75rem 1rem; border-radius: var(--cq-r-field); background: var(--cq-crit-bg); border: 1px solid var(--cq-crit-fg); color: var(--cq-crit-fg); }
