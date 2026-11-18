@@ -86,7 +86,7 @@
                                 <div class="lab">Signals on This Part</div>
                                 <template if:true={hasSignals}>
                                     <template for:each={signals} for:item="s">
-                                        <div key={s.id} class="krow">
+                                        <div key={s.id} class="krow" data-tone={s.strength}>
                                             <span class="fn"><span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.where}</span></span><span class="rk">{s.label}</span></span>
                                         </div>
                                     </template>

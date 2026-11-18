@@ -122,3 +122,8 @@
 /* buttons, pills, chips and messages come from cqStyles */
 .cq-msg.errbox { margin-top: 12px; }
 .cq-pill.notconf { margin-left: 8px; }
+/* signals: a side bar in the colour of the signal's strength, the same device as the flagged rows on a CQ.AI suggestion card */
+.krow[data-tone] { border-left: 3px solid var(--cq-line-field); padding-left: 10px; }
+.krow[data-tone="Escalate"] { border-left-color: var(--cq-crit-solid); }
+.krow[data-tone="Assess"], .krow[data-tone="Watch"] { border-left-color: var(--cq-warn-solid); }
+.krow[data-tone]:last-child { padding-bottom: 8px; }
