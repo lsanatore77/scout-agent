@@ -79,9 +79,9 @@
                                     </div>
                                 </div>
                                 <div class="card sug">
-                                    <div class="rec"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={v.suggestedOutcome}></c-cq-ai-why></div>
-                                    <div class="sughead"><span class="big">{v.suggestedOutcome}</span></div>
-                                    <div class="para">{v.suggestedWhy}</div>
+                                    <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={v.suggestedOutcome}></c-cq-ai-why></div>
+                                    <div class="cq-ai-verdict">{v.suggestedOutcome}</div>
+                                    <div class="cq-ai-text">{v.suggestedWhy}</div>
                                     <template if:true={showReason}>
                                         <div class="ftable">
                                             <div class="lab top14">{reasonLabel}</div>
@@ -257,12 +257,15 @@
                                 </template>
                             </div>
                             <div class="card sug riskcard">
-                                <div class="rec"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="How was the risk score worked out?"></c-cq-ai-why></div>
+                                <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="How was the risk score worked out?"></c-cq-ai-why></div>
                                 <div class="sughead"><span class="score">{v.score}</span><span class="rk">out of 100</span><span class={bandCls}>{v.band}</span></div>
-                                <div class="ftable">
-                                    <template for:each={factors} for:item="f">
-                                        <div key={f.key} class="frow"><span class="fn"><span class="fname">{f.name}</span><span class="rk">{f.detail}</span></span><span class="fpts">{f.of}</span></div>
-                                    </template>
+                                <div>
+                                    <div class="cq-ai-sub">Score Factors <span class="cq-hint">&mdash; purple = what raised the score</span></div>
+                                    <div class="cq-qa">
+                                        <template for:each={factors} for:item="f">
+                                            <div key={f.key} class="cq-qa-row" data-hot={f.pts}><span class="cq-qa-k"><span>{f.name}</span><span class="cq-qa-d">{f.detail}</span></span><span class="cq-qa-v">{f.of}</span></div>
+                                        </template>
+                                    </div>
                                 </div>
                                 <p class="note">Bands: 0&ndash;39 Low &middot; 40&ndash;69 Medium &middot; 70&ndash;100 High. The score supports the decision; it does not make it.</p>
                                 <div class="lvlrow">

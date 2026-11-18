@@ -170,6 +170,26 @@
 .cq-msg.pos  { background: var(--cq-pos-bg);  border-color: var(--cq-pos-line);  color: var(--cq-pos-fg); }
 .cq-msg.crit { background: var(--cq-crit-bg); border-color: var(--cq-crit-line); color: var(--cq-crit-fg); }
 
+/* ============================ CQ.AI SUGGESTION CARD ==================== */
+/* what CQ.AI suggests and why: purple card > eyebrow > verdict > text > answer rows (the rows it flagged in purple) */
+.cq-ai-card { border: 1px solid var(--cq-accent-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-accent-soft); }
+.cq-ai-eyebrow { display: flex; align-items: center; gap: 0.3rem; font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cq-accent); }
+.cq-ai-verdict { font-size: 1.0625rem; font-weight: 700; color: var(--cq-ink); margin: 0.15rem 0 0.4rem; line-height: 1.25; }
+.cq-ai-text { margin: 0; font-size: var(--cq-fs-body); line-height: 1.5; color: var(--cq-ink); white-space: pre-line; }
+.cq-ai-rule { height: 1px; background: var(--cq-accent-line); margin: 0.85rem 0; }
+.cq-ai-sub { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); margin-bottom: 0.4rem; }
+.cq-ai-sub .cq-hint { margin-left: 0.25rem; }
+/* label / value rows; a flagged row (class hot, or data-hot set to anything but 0 or false) gets the purple bar */
+.cq-qa { display: flex; flex-direction: column; }
+.cq-qa-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.4rem 0; border-top: 1px solid var(--cq-accent-line); font-size: var(--cq-fs-body); }
+.cq-qa-row:first-child { border-top: 0; }
+.cq-qa-k { display: flex; flex-direction: column; min-width: 0; color: var(--cq-muted); line-height: 1.35; }
+.cq-qa-d { font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-muted); }
+.cq-qa-v { font-weight: 600; text-align: right; white-space: nowrap; color: var(--cq-ink); }
+.cq-qa-row.hot, .cq-qa-row[data-hot]:not([data-hot="0"]):not([data-hot="false"]) { border-left: 3px solid var(--cq-accent); padding-left: 0.5rem; }
+.cq-qa-row.hot .cq-qa-k, .cq-qa-row[data-hot]:not([data-hot="0"]):not([data-hot="false"]) .cq-qa-k { color: var(--cq-ink); font-weight: 600; }
+.cq-qa-row.hot .cq-qa-v, .cq-qa-row[data-hot]:not([data-hot="0"]):not([data-hot="false"]) .cq-qa-v { color: var(--cq-accent); font-weight: 700; }
+
 /* ============================ WORKSPACE HEADER ========================= */
 /* every record workspace opens with this: .cq-box > header.cq-hl > .cq-hl-top (+ optional .cq-hl-fields) */
 .cq-box { border: 1px solid var(--cq-hl-line); border-radius: 0.75rem; background: var(--cq-bg); }
