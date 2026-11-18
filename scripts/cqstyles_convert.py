@@ -32,11 +32,14 @@ PLAIN.update(group('--cq-pos-line', '#b7e1c1'))
 PLAIN.update(group('--cq-warn-bg', '#fff6cc', '#fef1e6', '#fffbf5', '#ffe6cf'))
 PLAIN.update(group('--cq-warn-line', '#f2d3a8'))
 PLAIN.update(group('--cq-link-soft', '#e8f0fd', '#f5f9ff'))
+# the guide's own values typed out by hand
+PLAIN.update({'#0b5cad': '--cq-link', '#1b1f27': '--cq-ink', '#e5e8ec': '--cq-line', '#f6f7f9': '--cq-surface', '#8a93a0': '--cq-faint'})
 # status colours: solid when used as a fill, fg when used as text or a border
 STATUS = {}
 STATUS.update(group('crit', '#b42318', '#ba0517', '#9b2c2c'))
 STATUS.update(group('pos', '#2e844a', '#12784a', '#2f5d3a'))
 STATUS.update(group('warn', '#7a4100', '#6b5300', '#8c4b02', '#8a3c00'))
+STATUS.update({'#1a7f45': 'pos', '#8a4b00': 'warn', '#b3261e': 'crit'})
 WHITE = {'#fff', '#ffffff'}
 HEX = re.compile(r'#[0-9a-fA-F]{3,8}\b')
 
