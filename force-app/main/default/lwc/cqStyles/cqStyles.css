@@ -118,6 +118,7 @@
 .cq-btn-outline:hover { background: var(--cq-surface); }
 .cq-btn-primary { padding: 0 1rem 0.1875rem; border: 0; background: var(--cq-link); color: #fff; font-weight: 700; }
 .cq-btn-ai      { padding: 0 1rem 0.1875rem; border: 0; background: var(--cq-accent); color: #fff; font-weight: 700; }
+.cq-btn-outline:disabled, .cq-btn-primary:disabled, .cq-btn-ai:disabled { opacity: 0.45; cursor: not-allowed; }
 .cq-link { color: var(--cq-link); font-weight: 600; font-size: var(--cq-fs-meta); background: none; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .cq-link:hover { text-decoration: underline; }
 

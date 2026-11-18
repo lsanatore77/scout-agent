@@ -9,6 +9,10 @@ import actOnStep from '@salesforce/apex/CqFarCommittee.act';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 
+// shared pill tones (cqStyles .cq-pill.soft.*)
+const STRENGTH_TONE = { watch: 'warn', assess: 'warn', escalate: 'crit' };
+const SEAT_TONE = { approved: 'pos', rejected: 'crit' };
+
 // Order on screen: glance, signals, the reviewer's own assessment (risk and checklist), recommendation, committee approval.
 const STEPS = ['Review at a Glance', 'Signals and Evidence', 'Reviewer Assessment', 'Recommendation', 'Committee Approval'];
 const ASK = [
@@ -271,7 +275,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const all = (s.records || []).map((r) => this.rec(r));
         const n = all.length;
         const rest = this.showAll[s.id] ? 0 : Math.max(0, n - PAGE);
-        return { ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(),
+        return { ...s, pillCls: 'cq-pill soft ' + (STRENGTH_TONE[(s.strength || '').toLowerCase()] || 'neu'),
             meta: titleCase([s.name, s.trend, seen ? 'first seen ' + seen : '', !s.lot ? 'whole part' : s.lot === this.v.lot ? 'this lot' : 'lot ' + s.lot,
                 s.raisedBy ? 'raised by ' + s.raisedBy : '', s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' · ')),
             label: titleCase(s.label),
@@ -371,7 +375,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get factors() { return (this.v.factors || []).map((f, i) => ({ ...f, key: 'f' + i, of: f.pts + ' / ' + f.max })); }
     get bandCls() { return 'lvl ' + (this.v.band || '').toLowerCase(); }
     get levels() {
-        return LEVELS.map((l) => ({ id: l, cq: l === this.v.band, pressed: this.level === l ? 'true' : 'false', cls: 'segb' + (this.level === l ? ' on' : '') }));
+        return LEVELS.map((l) => ({ id: l, cq: l === this.v.band, pressed: this.level === l ? 'true' : 'false', cls: 'cq-chip' }));
     }
     handleLevel(event) { if (this.waiting) { return; } this.level = event.currentTarget.dataset.id; }
     get assessDone() { return !!this.hazard.trim() && !!this.level && this.checksDone; }
@@ -379,7 +383,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get questions() {
         return QUESTIONS.map((q) => ({
             ...q,
-            opts: ANSWERS.map((a) => ({ key: q.id + a, q: q.id, a, cls: 'yn' + (this.checks[q.id] === a ? ' sel' : ''), pressed: this.checks[q.id] === a ? 'true' : 'false' }))
+            opts: ANSWERS.map((a) => ({ key: q.id + a, q: q.id, a, cls: 'cq-chip', pressed: this.checks[q.id] === a ? 'true' : 'false' }))
         }));
     }
     get checksDone() { return QUESTIONS.every((q) => !!this.checks[q.id]); }
@@ -408,7 +412,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get scopeData() { return this.sc || {}; }
     get scopeOpts() {
         const sug = this.scopeData.suggested;
-        return SCOPES.map((id) => ({ id, cq: id === sug, cls: 'opt' + (this.scope === id ? ' on' : id === sug ? ' sug' : '') }));
+        return SCOPES.map((id) => ({ id, cq: id === sug, cls: 'cq-chip', pressed: this.scope === id ? 'true' : 'false' }));
     }
     get scopeSuggests() { return this.scopeData.suggested ? 'CQ.AI Suggests ' + this.scopeData.suggested + '. ' + (this.scopeData.why || '') : ''; }
     get isPartial() { return this.scope === 'Partial'; }
@@ -466,7 +470,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     }
     get csteps() {
         return (this.committee.steps || []).map((s) => ({
-            ...s, label: STEP_LABEL[s.status] || s.status, cls: 'cpill ' + (s.status || '').toLowerCase(),
+            ...s, label: STEP_LABEL[s.status] || s.status, cls: 'cq-pill soft ' + (SEAT_TONE[(s.status || '').toLowerCase()] || 'neu'),
             line: [s.person, s.doneOn ? new Date(s.doneOn).toLocaleString() : '', s.doneBy && s.doneBy !== s.person ? 'recorded by ' + s.doneBy : ''].filter(Boolean).join(' · '),
             quote: s.comment ? '“' + s.comment + '”' : ''
         }));

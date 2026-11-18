@@ -1,5 +1,5 @@
 <template>
-    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="box">
             <header class="cq-hl">
@@ -47,7 +47,7 @@
                 <div class="main">
                     <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
                     <template if:true={sentBack}>
-                        <div class="errbox back"><span class="fname">The committee sent this back.</span><span class="backtext">{sentBack}</span></div>
+                        <div class="cq-msg crit back"><span class="fname">The committee sent this back.</span><span class="backtext">{sentBack}</span></div>
                     </template>
 
                     <template if:true={is0}>
@@ -128,7 +128,7 @@
                                                 <tr key={r.key} class="evrow">
                                                     <td></td>
                                                     <td colspan="2"><div><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="rk">{r.meta}</div></td>
-                                                    <td class="num"><template if:true={r.sameLot}><span class="lot">This Lot</span></template></td>
+                                                    <td class="num"><template if:true={r.sameLot}><span class="cq-pill soft neu">This Lot</span></template></td>
                                                 </tr>
                                             </template>
                                             <template if:true={r.isRest}>
@@ -173,7 +173,7 @@
                                                     <tr key={r.key} class="evrow">
                                                         <td></td>
                                                         <td colspan="2"><div><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="rk">{r.meta}</div></td>
-                                                        <td class="num"><template if:true={r.sameLot}><span class="lot">This Lot</span></template></td>
+                                                        <td class="num"><template if:true={r.sameLot}><span class="cq-pill soft neu">This Lot</span></template></td>
                                                     </tr>
                                                 </template>
                                                 <template if:true={r.isRest}>
@@ -248,7 +248,7 @@
                                 <template for:each={questions} for:item="q">
                                     <div key={q.id} class="cq">
                                         <div class="cqt"><span class="question">{q.text}</span></div>
-                                        <div class="ynwrap">
+                                        <div class="cq-chips ynwrap">
                                             <template for:each={q.opts} for:item="o">
                                                 <button key={o.key} class={o.cls} data-q={o.q} data-a={o.a} onclick={handleCheck} aria-pressed={o.pressed}>{o.a}</button>
                                             </template>
@@ -267,14 +267,14 @@
                                 <p class="note">Bands: 0&ndash;39 Low &middot; 40&ndash;69 Medium &middot; 70&ndash;100 High. The score supports the decision; it does not make it.</p>
                                 <div class="lvlrow">
                                     <span class="lab dark">Risk Level *</span>
-                                    <div class="seg" role="group" aria-label="Risk Level">
+                                    <div class="cq-chips" role="group" aria-label="Risk Level">
                                         <template for:each={levels} for:item="l">
                                             <button key={l.id} class={l.cls} data-id={l.id} onclick={handleLevel} aria-pressed={l.pressed}><template if:true={l.cq}><c-cq-ai-why variant="star" lead="Why does CQ.AI suggest risk level " subject={l.id}></c-cq-ai-why>&nbsp;</template>{l.id}</button>
                                         </template>
                                     </div>
                                 </div>
-                                <label class="fl">Health Hazard Summary *
-                                    <textarea class="ta" rows="3" data-f="hazard" value={hazard} oninput={handleInput} placeholder="What could happen to a patient or user, how likely, and how serious."></textarea>
+                                <label class="cq-field"><span class="cq-label">Health Hazard Summary<span class="cq-req">*</span></span>
+                                    <textarea rows="3" data-f="hazard" value={hazard} oninput={handleInput} placeholder="What could happen to a patient or user, how likely, and how serious."></textarea>
                                 </label>
                             </div>
                         </div>
@@ -305,27 +305,27 @@
                             </div>
                             <template if:true={isNew}>
                                 <div class="newfa">
-                                    <label class="fl">Title *
-                                        <input class="ta" type="text" data-f="faTitle" value={faTitle} oninput={handleInput} />
+                                    <label class="cq-field"><span class="cq-label">Title<span class="cq-req">*</span></span>
+                                        <input type="text" data-f="faTitle" value={faTitle} oninput={handleInput} />
                                     </label>
                                     <div class="pair">
-                                        <label class="fl">Action Type *
-                                            <select class="ta" data-f="actionType" onchange={handleInput}>
+                                        <label class="cq-field"><span class="cq-label">Action Type<span class="cq-req">*</span></span>
+                                            <select data-f="actionType" onchange={handleInput}>
                                                 <option value="">Choose</option>
                                                 <template for:each={typeOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
                                             </select>
                                         </label>
-                                        <label class="fl">Recall Class
-                                            <select class="ta" data-f="recallClass" onchange={handleInput}>
+                                        <label class="cq-field"><span class="cq-label">Recall Class</span>
+                                            <select data-f="recallClass" onchange={handleInput}>
                                                 <option value="">Not Yet Determined</option>
                                                 <template for:each={classOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
                                             </select>
                                         </label>
                                     </div>
                                     <div class="lab top14">Scope *</div>
-                                    <div class="opts tight">
+                                    <div class="cq-chips">
                                         <template for:each={scopeOpts} for:item="o">
-                                            <button key={o.id} class={o.cls} data-id={o.id} onclick={handleScope}><template if:true={o.cq}><c-cq-ai-why variant="star" subject={o.id} tail=" scope?"></c-cq-ai-why>&nbsp;</template>{o.id}</button>
+                                            <button key={o.id} class={o.cls} data-id={o.id} onclick={handleScope} aria-pressed={o.pressed}><template if:true={o.cq}><c-cq-ai-why variant="star" subject={o.id} tail=" scope?"></c-cq-ai-why>&nbsp;</template>{o.id}</button>
                                         </template>
                                     </div>
                                     <p class="note">Full covers every lot of the part, including lots found later. Partial starts with this review's lot; the rest are chosen and approved in the Field Action.</p>
@@ -335,8 +335,8 @@
                                 </div>
                             </template>
                         </template>
-                        <label class="fl">Rationale *
-                            <textarea class="ta" rows="3" data-f="rationale" value={rationale} oninput={handleInput}></textarea>
+                        <label class="cq-field"><span class="cq-label">Rationale<span class="cq-req">*</span></span>
+                            <textarea rows="3" data-f="rationale" value={rationale} oninput={handleInput}></textarea>
                         </label>
                     </template>
 
@@ -349,8 +349,8 @@
                                     <div class="lab">Committee</div>
                                     <template if:true={normal}>
                                         <template for:each={seats} for:item="s">
-                                            <label key={s.functionId} class="fl">{s.name}
-                                                <select class="ta" data-id={s.functionId} onchange={handleSeat}>
+                                            <label key={s.functionId} class="cq-field"><span class="cq-label">{s.name}</span>
+                                                <select data-id={s.functionId} onchange={handleSeat}>
                                                     <option value="">Choose</option>
                                                     <template for:each={s.opts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
                                                 </select>
@@ -359,14 +359,14 @@
                                         </template>
                                     </template>
                                     <template if:true={emergency}>
-                                        <label class="fl">Emergency Approver
-                                            <select class="ta" data-f="emergencyUser" onchange={handleInput}>
+                                        <label class="cq-field"><span class="cq-label">Emergency Approver</span>
+                                            <select data-f="emergencyUser" onchange={handleInput}>
                                                 <option value="">Choose</option>
                                                 <template for:each={emergencyOpts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
                                             </select>
                                         </label>
-                                        <label class="fl">Reason for Emergency *
-                                            <textarea class="ta" rows="4" data-f="emergencyReason" value={emergencyReason} oninput={handleInput} placeholder="Why this cannot wait for the full committee."></textarea>
+                                        <label class="cq-field"><span class="cq-label">Reason for Emergency<span class="cq-req">*</span></span>
+                                            <textarea rows="4" data-f="emergencyReason" value={emergencyReason} oninput={handleInput} placeholder="Why this cannot wait for the full committee."></textarea>
                                         </label>
                                     </template>
                                 </div>
@@ -396,14 +396,14 @@
                                             <span class="fn"><span class="fname">{s.seat}</span><span class="rk">{s.line}</span><template if:true={s.quote}><span class="rk">{s.quote}</span></template></span>
                                             <span class={s.cls}>{s.label}</span>
                                             <template if:true={s.canAct}>
-                                                <button class="btn sm primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
-                                                <button class="btn sm" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
+                                                <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
+                                                <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
                                             </template>
                                         </div>
                                     </template>
                                     <template if:true={canActAny}>
-                                        <label class="fl">Comment
-                                            <textarea class="ta" rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder="Required when you send it back."></textarea>
+                                        <label class="cq-field"><span class="cq-label">Comment</span>
+                                            <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder="Required when you send it back."></textarea>
                                         </label>
                                     </template>
                                     <p class="note">Approvals run on CQ Approvals. The Field Action starts when every member has approved.</p>
@@ -418,16 +418,16 @@
                             <div key={r.key} class="row"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
                         </template>
                         <div class="opts">
-                            <button class="btn primary" onclick={handleFinish}>Done</button>
-                            <template if:true={hasFa}><button class="btn" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
+                            <button class="cq-btn-primary" onclick={handleFinish}>Done</button>
+                            <template if:true={hasFa}><button class="cq-btn-outline" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
                         </div>
                     </template>
-                    <template if:true={error}><div class="errbox">{error}</div></template>
+                    <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
                     <template if:true={live}>
                         <div class="foot">
                             <span class="blocker">{blocker}</span>
-                            <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
-                            <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+                            <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
+                            <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
                         </div>
                     </template>
                 </div>
