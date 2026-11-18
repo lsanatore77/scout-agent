@@ -286,12 +286,12 @@
                     <template if:true={is4}>
                         <h3 class="q">Recommendation</h3>
                         <p class="p">Choose what you recommend. The committee approves it in the next step.</p>
-                        <div class="paths">
+                        <div class="cq-optcards paths">
                             <template for:each={outcomes} for:item="o">
-                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleOutcome}>
+                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleOutcome} aria-pressed={o.pressed}>
+                                    <span class="cq-optcard-title">{o.id}</span>
                                     <template if:true={o.cq}><c-cq-ai-why variant="pill" subject={o.id}></c-cq-ai-why></template>
-                                    <span class="pl">{o.id}</span>
-                                    <span class="rk">{o.why}</span>
+                                    <span class="cq-optcard-desc">{o.why}</span>
                                 </button>
                             </template>
                         </div>

@@ -393,7 +393,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get outcomes() {
         return [['No Field Action', 'Nothing further is needed in the field.'],
                 ['Field Action Needed', 'Start a field action, or join one that already covers this problem.']]
-            .map(([id, why]) => ({ id, why, cq: id === this.v.suggestedOutcome, cls: 'pathopt' + (this.outcome === id ? ' on' : id === this.v.suggestedOutcome ? ' sug' : '') }));
+            .map(([id, why]) => ({ id, why, cq: id === this.v.suggestedOutcome, cls: id === this.v.suggestedOutcome ? 'cq-optcard ai' : 'cq-optcard', pressed: this.outcome === id ? 'true' : 'false' }));
     }
     get needed() { return this.outcome === 'Field Action Needed'; }
     get faOpts() {
