@@ -60,7 +60,7 @@ private class CqFieldActionReviewTest {
         System.assertEquals('Nonconformance', v.sourceKind);
         System.assertEquals('FAR-L1', v.lot, 'the lot comes from the nonconformance');
         System.assertEquals('FAR-PART-1', v.partName);
-        System.assertEquals('Seal open on the pouch', v.problem);
+        System.assertEquals('Seal open', v.sourceTitle);
 
         System.assertEquals(2, v.records.size(), 'the other records on the part');
         System.assertEquals(true, v.records[0].sameLot, 'same-lot records come first');
