@@ -1,21 +1,21 @@
 <template>
-    <template if:true={error}><div class="err">{error}</div></template>
+    <template if:true={error}><div class="cq-msg crit">{error}</div></template>
 
     <template if:true={hasReview}>
-        <div class="box">
+        <div class="cq-box">
             <!-- standard workspace header -->
-            <header class="hl">
-                <div class="hl-top">
-                    <div class="hl-who">
-                        <span class="hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Quality Event"></lightning-icon></span>
-                        <div class="hl-name">
-                            <span class="hl-obj">Event Review</span>
-                            <span class="hl-title">{review.name}</span>
+            <header class="cq-hl">
+                <div class="cq-hl-top">
+                    <div class="cq-hl-who">
+                        <span class="cq-hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Quality Event"></lightning-icon></span>
+                        <div class="cq-hl-name">
+                            <span class="cq-hl-obj">Event Review</span>
+                            <span class="cq-hl-title">{review.name}</span>
                         </div>
                     </div>
-                    <div class="hl-actions">
+                    <div class="cq-hl-actions">
                         <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Quality" placeholder="Ask about this event…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
-                        <button class="btn" onclick={handleEdit}>Edit</button>
+                        <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
                     </div>
                 </div>
             </header>

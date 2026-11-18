@@ -1,20 +1,8 @@
 @import 'c/cqStyles';
 
-/* standard workspace header (matches Triage / Field Action / Investigation) */
-.box { border: 1px solid #e5e5e5; border-radius: 12px; background: #fff; overflow: hidden; }
-.hl { padding: 14px 20px 12px; background: #f3f3f3; border-bottom: 1px solid #e5e5e5; display: flex; flex-direction: column; gap: 12px; }
-.hl-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.hl-who { display: flex; align-items: center; gap: 12px; }
-.hl-icon { display: inline-flex; }
-.hl-name { display: flex; flex-direction: column; gap: 1px; }
-.hl-obj { font-size: 12px; color: #5c6572; }
-.hl-title { font-size: 22px; font-weight: 700; line-height: 1.2; color: var(--cq-ink); }
-.hl-actions { display: flex; align-items: center; gap: 8px; }
-.btn { min-height: 40px; padding: 0 16px 3px; border-radius: 4px; border: 1px solid #c4cad2; background: #fff; color: #1a1d21; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.btn:hover { background: #f3f3f3; }
+/* workspace header, box and error message come from cqStyles (.cq-box, .cq-hl*, .cq-msg) */
+.cq-box { overflow: hidden; }
 .body { padding: 16px; font-size: var(--cq-fs-body); color: var(--cq-ink); }
-
-.err { padding: 0.75rem 1rem; border-radius: var(--cq-r-field); background: var(--cq-crit-bg); border: 1px solid var(--cq-crit-fg); color: var(--cq-crit-fg); }
 
 /* two columns: left = problem + facts + decision, right = CQ.AI */
 .cols { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; align-items: start; }
