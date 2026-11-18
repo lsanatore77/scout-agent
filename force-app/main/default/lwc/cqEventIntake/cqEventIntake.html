@@ -31,7 +31,7 @@
                                 <input type="text" maxlength="255" data-f="title" oninput={handleField} placeholder="A short name for the problem">
                             </label>
                             <div class="cq-field"><span class="cq-label">Product</span>
-                                <div class="cq-group fit-last">
+                                <div class="cq-group">
                                     <c-cq-lot-picker class="rlot cq-span" part-id={partId} onchange={handleLot}></c-cq-lot-picker>
                                     <c-cq-part-picker class="rpart" onchange={handlePart}></c-cq-part-picker>
                                     <input class="cq-num" type="number" min="0" data-f="units" oninput={handleField} placeholder="Units affected">
@@ -94,7 +94,7 @@
                                 <span class="cq-hint">Only categories your quality team approved for trend-only logging appear here. Anything else needs a Full Report.</span>
                             </div>
                             <div class="cq-field"><span class="cq-label">2. Which lot or part, and how many?<span class="cq-req">*</span></span>
-                                <div class="cq-group fit-last">
+                                <div class="cq-group">
                                     <c-cq-lot-picker class="qlot cq-span" part-id={qPartId} onchange={handleQLot}></c-cq-lot-picker>
                                     <c-cq-part-picker class="qpart" onchange={handleQPart}></c-cq-part-picker>
                                     <div class="stepper">
