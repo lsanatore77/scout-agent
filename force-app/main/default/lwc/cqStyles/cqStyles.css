@@ -96,9 +96,10 @@
 .cq-pill.soft.info { background: var(--cq-info-bg); color: var(--cq-info-fg); }
 
 /* =============================== CHIPS ================================== */
+/* 3px of bottom padding on chips and buttons lifts the text to optical center in Salesforce Sans, which sits low */
 .cq-chip {
   min-height: var(--cq-field-h); display: inline-flex; align-items: center; justify-content: center;
-  padding: 0 0.95rem; border-radius: var(--cq-r-pill); border: 1px solid var(--cq-line-field);
+  padding: 0 0.95rem 0.1875rem; border-radius: var(--cq-r-pill); border: 1px solid var(--cq-line-field);
   background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: var(--cq-fs-body);
   font-weight: 600; cursor: pointer; white-space: nowrap;
 }
@@ -113,10 +114,10 @@
   min-height: var(--cq-field-h); border-radius: var(--cq-r-field);
   font: inherit; font-size: var(--cq-fs-btn); cursor: pointer; white-space: nowrap;
 }
-.cq-btn-outline { padding: 0 0.9rem; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font-weight: 600; }
+.cq-btn-outline { padding: 0 0.9rem 0.1875rem; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font-weight: 600; }
 .cq-btn-outline:hover { background: var(--cq-surface); }
-.cq-btn-primary { padding: 0 1rem; border: 0; background: var(--cq-link); color: #fff; font-weight: 700; }
-.cq-btn-ai      { padding: 0 1rem; border: 0; background: var(--cq-accent); color: #fff; font-weight: 700; }
+.cq-btn-primary { padding: 0 1rem 0.1875rem; border: 0; background: var(--cq-link); color: #fff; font-weight: 700; }
+.cq-btn-ai      { padding: 0 1rem 0.1875rem; border: 0; background: var(--cq-accent); color: #fff; font-weight: 700; }
 .cq-link { color: var(--cq-link); font-weight: 600; font-size: var(--cq-fs-meta); background: none; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .cq-link:hover { text-decoration: underline; }
 
