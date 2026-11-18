@@ -179,3 +179,6 @@
 .cq-field { margin-top: 14px; }
 .riskcard .cq-field { margin-top: 0; }
 .cq-msg.errbox { margin-top: 12px; }
+/* Recommendation: what sits under the two outcome cards keeps to the left card's width, so fields are not stretched across the page */
+.main > .cq-field, .main > .newfa, .main > .list { width: calc(50% - 5px); box-sizing: border-box; }
+@media (max-width: 760px) { .main > .cq-field, .main > .newfa, .main > .list { width: 100%; } }
