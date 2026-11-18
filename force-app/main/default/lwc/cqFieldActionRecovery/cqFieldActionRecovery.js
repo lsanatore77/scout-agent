@@ -77,7 +77,7 @@ export default class CqFieldActionRecovery extends LightningElement {
         if (this.v.verdict === 'Not Effective' && this.v.verdictOn) { return 'Not Effective'; }
         return 'In Progress';
     }
-    get statePill() { return 'spill ' + (this.confirmed ? 'ok' : this.stateText === 'Not Effective' ? 'bad' : 'wait'); }
+    get statePill() { return 'cq-pill soft ' + (this.confirmed ? 'pos' : this.stateText === 'Not Effective' ? 'crit' : 'warn'); }
     get intro() {
         const parts = [this.v.action, this.v.depth ? 'to ' + this.v.depth.toLowerCase() + ' level' : '',
             this.v.level ? this.v.level + ' check' + (this.v.checkBy ? ' due ' + this.day(this.v.checkBy) : '') : ''].filter(Boolean);
@@ -155,7 +155,7 @@ export default class CqFieldActionRecovery extends LightningElement {
                 sub: c.other ? openCount + ' open' : [c.units !== undefined && c.units !== null ? c.units + ' units' : '',
                     lots.length + ' lot' + (lots.length === 1 ? '' : 's'), openCount + ' open task' + (openCount === 1 ? '' : 's'),
                     c.source === 'Shipment' ? '' : 'added by hand'].filter(Boolean).join(' · '),
-                hasPill: !c.other, pill: c.status, pillCls: 'spill ' + (c.status === 'Acknowledged' ? 'ok' : c.status === 'No reply' ? 'bad' : '') });
+                hasPill: !c.other, pill: c.status, pillCls: 'cq-pill soft ' + (c.status === 'Acknowledged' ? 'pos' : c.status === 'No reply' ? 'crit' : 'neu') });
             if (!open) { return; }
             shown.filter((x) => !x.lot).forEach((x) => rows.push(this.taskRow(x, 'i1')));
             lots.forEach((lot) => {
@@ -178,7 +178,7 @@ export default class CqFieldActionRecovery extends LightningElement {
             unitsText: (x.units === undefined || x.units === null ? 'No' : Number(x.units)) + ' unit' + (Number(x.units) === 1 ? '' : 's')
                 + (x.type === 'Confirm correction' ? ' corrected' : x.type === 'Confirm destruction' ? ' destroyed' : ' back'),
             owner: x.owner, due: this.day(x.due), dueCls: 'nw' + (x.overdue ? ' badc b' : ''),
-            pill: x.done ? 'Done' : x.overdue ? 'Overdue' : 'Open', pillCls: 'spill ' + (x.done ? 'ok' : x.overdue ? 'bad' : '') };
+            pill: x.done ? 'Done' : x.overdue ? 'Overdue' : 'Open', pillCls: 'cq-pill soft ' + (x.done ? 'pos' : x.overdue ? 'crit' : 'neu') };
     }
     get hasRows() { return this.rows.length > 0; }
     get emptyLine() {
@@ -302,8 +302,8 @@ export default class CqFieldActionRecovery extends LightningElement {
         return (this.v.level || 'Target') + ' target ' + this.v.target + '%' + (this.v.checkBy ? ' by ' + this.day(this.v.checkBy) : '');
     }
     get verdicts() {
-        return ['Effective', 'Not Effective'].map((t, i) => ({ key: t, value: t, label: (t === this.v.aiVerdict ? '✦ ' : '') + t,
-            pressed: this.v.verdict === t ? 'true' : 'false', cls: 'seg' + (this.v.verdict === t ? ' on' : '') + (i ? ' sep' : '') }));
+        return ['Effective', 'Not Effective'].map((t) => ({ key: t, value: t, label: (t === this.v.aiVerdict ? '✦ ' : '') + t,
+            pressed: this.v.verdict === t ? 'true' : 'false', cls: t === this.v.aiVerdict ? 'cq-chip ai' : 'cq-chip' }));
     }
     get notEffective() { return this.v.verdict === 'Not Effective'; }
     get nextOpts() {

@@ -4,17 +4,12 @@
 .sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .q { margin: 0; font-size: 20px; font-weight: 700; }
 .p { margin: 10px 0 14px; color: var(--cq-muted); }
-.note { margin: 10px 0 0; font-size: 12px; color: var(--cq-muted); }
-.rk { display: block; font-size: 12px; font-weight: 400; color: var(--cq-muted); }
+.note { margin: 10px 0 0; font-size: 13px; color: var(--cq-muted); }
+.rk { display: block; font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .rk.in { display: inline; }
-.hint { font-size: 12px; color: var(--cq-muted); }
 .b { font-weight: 600; }
 .nw { white-space: nowrap; }
 .grow { flex: 1; min-width: 0; }
-.spill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--cq-hl-bg); color: var(--cq-muted); white-space: nowrap; }
-.spill.ok { background: var(--cq-pos-bg); color: var(--cq-pos-fg); }
-.spill.wait { background: var(--cq-warn-bg); color: var(--cq-warn-fg); }
-.spill.bad { background: var(--cq-crit-bg); color: var(--cq-crit-fg); }
 
 .grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 16px; }
 @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
@@ -22,7 +17,7 @@
 .grid + .card, .card + .card { margin-top: 16px; }
 .grid > .card + .card { margin-top: 0; }
 .ch { display: flex; align-items: baseline; gap: 8px; }
-.cn { font-size: 12px; font-weight: 700; color: var(--cq-muted); }
+.cn { font-size: 13px; font-weight: 700; color: var(--cq-muted); }
 .ct { font-size: 15px; font-weight: 700; }
 .tot { font-size: 13px; font-weight: 600; }
 
@@ -38,7 +33,7 @@
 .barrow { display: flex; align-items: center; gap: 8px; }
 .track { flex: 1; height: 8px; border-radius: 4px; background: var(--cq-line); overflow: hidden; }
 .fill { display: block; height: 100%; }
-.pct { width: 40px; text-align: right; font-size: 12px; color: var(--cq-muted); font-variant-numeric: tabular-nums; }
+.pct { width: 40px; text-align: right; font-size: 13px; color: var(--cq-muted); font-variant-numeric: tabular-nums; }
 
 .locwrap { display: inline-flex; align-items: center; gap: 6px; }
 
@@ -47,27 +42,9 @@
 .fn { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .w80 { width: 80px; }
 
-.fld { display: flex; flex-direction: column; gap: 6px; }
-.fl { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
 .vrow { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
-.segs { display: inline-flex; align-self: flex-start; border: 1px solid var(--cq-line-field); border-radius: 4px; overflow: hidden; }
-.seg { min-height: 38px; padding: 0 14px; border: none; background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.seg.sep { border-left: 1px solid var(--cq-line-field); }
-.seg.on { background: var(--cq-link); color: #fff; }
-.seg:disabled { cursor: default; }
-.ai { min-width: 280px; padding: 10px 12px; border-radius: 8px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); font-size: 12px; color: var(--cq-muted); }
 .aih { color: var(--cq-accent); font-weight: 600; }
 
-.ta { box-sizing: border-box; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: 14px; color: var(--cq-ink); }
-.ta.in { min-height: 40px; padding: 0 10px; }
-.ni { width: 76px; min-height: 32px; padding: 2px 8px; text-align: right; }
-.sel { min-height: 40px; max-width: 100%; padding: 0 8px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: 13px; color: var(--cq-ink); }
-.btn { min-height: 40px; padding: 0 16px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.btn.sm { min-height: 32px; padding: 0 12px; font-size: 13px; }
-.btn.xs { flex: none; min-height: 24px; padding: 0 8px; font-size: 12px; border-radius: 999px; }
-.btn.primary { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
-.errbox { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: var(--cq-crit-bg); border: 1px solid var(--cq-crit-line); color: var(--cq-crit-fg); }
 
 /* task summary cards: click to filter; no coloured borders, only the overdue number turns red */
 .tcards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
@@ -75,19 +52,15 @@
 .tcard { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); font: inherit; text-align: left; cursor: pointer; }
 .tcard:hover { border-color: var(--cq-line-field); }
 .tcard.on { border: 2px solid var(--cq-link); background: var(--cq-surface); padding: 11px 13px; }
-.tlab { font-size: 12px; font-weight: 600; color: var(--cq-muted); }
+.tlab { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
 .tnum { font-size: 28px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
 .badc { color: var(--cq-crit-fg); }
 
 .ch.mid { align-items: center; }
-.ai.row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; min-width: 0; }
-.btn.ghost { border-color: var(--cq-accent); color: var(--cq-accent); }
 .sugg { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--cq-accent-line); border-radius: 8px; }
 .srow { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--cq-line); cursor: pointer; }
 .formbtns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 6px; }
 .addform { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 12px; padding: 12px; border: 1px solid var(--cq-line); border-radius: 8px; background: var(--cq-surface); }
-.addform .fld { gap: 4px; }
-.addform .fld.wide { flex: 1; min-width: 220px; }
 .addform .formbtns { flex-basis: 100%; padding-top: 0; }
 
 /* the nested customer / lot / task table; completed tasks keep normal text */
@@ -104,13 +77,21 @@
 .tick:disabled { cursor: default; }
 .tlink { color: var(--cq-link); text-decoration: none; }
 .tlink:hover { text-decoration: underline; }
-.ulink { align-self: flex-start; padding: 0; border: none; background: none; font: inherit; font-size: 12px; color: var(--cq-muted); cursor: pointer; text-decoration: underline dotted; }
+.ulink { align-self: flex-start; padding: 0; border: none; background: none; font: inherit; font-size: 13px; color: var(--cq-muted); cursor: pointer; text-decoration: underline dotted; }
 .ulink:disabled { cursor: default; text-decoration: none; }
 
 /* held stock: lot and description on the left, a narrow disposition menu on the same line */
 .hrow { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--cq-line); }
 .hl { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
 .hl .ell { display: block; }
-.sel.full { flex: none; width: 172px; font-size: 13px; }
-/* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
-.btn:not(.xs), .seg { padding-bottom: 3px; }
+/* fields, buttons, pills, chips, messages and the CQ.AI suggestion card come from cqStyles */
+.cq-msg.errbox { margin-top: 12px; }
+.addform .cq-field.wide { flex: 1; min-width: 220px; }
+.cq-field.full { flex: none; width: 172px; }
+.cq-field.ni { width: 76px; }
+.cq-field.ni input { min-height: 28px; padding: 2px 8px; text-align: right; }
+.cq-ai-card { min-width: 280px; padding: 10px 12px; }
+.cq-ai-card.row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* small buttons inside a table row or a suggestion line: the shared buttons, shorter */
+.cq-btn-outline.xs, .cq-btn-primary.xs { flex: none; min-height: 24px; padding: 0 8px 1px; font-size: 13px; border-radius: 999px; }
+.cq-btn-outline.ghost { border-color: var(--cq-accent); color: var(--cq-accent); }

@@ -1,5 +1,5 @@
 <template>
-    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="sechead">
             <h3 class="q">Closure</h3>
@@ -21,43 +21,43 @@
                         </div>
                     </template>
                 </div>
-                <span class="hint">Ticked automatically from the earlier steps. Skipped steps show as Not Applicable and do not block closing; units still in the field are flagged but do not block.</span>
+                <span class="cq-hint">Ticked automatically from the earlier steps. Skipped steps show as Not Applicable and do not block closing; units still in the field are flagged but do not block.</span>
             </section>
 
             <div class="col">
                 <section class="card">
                     <div class="ch"><span class="cn">2</span><span class="ct">Closure Summary</span><span class="grow"></span>
                         <template if:true={isDraft}><span class="aitag">&#10022; Drafted by CQ.AI</span></template></div>
-                    <textarea class="ta" rows="9" value={summaryText} disabled={locked} oninput={handleSummaryInput} onchange={handleSummary} aria-label="Closure summary"></textarea>
+                    <div class="cq-field"><textarea class="ta" rows="9" value={summaryText} disabled={locked} oninput={handleSummaryInput} onchange={handleSummary} aria-label="Closure summary"></textarea></div>
                 </section>
                 <section class="card">
                     <div class="ch"><span class="cn">3</span><span class="ct">What Follows</span></div>
-                    <div class="fld">
-                        <span class="fl">CAPA *</span>
+                    <div class="cq-field">
+                        <span class="cq-label">CAPA<span class="cq-req">*</span></span>
                         <template if:true={hasCapa}>
                             <div class="capa">
                                 <span class="fn"><a class="clink" href={capaUrl} target="_blank">{v.capaName}</a><span class="rk">{v.capaTitle}</span></span>
                                 <template if:true={v.capaStatus}><span class={capaStatusCls}>{v.capaStatus}</span></template>
-                                <template if:false={locked}><button class="btn cmp" onclick={handleUnlink} disabled={busy}>Unlink</button></template>
+                                <template if:false={locked}><button class="cq-btn-outline" onclick={handleUnlink} disabled={busy}>Unlink</button></template>
                             </div>
-                            <span class="hint">Root cause and prevention continue in this CAPA. The field action can close while the CAPA carries on.</span>
+                            <span class="cq-hint">Root cause and prevention continue in this CAPA. The field action can close while the CAPA carries on.</span>
                         </template>
                         <template if:true={noCapa}>
                             <div class="capaopts">
-                                <button class="btn primary" onclick={handleCreateCapa} disabled={cantCreate}>Create CAPA</button>
+                                <button class="cq-btn-primary" onclick={handleCreateCapa} disabled={cantCreate}>Create CAPA</button>
                                 <span class="or">or</span>
-                                <select class="sel grow" onchange={handleCapa} disabled={cantCreate} aria-label="Link an Existing CAPA">
+                                <select class="grow" onchange={handleCapa} disabled={cantCreate} aria-label="Link an Existing CAPA">
                                     <template for:each={capaOpts} for:item="o">
                                         <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                     </template>
                                 </select>
                             </div>
-                            <span class="hint">Create CAPA makes a new CAPA - Field Action record for this field action, due in 60 days, and links it here. Fill it in on the CAPA.</span>
+                            <span class="cq-hint">Create CAPA makes a new CAPA - Field Action record for this field action, due in 60 days, and links it here. Fill it in on the CAPA.</span>
                         </template>
                     </div>
                 </section>
             </div>
         </div>
-        <template if:true={error}><div class="errbox">{error}</div></template>
+        <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
     </template>
 </template>

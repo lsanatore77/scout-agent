@@ -1,5 +1,5 @@
 <template>
-    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="box">
             <header class="cq-hl">
@@ -13,7 +13,7 @@
                     </div>
                     <div class="cq-hl-actions">
                         <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Field_Action" step={askStep} suggestions={askSuggestions} onaskcqaction={handleAskAction}></c-ask-cq-popover>
-                        <button class="btn cmp" onclick={handleEdit}>Edit</button>
+                        <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
                     </div>
                 </div>
                 <div class="cq-hl-fields">
@@ -48,8 +48,8 @@
                                     <div class="lab">What Was Decided</div>
                                     <div class="big">{v.title}</div>
                                     <div class="sumrow">
-                                        <span class="spill state">{v.actionType}</span>
-                                        <template if:true={v.recallClass}><span class="spill state">{v.recallClass}</span></template>
+                                        <span class="cq-pill soft neu">{v.actionType}</span>
+                                        <template if:true={v.recallClass}><span class="cq-pill soft neu">{v.recallClass}</span></template>
                                         <template if:true={v.scope}><span class={scopePill}>{v.scope} Scope</span></template>
                                         <span class="rk">{decidedLine}</span>
                                     </div>
@@ -105,18 +105,18 @@
 
                         <template if:true={hasLots}>
                             <div class="tbar">
-                                <div class="togs" role="group" aria-label="Which lots to show">
+                                <div class="cq-chips" role="group" aria-label="Which lots to show">
                                     <button class={allTab} data-v="all" onclick={handleView} aria-pressed={allPressed}>All Lots</button>
                                     <button class={inTab} data-v="in" onclick={handleView} aria-pressed={inPressed}>In Scope</button>
                                 </div>
                                 <template if:true={pendingLine}><span class="pendline warn">{pendingLine}</span></template>
                                 <div class="cact">
                                     <template if:true={isPartial}>
-                                        <button class="btn cmp primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
+                                        <button class="cq-btn-primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
                                         <span class="vdiv"></span>
                                     </template>
-                                    <button class="btn cmp" onclick={handleBack} disabled={cantBack}>Back</button>
-                                    <button class="btn cmp primary" onclick={handleNext} disabled={cantNext}>Next</button>
+                                    <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
+                                    <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>Next</button>
                                 </div>
                             </div>
                             <div class="tblwrap tree" style={tableStyle}>
@@ -138,8 +138,8 @@
                                                             <template if:true={r.showCheck}>
                                                                 <input class="tick" type="checkbox" data-name={r.name} checked={r.checked} disabled={r.checkDisabled} onchange={handleTick} aria-label={r.checkLabel} />
                                                             </template>
-                                                            <template if:true={r.added}><span class="spill added" title={r.addedTitle}>Added</span></template>
-                                                            <template if:true={r.removing}><span class="spill removing">Removing</span></template>
+                                                            <template if:true={r.added}><span class="cq-pill soft pos" title={r.addedTitle}>Added</span></template>
+                                                            <template if:true={r.removing}><span class="cq-pill soft crit">Removing</span></template>
                                                         </span>
                                                     </td>
                                                     <td class="nw">
@@ -147,7 +147,7 @@
                                                         <template if:true={r.hasKids}><button class="chev" data-key={r.key} onclick={handleToggle} aria-label={r.toggleLabel} aria-expanded={r.openText}>{r.chev}</button></template>
                                                         <template if:true={r.noKids}><span class="chev0"></span></template>
                                                         <span class={r.itemCls}>{r.item}</span>
-                                                        <template if:true={r.pendingAdd}><span class="spill notconf">Not Confirmed</span></template>
+                                                        <template if:true={r.pendingAdd}><span class="cq-pill soft warn notconf">Not Confirmed</span></template>
                                                         <template if:true={r.suggested}>&nbsp;&nbsp;<c-cq-ai-why variant="pill" tip={r.why} lead="Why does CQ.AI suggest including " subject={r.item}></c-cq-ai-why></template>
                                                     </td>
                                                     <td class="nw mut">{r.partRev}</td>
@@ -234,14 +234,14 @@
                         <c-cq-field-action-closure data-step="closure" record-id={recordId} onrailchange={handleRailChange} onfootchange={handleFootChange}></c-cq-field-action-closure>
                     </template>
 
-                    <template if:true={error}><div class="errbox">{error}</div></template>
+                    <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
                     <template if:true={showFoot}>
                     <div class="foot">
                         <template if:true={showStepAction}>
                             <span class="fblock">{foot.blocker}</span>
-                            <button class="btn primary" onclick={handleStepAction} disabled={foot.disabled}>{foot.label}</button>
+                            <button class="cq-btn-primary" onclick={handleStepAction} disabled={foot.disabled}>{foot.label}</button>
                         </template>
-                        <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
+                        <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
                         <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
                     </div>
                     </template>

@@ -208,7 +208,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     foot = { show: false, label: '', disabled: true, blocker: '' };
     handleFootChange(event) { this.foot = event.detail; }
     get showStepAction() { return (this.is2 || this.is5 || this.is6) && this.foot.show; }
-    get nextCls() { return this.showStepAction ? 'btn' : 'btn primary'; }
+    get nextCls() { return this.showStepAction ? 'cq-btn-outline' : 'cq-btn-primary'; }
     handleStepAction() {
         const s = this.template.querySelector('[data-step]');
         if (s) { s.confirm(); }
@@ -252,18 +252,18 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     }
     get hasReviews() { return this.reviews.length > 0; }
     get signals() {
-        return (this.v.signals || []).map((s) => ({ ...s, pillCls: 'spill ' + (s.strength || '').toLowerCase(), where: s.lot ? 'Lot ' + s.lot : 'Whole Part', label: titleCase(s.label) }));
+        return (this.v.signals || []).map((s) => ({ ...s, pillCls: 'cq-pill soft ' + ({ watch: 'warn', assess: 'warn', escalate: 'crit' }[(s.strength || '').toLowerCase()] || 'neu'), where: s.lot ? 'Lot ' + s.lot : 'Whole Part', label: titleCase(s.label) }));
     }
     get hasSignals() { return this.signals.length > 0; }
     goScope() { this.step = SCOPE; }
 
     // ---- step 2: scope
-    get scopePill() { return 'spill ' + (this.isFull ? 'full' : 'partial'); }
-    get statePill() { return 'spill state' + (this.scopeConfirmed ? ' ok' : this.v.scope ? ' wait' : ''); }
+    get scopePill() { return 'cq-pill soft neu'; }
+    get statePill() { return 'cq-pill soft ' + (this.scopeConfirmed ? 'pos' : this.v.scope ? 'warn' : 'neu'); }
     get noScope() { return !this.v.scope; }
     get canChange() { return this.isPartial && this.v.status !== 'Closed'; }
-    get allTab() { return 'tog' + (this.view === 'all' ? ' on' : ''); }
-    get inTab() { return 'tog' + (this.view === 'in' ? ' on' : ''); }
+    get allTab() { return 'cq-chip'; }
+    get inTab() { return 'cq-chip'; }
     get allPressed() { return this.view === 'all' ? 'true' : 'false'; }
     get inPressed() { return this.view === 'in' ? 'true' : 'false'; }
     handleView(event) { this.view = event.currentTarget.dataset.v; this.page = 0; this.tableMin = 0; }

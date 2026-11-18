@@ -6,12 +6,14 @@
         </div>
         <div class="mid">
             <template if:true={fa}>
-                <div class="sug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={fa.suggestion}></c-cq-ai-why><span class="rec">{fa.suggestion}</span></div>
+                <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={fa.suggestion}></c-cq-ai-why></div>
+                <div class="cq-ai-verdict">{fa.suggestion}</div>
                 <div class="why">{fa.suggestionWhy}</div>
             </template>
             <template if:true={asking}>
-                <label class="lbl" for="why">Why Does This Need Field Action Review? (Required)</label>
-                <textarea id="why" class="ta" rows="2" oninput={handleReason} placeholder="For example: this lot may have shipped before the hold"></textarea>
+                <label class="cq-field"><span class="cq-label">Why Does This Need Field Action Review?<span class="cq-req">*</span></span>
+                    <textarea rows="2" oninput={handleReason} placeholder="For example: this lot may have shipped before the hold"></textarea>
+                </label>
             </template>
             <template if:true={doneNote}><div class={noteClass}>{doneNote}</div></template>
             <template if:true={hasReview}>
@@ -21,16 +23,16 @@
                     <template if:true={hasFa}><button class="link" data-id={fa.faId} onclick={handleOpen}>{fa.faName}</button></template>
                 </div>
             </template>
-            <template if:true={error}><div class="err">{error}</div></template>
+            <template if:true={error}><div class="cq-msg crit err">{error}</div></template>
         </div>
         <div class="btns">
             <template if:true={isOpen}>
-                <button class="btn" onclick={handleNotNeeded} disabled={busy}>Not Needed</button>
-                <button class="btn red" onclick={handleAsk} disabled={busy}>Send for Review</button>
+                <button class="cq-btn-outline" onclick={handleNotNeeded} disabled={busy}>Not Needed</button>
+                <button class="cq-btn-outline serious" onclick={handleAsk} disabled={busy}>Send for Review</button>
             </template>
             <template if:true={asking}>
                 <button class="link grey" onclick={handleCancel}>Cancel</button>
-                <button class="btn solid" onclick={handleSend} disabled={cannotSend}>Send for Review</button>
+                <button class="cq-btn-primary serious" onclick={handleSend} disabled={cannotSend}>Send for Review</button>
             </template>
             <template if:true={canChange}>
                 <button class="link" onclick={handleChange} disabled={busy}>Change</button>

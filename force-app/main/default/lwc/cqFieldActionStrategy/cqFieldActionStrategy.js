@@ -97,7 +97,7 @@ export default class CqFieldActionStrategy extends LightningElement {
 
     // ---- header
     get stateText() { return this.v.status || 'Not started'; }
-    get statePill() { return 'spill state' + (this.v.status === 'Confirmed' ? ' ok' : this.v.status ? ' wait' : ''); }
+    get statePill() { return 'cq-pill soft ' + (this.v.status === 'Confirmed' ? 'pos' : this.v.status ? 'warn' : 'neu'); }
 
     // ---- tabs: one section, a numbered tab per part; the number is green when that part is done, amber when it needs fixing
     get tabState() {
@@ -139,7 +139,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     cards(list, cur, ai, field, hints) {
         return list.map(([value, title], i) => ({
             key: field + i, value, field, title, desc: hints[value] || '', ai: value === ai,
-            pressed: cur === value ? 'true' : 'false', cls: 'oc' + (cur === value ? ' on' : '')
+            pressed: cur === value ? 'true' : 'false', cls: 'cq-optcard' + (value === ai ? ' ai' : '')
         }));
     }
     get actionCards() { return this.cards(ACTIONS, this.action, this.v.sAction, 'action', ACTION_HINT); }
@@ -159,7 +159,7 @@ export default class CqFieldActionStrategy extends LightningElement {
             const fits = forAction === this.action;
             return { key: 'i' + i, value, field: 'instruction', title: value, ai: value === this.v.sInstruction,
                 desc: INSTRUCTION_HINT[value] + (fits ? '' : ' Only for ' + (forAction === REMOVAL ? 'a removal.' : forAction === CORRECTION ? 'a correction.' : 'an advisory notice.')),
-                pressed: on ? 'true' : 'false', cls: 'oc' + (on ? ' on' : '') + (fits ? '' : ' off') };
+                pressed: on ? 'true' : 'false', cls: 'cq-optcard' + (value === this.v.sInstruction ? ' ai' : '') + (fits ? '' : ' off') };
         });
     }
     get methods() { return METHODS.map((m) => ({ value: m, label: m, selected: m === this.method })); }
@@ -190,11 +190,11 @@ export default class CqFieldActionStrategy extends LightningElement {
             if (!list.length) { return; }
             rows.push({ key: 'g' + kind, isGroup: true, title, rowCls: 'grp' });
             list.forEach((h) => {
-                const state = h.hold && h.held ? ['Held', 'spill ok'] : h.hold ? ['Not confirmed', 'spill wait'] : h.held ? ['Releasing', 'spill bad'] : ['', ''];
+                const state = h.hold && h.held ? ['Held', 'cq-pill soft pos'] : h.hold ? ['Not confirmed', 'cq-pill soft warn'] : h.held ? ['Releasing', 'cq-pill soft crit'] : ['', ''];
                 rows.push({ key: h.id, isGroup: false, rowCls: '', id: h.id, lot: h.lot, hold: h.hold, item: h.item || '',
                     part: h.part ? h.part : '', why: h.kind === 'Component Lot' ? h.reason || '' : '', ai: h.suggested && h.kind === 'Component Lot',
                     onHand: h.onHand === undefined || h.onHand === null ? '—' : String(h.onHand),
-                    stateText: h.outOfScope ? 'No longer in scope' : state[0], stateCls: h.outOfScope ? 'spill bad' : state[1],
+                    stateText: h.outOfScope ? 'No longer in scope' : state[0], stateCls: h.outOfScope ? 'cq-pill soft crit' : state[1],
                     hasState: h.outOfScope || !!state[0], label: (h.hold ? 'Release ' : 'Hold ') + h.lot,
                     places: (h.places || []).map((k, i, all) => ({ key: h.id + '|' + i, location: k.location, units: String(Number(k.units)),
                         href: k.locationId ? '/lightning/r/compliancequest__SQX_Location__c/' + k.locationId + '/view' : null, sep: i < all.length - 1 })),

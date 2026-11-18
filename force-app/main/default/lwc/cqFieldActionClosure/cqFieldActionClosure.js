@@ -49,7 +49,7 @@ export default class CqFieldActionClosure extends LightningElement {
     @api async createCapa() { await this._loading; return this.handleCreateCapa(); }
 
     get stateText() { return this.v.closed ? 'Closed' : this.v.canClose ? 'Ready to Close' : 'Open Items'; }
-    get statePill() { return 'spill ' + (this.v.closed ? 'ok' : this.v.canClose ? '' : 'wait'); }
+    get statePill() { return 'cq-pill soft ' + (this.v.closed ? 'pos' : this.v.canClose ? 'neu' : 'warn'); }
     get closedLine() {
         return this.v.closed ? 'Closed by ' + this.v.closedBy + ' · ' + new Date(this.v.closedOn).toLocaleString() : '';
     }
@@ -84,7 +84,7 @@ export default class CqFieldActionClosure extends LightningElement {
     get hasCapa() { return !!this.v.capaId; }
     get noCapa() { return !this.v.capaId; }
     get capaUrl() { return '/lightning/r/compliancequest__SQX_CAPA__c/' + this.v.capaId + '/view'; }
-    get capaStatusCls() { return 'spill' + (this.v.capaStatus === 'Closed' || this.v.capaStatus === 'Complete' ? ' ok' : ''); }
+    get capaStatusCls() { return 'cq-pill soft ' + (this.v.capaStatus === 'Closed' || this.v.capaStatus === 'Complete' ? 'pos' : 'neu'); }
     get cantCreate() { return this.locked || this.busy; }
     get capaOpts() {
         const list = (this.v.capas || []).map((c) => ({ value: c.id, label: c.name + (c.title ? ' · ' + c.title : ''), selected: false }));

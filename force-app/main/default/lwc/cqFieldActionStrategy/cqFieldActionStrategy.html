@@ -1,5 +1,5 @@
 <template>
-    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="sechead">
             <h3 class="q">Strategy</h3>
@@ -21,47 +21,47 @@
                 <div class="panel" role="tabpanel">
                     <template if:true={isAction}>
                     <template if:true={v.whyAction}>
-                        <div class="ai"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this action and how far it goes?"></c-cq-ai-why> {v.whyAction}</div>
+                        <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this action and how far it goes?"></c-cq-ai-why></div><div class="cq-ai-text">{v.whyAction}</div></div>
                     </template>
-                    <div class="fld">
-                        <span class="fl">Action *</span>
+                    <div class="cq-field">
+                        <span class="cq-label">Action<span class="cq-req">*</span></span>
                         <div class="cards c3" role="group" aria-label="Action">
                             <template for:each={actionCards} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template></span>
-                                    <span class="od">{o.desc}</span>
+                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template>
+                                    <span class="cq-optcard-desc">{o.desc}</span>
                                 </button>
                             </template>
                         </div>
                     </div>
-                    <div class="fld">
-                        <span class="fl">How Far It Goes *</span>
+                    <div class="cq-field">
+                        <span class="cq-label">How Far It Goes<span class="cq-req">*</span></span>
                         <div class="cards c3" role="group" aria-label="How Far It Goes">
                             <template for:each={depthCards} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template></span>
-                                    <span class="od">{o.desc}</span>
+                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template>
+                                    <span class="cq-optcard-desc">{o.desc}</span>
                                 </button>
                             </template>
                         </div>
                     </div>
                     </template>
                     <template if:true={isTell}>
-                    <div class="fld">
-                        <span class="fl">Instruction *</span>
+                    <div class="cq-field">
+                        <span class="cq-label">Instruction<span class="cq-req">*</span></span>
                         <div class="cards c2" role="group" aria-label="Instruction">
                             <template for:each={instructions} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template></span>
-                                    <span class="od">{o.desc}</span>
+                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template>
+                                    <span class="cq-optcard-desc">{o.desc}</span>
                                 </button>
                             </template>
                         </div>
                     </div>
-                    <label class="fld">
-                        <span class="fl">Key Message *</span>
-                        <textarea class="ta" rows="5" data-field="message" disabled={locked} onchange={handleText}></textarea>
-                        <span class="hint">The Notifications step builds the customer letter from this.</span>
+                    <label class="cq-field">
+                        <span class="cq-label">Key Message<span class="cq-req">*</span></span>
+                        <textarea rows="5" data-field="message" disabled={locked} onchange={handleText}></textarea>
+                        <span class="cq-hint">The Notifications step builds the customer letter from this.</span>
                     </label>
                     </template>
                     <template if:true={isHolds}>
@@ -93,49 +93,49 @@
                     </div>
                     <template if:true={hasComps}>
                         <div class="addrow">
-                            <select class="sel" aria-label="Add a Component Lot" disabled={locked} onchange={handleAddPick}>
+                            <span class="cq-field addsel"><select aria-label="Add a Component Lot" disabled={locked} onchange={handleAddPick}>
                                 <template for:each={compOptions} for:item="o">
                                     <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                 </template>
-                            </select>
-                            <button class="btn sm" onclick={handleAdd} disabled={cantAdd}>Add Hold</button>
+                            </select></span>
+                            <button class="cq-btn-outline" onclick={handleAdd} disabled={cantAdd}>Add Hold</button>
                         </div>
                     </template>
-                    <span class="hint">{holdLine}</span>
+                    <span class="cq-hint">{holdLine}</span>
                     </template>
                     <template if:true={isCheck}>
                     <template if:true={v.whyLevel}>
-                        <div class="ai"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this effectiveness check level?"></c-cq-ai-why> {v.whyLevel}</div>
+                        <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this effectiveness check level?"></c-cq-ai-why></div><div class="cq-ai-text">{v.whyLevel}</div></div>
                     </template>
-                    <div class="fld">
-                        <span class="fl">Check Level *</span>
+                    <div class="cq-field">
+                        <span class="cq-label">Check Level<span class="cq-req">*</span></span>
                         <div class="cards c5" role="group" aria-label="Check Level">
                             <template for:each={levelCards} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="oh"><span class="ot">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="star" lead="Why does CQ.AI suggest check level " subject={o.title}></c-cq-ai-why></template></span>
-                                    <span class="od">{o.desc}</span>
+                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="star" lead="Why does CQ.AI suggest check level " subject={o.title}></c-cq-ai-why></template>
+                                    <span class="cq-optcard-desc">{o.desc}</span>
                                 </button>
                             </template>
                         </div>
                     </div>
                     <template if:true={needsCheck}>
                         <div class="row3">
-                            <label class="fld">
-                                <span class="fl">How We Check *</span>
-                                <select class="sel" data-field="method" disabled={locked} onchange={handleText}>
+                            <label class="cq-field">
+                                <span class="cq-label">How We Check<span class="cq-req">*</span></span>
+                                <select data-field="method" disabled={locked} onchange={handleText}>
                                     <template for:each={methods} for:item="m">
                                         <option key={m.value} value={m.value} selected={m.selected}>{m.label}</option>
                                     </template>
                                 </select>
                             </label>
-                            <label class="fld">
-                                <span class="fl">Check by *</span>
-                                <input class="ta in" type="date" data-field="checkBy" value={checkBy} disabled={locked} onchange={handleText} />
+                            <label class="cq-field">
+                                <span class="cq-label">Check by<span class="cq-req">*</span></span>
+                                <input type="date" data-field="checkBy" value={checkBy} disabled={locked} onchange={handleText} />
                             </label>
                             <template if:true={isLevelB}>
-                                <label class="fld">
-                                    <span class="fl">Share of Customers Checked (%) *</span>
-                                    <input class="ta in" type="number" min="11" max="99" data-field="percent" value={percent} disabled={locked} onchange={handleText} />
+                                <label class="cq-field">
+                                    <span class="cq-label">Share of Customers Checked (%)<span class="cq-req">*</span></span>
+                                    <input type="number" min="11" max="99" data-field="percent" value={percent} disabled={locked} onchange={handleText} />
                                 </label>
                             </template>
                         </div>
@@ -144,7 +144,7 @@
                 </div>
             </section>
 
-            <template if:true={error}><div class="errbox">{error}</div></template>
+            <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
         </template>
     </template>
 </template>

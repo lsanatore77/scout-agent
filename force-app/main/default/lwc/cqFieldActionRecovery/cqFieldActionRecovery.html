@@ -1,5 +1,5 @@
 <template>
-    <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
+    <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="sechead">
             <h3 class="q">Recovery and Effectiveness</h3>
@@ -39,7 +39,7 @@
                         </tbody>
                     </table>
                 </div>
-                <span class="hint">{tableHint}</span>
+                <span class="cq-hint">{tableHint}</span>
             </section>
             </template>
 
@@ -54,51 +54,51 @@
             <div class="grid">
                 <section class="card">
                     <div class="ch mid"><span class="cn">2</span><span class="ct">Customers and Tasks</span><span class="grow"></span>
-                        <template if:true={filterLine}><span class="hint">{filterLine}</span></template>
-                        <button class="btn sm" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
+                        <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
+                        <button class="cq-btn-outline" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
                     </div>
 
                     <template if:true={adding}>
                         <div class="addform">
-                            <label class="fld"><span class="fl">Customer</span>
-                                <select class="sel" data-f="customerId" onchange={handleForm}>
+                            <label class="cq-field"><span class="cq-label">Customer</span>
+                                <select data-f="customerId" onchange={handleForm}>
                                     <template for:each={custOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
                                 </select></label>
                             <template if:true={isNewCustomer}>
-                                <label class="fld"><span class="fl">New Customer *</span>
-                                    <input class="ta in" type="text" data-f="newCustomer" value={form.newCustomer} oninput={handleForm} /></label>
+                                <label class="cq-field"><span class="cq-label">New Customer<span class="cq-req">*</span></span>
+                                    <input type="text" data-f="newCustomer" value={form.newCustomer} oninput={handleForm} /></label>
                             </template>
-                            <label class="fld"><span class="fl">Lot</span>
-                                <select class="sel" data-f="lot" onchange={handleForm}>
+                            <label class="cq-field"><span class="cq-label">Lot</span>
+                                <select data-f="lot" onchange={handleForm}>
                                     <template for:each={lotOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
                                 </select></label>
-                            <label class="fld"><span class="fl">Type</span>
-                                <select class="sel" data-f="type" onchange={handleForm}>
+                            <label class="cq-field"><span class="cq-label">Type</span>
+                                <select data-f="type" onchange={handleForm}>
                                     <template for:each={typeOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
                                 </select></label>
-                            <label class="fld wide"><span class="fl">Task</span>
-                                <input class="ta in" type="text" data-f="subject" value={form.subject} placeholder={subjectHint} oninput={handleForm} /></label>
-                            <label class="fld"><span class="fl">Assigned to</span>
-                                <select class="sel" data-f="ownerId" onchange={handleForm}>
+                            <label class="cq-field wide"><span class="cq-label">Task</span>
+                                <input type="text" data-f="subject" value={form.subject} placeholder={subjectHint} oninput={handleForm} /></label>
+                            <label class="cq-field"><span class="cq-label">Assigned to</span>
+                                <select data-f="ownerId" onchange={handleForm}>
                                     <template for:each={ownerOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
                                 </select></label>
-                            <label class="fld"><span class="fl">Due</span>
-                                <input class="ta in" type="date" data-f="due" value={form.due} onchange={handleForm} /></label>
+                            <label class="cq-field"><span class="cq-label">Due</span>
+                                <input type="date" data-f="due" value={form.due} onchange={handleForm} /></label>
                             <template if:true={formHasUnits}>
-                                <label class="fld"><span class="fl">Units So Far</span>
-                                    <input class="ta in w80" type="number" min="0" data-f="units" value={form.units} oninput={handleForm} /></label>
+                                <label class="cq-field"><span class="cq-label">Units So Far</span>
+                                    <input class="w80" type="number" min="0" data-f="units" value={form.units} oninput={handleForm} /></label>
                             </template>
                             <div class="formbtns">
-                                <button class="btn sm primary" onclick={handleAdd} disabled={cantAdd}>Add</button>
-                                <button class="btn sm" onclick={handleOpenAdd}>Cancel</button>
+                                <button class="cq-btn-primary" onclick={handleAdd} disabled={cantAdd}>Add</button>
+                                <button class="cq-btn-outline" onclick={handleOpenAdd}>Cancel</button>
                             </div>
                         </div>
                     </template>
 
                     <template if:true={hasSuggestions}>
-                        <div class="ai row">
-                            <span class="grow"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why> {t.suggestLine}</span>
-                            <button class="btn xs ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
+                        <div class="cq-ai-card row">
+                            <span class="grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{t.suggestLine}</span></span>
+                            <button class="cq-btn-outline xs ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
                         </div>
                         <template if:true={reviewing}>
                             <div class="sugg">
@@ -109,9 +109,9 @@
                                     </label>
                                 </template>
                                 <div class="formbtns">
-                                    <button class="btn sm primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
-                                    <button class="btn sm" onclick={handleReview}>Cancel</button>
-                                    <span class="hint">Assigned to you; reassign any task from the Add Task form or the Task record.</span>
+                                    <button class="cq-btn-primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
+                                    <button class="cq-btn-outline" onclick={handleReview}>Cancel</button>
+                                    <span class="cq-hint">Assigned to you; reassign any task from the Add Task form or the Task record.</span>
                                 </div>
                             </div>
                         </template>
@@ -150,9 +150,9 @@
                                                             </template>
                                                             <template if:true={r.editingUnits}>
                                                                 <span class="locwrap">
-                                                                    <input class="ta ni" type="number" min="0" value={r.unitsVal} oninput={handleUnitsInput} aria-label="Units" />
-                                                                    <button class="btn xs primary" onclick={handleUnitsSave} disabled={busy}>Save</button>
-                                                                    <button class="btn xs" onclick={handleUnitsCancel}>Cancel</button>
+                                                                    <span class="cq-field ni"><input type="number" min="0" value={r.unitsVal} oninput={handleUnitsInput} aria-label="Units" /></span>
+                                                                    <button class="cq-btn-primary xs" onclick={handleUnitsSave} disabled={busy}>Save</button>
+                                                                    <button class="cq-btn-outline xs" onclick={handleUnitsCancel}>Cancel</button>
                                                                 </span>
                                                             </template>
                                                         </template>
@@ -168,7 +168,7 @@
                         </div>
                     </template>
                     <template if:false={hasRows}><p class="note">{emptyLine}</p></template>
-                    <span class="hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table. {respLine}; {targetText}.</span>
+                    <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table. {respLine}; {targetText}.</span>
                 </section>
 
                 <section class="card">
@@ -178,46 +178,46 @@
                             <template for:each={holdRows} for:item="h">
                                 <div key={h.id} class="hrow">
                                     <span class="hl"><span class="b">{h.lot}</span><span class="rk in ell">{h.what}</span></span>
-                                    <select class="sel full" data-id={h.id} onchange={handleDisposition} disabled={locked} aria-label={h.label}>
+                                    <span class="cq-field full"><select data-id={h.id} onchange={handleDisposition} disabled={locked} aria-label={h.label}>
                                         <template for:each={h.opts} for:item="o">
                                             <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                         </template>
-                                    </select>
+                                    </select></span>
                                 </div>
                             </template>
                         </div>
                     </template>
                     <template if:false={hasHolds}><p class="note">No stock was held in the strategy.</p></template>
-                    <span class="hint">Stock still in our control, held in the Strategy step. A finished lot's disposition also covers the units customers send back. &#10022; marks CQ.AI's suggestion; dispositions are fixed when the verdict is confirmed.</span>
+                    <span class="cq-hint">Stock still in our control, held in the Strategy step. A finished lot's disposition also covers the units customers send back. &#10022; marks CQ.AI's suggestion; dispositions are fixed when the verdict is confirmed.</span>
                 </section>
             </div>
 
             <section class="card">
                 <div class="ch"><span class="cn">4</span><span class="ct">Effectiveness Verdict</span></div>
                 <div class="vrow">
-                    <div class="fld">
-                        <span class="fl">Verdict *</span>
-                        <div class="segs" role="group" aria-label="Verdict">
+                    <div class="cq-field">
+                        <span class="cq-label">Verdict<span class="cq-req">*</span></span>
+                        <div class="cq-chips" role="group" aria-label="Verdict">
                             <template for:each={verdicts} for:item="o">
                                 <button key={o.key} class={o.cls} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handleVerdict}>{o.label}</button>
                             </template>
                         </div>
                     </div>
                     <template if:true={notEffective}>
-                        <label class="fld">
-                            <span class="fl">What Happens Next *</span>
-                            <select class="sel" onchange={handleNext} disabled={locked}>
+                        <label class="cq-field">
+                            <span class="cq-label">What Happens Next<span class="cq-req">*</span></span>
+                            <select onchange={handleNext} disabled={locked}>
                                 <template for:each={nextOpts} for:item="o">
                                     <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                 </template>
                             </select>
                         </label>
                     </template>
-                    <div class="ai grow"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="What does CQ.AI suggest for the recovery verdict, and why?"></c-cq-ai-why> {v.aiLine}</div>
+                    <div class="cq-ai-card grow"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="What does CQ.AI suggest for the recovery verdict, and why?"></c-cq-ai-why></div><div class="cq-ai-text">{v.aiLine}</div></div>
                 </div>
             </section>
 
-            <template if:true={error}><div class="errbox">{error}</div></template>
+            <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
         </template>
     </template>
 </template>

@@ -4,24 +4,20 @@
 .sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .q { margin: 0; font-size: 20px; font-weight: 700; }
 .p { margin: 10px 0 14px; color: var(--cq-muted); }
-.rk { display: block; font-size: 12px; font-weight: 400; color: var(--cq-muted); }
+.rk { display: block; font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .rk.in { display: inline; }
-.hint { font-size: 12px; color: var(--cq-muted); }
 .b { font-weight: 600; }
 .grow { flex: 1; min-width: 0; }
-.spill { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--cq-hl-bg); color: var(--cq-muted); white-space: nowrap; }
-.spill.ok { background: var(--cq-pos-bg); color: var(--cq-pos-fg); }
-.spill.wait { background: var(--cq-warn-bg); color: var(--cq-warn-fg); }
 
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
 @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
 .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .ch { display: flex; align-items: baseline; gap: 8px; }
-.cn { font-size: 12px; font-weight: 700; color: var(--cq-muted); }
+.cn { font-size: 13px; font-weight: 700; color: var(--cq-muted); }
 .ct { font-size: 15px; font-weight: 700; }
 .tot { font-size: 13px; font-weight: 600; }
-.aitag { color: var(--cq-accent); font-size: 12px; font-weight: 600; }
+.aitag { color: var(--cq-accent); font-size: 13px; font-weight: 600; }
 
 .list { display: flex; flex-direction: column; }
 .lrow { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--cq-line); }
@@ -31,20 +27,13 @@
 .mk.na { background: var(--cq-hl-bg); color: var(--cq-muted); border: 1px solid var(--cq-line-field); }
 .mk.open { background: var(--cq-warn-bg); color: var(--cq-warn-fg); }
 
-.fld { display: flex; flex-direction: column; gap: 6px; }
-.fl { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
-.ta { width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: 14px; line-height: 1.45; color: var(--cq-ink); resize: vertical; }
-.ta.in { min-height: 40px; padding: 0 10px; }
-.sel { min-height: 40px; max-width: 100%; padding: 0 8px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: 14px; color: var(--cq-ink); }
-.errbox { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: var(--cq-crit-bg); border: 1px solid var(--cq-crit-line); color: var(--cq-crit-fg); }
-.mklink { padding: 0; border: none; background: none; cursor: pointer; font: inherit; font-size: 12px; font-weight: 600; color: var(--cq-link); text-decoration: none; align-self: flex-start; }
+.mklink { padding: 0; border: none; background: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; color: var(--cq-link); text-decoration: none; align-self: flex-start; }
 .mklink:hover { text-decoration: underline; }
-.btn { min-height: 40px; padding: 0 16px 3px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: 14px; font-weight: 600; color: var(--cq-ink); cursor: pointer; white-space: nowrap; }
-.btn.primary { background: var(--cq-link); border-color: var(--cq-link); color: #fff; }
-.btn.cmp { min-height: 32px; padding: 0 12px 3px; font-size: 13px; }
-.btn:disabled { opacity: .45; cursor: default; }
 .capa { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 4px; border: 1px solid var(--cq-line); }
 .clink { font-weight: 600; color: var(--cq-link); text-decoration: none; }
 .clink:hover { text-decoration: underline; }
 .capaopts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .or { font-size: 13px; color: var(--cq-muted); }
+/* shared fields, buttons, pills and messages come from cqStyles */
+.cq-msg.errbox { margin-top: 12px; }
+.capaopts select { flex: 1; width: auto; }
