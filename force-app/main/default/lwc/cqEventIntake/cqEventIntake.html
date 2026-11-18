@@ -97,11 +97,7 @@
                                 <div class="cq-group">
                                     <c-cq-lot-picker class="qlot cq-span" part-id={qPartId} onchange={handleQLot}></c-cq-lot-picker>
                                     <c-cq-part-picker class="qpart" onchange={handleQPart}></c-cq-part-picker>
-                                    <div class="cq-stepper">
-                                        <button onclick={handleDec} disabled={cantDec} aria-label="One fewer">&minus;</button>
-                                        <span class="cq-stepper-val">{qty}</span>
-                                        <button onclick={handleInc} aria-label="One more">+</button>
-                                    </div>
+                                    <input class="cq-num" type="number" min="1" data-f="qty" value={qty} oninput={handleQField} placeholder="Quantity" aria-label="Quantity">
                                 </div>
                             </div>
                             <label class="cq-field"><span class="cq-label">Note</span>
