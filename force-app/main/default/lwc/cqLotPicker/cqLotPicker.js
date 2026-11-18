@@ -34,7 +34,24 @@ export default class CqLotPicker extends LightningElement {
     partText(l) { return [l.partNumber, l.partName && l.partName !== l.partNumber ? l.partName : null].filter(Boolean).join(' \u00b7 '); }
 
     fetch(term) { return searchLots({ term, partId: this._partId || null }); }
+    // Open the list where it fits: below when there is room, above when there is not, and never taller than the
+    // space available. A list that runs past the bottom of the page makes the page grow and the screen jump.
+    up = false;
+    maxH = 320;
+    place() {
+        const w = this.template.querySelector('.wrap');
+        if (!w) { return; }
+        const r = w.getBoundingClientRect();
+        const below = window.innerHeight - r.bottom - 12;
+        const above = r.top - 12;
+        this.up = below < 220 && above > below;
+        this.maxH = Math.max(120, Math.min(320, Math.floor(this.up ? above : below)));
+    }
+    get listCls() { return 'list' + (this.up ? ' up' : ''); }
+    get listStyle() { return 'max-height: ' + this.maxH + 'px;'; }
+
     async handleFocus() {
+        this.place();
         this.open = true;
         if (!this.searching) { await this.loadSuggested(); }
     }
@@ -47,6 +64,7 @@ export default class CqLotPicker extends LightningElement {
     }
     handleInput(event) {
         this.term = event.target.value;
+        if (!this.open) { this.place(); }
         this.open = true;
         clearTimeout(this.timer);
         if (!this.searching) { this.loadSuggested(); return; }

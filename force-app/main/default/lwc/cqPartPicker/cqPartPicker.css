@@ -13,6 +13,7 @@
 .x { width: 1.6rem; height: 1.6rem; border: none; border-radius: var(--cq-r-field); background: none; font-size: 1.1rem; line-height: 1; color: var(--cq-muted); cursor: pointer; }
 .x:hover { background: var(--cq-bg); color: var(--cq-link); }
 .list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); max-height: 320px; overflow-y: auto; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line); background: var(--cq-bg); box-shadow: 0 6px 18px rgba(26, 29, 33, .12); }
+.list.up { top: auto; bottom: calc(100% + 4px); }
 .lhead { padding: 0.5rem 0.75rem 0.25rem; font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); text-transform: uppercase; letter-spacing: .03em; }
 .row { display: flex; flex-direction: column; gap: 1px; padding: 0.45rem 0.75rem; cursor: pointer; }
 .row:hover { background: var(--cq-link-soft); }

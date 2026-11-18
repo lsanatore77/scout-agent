@@ -14,7 +14,7 @@
             </div>
         </template>
         <template if:true={showList}>
-            <div class="list" role="listbox" onmousedown={handleDown}>
+            <div class={listCls} style={listStyle} role="listbox" onmousedown={handleDown}>
                 <div class="lhead">{heading}</div>
                 <template if:true={hasItems}>
                     <template for:each={rows} for:item="l">

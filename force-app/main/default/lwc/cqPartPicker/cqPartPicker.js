@@ -23,7 +23,24 @@ export default class CqPartPicker extends LightningElement {
     get rows() { return this.items.map((p) => ({ ...p, label: p.partNumber || p.name, sub: p.partNumber ? p.name : '' })); }
     get pickedLabel() { return this.picked ? (this.picked.partNumber ? this.picked.partNumber + ' · ' + this.picked.name : this.picked.name) : ''; }
 
+    // Open the list where it fits: below when there is room, above when there is not, and never taller than the
+    // space available. A list that runs past the bottom of the page makes the page grow and the screen jump.
+    up = false;
+    maxH = 320;
+    place() {
+        const w = this.template.querySelector('.wrap');
+        if (!w) { return; }
+        const r = w.getBoundingClientRect();
+        const below = window.innerHeight - r.bottom - 12;
+        const above = r.top - 12;
+        this.up = below < 220 && above > below;
+        this.maxH = Math.max(120, Math.min(320, Math.floor(this.up ? above : below)));
+    }
+    get listCls() { return 'list' + (this.up ? ' up' : ''); }
+    get listStyle() { return 'max-height: ' + this.maxH + 'px;'; }
+
     async handleFocus() {
+        this.place();
         this.open = true;
         if (this.term.trim().length < 2) { await this.loadSuggested(); }
     }
@@ -36,6 +53,7 @@ export default class CqPartPicker extends LightningElement {
     }
     handleInput(event) {
         this.term = event.target.value;
+        if (!this.open) { this.place(); }
         this.open = true;
         clearTimeout(this.timer);
         if (this.term.trim().length < 2) { this.loadSuggested(); return; }
