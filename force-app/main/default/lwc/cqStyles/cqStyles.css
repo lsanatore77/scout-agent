@@ -146,6 +146,14 @@
 /* last control hugs its content (a short number, a stepper); the one before it takes the rest */
 .cq-group.fit-last { grid-template-columns: minmax(0, 1fr) auto; }
 .cq-field input.cq-num { width: 9rem; }
+/* number stepper: one field-height box, minus | value | plus. Use where a count is tapped, not typed. */
+.cq-stepper { box-sizing: border-box; display: inline-flex; align-items: stretch; width: calc(var(--cq-field-h) * 2 + 3.5rem); min-height: var(--cq-field-h); border: 1px solid var(--cq-line-field); border-radius: var(--cq-r-field); background: var(--cq-bg); overflow: hidden; }
+.cq-stepper button { flex: 0 0 var(--cq-field-h); padding: 0 0 0.125rem; border: 0; background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 1.125rem; font-weight: 600; line-height: 1; cursor: pointer; }
+.cq-stepper button:first-child { border-right: 1px solid var(--cq-line); }
+.cq-stepper button:last-child { border-left: 1px solid var(--cq-line); }
+.cq-stepper button:hover { background: var(--cq-surface); }
+.cq-stepper button:disabled { background: var(--cq-bg); color: var(--cq-faint); cursor: not-allowed; }
+.cq-stepper-val { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; font-size: var(--cq-fs-body); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
 /* read-only value */
 .cq-readval { min-height: var(--cq-field-h); display: flex; align-items: center; padding: var(--cq-field-pad-y) 0; font-size: var(--cq-fs-body); color: var(--cq-ink); }
 .cq-readval.empty { color: var(--cq-faint); font-style: italic; }

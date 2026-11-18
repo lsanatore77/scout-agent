@@ -25,8 +25,6 @@
 .card.on { border: 2px solid var(--cq-link); background: var(--cq-link-soft); }
 .card b { font-size: 14px; color: var(--cq-ink); }
 .card span { color: var(--cq-muted); font-size: 12px; font-weight: 400; }
-.stepper { display: flex; align-items: center; gap: 8px; }
-.qty { min-width: 28px; text-align: center; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .plainbox { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; }
 .trendbox { align-self: start; }
 .sughead { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--cq-accent); }
@@ -54,7 +52,6 @@
 .q.nom { margin: 0; }
 .grow { flex: 1 1 auto; min-width: 0; }
 .btn { min-height: 40px; padding: 0 16px 3px; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.btn.sm { min-height: 32px; padding: 0 12px 2px; font-size: 13px; }
 .btn.primary { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .smalllink { font-size: 13px; color: var(--cq-link); font-weight: 600; cursor: pointer; }
