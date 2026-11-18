@@ -100,6 +100,9 @@
 }
 .cq-chip[aria-pressed="true"] { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
 .cq-chip:disabled { cursor: default; }
+/* a row of chips; under a field label it gets extra air (chips are tall and rounded) */
+.cq-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.cq-field > .cq-chips { margin-top: 0.25rem; }
 
 /* ============================ BUTTONS / ACTIONS ======================== */
 .cq-btn-outline, .cq-btn-primary, .cq-btn-ai {

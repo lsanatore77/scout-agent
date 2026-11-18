@@ -45,7 +45,7 @@
                                 <div key={q.id} class={q.cls}>
                                     <span class="cq-label">{q.label}<template if:true={q.required}><span class="cq-req">*</span></template></span>
                                     <template if:true={q.isChoice}>
-                                        <div class="opts">
+                                        <div class="cq-chips">
                                             <template for:each={q.opts} for:item="o">
                                                 <button key={o.key} class={o.cls} data-q={o.qid} data-v={o.label} aria-pressed={o.pressed} onclick={handleAnswer}>{o.label}</button>
                                             </template>
