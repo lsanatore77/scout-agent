@@ -105,6 +105,9 @@
 }
 .cq-chip[aria-pressed="true"] { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
 .cq-chip:disabled { cursor: default; }
+/* a chip that is the CQ.AI suggestion wears CQ.AI purple, never the neutral blue: tinted at rest, solid when chosen */
+.cq-chip.ai { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
+.cq-chip.ai[aria-pressed="true"] { border-color: var(--cq-accent); background: var(--cq-accent); color: #fff; --cq-ai-ink: #fff; }
 /* a row of chips; under a field label it gets extra air (chips are tall and rounded) */
 .cq-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .cq-field > .cq-chips { margin-top: 0.25rem; }

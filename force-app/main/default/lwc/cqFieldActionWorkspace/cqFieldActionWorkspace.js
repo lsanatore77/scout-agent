@@ -375,7 +375,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get factors() { return (this.v.factors || []).map((f, i) => ({ ...f, key: 'f' + i, of: f.pts + ' / ' + f.max })); }
     get bandCls() { return 'lvl ' + (this.v.band || '').toLowerCase(); }
     get levels() {
-        return LEVELS.map((l) => ({ id: l, cq: l === this.v.band, pressed: this.level === l ? 'true' : 'false', cls: 'cq-chip' }));
+        return LEVELS.map((l) => ({ id: l, cq: l === this.v.band, pressed: this.level === l ? 'true' : 'false', cls: l === this.v.band ? 'cq-chip ai' : 'cq-chip' }));
     }
     handleLevel(event) { if (this.waiting) { return; } this.level = event.currentTarget.dataset.id; }
     get assessDone() { return !!this.hazard.trim() && !!this.level && this.checksDone; }
@@ -412,7 +412,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get scopeData() { return this.sc || {}; }
     get scopeOpts() {
         const sug = this.scopeData.suggested;
-        return SCOPES.map((id) => ({ id, cq: id === sug, cls: 'cq-chip', pressed: this.scope === id ? 'true' : 'false' }));
+        return SCOPES.map((id) => ({ id, cq: id === sug, cls: id === sug ? 'cq-chip ai' : 'cq-chip', pressed: this.scope === id ? 'true' : 'false' }));
     }
     get scopeSuggests() { return this.scopeData.suggested ? 'CQ.AI Suggests ' + this.scopeData.suggested + '. ' + (this.scopeData.why || '') : ''; }
     get isPartial() { return this.scope === 'Partial'; }
