@@ -71,4 +71,10 @@ export default class CqPartPicker extends LightningElement {
         this.dispatchEvent(new CustomEvent('change', { detail: { recordId: null } }));
     }
     @api clear() { this.picked = undefined; this.term = ''; }
+    /** Fill the part from outside (a chosen lot) without firing change. */
+    @api setPart(p) {
+        this.picked = p && p.id ? { id: p.id, partNumber: p.partNumber, name: p.name } : undefined;
+        this.term = '';
+        this.open = false;
+    }
 }

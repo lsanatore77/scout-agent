@@ -32,11 +32,11 @@
                             </label>
                             <div class="cq-field"><span class="cq-label">Product</span>
                                 <div class="cq-group fit-last">
-                                    <c-cq-part-picker class="rpart cq-span" onchange={handlePart}></c-cq-part-picker>
-                                    <lightning-combobox class="lotbox" label="Lot" variant="label-hidden" placeholder={lotPlaceholder} options={lotOptions} value={lot} disabled={noLots} onchange={handleLot}></lightning-combobox>
+                                    <c-cq-lot-picker class="rlot cq-span" part-id={partId} onchange={handleLot}></c-cq-lot-picker>
+                                    <c-cq-part-picker class="rpart" onchange={handlePart}></c-cq-part-picker>
                                     <input class="cq-num" type="number" min="0" data-f="units" oninput={handleField} placeholder="Units affected">
                                 </div>
-                                <span class="cq-hint">Leave blank if no product was affected.</span>
+                                <span class="cq-hint">Start with the lot if you know it and the part fills in. Leave blank if no product was affected.</span>
                             </div>
                             <div class="note">{capturedText}</div>
                         </div>
@@ -93,10 +93,10 @@
                                 <template if:false={hasCats}><span class="cq-hint">No categories are approved for quick logging yet.</span></template>
                                 <span class="cq-hint">Only categories your quality team approved for trend-only logging appear here. Anything else needs a Full Report.</span>
                             </div>
-                            <div class="cq-field"><span class="cq-label">2. Which part, and how many?<span class="cq-req">*</span></span>
+                            <div class="cq-field"><span class="cq-label">2. Which lot or part, and how many?<span class="cq-req">*</span></span>
                                 <div class="cq-group fit-last">
-                                    <c-cq-part-picker class="qpart cq-span" onchange={handleQPart}></c-cq-part-picker>
-                                    <lightning-combobox class="lotbox" label="Lot" variant="label-hidden" placeholder={qLotPlaceholder} options={qLotOptions} value={qLot} disabled={noQLots} onchange={handleQLot}></lightning-combobox>
+                                    <c-cq-lot-picker class="qlot cq-span" part-id={qPartId} onchange={handleQLot}></c-cq-lot-picker>
+                                    <c-cq-part-picker class="qpart" onchange={handleQPart}></c-cq-part-picker>
                                     <div class="stepper">
                                         <button class="btn sm" onclick={handleDec} disabled={cantDec} aria-label="One fewer">&minus;</button>
                                         <span class="qty">{qty}</span>

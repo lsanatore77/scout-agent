@@ -1,0 +1,31 @@
+<template>
+    <div class="wrap">
+        <template if:true={picked}>
+            <div class="picked">
+                <span class="plabel">{pickedLabel}</span>
+                <button class="x" onclick={handleClear} aria-label="Clear the lot" title="Clear">&times;</button>
+            </div>
+        </template>
+        <template if:false={picked}>
+            <div class="box">
+                <input class="in" type="text" placeholder={placeholder} value={term} onfocus={handleFocus} oninput={handleInput}
+                    onkeydown={handleKey} onblur={handleBlur} role="combobox" aria-expanded={open} aria-autocomplete="list">
+                <lightning-icon icon-name="utility:search" size="x-small" class="sicon" alternative-text=""></lightning-icon>
+            </div>
+        </template>
+        <template if:true={showList}>
+            <div class="list" role="listbox" onmousedown={handleDown}>
+                <div class="lhead">{heading}</div>
+                <template if:true={hasItems}>
+                    <template for:each={rows} for:item="l">
+                        <div key={l.key} class="row" role="option" data-key={l.key} onclick={handlePick}>
+                            <span class="pn">{l.lot}</span>
+                            <span class="pname">{l.sub}</span>
+                        </div>
+                    </template>
+                </template>
+                <template if:false={hasItems}><div class="empty">{emptyText}</div></template>
+            </div>
+        </template>
+    </div>
+</template>
