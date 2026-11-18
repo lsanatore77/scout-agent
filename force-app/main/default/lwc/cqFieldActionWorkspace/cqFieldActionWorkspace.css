@@ -179,6 +179,6 @@
 .cq-field { margin-top: 14px; }
 .riskcard .cq-field { margin-top: 0; }
 .cq-msg.errbox { margin-top: 12px; }
-/* Recommendation: the outcome cards and what sits under them keep to half the page, so nothing is stretched across it */
-.main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: calc(50% - 5px); box-sizing: border-box; }
+/* Recommendation: the outcome cards and what sits under them keep to two thirds of the page, so nothing is stretched across it */
+.main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: 66.667%; box-sizing: border-box; }
 @media (max-width: 1100px) { .main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: 100%; } }
