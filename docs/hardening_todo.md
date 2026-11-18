@@ -86,3 +86,14 @@ _Last updated: 2026-11-17_
   "flagged answers" are currently composed client-side from the captured facts (a
   heuristic: affirmative risk answers). Move this to Apex/LLM so the rationale is real
   model reasoning, and have the backend mark which answers it actually used.
+
+## Next up: Lot-first product entry on Report a Problem (requested 2026-11-17, not started)
+
+Lou asked to make Lot the primary choice, with the part filling in from it. Nothing is built or deployed yet.
+
+Planned design (defaults chosen, confirm with Lou):
+- New `cqLotPicker` LWC (same look as `cqPartPicker`): search Lot Info by lot number; rows show lot, part number, part name. Fires `change` with `{ lot, partId, partNumber, partName }`.
+- New Apex `CqEventLots.searchLots(String term, Id partId)`: newest lots when the term is blank, `Name LIKE` search otherwise; resolves each lot's text part number to a Part record (Part Number or Name). Narrow to one part when `partId` is given. Add a test to `CqEventLotsTest`.
+- `cqPartPicker`: add `@api setPart({ id, partNumber, name })` so the intake can fill the part without firing `change`.
+- `cqEventIntake` (both tabs): lot picker on top spanning the group, then part picker + Units Affected (or the stepper). Picking a lot fills the part. Part stays directly pickable when the lot is not known; picking a part first narrows the lot list; changing to a different part clears the lot. Remove the old lot dropdown, `getLots` wiring and the "Not Known" option (blank means not known).
+- Layout uses the shared `.cq-group.fit-last` from `cqStyles`.
