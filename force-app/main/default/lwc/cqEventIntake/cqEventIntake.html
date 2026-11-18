@@ -31,10 +31,10 @@
                                 <input type="text" maxlength="255" data-f="title" oninput={handleField} placeholder="A short name for the problem">
                             </label>
                             <div class="cq-field"><span class="cq-label">Product</span>
-                                <c-cq-part-picker class="rpart" onchange={handlePart}></c-cq-part-picker>
-                                <div class="two">
+                                <div class="cq-group fit-last">
+                                    <c-cq-part-picker class="rpart cq-span" onchange={handlePart}></c-cq-part-picker>
                                     <lightning-combobox class="lotbox" label="Lot" variant="label-hidden" placeholder={lotPlaceholder} options={lotOptions} value={lot} disabled={noLots} onchange={handleLot}></lightning-combobox>
-                                    <input type="number" min="0" data-f="units" oninput={handleField} placeholder="Units affected">
+                                    <input class="cq-num" type="number" min="0" data-f="units" oninput={handleField} placeholder="Units affected">
                                 </div>
                                 <span class="cq-hint">Leave blank if no product was affected.</span>
                             </div>
@@ -94,8 +94,8 @@
                                 <span class="cq-hint">Only categories your quality team approved for trend-only logging appear here. Anything else needs a Full Report.</span>
                             </div>
                             <div class="cq-field"><span class="cq-label">2. Which part, and how many?<span class="cq-req">*</span></span>
-                                <c-cq-part-picker class="qpart" onchange={handleQPart}></c-cq-part-picker>
-                                <div class="two">
+                                <div class="cq-group fit-last">
+                                    <c-cq-part-picker class="qpart cq-span" onchange={handleQPart}></c-cq-part-picker>
                                     <lightning-combobox class="lotbox" label="Lot" variant="label-hidden" placeholder={qLotPlaceholder} options={qLotOptions} value={qLot} disabled={noQLots} onchange={handleQLot}></lightning-combobox>
                                     <div class="stepper">
                                         <button class="btn sm" onclick={handleDec} disabled={cantDec} aria-label="One fewer">&minus;</button>

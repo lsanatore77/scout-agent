@@ -16,10 +16,9 @@
 .tab.on { color: var(--cq-link); border-bottom-color: var(--cq-link); }
 .p { margin: 0 0 16px; color: var(--cq-muted); max-width: 72ch; }
 .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
-/* form fields use the shared .cq-field pattern from cqStyles */
+/* form fields use the shared .cq-field / .cq-group patterns from cqStyles */
 .stack { display: flex; flex-direction: column; gap: var(--cq-row-gap); min-width: 0; }
 .cq-field textarea.big { min-height: 180px; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* choice chips use the shared .cq-chips / .cq-chip from cqStyles (selected = aria-pressed) */
 .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .card { min-height: 64px; padding: 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); text-align: left; font: inherit; display: flex; flex-direction: column; gap: 3px; cursor: pointer; }

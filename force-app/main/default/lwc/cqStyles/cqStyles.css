@@ -135,6 +135,12 @@
 .cq-err  { font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-danger); }
 .cq-field.is-error input, .cq-field.is-error select, .cq-field.is-error textarea { border-color: var(--cq-danger); box-shadow: 0 0 0 3px rgba(179, 38, 30, 0.16); }
 .cq-field input:disabled, .cq-field select:disabled, .cq-field textarea:disabled { background: var(--cq-surface); color: var(--cq-faint); cursor: not-allowed; }
+/* a group of controls under one label: the same gap across and down */
+.cq-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--cq-s3); }
+.cq-group > .cq-span { grid-column: 1 / -1; }
+/* last control hugs its content (a short number, a stepper); the one before it takes the rest */
+.cq-group.fit-last { grid-template-columns: minmax(0, 1fr) auto; }
+.cq-field input.cq-num { width: 9rem; }
 /* read-only value */
 .cq-readval { min-height: var(--cq-field-h); display: flex; align-items: center; padding: var(--cq-field-pad-y) 0; font-size: var(--cq-fs-body); color: var(--cq-ink); }
 .cq-readval.empty { color: var(--cq-faint); font-style: italic; }
