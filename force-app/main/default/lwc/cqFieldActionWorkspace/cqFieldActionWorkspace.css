@@ -110,10 +110,14 @@
 .question { font-size: 14px; font-weight: 400; line-height: 32px; color: var(--cq-ink); }
 .ynwrap { flex: none; }
 .paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.pathopt { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-height: 96px; padding: 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); color: var(--cq-ink); font: inherit; text-align: left; cursor: pointer; }
+.pathopt { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 6px 10px; min-height: 96px; padding: 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); color: var(--cq-ink); font: inherit; text-align: left; cursor: pointer; }
 .pathopt.sug { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
 .pathopt.on { border: 2px solid var(--cq-link); background: var(--cq-link-soft); padding: 13px; }
 .pl { font-size: 16px; font-weight: 700; }
+/* the CQ.AI Suggests tag sits on the title's line, after the title; the description takes the next line */
+.pathopt .pl { order: 1; }
+.pathopt c-cq-ai-why { order: 2; }
+.pathopt .rk { order: 3; flex: 0 0 100%; }
 .newfa { margin-top: 8px; padding: 2px 14px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-surface); }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
