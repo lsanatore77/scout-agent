@@ -91,7 +91,7 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
                 id: q.id, label: (i + 1) + '. ' + q.question + (q.required ? ' *' : ''), help: q.help,
                 isChoice, isText: q.answerType === 'Text', isNumber: q.answerType === 'Number', isDate: q.answerType === 'Date',
                 value: a || '',
-                opts: isChoice ? q.choices.map((c) => ({ key: q.id + c, label: c, qid: q.id, pressed: String(a === c), cls: 'opt' + (a === c ? ' on' : '') })) : []
+                opts: isChoice ? q.choices.map((c) => ({ key: q.id + c, label: c, qid: q.id, pressed: String(a === c), cls: 'cq-chip' })) : []
             };
         });
     }

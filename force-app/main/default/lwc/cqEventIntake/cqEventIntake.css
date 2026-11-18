@@ -22,10 +22,8 @@
 textarea.ta.big { min-height: 180px; line-height: 1.45; resize: vertical; }
 .ta.narrow { width: 200px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.opts { display: flex; flex-wrap: wrap; gap: 8px; }
-/* choice chips — the guide's chip pattern: rounded pill, solid-blue selected, white text */
-.opt { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 0.95rem; border-radius: var(--cq-r-pill); border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: var(--cq-fs-body); font-weight: 600; cursor: pointer; white-space: nowrap; }
-.opt.on { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
+/* choice chips use the shared .cq-chip from cqStyles (selected = aria-pressed) */
+.opts { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .card { min-height: 64px; padding: 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); text-align: left; font: inherit; display: flex; flex-direction: column; gap: 3px; cursor: pointer; }
 .card.on { border: 2px solid var(--cq-link); background: var(--cq-link-soft); }
