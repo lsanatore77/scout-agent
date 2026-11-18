@@ -302,3 +302,23 @@ Restructured cqIntakeConversation into two stages (approved from an interactive 
 - **Compose:** one big "Tell me what happened" box. Speak fills it **live** (SpeechRecognition writes into the box as you talk); dictation **replaces** (never appends); a "↺ Clear & start over" link resets it; Submit is enabled once there's text.
 - **Chat:** on Submit the story compacts into a "Your report" card (with Edit) and CQ.AI asks only for the gaps — chips for choices, text+mic for text questions (mic only on text turns), read-aloud per prompt. When ready, a "Remembered something? Add it…" composer lets a later thought fold into the description (engine re-reads the whole thing); "Send to a Reviewer" finishes.
 - Opening AI bubble removed (the lead text is the prompt now); `start()` Apex no longer used by the component.
+
+## Design-token layer + event-review pilot — 2026-11-17
+Established the shared design system as code, and piloted it on the event-review panel.
+- **New `cqStyles` LWC** — a CSS-only module (`@import 'c/cqStyles';`) that sets the design
+  tokens on `:host` (they inherit through the shadow DOM into the importing component) and
+  carries the locked component classes: `.cq-pill` (+ crit/warn/pos/neu/info, solid + `.soft`),
+  `.cq-chip`, `.cq-btn-outline/primary/ai`, `.cq-link`, and field-width helpers
+  (`w-num`/`w-date`/`w-code`). Two registers share one spine: **neutral** (records/forms/tables,
+  blue `--cq-link`) and **CQ.AI** (assistant/chat, purple `--cq-accent`). Green = positive only.
+- **Tokens:** type sizes (13/15/11/14), neutral + CQ.AI colors, pill solids+tints, radius,
+  spacing scale, and **density** (comfortable default / compact at ≥56.25rem via `:host` media
+  query, override with `data-density`). Font is **inherited from the platform** (Salesforce Sans,
+  consistent desktop + mobile) — no external font; pill vertical-centering was tuned to Inter in
+  the gallery, so revisit the 1px top bias on-device if needed.
+- **`cqEventReviewPanel`** refactored to `@import 'c/cqStyles'` and consume tokens (dropped its
+  hardcoded hexes). Urgent=Yes now renders as a `.cq-pill crit`; the CQ.AI-suggested choice keeps
+  the purple register. Verified desktop + mobile. Deployed to `cqse-golden--dev` via Tooling API.
+- Decisions captured in the pattern gallery (CQ Form Patterns artifact). **Rollout rule:** adopt
+  a pattern once it stops changing; new screens build on `cqStyles`, existing ones convert as
+  touched. Density tokens are placeholders pending the density pass — don't hard-tune yet.
