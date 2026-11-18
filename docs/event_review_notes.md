@@ -322,3 +322,20 @@ Established the shared design system as code, and piloted it on the event-review
 - Decisions captured in the pattern gallery (CQ Form Patterns artifact). **Rollout rule:** adopt
   a pattern once it stops changing; new screens build on `cqStyles`, existing ones convert as
   touched. Density tokens are placeholders pending the density pass — don't hard-tune yet.
+
+## Shared cqStyles module validated via @import — 2026-11-17
+Re-tested the shared module. Earlier the panel was switched to self-contained (inlined
+tokens) because it dropped out of the App Builder palette — but inlining did NOT restore
+it to the palette, and it later placed + rendered fine via the flexipage API. So the
+palette drop was never caused by `@import`; it was an App Builder palette quirk, unrelated
+to runtime.
+- `cqEventReviewPanel.css` now starts with `@import 'c/cqStyles';` and its own `:host`
+  token block + local `.cq-pill` are **removed** — every `var(--cq-*)` and the pill come
+  from the shared module. The Tooling PATCH compiled (204), i.e. the LWC compiler resolved
+  and bundled the module.
+- Because the component is already placed on the record page, the App Builder palette is
+  irrelevant. `@import` of a CSS-only module deployed via the Tooling API is therefore a
+  viable shared-layer mechanism without the sf CLI.
+- **This is the define-once path**: change a token in `cqStyles` and every importing
+  component updates. Convert future components by importing `cqStyles` (keep only
+  component-specific rules locally).
