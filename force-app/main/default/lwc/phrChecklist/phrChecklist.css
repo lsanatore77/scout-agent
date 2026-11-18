@@ -1,22 +1,24 @@
+@import 'c/cqStyles';
+
 :host { display: block; max-width: 100%; }
 .body { display: flex; flex-direction: column; gap: 0.75rem; max-width: 100%; }
 .intro { font-size: 0.8125rem; line-height: 1.4; }
-.error { color: #ba0517; font-size: 0.8125rem; }
-.empty { color: #706e6b; font-size: 0.8125rem; }
-.card { background: #fff; border: 1px solid #dddbda; border-radius: 0.5rem; overflow: hidden; }
-.row { padding: 0.5rem 0.75rem; border-bottom: 1px solid #eee; display: flex; flex-direction: column; gap: 0.25rem; }
+.error { color: var(--cq-crit-fg); font-size: 0.8125rem; }
+.empty { color: var(--cq-muted); font-size: 0.8125rem; }
+.card { background: var(--cq-bg); border: 1px solid var(--cq-line); border-radius: 0.5rem; overflow: hidden; }
+.row { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 0.25rem; }
 .row:last-child { border-bottom: 0; }
 .row-unsure { background: #fef8ee; }
 .question { font-size: 0.8125rem; font-weight: 600; overflow-wrap: anywhere; }
-.num { color: #706e6b; font-weight: 400; margin-right: 0.25rem; font-variant-numeric: tabular-nums; }
+.num { color: var(--cq-muted); font-weight: 400; margin-right: 0.25rem; font-variant-numeric: tabular-nums; }
 .answer-line { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .chip { display: inline-block; min-width: 2.5rem; text-align: center; padding: 0.0625rem 0.5rem; border-radius: 0.25rem;
-    font-size: 0.75rem; font-weight: 700; border: 1px solid #c9c9c9; background: #fafaf9; color: #181818; }
-.chip-yes { background: #fdecea; border-color: #f0b4ae; color: #8e030f; }
-.chip-no { background: #ebf7e6; border-color: #a7d7a1; color: #2e6b25; }
+    font-size: 0.75rem; font-weight: 700; border: 1px solid var(--cq-line-field); background: var(--cq-surface); color: var(--cq-ink); }
+.chip-yes { background: var(--cq-crit-bg); border-color: #f0b4ae; color: #8e030f; }
+.chip-no { background: var(--cq-pos-bg); border-color: #a7d7a1; color: #2e6b25; }
 .pill { font-size: 0.6875rem; padding: 0.0625rem 0.5rem; border-radius: 1rem; }
-.pill-suggested { background: #eef4ff; color: #0b5cab; }
-.pill-unsure { background: #fde9c7; color: #8c4b02; font-weight: 600; }
-.pill-saved { background: #ebf7e6; color: #2e6b25; font-weight: 600; }
+.pill-suggested { background: #eef4ff; color: var(--cq-link); }
+.pill-unsure { background: #fde9c7; color: var(--cq-warn-fg); font-weight: 600; }
+.pill-saved { background: var(--cq-pos-bg); color: #2e6b25; font-weight: 600; }
 .basis { color: #5c5c5c; font-size: 0.75rem; overflow-wrap: anywhere; }
-.foot { color: #706e6b; font-size: 0.75rem; }
+.foot { color: var(--cq-muted); font-size: 0.75rem; }

@@ -3,15 +3,8 @@
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
 .box { display: flex; flex-direction: column; border-radius: 12px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
 /* record header: the same layout as the other CQ.AI workspaces */
-.hl { padding: 14px 20px 12px; background: #f3f3f3; border-bottom: 1px solid #e5e5e5; border-radius: 12px 12px 0 0; }
-.hl-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.hl-who { display: flex; align-items: center; gap: 12px; }
-.hl-icon { display: inline-flex; }
-.hl-name { display: flex; flex-direction: column; gap: 1px; }
-.hl-obj { font-size: 12px; color: #5c6572; }
-.hl-title { font-size: 22px; font-weight: 700; line-height: 1.2; }
 .main { padding: 20px; }
-.tabs { display: flex; gap: 4px; border-bottom: 1px solid #e5e5e5; margin: -6px 0 18px; }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--cq-hl-line); margin: -6px 0 18px; }
 .tab { padding: 8px 14px; border: none; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--cq-muted); border-bottom: 3px solid transparent; cursor: pointer; }
 .tab.on { color: var(--cq-link); border-bottom-color: var(--cq-link); }
 .p { margin: 0 0 16px; color: var(--cq-muted); max-width: 72ch; }

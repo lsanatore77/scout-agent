@@ -1,24 +1,26 @@
+@import 'c/cqStyles';
+
 .wrap { position: relative; display: inline-block; }
 .trigger { border: none; background: transparent; color: #7c5cc4; font-weight: 700; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 4px; }
-.trigger:hover { background: #f1ecfa; }
+.trigger:hover { background: var(--cq-accent-soft); }
 .star { color: #7c5cc4; font-size: 16px; line-height: 1; }
 .star.small { font-size: 12px; margin-right: 6px; }
 
-.pop { position: absolute; right: 0; top: 40px; width: 380px; max-height: 560px; background: #fff; border: 1px solid #c9d2dc; border-radius: 10px; box-shadow: 0 12px 32px rgba(11, 42, 74, .18); display: flex; flex-direction: column; z-index: 9000; }
-.head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid #eceff2; }
+.pop { position: absolute; right: 0; top: 40px; width: 380px; max-height: 560px; background: var(--cq-bg); border: 1px solid var(--cq-line-field); border-radius: 10px; box-shadow: 0 12px 32px rgba(11, 42, 74, .18); display: flex; flex-direction: column; z-index: 9000; }
+.head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--cq-line); }
 .title { font-weight: 700; font-size: 14px; }
-.sub { font-size: 11px; color: #8a94a3; flex: 1; }
+.sub { font-size: 11px; color: var(--cq-faint); flex: 1; }
 .log { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 60px; max-height: 320px; font-size: 13px; }
 .msg { padding: 8px 10px; border-radius: 10px; max-width: 92%; line-height: 1.45; white-space: pre-wrap; }
 .msg.user { align-self: flex-end; background: #7c5cc4; color: #fff; border-bottom-right-radius: 2px; }
-.msg.agent { align-self: flex-start; background: #f5f2fb; color: #2b2f36; border-bottom-left-radius: 2px; }
+.msg.agent { align-self: flex-start; background: #f5f2fb; color: var(--cq-ink); border-bottom-left-radius: 2px; }
 .msg.thinking { min-width: 60px; min-height: 36px; position: relative; }
-.err { color: #9b2c2c; background: #fbe9e7; border-radius: 6px; padding: 8px 10px; font-size: 12px; }
+.err { color: var(--cq-crit-fg); background: var(--cq-crit-bg); border-radius: 6px; padding: 8px 10px; font-size: 12px; }
 .suggest { padding: 4px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
-.label { font-size: 11px; font-weight: 700; color: #5c6572; letter-spacing: .4px; text-transform: uppercase; }
-.chip { text-align: left; border: 1px solid #e3e6ea; background: #fff; border-radius: 6px; padding: 8px 10px; font-size: 13px; color: #7c5cc4; cursor: pointer; }
-.chip:hover { background: #f1ecfa; }
-.foot { display: flex; gap: 8px; align-items: center; padding: 8px 12px 12px; border-top: 1px solid #eceff2; }
+.label { font-size: 11px; font-weight: 700; color: var(--cq-muted); letter-spacing: .4px; text-transform: uppercase; }
+.chip { text-align: left; border: 1px solid var(--cq-line); background: var(--cq-bg); border-radius: 6px; padding: 8px 10px; font-size: 13px; color: #7c5cc4; cursor: pointer; }
+.chip:hover { background: var(--cq-accent-soft); }
+.foot { display: flex; gap: 8px; align-items: center; padding: 8px 12px 12px; border-top: 1px solid var(--cq-line); }
 .foot lightning-input { flex: 1; }
 .pi { --sds-c-icon-color-foreground-default: #7c5cc4; --slds-c-icon-color-foreground-default: #7c5cc4; }
 
@@ -30,12 +32,12 @@
 .blk.li .txt { flex: 1; min-width: 0; }
 .blk.li.sub { padding-left: 14px; }
 .blk.gap { height: 6px; }
-.alink { color: #1d5fd1; font-weight: 600; text-decoration: none; }
+.alink { color: var(--cq-link); font-weight: 600; text-decoration: none; }
 .alink:hover { text-decoration: underline; }
-.alink.act { padding: 0; border: none; background: none; cursor: pointer; font: inherit; font-weight: 600; color: #1d5fd1; }
+.alink.act { padding: 0; border: none; background: none; cursor: pointer; font: inherit; font-weight: 600; color: var(--cq-link); }
 
 /* Add to Evidence (or another pinLabel) under an answer */
 .pinrow { margin-top: 6px; }
-.pinbtn { border: 1px solid #c4cad2; background: #fff; border-radius: 4px; padding: 2px 10px 3px; font: inherit; font-size: 12px; font-weight: 600; color: #1a1d21; cursor: pointer; }
-.pinbtn:hover { background: #f3f3f3; }
-.pinrow.pinned { font-size: 12px; font-weight: 600; color: #2e844a; }
+.pinbtn { border: 1px solid var(--cq-line-field); background: var(--cq-bg); border-radius: 4px; padding: 2px 10px 3px; font: inherit; font-size: 12px; font-weight: 600; color: var(--cq-ink); cursor: pointer; }
+.pinbtn:hover { background: var(--cq-hl-bg); }
+.pinrow.pinned { font-size: 12px; font-weight: 600; color: var(--cq-pos-fg); }

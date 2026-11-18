@@ -2,31 +2,31 @@
     <template if:true={loadError}><div class="err">{loadError}</div></template>
     <template if:true={ready}>
         <div class="box">
-            <header class="hl">
-                <div class="hl-top">
-                    <div class="hl-who">
-                        <span class="hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Nonconformance"></lightning-icon></span>
-                        <div class="hl-name">
-                            <span class="hl-obj">Nonconformance</span>
-                            <span class="hl-title">{v.name}</span>
+            <header class="cq-hl">
+                <div class="cq-hl-top">
+                    <div class="cq-hl-who">
+                        <span class="cq-hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Nonconformance"></lightning-icon></span>
+                        <div class="cq-hl-name">
+                            <span class="cq-hl-obj">Nonconformance</span>
+                            <span class="cq-hl-title">{v.name}</span>
                         </div>
                     </div>
-                    <div class="hl-actions">
+                    <div class="cq-hl-actions">
                         <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Quality" placeholder="Ask about this disposition…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
-                        <button class="btn" onclick={handleEdit}>Edit</button>
+                        <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
                     </div>
                 </div>
-                <div class="hl-fields">
-                    <div class="f"><span class="k">Title</span><span class="v">{titleText}</span></div>
-                    <div class="f"><span class="k">Part</span>
-                        <template if:true={v.partId}><a class="v link" href={partHref} target="_blank">{v.partNumber}</a></template>
-                        <template if:false={v.partId}><span class="v">&mdash;</span></template>
+                <div class="cq-hl-fields">
+                    <div class="cq-hl-f"><span class="cq-hl-k">Title</span><span class="cq-hl-v">{titleText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Part</span>
+                        <template if:true={v.partId}><a class="cq-hl-v link" href={partHref} target="_blank">{v.partNumber}</a></template>
+                        <template if:false={v.partId}><span class="cq-hl-v">&mdash;</span></template>
                     </div>
-                    <div class="f"><span class="k">Lot</span><span class="v">{lotText}</span></div>
-                    <div class="f"><span class="k">Stage</span><span class="v">{stageText}</span></div>
-                    <div class="f"><span class="k">Risk</span><span class={riskCls}>{riskText}</span></div>
-                    <div class="f"><span class="k">Disposition Due</span><span class="v">{dueText}</span></div>
-                    <div class="f"><span class="k">Owner</span><span class="v">{ownerText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Lot</span><span class="cq-hl-v">{lotText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Stage</span><span class="cq-hl-v">{stageText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Risk</span><span class={riskCls}>{riskText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Disposition Due</span><span class="cq-hl-v">{dueText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Owner</span><span class="cq-hl-v">{ownerText}</span></div>
                 </div>
             </header>
 

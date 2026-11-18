@@ -1,3 +1,5 @@
+@import 'c/cqStyles';
+
 /* Keep the card inside the Agentforce panel width */
 :host {
     display: block;
@@ -55,10 +57,10 @@ lightning-badge.lot-badge {
 }
 
 .count-card {
-    border: 1px solid #dddbda;
+    border: 1px solid var(--cq-line);
     border-radius: 0.25rem;
     padding: 0.75rem;
-    background: #fafaf9;
+    background: var(--cq-surface);
 }
 
 .count-title {
@@ -80,9 +82,9 @@ lightning-badge.lot-badge {
     line-height: 1;
 }
 
-.count-green { color: #2e844a; }
-.count-yellow { color: #8c4b02; }
-.count-red { color: #ba0517; }
+.count-green { color: var(--cq-pos-fg); }
+.count-yellow { color: var(--cq-warn-fg); }
+.count-red { color: var(--cq-crit-fg); }
 
 .count-badge {
     display: inline-flex;
@@ -93,9 +95,9 @@ lightning-badge.lot-badge {
     border-radius: 0.25rem;
 }
 
-.badge-green { background: #def9e1; color: #2e844a; }
-.badge-yellow { background: #fef0cd; color: #8c4b02; }
-.badge-red { background: #feded8; color: #ba0517; }
+.badge-green { background: #def9e1; color: var(--cq-pos-fg); }
+.badge-yellow { background: #fef0cd; color: var(--cq-warn-fg); }
+.badge-red { background: #feded8; color: var(--cq-crit-fg); }
 
 .count-track {
     position: relative;
@@ -110,7 +112,7 @@ lightning-badge.lot-badge {
     width: 33.33%;
 }
 
-.band-green { background: #2e844a; border-radius: 0.125rem 0 0 0.125rem; }
+.band-green { background: var(--cq-pos-solid); border-radius: 0.125rem 0 0 0.125rem; }
 .band-yellow { background: #fe9339; }
 .band-red { background: #ea001e; border-radius: 0 0.125rem 0.125rem 0; }
 
@@ -127,7 +129,7 @@ lightning-badge.lot-badge {
     display: flex;
     justify-content: space-between;
     font-size: 0.6875rem;
-    color: #706e6b;
+    color: var(--cq-muted);
     margin-top: 0.25rem;
 }
 
@@ -140,7 +142,7 @@ lightning-badge.lot-badge {
     gap: 0.5rem;
     margin-top: 0.5rem;
     font-size: 0.75rem;
-    color: #706e6b;
+    color: var(--cq-muted);
 }
 
 .pager-controls {
@@ -153,7 +155,7 @@ lightning-badge.lot-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.125rem;
-    color: #0176d3;
+    color: var(--cq-link);
     text-decoration: none;
 }
 
@@ -168,7 +170,7 @@ lightning-badge.lot-badge {
 
 .pager-link-off,
 .pager-link-off:hover {
-    color: #c9c7c5;
+    color: var(--cq-line-field);
     text-decoration: none;
     pointer-events: none;
     cursor: default;

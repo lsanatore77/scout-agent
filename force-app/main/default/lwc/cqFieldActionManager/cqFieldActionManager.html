@@ -2,26 +2,26 @@
     <template if:false={ready}><template if:true={error}><div class="errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="box">
-            <header class="hl">
-                <div class="hl-top">
-                    <div class="hl-who">
-                        <span class="hl-icon"><lightning-icon icon-name="custom:custom87" size="medium" alternative-text="Field Action"></lightning-icon></span>
-                        <div class="hl-name">
-                            <span class="hl-obj">Field Action</span>
-                            <span class="hl-title">{v.name}</span>
+            <header class="cq-hl">
+                <div class="cq-hl-top">
+                    <div class="cq-hl-who">
+                        <span class="cq-hl-icon"><lightning-icon icon-name="custom:custom87" size="medium" alternative-text="Field Action"></lightning-icon></span>
+                        <div class="cq-hl-name">
+                            <span class="cq-hl-obj">Field Action</span>
+                            <span class="cq-hl-title">{v.name}</span>
                         </div>
                     </div>
-                    <div class="hl-actions">
+                    <div class="cq-hl-actions">
                         <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Field_Action" step={askStep} suggestions={askSuggestions} onaskcqaction={handleAskAction}></c-ask-cq-popover>
                         <button class="btn cmp" onclick={handleEdit}>Edit</button>
                     </div>
                 </div>
-                <div class="hl-fields">
-                    <div class="f"><span class="k">Part</span><span class="v">{partText}</span></div>
-                    <div class="f"><span class="k">Action Type</span><span class="v">{v.actionType}</span></div>
-                    <div class="f"><span class="k">Recall Class</span><span class="v">{classText}</span></div>
-                    <div class="f"><span class="k">Scope</span><span class="v">{scopeText}</span></div>
-                    <div class="f"><span class="k">Status</span><span class="v">{v.status}</span></div>
+                <div class="cq-hl-fields">
+                    <div class="cq-hl-f"><span class="cq-hl-k">Part</span><span class="cq-hl-v">{partText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Action Type</span><span class="cq-hl-v">{v.actionType}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Recall Class</span><span class="cq-hl-v">{classText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Scope</span><span class="cq-hl-v">{scopeText}</span></div>
+                    <div class="cq-hl-f"><span class="cq-hl-k">Status</span><span class="cq-hl-v">{v.status}</span></div>
                 </div>
             </header>
             <div class="body">

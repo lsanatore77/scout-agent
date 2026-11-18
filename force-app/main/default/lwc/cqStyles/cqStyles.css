@@ -179,7 +179,7 @@
 .cq-hl .cq-btn-outline { min-height: 2.5rem; }
 /* optional sub-field band under the title (Event Review keeps its fields in the body instead) */
 .cq-hl-fields { display: flex; gap: 0.5rem 2rem; flex-wrap: wrap; }
-.cq-hl-f { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cq-hl-f { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .cq-hl-k { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); }
 .cq-hl-v { font-size: var(--cq-fs-meta); color: var(--cq-ink); }
 .cq-hl-v.link { font-weight: 600; color: var(--cq-link); }
