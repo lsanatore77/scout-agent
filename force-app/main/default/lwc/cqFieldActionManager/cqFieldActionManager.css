@@ -23,7 +23,8 @@
 .q { margin: 0 0 14px; font-size: 20px; font-weight: 700; }
 .q.nom { margin: 0; }
 .p { margin: -6px 0 14px; color: var(--cq-muted); }
-.lab { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
+/* card headings: small bold capitals, the same shape as the CQ.AI Suggests eyebrow but in grey */
+.lab { font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cq-muted); }
 .top14 { margin-top: 14px; }
 .note { margin: 10px 0 0; font-size: 13px; color: var(--cq-muted); }
 .tiles { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 4px; }
