@@ -23,27 +23,27 @@
                 <template if:true={showForm}>
                     <p class="p">Describe the problem on the left and answer the quick questions on the right. The event reviewer decides what it becomes.</p>
                     <div class="cols">
-                        <div>
-                            <label class="fl"><span class="qn">Problem Statement *</span>
-                                <textarea class="ta big" rows="7" data-f="problem" oninput={handleField} placeholder="What happened, in your own words."></textarea>
+                        <div class="stack">
+                            <label class="cq-field"><span class="cq-label">Problem Statement<span class="cq-req">*</span></span>
+                                <textarea class="big" rows="7" data-f="problem" oninput={handleField} placeholder="What happened, in your own words."></textarea>
                             </label>
-                            <label class="fl"><span class="qn">Title *</span>
-                                <input class="ta" type="text" maxlength="255" data-f="title" oninput={handleField} placeholder="A short name for the problem">
+                            <label class="cq-field"><span class="cq-label">Title<span class="cq-req">*</span></span>
+                                <input type="text" maxlength="255" data-f="title" oninput={handleField} placeholder="A short name for the problem">
                             </label>
-                            <div class="fl"><span class="qn">Product</span>
+                            <div class="cq-field"><span class="cq-label">Product</span>
                                 <c-cq-part-picker class="rpart" onchange={handlePart}></c-cq-part-picker>
                                 <div class="two">
                                     <lightning-combobox class="lotbox" label="Lot" variant="label-hidden" placeholder={lotPlaceholder} options={lotOptions} value={lot} disabled={noLots} onchange={handleLot}></lightning-combobox>
-                                    <input class="ta" type="number" min="0" data-f="units" oninput={handleField} placeholder="Units affected">
+                                    <input type="number" min="0" data-f="units" oninput={handleField} placeholder="Units affected">
                                 </div>
-                                <span class="note">Leave blank if no product was affected.</span>
+                                <span class="cq-hint">Leave blank if no product was affected.</span>
                             </div>
                             <div class="note">{capturedText}</div>
                         </div>
-                        <div>
+                        <div class="stack">
                             <template for:each={questions} for:item="q">
-                                <div key={q.id} class="fl">
-                                    <span class="qn">{q.label}</span>
+                                <div key={q.id} class={q.cls}>
+                                    <span class="cq-label">{q.label}<template if:true={q.required}><span class="cq-req">*</span></template></span>
                                     <template if:true={q.isChoice}>
                                         <div class="opts">
                                             <template for:each={q.opts} for:item="o">
@@ -51,10 +51,10 @@
                                             </template>
                                         </div>
                                     </template>
-                                    <template if:true={q.isText}><input class="ta" type="text" data-q={q.id} oninput={handleAnswer}></template>
-                                    <template if:true={q.isNumber}><input class="ta narrow" type="number" data-q={q.id} oninput={handleAnswer}></template>
-                                    <template if:true={q.isDate}><input class="ta narrow" type="date" data-q={q.id} onchange={handleAnswer}></template>
-                                    <template if:true={q.help}><span class="note">{q.help}</span></template>
+                                    <template if:true={q.isText}><input type="text" data-q={q.id} oninput={handleAnswer}></template>
+                                    <template if:true={q.isNumber}><input type="number" data-q={q.id} oninput={handleAnswer}></template>
+                                    <template if:true={q.isDate}><input type="date" data-q={q.id} onchange={handleAnswer}></template>
+                                    <template if:true={q.help}><span class="cq-hint">{q.help}</span></template>
                                 </div>
                             </template>
                             <template if:true={urgent}><div class="warnbox"><strong>{urgentText}</strong></div></template>
@@ -81,8 +81,8 @@
                 <template if:true={isQuick}>
                     <p class="p">Quick log creates a normal NC marked trend only, closed with the category's disposition. No triage or investigation unless the count reaches the limit.</p>
                     <div class="cols">
-                        <div>
-                            <div class="fl"><span class="qn">1. What was it? *</span>
+                        <div class="stack">
+                            <div class="cq-field"><span class="cq-label">1. What was it?<span class="cq-req">*</span></span>
                                 <template if:true={hasCats}>
                                     <div class="grid">
                                         <template for:each={cats} for:item="c">
@@ -90,10 +90,10 @@
                                         </template>
                                     </div>
                                 </template>
-                                <template if:false={hasCats}><span class="note">No categories are approved for quick logging yet.</span></template>
-                                <span class="note">Only categories your quality team approved for trend-only logging appear here. Anything else needs a Full Report.</span>
+                                <template if:false={hasCats}><span class="cq-hint">No categories are approved for quick logging yet.</span></template>
+                                <span class="cq-hint">Only categories your quality team approved for trend-only logging appear here. Anything else needs a Full Report.</span>
                             </div>
-                            <div class="fl"><span class="qn">2. Which part, and how many? *</span>
+                            <div class="cq-field"><span class="cq-label">2. Which part, and how many?<span class="cq-req">*</span></span>
                                 <c-cq-part-picker class="qpart" onchange={handleQPart}></c-cq-part-picker>
                                 <div class="two">
                                     <lightning-combobox class="lotbox" label="Lot" variant="label-hidden" placeholder={qLotPlaceholder} options={qLotOptions} value={qLot} disabled={noQLots} onchange={handleQLot}></lightning-combobox>
@@ -104,8 +104,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <label class="fl"><span class="qn">Note</span>
-                                <input class="ta" type="text" maxlength="255" data-f="note" oninput={handleQField} placeholder="Optional">
+                            <label class="cq-field"><span class="cq-label">Note</span>
+                                <input type="text" maxlength="255" data-f="note" oninput={handleQField} placeholder="Optional">
                             </label>
                         </div>
                         <div class="plainbox trendbox">

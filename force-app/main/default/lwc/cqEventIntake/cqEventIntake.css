@@ -16,11 +16,9 @@
 .tab.on { color: var(--cq-link); border-bottom-color: var(--cq-link); }
 .p { margin: 0 0 16px; color: var(--cq-muted); max-width: 72ch; }
 .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
-.fl { display: flex; flex-direction: column; gap: 6px; font-weight: 600; color: var(--cq-ink); margin-bottom: 16px; }
-.qn { font-size: 14px; font-weight: 700; color: var(--cq-ink); }
-.ta { box-sizing: border-box; min-height: 40px; padding: 8px 10px; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: 14px; font-weight: 400; color: var(--cq-ink); width: 100%; }
-textarea.ta.big { min-height: 180px; line-height: 1.45; resize: vertical; }
-.ta.narrow { width: 200px; }
+/* form fields use the shared .cq-field pattern from cqStyles */
+.stack { display: flex; flex-direction: column; gap: var(--cq-row-gap); min-width: 0; }
+.cq-field textarea.big { min-height: 180px; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 /* choice chips use the shared .cq-chip from cqStyles (selected = aria-pressed) */
 .opts { display: flex; flex-wrap: wrap; gap: 0.4rem; }

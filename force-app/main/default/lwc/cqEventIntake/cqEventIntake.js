@@ -88,7 +88,8 @@ export default class CqEventIntake extends NavigationMixin(LightningElement) {
             const a = this.answers[q.id];
             const isChoice = q.answerType === 'Choice' || q.answerType === 'Yes or No';
             return {
-                id: q.id, label: (i + 1) + '. ' + q.question + (q.required ? ' *' : ''), help: q.help,
+                id: q.id, label: (i + 1) + '. ' + q.question, required: !!q.required, help: q.help,
+                cls: 'cq-field' + (q.answerType === 'Number' ? ' w-num' : q.answerType === 'Date' ? ' w-date' : ''),
                 isChoice, isText: q.answerType === 'Text', isNumber: q.answerType === 'Number', isDate: q.answerType === 'Date',
                 value: a || '',
                 opts: isChoice ? q.choices.map((c) => ({ key: q.id + c, label: c, qid: q.id, pressed: String(a === c), cls: 'cq-chip' })) : []
