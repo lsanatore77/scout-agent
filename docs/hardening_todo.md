@@ -92,3 +92,7 @@ _Last updated: 2026-11-17_
 Lot is the primary choice and the part fills in from it. `cqLotPicker` searches Lot Info through `CqEventLots.searchLots` (which matches the lot's text part number to a Part by part number, then name); `cqPartPicker.setPart` fills the part without firing `change`. The part stays directly pickable; picking a part first narrows the lot list; changing to a different part clears the lot. Both tabs of `cqEventIntake` use it. Both pickers now style from `cqStyles`.
 
 Still open: free-typed lots that are not in Lot Info cannot be entered; a lot whose part number matches no Part record leaves the part for the reporter to pick.
+
+## Design rule: anything that opens over the page (2026-11-17)
+
+Search results, dropdown lists, date pickers and popovers must open where there is room and never push the page. Measure before opening: downward when it fits, upward when it does not, and cap the height to the space available so the list scrolls inside itself. Otherwise a list that runs past the bottom of a short screen adds a page scroll bar and the screen jumps (seen on the Quick Log tab). Reference implementation: `place()` in `cqLotPicker` and `cqPartPicker`. To check during the screen-by-screen pass: the Ask CQ.AI popover and any other custom dropdowns.
