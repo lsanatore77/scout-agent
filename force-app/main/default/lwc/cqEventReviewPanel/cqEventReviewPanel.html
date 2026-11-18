@@ -1,5 +1,14 @@
 <template>
     <div class="wrap">
+        <!-- component header, like the app's other components -->
+        <div class="hd">
+            <span class="hdtitle">Event Review</span>
+            <div class="hdactions">
+                <button class="cq-btn-ai" disabled>&#10022; Ask CQ.AI</button>
+                <button class="cq-btn-outline" disabled>Edit</button>
+            </div>
+        </div>
+
         <template if:true={error}><div class="err">{error}</div></template>
 
         <template if:true={hasReview}>
@@ -18,14 +27,9 @@
                             <template if:false={review.urgent}><span class="v">No</span></template>
                         </div>
                     </div>
-                    <div class="qa">
-                        <template for:each={review.answers} for:item="a">
-                            <div key={a.question} class="qarow"><span class="qk">{a.question}</span><span class="qv">{a.answer}</span></div>
-                        </template>
-                    </div>
                 </div>
 
-                <!-- RIGHT: CQ.AI's recommendation + the decision -->
+                <!-- RIGHT: CQ.AI recommendation (with the answers) + the decision -->
                 <div class="rail">
                     <div class="ai">
                         <div class="aieyebrow">&#10022; CQ.AI Suggests</div>
@@ -40,25 +44,16 @@
 
                         <div class="airule"></div>
 
-                        <div class="sub">Open Records on This Part</div>
-                        <template if:true={review.hasOpen}>
-                            <template for:each={review.openOnPart} for:item="o">
-                                <div key={o.id} class="rel"><b>{o.name}</b> &middot; {o.title} <span class="muted">({o.status} &middot; {o.note})</span></div>
+                        <div class="aiwhy">Reported Answers <span class="hint">&mdash; purple = what CQ.AI flagged</span></div>
+                        <div class="qa">
+                            <template for:each={review.answers} for:item="a">
+                                <div key={a.question} class={a.cls}><span class="qk">{a.question}</span><span class="qv">{a.answer}</span></div>
                             </template>
-                        </template>
-                        <template if:false={review.hasOpen}><div class="muted">None open on this part.</div></template>
-
-                        <div class="sub">Similar Events</div>
-                        <template if:true={review.hasSimilar}>
-                            <template for:each={review.similarEvents} for:item="s">
-                                <div key={s.id} class="rel"><b>{s.name}</b> &middot; {s.title} <span class="muted">({s.status})</span></div>
-                            </template>
-                        </template>
-                        <template if:false={review.hasSimilar}><div class="muted">None. Nothing reported on this part before.</div></template>
+                        </div>
                     </div>
 
                     <div class="decide">
-                        <div class="becomes">What should this event become?</div>
+                        <div class="becomes">What Should This Event Become?</div>
                         <div class="choices">
                             <template for:each={review.choices} for:item="c">
                                 <button key={c.key} class={c.cls} disabled>{c.label} <span class="cmark">{c.mark}</span></button>
