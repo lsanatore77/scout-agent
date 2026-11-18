@@ -123,7 +123,7 @@
 .cq-msg.errbox { margin-top: 12px; }
 .cq-pill.notconf { margin-left: 8px; }
 /* signals: a side bar in the colour of the signal's strength, the same device as the flagged rows on a CQ.AI suggestion card */
-.krow[data-tone] { border-left: 3px solid var(--cq-line-field); padding-left: 10px; }
+/* each signal is its own block: a gap between rows instead of a rule, so the bars do not run together */
+.krow[data-tone] { margin-top: 10px; padding: 3px 0 3px 10px; border-bottom: none; border-left: 3px solid var(--cq-line-field); }
 .krow[data-tone="Escalate"] { border-left-color: var(--cq-crit-solid); }
 .krow[data-tone="Assess"], .krow[data-tone="Watch"] { border-left-color: var(--cq-warn-solid); }
-.krow[data-tone]:last-child { padding-bottom: 8px; }
