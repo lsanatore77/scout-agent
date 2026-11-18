@@ -1,10 +1,14 @@
 import { LightningElement, api, wire } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import getReview from '@salesforce/apex/CqEventReview.getReview';
 
-export default class CqEventReviewPanel extends LightningElement {
+const ASK_SUGGESTIONS = 'What makes this a nonconformance and not a complaint?,Are there similar events on this part?,What should I check before deciding?';
+
+export default class CqEventReviewPanel extends NavigationMixin(LightningElement) {
     @api recordId;
     review;
     error;
+    askStep = 'Event Review';
 
     @wire(getReview, { eventId: '$recordId' })
     wired({ data, error }) {
@@ -15,6 +19,15 @@ export default class CqEventReviewPanel extends LightningElement {
             this.error = (error.body && error.body.message) ? error.body.message : 'Could not load the review.';
             this.review = undefined;
         }
+    }
+
+    get askSuggestions() { return ASK_SUGGESTIONS; }
+
+    handleEdit() {
+        this[NavigationMixin.Navigate]({
+            type: 'standard__recordPage',
+            attributes: { recordId: this.recordId, objectApiName: 'Quality_Event__c', actionName: 'edit' }
+        });
     }
 
     shape(d) {

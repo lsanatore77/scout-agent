@@ -1,62 +1,72 @@
 <template>
-    <div class="wrap">
-        <!-- component header, like the app's other components -->
-        <div class="hd">
-            <span class="hdtitle">Event Review</span>
-            <div class="hdactions">
-                <button class="cq-btn-ai" disabled>&#10022; Ask CQ.AI</button>
-                <button class="cq-btn-outline" disabled>Edit</button>
-            </div>
-        </div>
+    <template if:true={error}><div class="err">{error}</div></template>
 
-        <template if:true={error}><div class="err">{error}</div></template>
+    <template if:true={hasReview}>
+        <div class="box">
+            <!-- standard workspace header -->
+            <header class="hl">
+                <div class="hl-top">
+                    <div class="hl-who">
+                        <span class="hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Quality Event"></lightning-icon></span>
+                        <div class="hl-name">
+                            <span class="hl-obj">Event Review</span>
+                            <span class="hl-title">{review.name}</span>
+                        </div>
+                    </div>
+                    <div class="hl-actions">
+                        <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Quality" placeholder="Ask about this event…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
+                        <button class="btn" onclick={handleEdit}>Edit</button>
+                    </div>
+                </div>
+            </header>
 
-        <template if:true={hasReview}>
-            <div class="cols">
-                <!-- LEFT: the problem, its facts, and the decision -->
-                <div class="colmain">
-                    <div class="card">
-                        <div class="cardhd">The Problem &middot; reported by {review.reportedBy}</div>
-                        <p class="stmt">{review.problem}</p>
-                        <div class="facts">
-                            <div class="factrow"><span class="factlabel">Where</span><span class="factval">{review.whereFound}</span></div>
-                            <div class="factrow"><span class="factlabel">Product</span><span class="factval">{review.partLine}</span></div>
-                            <div class="factrow"><span class="factlabel">Lot</span><span class="factval">{review.lot}</span></div>
-                            <div class="factrow"><span class="factlabel">Units</span><span class="factval">{review.units}</span></div>
-                            <div class="factrow"><span class="factlabel">Urgent</span>
-                                <template if:true={review.urgent}><span class="cq-pill crit">Yes</span></template>
-                                <template if:false={review.urgent}><span class="factval">No</span></template>
+            <div class="body">
+                <div class="cols">
+                    <!-- LEFT: the problem, its facts, and the decision -->
+                    <div class="colmain">
+                        <div class="card">
+                            <div class="probhd">The Problem <span class="probby">&middot; reported by {review.reportedBy}</span></div>
+                            <p class="stmt">{review.problem}</p>
+                            <div class="facts">
+                                <div class="factrow"><span class="factlabel">Where</span><span class="factval">{review.whereFound}</span></div>
+                                <div class="factrow"><span class="factlabel">Product</span><span class="factval">{review.partLine}</span></div>
+                                <div class="factrow"><span class="factlabel">Lot</span><span class="factval">{review.lot}</span></div>
+                                <div class="factrow"><span class="factlabel">Units</span><span class="factval">{review.units}</span></div>
+                                <div class="factrow"><span class="factlabel">Urgent</span>
+                                    <template if:true={review.urgent}><span class="cq-pill crit">Yes</span></template>
+                                    <template if:false={review.urgent}><span class="factval">No</span></template>
+                                </div>
                             </div>
                         </div>
+
+                        <div class="decide">
+                            <div class="becomes">What Should This Event Become?</div>
+                            <div class="choices">
+                                <template for:each={review.choices} for:item="c">
+                                    <button key={c.key} class={c.cls} disabled>{c.label} <span class="cmark">{c.mark}</span></button>
+                                </template>
+                            </div>
+                            <p class="note">Confirming a choice (create the NC or complaint, add to a record, or close it) is the next build. This panel is the review, read-only for now.</p>
+                        </div>
                     </div>
 
-                    <div class="decide">
-                        <div class="becomes">What Should This Event Become?</div>
-                        <div class="choices">
-                            <template for:each={review.choices} for:item="c">
-                                <button key={c.key} class={c.cls} disabled>{c.label} <span class="cmark">{c.mark}</span></button>
+                    <!-- RIGHT: CQ.AI recommendation, its reasoning, and the answers it flagged -->
+                    <div class="ai">
+                        <div class="aieyebrow">&#10022; CQ.AI Suggests</div>
+                        <div class="aiverdict">{review.suggestion.becomes}</div>
+                        <p class="aisummary">{review.summary}</p>
+
+                        <div class="airule"></div>
+
+                        <div class="aiwhy">Reported Answers <span class="hint">&mdash; purple = what CQ.AI flagged</span></div>
+                        <div class="qa">
+                            <template for:each={review.answers} for:item="a">
+                                <div key={a.question} class={a.cls}><span class="qk">{a.question}</span><span class="qv">{a.answer}</span></div>
                             </template>
                         </div>
-                        <p class="note">Confirming a choice (create the NC or complaint, add to a record, or close it) is the next build. This panel is the review, read-only for now.</p>
-                    </div>
-                </div>
-
-                <!-- RIGHT: CQ.AI recommendation, its reasoning, and the answers it flagged -->
-                <div class="ai">
-                    <div class="aieyebrow">&#10022; CQ.AI Suggests</div>
-                    <div class="aiverdict">{review.suggestion.becomes}</div>
-                    <p class="aisummary">{review.summary}</p>
-
-                    <div class="airule"></div>
-
-                    <div class="aiwhy">Reported Answers <span class="hint">&mdash; purple = what CQ.AI flagged</span></div>
-                    <div class="qa">
-                        <template for:each={review.answers} for:item="a">
-                            <div key={a.question} class={a.cls}><span class="qk">{a.question}</span><span class="qv">{a.answer}</span></div>
-                        </template>
                     </div>
                 </div>
             </div>
-        </template>
-    </div>
+        </div>
+    </template>
 </template>

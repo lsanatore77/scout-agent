@@ -3,16 +3,6 @@
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
-                <componentName>force:highlightsPanel</componentName>
-                <identifier>force_highlightsPanel</identifier>
-            </componentInstance>
-        </itemInstances>
-        <name>header</name>
-        <type>Region</type>
-    </flexiPageRegions>
-    <flexiPageRegions>
-        <itemInstances>
-            <componentInstance>
                 <componentName>c:cqEventReviewPanel</componentName>
                 <identifier>cqEventReviewPanelMain</identifier>
             </componentInstance>
