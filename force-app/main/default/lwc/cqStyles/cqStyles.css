@@ -33,6 +33,7 @@
   --cq-accent:      #4a2fc0;
   --cq-accent-soft: #f3eefe;
   --cq-accent-line: #e3d9fb;
+  --cq-accent-solid:#7357e8;   /* fill of a chosen CQ.AI control: lighter than the text purple so it never reads as the neutral blue */
 
   /* ---- semantic pills: solid fills (white text) + soft tints ---- */
   --cq-crit-solid:#b3261e; --cq-crit-bg:#fdecec; --cq-crit-fg:#b3261e;
@@ -107,7 +108,7 @@
 .cq-chip:disabled { cursor: default; }
 /* a chip that is the CQ.AI suggestion wears CQ.AI purple, never the neutral blue: tinted at rest, solid when chosen */
 .cq-chip.ai { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
-.cq-chip.ai[aria-pressed="true"] { border-color: var(--cq-accent); background: var(--cq-accent); color: #fff; --cq-ai-ink: #fff; }
+.cq-chip.ai[aria-pressed="true"] { border-color: var(--cq-accent-solid); background: var(--cq-accent-solid); color: #fff; --cq-ai-ink: #fff; }
 /* a row of chips; under a field label it gets extra air (chips are tall and rounded) */
 .cq-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .cq-field > .cq-chips { margin-top: 0.25rem; }
