@@ -27,6 +27,7 @@
   --cq-line:       #e5e8ec;   /* row rules, hairlines */
   --cq-line-field: #c4cad2;   /* input borders */
   --cq-link:       #0b5cad;   /* record links + focus + selected control */
+  --cq-link-soft:  #e8f0fd;   /* soft highlight for a selected neutral control */
 
   /* ---- CQ.AI register (assistant / chat) ---- */
   --cq-accent:      #4a2fc0;
@@ -39,6 +40,7 @@
   --cq-pos-solid: #15803d; --cq-pos-bg: #e8f6ee; --cq-pos-fg: #1a7f45;  /* green = positive only */
   --cq-neu-solid: #5b6470; --cq-neu-bg: #eef0f3; --cq-neu-fg: #5b6470;
   --cq-info-solid:#c2410c; --cq-info-bg:#fdede1; --cq-info-fg:#c2410c;  /* in-review (orange) */
+  --cq-crit-line:#f3c7c2; --cq-warn-line:#f2d3a8; --cq-pos-line:#b7e1c1;  /* soft-box borders */
   --cq-danger: #b3261e;
 
   /* ---- radius ---- */
