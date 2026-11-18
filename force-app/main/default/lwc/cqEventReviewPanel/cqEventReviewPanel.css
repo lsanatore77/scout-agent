@@ -28,30 +28,39 @@
 
 .err { padding: 0.75rem 1rem; border-radius: var(--cq-r-field); background: var(--cq-crit-bg); border: 1px solid var(--cq-crit-fg); color: var(--cq-crit-fg); }
 
-/* two columns, equal height */
+/* two columns: left = problem + facts + decision, right = CQ.AI */
 .cols { display: grid; grid-template-columns: 1.5fr 1fr; gap: 1rem; align-items: start; }
 @media (max-width: 48rem) { .cols { grid-template-columns: 1fr; } }
-.rail { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.colmain { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 
 .card { border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-bg); }
 .cardhd { font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--cq-muted); margin-bottom: 0.5rem; }
 .stmt { margin: 0 0 0.875rem; line-height: 1.5; color: var(--cq-ink); }
 
-/* quick-facts band: surface-filled tiles */
-.grid { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.f { display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; min-width: 5.5rem; padding: 0.45rem 0.6rem; background: var(--cq-surface); border-radius: var(--cq-r-field); }
-.k { font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; color: var(--cq-muted); }
-.v { font-weight: 600; }
+/* facts: vertical label/value list, width hugs content */
+.facts { display: inline-flex; flex-direction: column; min-width: 14rem; }
+.factrow { display: flex; align-items: center; justify-content: space-between; gap: 2rem; padding: 0.4rem 0; border-top: 1px solid var(--cq-line); }
+.factrow:first-child { border-top: 0; }
+.factlabel { font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em; color: var(--cq-muted); }
+.factval { font-weight: 600; color: var(--cq-ink); }
 
-/* CQ.AI recommendation card (verdict + why + answers) */
+/* decision card */
+.decide { border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-bg); }
+.becomes { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); margin: 0 0 0.6rem; }
+.choices { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.choice { display: inline-flex; align-items: center; justify-content: center; gap: 0.35rem; min-height: 2.75rem; padding: 0 1rem; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: var(--cq-fs-btn); font-weight: 600; color: var(--cq-ink); white-space: nowrap; }
+.choice.ai { border: 1px solid var(--cq-accent-line); background: var(--cq-accent-soft); color: var(--cq-accent); }
+.choice:disabled { opacity: 0.95; cursor: default; }
+.cmark { color: var(--cq-accent); }
+.note { font-size: var(--cq-fs-meta); color: var(--cq-muted); margin: 0.75rem 0 0; }
+
+/* CQ.AI recommendation card (verdict + summary + answers) */
 .ai { border: 1px solid var(--cq-accent-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-accent-soft); }
 .aieyebrow { display: flex; align-items: center; gap: 0.3rem; font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cq-accent); }
-.aiverdict { font-size: 1.0625rem; font-weight: 700; color: var(--cq-ink); margin: 0.15rem 0 0.6rem; line-height: 1.25; }
+.aiverdict { font-size: 1.0625rem; font-weight: 700; color: var(--cq-ink); margin: 0.15rem 0 0.4rem; line-height: 1.25; }
+.aisummary { margin: 0; line-height: 1.5; color: var(--cq-ink); }
 .aiwhy { font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--cq-muted); margin-bottom: 0.3rem; }
 .aiwhy .hint { font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--cq-faint); }
-.reasons { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
-.reasons li { position: relative; padding-left: 0.95rem; line-height: 1.4; }
-.reasons li::before { content: ""; position: absolute; left: 0.1rem; top: 0.52em; width: 0.32rem; height: 0.32rem; border-radius: 50%; background: var(--cq-accent); }
 .airule { height: 1px; background: var(--cq-accent-line); margin: 0.85rem 0; }
 
 /* answers, with CQ.AI-flagged rows in purple */
@@ -63,13 +72,3 @@
 .qarow.hot { border-left: 3px solid var(--cq-accent); padding-left: 0.5rem; }
 .qarow.hot .qk { color: var(--cq-ink); font-weight: 600; }
 .qarow.hot .qv { color: var(--cq-accent); font-weight: 700; }
-
-/* decision card */
-.decide { border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-bg); }
-.becomes { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); margin: 0 0 0.6rem; }
-.choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-.choice { display: flex; align-items: center; justify-content: center; gap: 0.35rem; min-height: 2.75rem; padding: 0 0.75rem; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: var(--cq-fs-btn); font-weight: 600; color: var(--cq-ink); text-align: center; white-space: nowrap; }
-.choice.ai { border: 1px solid var(--cq-accent-line); background: var(--cq-accent-soft); color: var(--cq-accent); }
-.choice:disabled { opacity: 0.95; cursor: default; }
-.cmark { color: var(--cq-accent); }
-.note { font-size: var(--cq-fs-meta); color: var(--cq-muted); margin: 0.75rem 0 0; }

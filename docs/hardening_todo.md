@@ -75,3 +75,14 @@ _Last updated: 2026-11-17_
   keep auditing as new Apex lands.
 - ☐ 🔴 Secrets (Ask CQ consumer key/secret) stay in the `Ask_CQ` External Credential only —
   never committed, never logged.
+
+## Longer-term design
+- ☐ 🟡 **Intake questions as their own related object** — today the event's Q&A is
+  stored as fields on the event (and shown in the review panel as such). Longer term
+  these should be a dedicated object related to the Quality Event (configurable
+  questions), so admins can add/edit/order questions without schema changes. Details TBD.
+- ☐ 🟡 **CQ.AI review summary should be server-generated** — the event-review panel's
+  "CQ.AI Suggests" reasoning summary (NC vs Complaint vs not-a-quality-issue) and the
+  "flagged answers" are currently composed client-side from the captured facts (a
+  heuristic: affirmative risk answers). Move this to Apex/LLM so the rationale is real
+  model reasoning, and have the backend mark which answers it actually used.

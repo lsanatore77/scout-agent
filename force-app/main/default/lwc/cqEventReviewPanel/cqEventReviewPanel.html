@@ -13,42 +13,20 @@
 
         <template if:true={hasReview}>
             <div class="cols">
-                <!-- LEFT: the problem -->
-                <div class="card">
-                    <div class="cardhd">The Problem &middot; reported by {review.reportedBy}</div>
-                    <p class="stmt">{review.problem}</p>
-                    <div class="grid">
-                        <div class="f"><span class="k">Where</span><span class="v">{review.whereFound}</span></div>
-                        <div class="f"><span class="k">Product</span><span class="v">{review.partLine}</span></div>
-                        <div class="f"><span class="k">Lot</span><span class="v">{review.lot}</span></div>
-                        <div class="f"><span class="k">Units</span><span class="v">{review.units}</span></div>
-                        <div class="f"><span class="k">Urgent</span>
-                            <template if:true={review.urgent}><span class="cq-pill crit">Yes</span></template>
-                            <template if:false={review.urgent}><span class="v">No</span></template>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RIGHT: CQ.AI recommendation (with the answers) + the decision -->
-                <div class="rail">
-                    <div class="ai">
-                        <div class="aieyebrow">&#10022; CQ.AI Suggests</div>
-                        <div class="aiverdict">{review.suggestion.becomes}</div>
-
-                        <div class="aiwhy">Why</div>
-                        <ul class="reasons">
-                            <template for:each={review.reasons} for:item="why">
-                                <li key={why}>{why}</li>
-                            </template>
-                        </ul>
-
-                        <div class="airule"></div>
-
-                        <div class="aiwhy">Reported Answers <span class="hint">&mdash; purple = what CQ.AI flagged</span></div>
-                        <div class="qa">
-                            <template for:each={review.answers} for:item="a">
-                                <div key={a.question} class={a.cls}><span class="qk">{a.question}</span><span class="qv">{a.answer}</span></div>
-                            </template>
+                <!-- LEFT: the problem, its facts, and the decision -->
+                <div class="colmain">
+                    <div class="card">
+                        <div class="cardhd">The Problem &middot; reported by {review.reportedBy}</div>
+                        <p class="stmt">{review.problem}</p>
+                        <div class="facts">
+                            <div class="factrow"><span class="factlabel">Where</span><span class="factval">{review.whereFound}</span></div>
+                            <div class="factrow"><span class="factlabel">Product</span><span class="factval">{review.partLine}</span></div>
+                            <div class="factrow"><span class="factlabel">Lot</span><span class="factval">{review.lot}</span></div>
+                            <div class="factrow"><span class="factlabel">Units</span><span class="factval">{review.units}</span></div>
+                            <div class="factrow"><span class="factlabel">Urgent</span>
+                                <template if:true={review.urgent}><span class="cq-pill crit">Yes</span></template>
+                                <template if:false={review.urgent}><span class="factval">No</span></template>
+                            </div>
                         </div>
                     </div>
 
@@ -60,6 +38,22 @@
                             </template>
                         </div>
                         <p class="note">Confirming a choice (create the NC or complaint, add to a record, or close it) is the next build. This panel is the review, read-only for now.</p>
+                    </div>
+                </div>
+
+                <!-- RIGHT: CQ.AI recommendation, its reasoning, and the answers it flagged -->
+                <div class="ai">
+                    <div class="aieyebrow">&#10022; CQ.AI Suggests</div>
+                    <div class="aiverdict">{review.suggestion.becomes}</div>
+                    <p class="aisummary">{review.summary}</p>
+
+                    <div class="airule"></div>
+
+                    <div class="aiwhy">Reported Answers <span class="hint">&mdash; purple = what CQ.AI flagged</span></div>
+                    <div class="qa">
+                        <template for:each={review.answers} for:item="a">
+                            <div key={a.question} class={a.cls}><span class="qk">{a.question}</span><span class="qv">{a.answer}</span></div>
+                        </template>
                     </div>
                 </div>
             </div>
