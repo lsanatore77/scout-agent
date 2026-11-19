@@ -46,8 +46,8 @@
             </template>
         </div>
 
-        <div class="tblwrap">
-        <table class="grid">
+        <div class="cq-tblwrap">
+        <table class="cq-tbl">
             <thead>
                 <tr>
                     <th class="c-score">Score</th>
@@ -65,14 +65,14 @@
                     <tr key={r.id}>
                         <td><span class={r.badgeClass}>{r.score}</span></td>
                         <td>
-                            <a href={r.link} target="_blank" class="num">{r.recordNumber}</a>
+                            <a href={r.link} target="_blank" class="cq-link">{r.recordNumber}</a>
                             <div class="line">{r.partText}</div>
                             <div class="line dim">{r.lotText}</div>
                         </td>
-                        <template if:true={col.status}><td class="muted">{r.status}</td></template>
+                        <template if:true={col.status}><td class="cq-muted">{r.status}</td></template>
                         <template if:true={col.title}><td>{r.titleText}</td></template>
                         <template if:true={col.rootCause}><td>{r.rootCauseText}</td></template>
-                        <template if:true={col.match}><td class="muted">{r.match}</td></template>
+                        <template if:true={col.match}><td class="cq-muted">{r.match}</td></template>
                         <td class="c-why">
                             <template if:true={r.suggested}>
                                 <c-cq-ai-why variant="pill" question={r.why}></c-cq-ai-why>
@@ -94,9 +94,9 @@
 
         <div class="pager">
             <span class="page-label">{pageLabel}</span>
-            <span class="gap"></span>
+            <span class="cq-grow"></span>
             <template if:true={hasPages}>
-                <nav class="pages" aria-label="Record pages">
+                <nav class="cq-pages" aria-label="Record pages">
                     <button class="pg" onclick={handlePrev} disabled={prevDisabled} aria-label="Previous page">&laquo;</button>
                     <template for:each={pageItems} for:item="p">
                         <button key={p.key} class={p.cls} data-p={p.p} onclick={handlePage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>

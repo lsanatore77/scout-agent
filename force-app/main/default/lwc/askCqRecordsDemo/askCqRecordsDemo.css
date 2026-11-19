@@ -19,18 +19,13 @@
 .tab.active { color: var(--cq-ink); font-weight: 700; border-bottom-color: var(--cq-link); }
 .on-badge { background: var(--cq-link); color: #fff; border-radius: 9px; font-size: 10px; font-weight: 700; padding: 1px 6px; }
 
-/* the records table and its pager: the same rules as the Field Action scope table */
-.tblwrap { margin: 12px 16px 0; overflow-x: auto; border: 1px solid var(--cq-line); border-radius: 10px; }
-.grid { width: 100%; border-collapse: collapse; font-size: 13px; }
-.grid th { text-align: left; font-size: 11px; font-weight: 700; color: var(--cq-muted); padding: 8px 10px; background: var(--cq-surface); border-bottom: 1px solid var(--cq-line); white-space: nowrap; }
-.grid td { padding: 8px 10px; border-bottom: 1px solid var(--cq-line); vertical-align: middle; }
-.grid tr:last-child td { border-bottom: none; }
+/* the records table comes from cqStyles; here it sits inside a card, with rows centred on the score badge */
+.cq-tblwrap { margin: 12px 16px 0; }
+.cq-tbl td { vertical-align: middle; }
+.cq-tbl th.c-why { text-align: center; }
 .c-score { width: 70px; }
 .c-why { width: 150px; text-align: center; }
-.grid th.c-why { text-align: center; }
 .c-add { width: 120px; }
-.num { font-weight: 700; }
-.muted { color: var(--cq-muted); }
 
 .badge { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 44px; border-radius: 8px; font-size: 14px; font-weight: 700; color: #fff; }
 .badge.red { background: #e06c6c; }
@@ -50,13 +45,6 @@
 .added { font-size: 13px; font-weight: 700; color: var(--cq-pos-fg); }
 
 .pager { display: flex; align-items: center; gap: 14px; padding: 8px 16px 6px; }
-.gap { flex: 1; }
-.pages { display: inline-flex; align-items: center; gap: 2px; }
-.pg { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 22px; padding: 0 3px; box-sizing: border-box; border: none; background: none; color: var(--cq-faint); font: inherit; font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; }
-.pg:hover { color: var(--cq-link); }
-.pg:disabled { color: var(--cq-line-field); cursor: default; }
-.pg.gap:disabled { color: var(--cq-faint); }
-.pg.on, .pg.on:disabled { color: var(--cq-link); font-weight: 700; }
 .vdiv { width: 1px; height: 22px; background: var(--cq-line); }
 .bom { --slds-c-checkbox-color-border: var(--cq-line-field); }
 .page-label { font-size: 13px; color: var(--cq-muted); }
