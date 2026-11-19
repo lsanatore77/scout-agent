@@ -26,8 +26,8 @@
 .grid td { padding: 8px 10px; border-bottom: 1px solid var(--cq-line); vertical-align: middle; }
 .grid tr:last-child td { border-bottom: none; }
 .c-score { width: 70px; }
-.c-why { width: 120px; text-align: center; }
-.grid th.c-why { text-align: center; color: var(--cq-accent); font-size: 13px; }
+.c-why { width: 150px; text-align: center; }
+.grid th.c-why { text-align: center; color: var(--cq-accent); }
 .c-add { width: 120px; }
 .num { font-weight: 700; }
 .muted { color: var(--cq-muted); }
