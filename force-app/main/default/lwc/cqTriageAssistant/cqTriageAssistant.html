@@ -235,42 +235,47 @@
 
                     <template if:true={is3}>
                         <h3 class="q">Next Steps</h3>
-                        <p class="p">What happens after triage. CQ.AI suggests; you decide. Complete Triage moves the NC to Disposition / Investigate.</p>
+                        <p class="p">CQ.AI suggests; you decide. Complete Triage moves the NC to Disposition / Investigate.</p>
                         <div class="farwrap"><c-cq-field-action-review record-id={recordId}></c-cq-field-action-review></div>
                         <template if:false={nextReady}><p class="p">Working out the next steps&hellip;</p></template>
                         <template if:true={nextReady}>
-                        <div class="cgrid">
-                            <div class="col">
-                                <div class="cq-card-title">Disposition</div>
-                                <div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Does this nonconformance need a disposition?"></c-cq-ai-why> <strong>{dispSugText}.</strong> {nx.dispWhy}</div>
-                                <div class="opts">
-                                    <template for:each={dispOpts} for:item="o">
-                                        <button key={o.id} class={o.cls} data-id={o.id} onclick={handleDisp} aria-pressed={o.pressed}>{o.label}</button>
-                                    </template>
-                                </div>
-                                <template if:true={dispReq}>
+                        <div class="drow">
+                            <div class="left"><div class="dname">Disposition</div></div>
+                            <div class="dsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Does this nonconformance need a disposition?"></c-cq-ai-why> <strong>{dispSugText}.</strong> {nx.dispWhy}</div>
+                            <div class="dchips">
+                                <template for:each={dispOpts} for:item="o">
+                                    <button key={o.id} class={o.cls} data-id={o.id} onclick={handleDisp} aria-pressed={o.pressed}>{o.label}</button>
+                                </template>
+                            </div>
+                            <template if:true={dispReq}>
+                                <div class="dextra">
                                     <label class="cq-field"><span class="cq-label">Disposition Due<span class="cq-req">*</span></span>
                                         <input class="date" type="date" data-f="dispDue" value={dispDue} onchange={handleInput} />
                                     </label>
-                                    <div class="opts"><button class={dispApprCls} onclick={handleDispAppr} aria-pressed={dispApprPressed}>Needs Approval</button></div>
-                                    <p class="note">Decided in the Disposition workspace after triage.</p>
+                                    <button class={dispApprCls} onclick={handleDispAppr} aria-pressed={dispApprPressed}>Needs Approval</button>
+                                    <span class="note">Decided in the Disposition workspace after triage.</span>
+                                </div>
+                            </template>
+                        </div>
+                        <div class="drow">
+                            <div class="left">
+                                <div class="dname">Investigation</div>
+                                <template if:true={linksReady}><div class="dstate">{lk.ownName}</div></template>
+                            </div>
+                            <div class="dsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this nonconformance be investigated or logged only?"></c-cq-ai-why> <strong>{invSugText}.</strong> {nx.invWhy}</div>
+                            <div class="dchips">
+                                <template for:each={invOpts} for:item="o">
+                                    <button key={o.id} class={o.cls} data-id={o.id} onclick={handleInv} aria-pressed={o.pressed}>{o.label}</button>
                                 </template>
                             </div>
-                            <div class="col">
-                                <div class="cq-card-title">Investigation</div>
-                                <div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this nonconformance be investigated or logged only?"></c-cq-ai-why> <strong>{invSugText}.</strong> {nx.invWhy}</div>
-                                <div class="opts">
-                                    <template for:each={invOpts} for:item="o">
-                                        <button key={o.id} class={o.cls} data-id={o.id} onclick={handleInv} aria-pressed={o.pressed}>{o.label}</button>
-                                    </template>
-                                </div>
-                                <template if:true={invReq}>
+                            <template if:true={invReq}>
+                                <div class="dextra">
                                     <label class="cq-field"><span class="cq-label">Investigation Due<span class="cq-req">*</span></span>
                                         <input class="date" type="date" data-f="invDue" value={invDue} onchange={handleInput} />
                                     </label>
-                                    <div class="opts"><button class={invApprCls} onclick={handleInvAppr} aria-pressed={invApprPressed}>Needs Approval</button></div>
-                                </template>
-                            </div>
+                                    <button class={invApprCls} onclick={handleInvAppr} aria-pressed={invApprPressed}>Needs Approval</button>
+                                </div>
+                            </template>
                         </div>
                         <template if:true={rep}>
                             <div class="recur top8">
@@ -299,11 +304,10 @@
                             <p class="note">Approvers come from the matrix. CQ asks them when the disposition or investigation is submitted.</p>
                         </template>
                         <template if:true={invReq}>
-                            <div class="cq-card-title top8">Investigations to Link for Research</div>
-                            <div class="ownbox"><strong>{ownLine}</strong> Linked investigations are for research only and do not replace it. Linking is optional.</div>
-                                <template if:false={linksReady}><p class="p">Looking for related investigations&hellip;</p></template>
+                            <div class="cq-card-title top8">Relevant Investigations to Link for Research</div>
+                            <p class="note lead">Optional. Linked investigations are for research only and do not replace this NC&rsquo;s own investigation.</p>
+                                <template if:false={linksReady}><p class="note">Looking for relevant investigations&hellip;</p></template>
                                 <template if:true={linksReady}>
-                                    <div class="cq-card-title">Related Investigations</div>
                                     <template if:true={noLinks}><p class="note">No other investigations were found on this part.</p></template>
                                     <template if:true={hasSug}>
                                         <div class="tblwrap">

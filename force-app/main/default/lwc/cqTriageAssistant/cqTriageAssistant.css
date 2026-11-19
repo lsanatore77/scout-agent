@@ -151,7 +151,18 @@
 /* in the page, Back and Next sit at the bottom right of the work area like the other workspaces */
 .box.inline .foot { border-top: none; padding: 0 20px 20px 220px; background: none; }
 .steps-title .star { margin-right: 5px; }
-.farwrap { margin: 0 0 20px; }
+.farwrap { margin: 0 0 8px; }
+/* Next Steps: one row per decision, all laid out the same: name and state, the suggestion, the choices */
+.drow { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 12px 14px; margin-bottom: 8px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.dname { font-size: 14px; font-weight: 700; }
+.dstate { margin-top: 2px; color: var(--cq-muted); }
+.dsug { min-width: 0; line-height: 1.45; }
+.dchips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.dextra { grid-column: 2 / 4; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; padding-top: 10px; border-top: 1px solid var(--cq-line); }
+.dextra .cq-field { margin-top: 0; }
+.dextra .note { margin: 0; align-self: center; }
+.note.lead { margin: 2px 0 8px; }
+@media (max-width: 760px) { .drow { grid-template-columns: 1fr; } .dchips { justify-content: flex-start; } .dextra { grid-column: 1; } }
 /* the repeat: happened before, and the fix did not hold */
 .recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-warn-line); background: var(--cq-warn-bg); display: flex; flex-direction: column; gap: 8px; }
 .recur .opts { margin-top: 0; }

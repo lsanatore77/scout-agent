@@ -1,23 +1,29 @@
 @import 'c/cqStyles';
 
-:host { display: block; }
-.box { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 20px; padding: 16px 20px; border-radius: 12px; background: var(--cq-bg); border: 1px solid var(--cq-line); font-size: 13px; color: var(--cq-ink); }
-.box.sent { background: var(--cq-crit-bg); border-color: var(--cq-crit-line); }
-.left { flex: 0 0 auto; min-width: 180px; }
-.ttl { font-size: 14px; font-weight: 700; }
-.val { margin-top: 2px; font-size: 15px; color: var(--cq-muted); }
-.mid { flex: 1 1 280px; min-width: 0; }
-/* the suggestion uses the shared CQ.AI eyebrow and verdict (cqStyles) */
-.why { color: var(--cq-muted); }
-.cq-field { margin-top: 10px; }
-.note { margin-top: 8px; font-weight: 600; color: var(--cq-pos-fg); }
-.note.red { color: var(--cq-crit-fg); }
-.cq-msg.err { margin-top: 8px; }
-.btns { flex: 0 0 auto; align-self: center; display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; }
-/* sending for review is a serious step: the shared buttons in the critical colour */
-.cq-btn-outline.serious { border-color: var(--cq-crit-fg); color: var(--cq-crit-fg); }
-.cq-btn-primary.serious { background: var(--cq-crit-solid); }
-.link { min-height: 36px; padding: 0 6px; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.link.grey { color: var(--cq-muted); }
-.rev { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 6px; font-size: 13px; }
+:host { display: block; font-size: 13px; color: var(--cq-ink); }
+/* one decision row, the same as Disposition and Investigation in Next Steps: name and state, the suggestion, the choices */
+.drow { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.dname { font-size: 14px; font-weight: 700; }
+.dstate { margin-top: 2px; color: var(--cq-muted); }
+.dsug { min-width: 0; line-height: 1.45; }
+.dchips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.dextra { grid-column: 2 / 4; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; padding-top: 10px; border-top: 1px solid var(--cq-line); }
+.note { color: var(--cq-muted); }
+.rev { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .revs { font-weight: 600; color: var(--cq-muted); }
+.link { padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.cq-msg.err { flex: 1 1 100%; }
+.cq-chip:disabled { opacity: 0.6; }
+/* a chip that is the CQ.AI suggestion always carries the CQ.AI mark, chosen or not */
+.cq-chip.ai::before { content: '\2726'; margin-right: 6px; }
+@media (max-width: 760px) { .drow { grid-template-columns: 1fr; } .dchips { justify-content: flex-start; } .dextra { grid-column: 1; } }
+/* the reason popup: the same modal as Add a Hypothesis, above the triage popup */
+.modal-back { position: fixed; inset: 0; z-index: 9100; background: rgba(8, 7, 7, .45); display: flex; align-items: flex-start; justify-content: center; padding: 10vh 16px 16px; }
+.modal { width: 100%; max-width: 560px; background: var(--cq-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
+.modal-head { position: relative; padding: 16px 52px; border-bottom: 1px solid var(--cq-hl-line); text-align: center; }
+.modal-title { margin: 0; font-size: 20px; font-weight: 700; }
+.modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
+.modal-x:hover { background: var(--cq-hl-bg); }
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--cq-hl-line); background: var(--cq-hl-bg); }

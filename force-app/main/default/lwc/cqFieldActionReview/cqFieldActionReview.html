@@ -1,42 +1,53 @@
 <template>
-    <div class={boxClass}>
+    <div class="drow">
         <div class="left">
-            <div class="ttl">Field Action Review</div>
-            <div class="val">{statusText}</div>
+            <div class="dname">Field Action Review</div>
+            <div class="dstate">{statusText}</div>
         </div>
-        <div class="mid">
+        <div class="dsug">
             <template if:true={fa}>
-                <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={fa.suggestion}></c-cq-ai-why></div>
-                <div class="cq-ai-verdict">{fa.suggestion}</div>
-                <div class="why">{fa.suggestionWhy}</div>
-            </template>
-            <template if:true={asking}>
-                <label class="cq-field"><span class="cq-label">Why Does This Need Field Action Review?<span class="cq-req">*</span></span>
-                    <textarea rows="2" oninput={handleReason} placeholder="For example: this lot may have shipped before the hold"></textarea>
-                </label>
-            </template>
-            <template if:true={doneNote}><div class={noteClass}>{doneNote}</div></template>
-            <template if:true={hasReview}>
-                <div class="rev">
-                    <button class="link" data-id={fa.reviewId} onclick={handleOpen}>{fa.reviewName}</button>
-                    <span class="revs">{reviewLine}</span>
-                    <template if:true={hasFa}><button class="link" data-id={fa.faId} onclick={handleOpen}>{fa.faName}</button></template>
-                </div>
-            </template>
-            <template if:true={error}><div class="cq-msg crit err">{error}</div></template>
-        </div>
-        <div class="btns">
-            <template if:true={isOpen}>
-                <button class="cq-btn-outline" onclick={handleNotNeeded} disabled={busy}>Not Needed</button>
-                <button class="cq-btn-outline serious" onclick={handleAsk} disabled={busy}>Send for Review</button>
-            </template>
-            <template if:true={asking}>
-                <button class="link grey" onclick={handleCancel}>Cancel</button>
-                <button class="cq-btn-primary serious" onclick={handleSend} disabled={cannotSend}>Send for Review</button>
-            </template>
-            <template if:true={canChange}>
-                <button class="link" onclick={handleChange} disabled={busy}>Change</button>
+                <c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={fa.suggestion}></c-cq-ai-why> <strong>{fa.suggestion}.</strong> {fa.suggestionWhy}
             </template>
         </div>
+        <div class="dchips">
+            <template for:each={opts} for:item="o">
+                <button key={o.id} class={o.cls} data-id={o.id} aria-pressed={o.pressed} disabled={o.off} onclick={handlePick}>{o.label}</button>
+            </template>
+        </div>
+        <template if:true={hasExtra}>
+            <div class="dextra">
+                <template if:true={doneNote}><span class="note">{doneNote}</span></template>
+                <template if:true={hasReview}>
+                    <span class="rev">
+                        <button class="link" data-id={fa.reviewId} onclick={handleOpen}>{fa.reviewName}</button>
+                        <span class="revs">{reviewLine}</span>
+                        <template if:true={hasFa}><button class="link" data-id={fa.faId} onclick={handleOpen}>{fa.faName}</button></template>
+                    </span>
+                </template>
+                <template if:true={rowError}><div class="cq-msg crit err">{error}</div></template>
+            </div>
+        </template>
     </div>
+
+    <template if:true={asking}>
+        <div class="modal-back" onkeydown={handleKey}>
+            <section class="modal" role="dialog" aria-modal="true" aria-labelledby="far-head">
+                <header class="modal-head">
+                    <h2 id="far-head" class="modal-title">Send for Field Action Review</h2>
+                    <button class="modal-x" aria-label="Close" onclick={handleCancel}>&times;</button>
+                </header>
+                <div class="modal-body">
+                    <label class="cq-field"><span class="cq-label">Why Does This Need Field Action Review?<span class="cq-req">*</span></span>
+                        <textarea class="reason" rows="4" oninput={handleReason} placeholder="For example: this lot may have shipped before the hold"></textarea>
+                        <span class="cq-hint">The reviewer sees this reason. Sending opens a Field Action Review for this nonconformance.</span>
+                    </label>
+                    <template if:true={error}><div class="cq-msg crit">{error}</div></template>
+                </div>
+                <footer class="modal-foot">
+                    <button class="cq-btn-outline" onclick={handleCancel}>Cancel</button>
+                    <button class="cq-btn-primary" onclick={handleSend} disabled={cannotSend}>Send for Review</button>
+                </footer>
+            </section>
+        </div>
+    </template>
 </template>
