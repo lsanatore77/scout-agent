@@ -5,9 +5,7 @@
 /* highlights panel */
 /* Same icon and colour Salesforce gives the Product History Review object (theme colour 747E96, no custom icon). */
 .cq-hl-icon lightning-icon { --slds-c-icon-color-background: #747e96; --sds-c-icon-color-background: #747e96; }
-.btn { min-height: 40px; padding: 0 16px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 
-.err { margin: 10px 16px 0; color: var(--cq-crit-fg); background: var(--cq-crit-bg); border-radius: 6px; padding: 8px 10px; font-size: 12px; }
 
 /* body: steps + work, flush */
 .body { display: flex; min-height: 420px; }
@@ -27,9 +25,8 @@
 .sect { padding: 12px 20px 8px; }
 .sect-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; flex-wrap: wrap; }
 .sect-title { font-size: 15px; font-weight: 700; }
-.sect-sub { font-size: 12px; color: var(--cq-muted); }
+.sect-sub { font-size: 13px; color: var(--cq-muted); }
 .muted { color: var(--cq-muted); font-size: 13px; }
-.ok { margin: 0 0 8px; color: var(--cq-pos-fg); background: var(--cq-pos-bg); border-radius: 6px; padding: 6px 10px; font-size: 12px; }
 
 /* checklist */
 .q { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--cq-line); }
@@ -37,16 +34,13 @@
 .qh { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .question { font-size: 15px; font-weight: 700; color: var(--cq-ink); }
 .ev { font-size: 13px; color: var(--cq-muted); line-height: 1.5; }
-.ynwrap { flex: none; display: flex; gap: 6px; }
-.yn { height: 32px; min-width: 64px; padding: 0 14px; border-radius: 2px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); font-size: 13px; font-weight: 600; color: var(--cq-ink); cursor: pointer; }
-.yn:hover { background: var(--cq-surface); }
-.yn.sel { background: var(--cq-link); border-color: var(--cq-link); color: #fff; }
-.yn.sug { background: var(--cq-accent-soft); border-color: var(--cq-accent-line); color: var(--cq-accent); }   /* CQ.AI Suggests: the same pill purple as NC triage and Field Action Review */
 
 .file { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); font-size: 13px; }
 .file a { font-weight: 700; }
-.file lightning-formatted-date-time { color: var(--cq-faint); font-size: 12px; margin-left: auto; }
-/* optical centring: browsers centre the whole line including room for descenders, so lift the label about 1.5px */
-.btn { padding-bottom: 3px; }
+.file lightning-formatted-date-time { color: var(--cq-faint); font-size: 13px; margin-left: auto; }
 /* this header sits flush inside its container, so no rounded top */
 .cq-hl { border-radius: 0; }
+.cq-msg.err { margin: 10px 16px 0; }
+.cq-msg.ok { margin: 0 0 8px; }
+.ynwrap { flex: none; flex-wrap: nowrap; }
+.ynwrap .cq-chip { min-width: 64px; }

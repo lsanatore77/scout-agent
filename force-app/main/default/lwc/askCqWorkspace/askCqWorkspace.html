@@ -25,7 +25,7 @@
         </header>
 
         <template if:true={error}>
-            <div class="err">{error}</div>
+            <div class="cq-msg crit err">{error}</div>
         </template>
 
         <div class="body">
@@ -60,7 +60,7 @@
                         <template if:false={hasChecklist}>
                             <p class="muted">No checklist questions on this review yet.</p>
                         </template>
-                        <template if:true={saveNote}><div class="ok">{saveNote}</div></template>
+                        <template if:true={saveNote}><div class="cq-msg pos ok">{saveNote}</div></template>
                         <template for:each={checklist} for:item="q">
                             <div key={q.id} class="q">
                                 <div class="qt">
@@ -72,7 +72,7 @@
                                     </div>
                                     <template if:true={q.evidence}><div class="ev">{q.evidence}</div></template>
                                 </div>
-                                <div class="ynwrap">
+                                <div class="cq-chips ynwrap">
                                     <template for:each={q.buttons} for:item="b">
                                         <button key={b.key} class={b.cls} data-id={q.id} data-value={b.value} aria-pressed={b.pressed} onclick={handleAnswer}>{b.value}</button>
                                     </template>
@@ -86,7 +86,7 @@
                     <div class="sect">
                         <div class="sect-head">
                             <span class="sect-title">PHR Summary</span>
-                            <lightning-button label="Generate with ✦ CQ.AI" onclick={handleDraft}></lightning-button>
+                            <button class="cq-btn-ai" onclick={handleDraft}>Generate with &#10022; CQ.AI</button>
                         </div>
                         <template if:true={hasSummary}>
                             <lightning-formatted-rich-text value={summaryHtml}></lightning-formatted-rich-text>
@@ -101,7 +101,7 @@
                     <div class="sect">
                         <div class="sect-head">
                             <span class="sect-title">Reports</span>
-                            <lightning-button label="Generate with ✦ CQ.AI" onclick={handleReport}></lightning-button>
+                            <button class="cq-btn-ai" onclick={handleReport}>Generate with &#10022; CQ.AI</button>
                         </div>
                         <template if:false={hasReports}>
                             <p class="muted">No report attached to the complaint yet.</p>

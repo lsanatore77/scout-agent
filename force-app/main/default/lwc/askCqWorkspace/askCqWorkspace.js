@@ -52,8 +52,8 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
                 buttons: orderOptions(q.options).map((o) => ({
                     key: q.id + ':' + o,
                     value: o,
-                    cls: 'yn' + (o === shownAnswer ? (purple ? ' sug' : ' sel') : ''),
-                    pressed: o === shownAnswer
+                    cls: 'cq-chip' + (o === shownAnswer && purple ? ' ai' : ''),
+                    pressed: String(o === shownAnswer)
                 })),
                 why: q.suggested || pending
                     ? 'Why is the suggested answer to "' + q.question + '" ' + shownAnswer + '?'
