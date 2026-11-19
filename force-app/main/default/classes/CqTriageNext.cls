@@ -61,7 +61,7 @@ public with sharing class CqTriageNext {
     public static Next getNext(Id recordId) {
         compliancequest__SQX_Nonconformance__c nc = [
             SELECT compliancequest__Lot_Number__c, compliancequest__Defective_Quantity__c
-            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         Next n = new Next();
         n.containmentDue = Date.today().addDays(CONTAINMENT_DAYS);
         n.dispDue = Date.today().addDays(DISPOSITION_DAYS);
@@ -124,7 +124,7 @@ public with sharing class CqTriageNext {
         for (compliancequest__SQX_Approval_Matrix__c a : [
                 SELECT Id, Name,
                        (SELECT compliancequest__Disposition_Approval__c, compliancequest__Investigation_Approval__c FROM compliancequest__SQX_Approval_Matrix_Steps__r)
-                FROM compliancequest__SQX_Approval_Matrix__c WHERE RecordTypeId = :rtId ORDER BY Name LIMIT 200]) {
+                FROM compliancequest__SQX_Approval_Matrix__c WHERE RecordTypeId = :rtId WITH USER_MODE ORDER BY Name LIMIT 200]) {
             Matrix m = new Matrix(); m.id = a.Id; m.name = a.Name;
             for (compliancequest__SQX_Approval_Matrix_Step__c s : a.compliancequest__SQX_Approval_Matrix_Steps__r) {
                 if (s.compliancequest__Disposition_Approval__c == true) { m.disp = true; }
@@ -152,7 +152,7 @@ public with sharing class CqTriageNext {
 
         // a triage finished without the workspace's start (the popup, say) still goes through Triage first
         Started st = startTriage(recordId);
-        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__SQX_Investigation__c, compliancequest__SQX_CAPA__c, OwnerId FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__SQX_Investigation__c, compliancequest__SQX_CAPA__c, OwnerId FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         String path = !inv ? 'Log Only' : cur.compliancequest__SQX_Investigation__c != null ? 'Continue with Investigation' : 'New Investigation';
         Boolean contain = c.containment == true;
 
@@ -191,14 +191,14 @@ public with sharing class CqTriageNext {
         if (cur.OwnerId != null && cur.OwnerId.getSObjectType() == Group.SObjectType) { nc.OwnerId = UserInfo.getUserId(); }
         Savepoint sp = Database.setSavepoint();
         try {
-            update nc;
+            update as user nc;
             d.moved = true;
         } catch (DmlException e) {
             Database.rollback(sp);
             warnings.add('CQ did not move the NC to Disposition / Investigate: ' + e.getDmlMessage(0));
             // still record what was decided, in CQ's own Required flags
             try {
-                update new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Containment_Required__c = contain,
+                update as user new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Containment_Required__c = contain,
                     compliancequest__Disposition_Required__c = dispFlag, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
             } catch (Exception e2) { /* the triage is saved; the warning above says CQ refused the move */ }
         }
@@ -210,7 +210,7 @@ public with sharing class CqTriageNext {
             if (c.repeatDecision == 'Escalate to CAPA') { rp.compliancequest__Initiate_CAPA__c = true; }
             if (c.repeatDecision == 'Link to Earlier CAPA' && c.repeatCapaId != null && cur.compliancequest__SQX_CAPA__c == null) { rp.compliancequest__SQX_CAPA__c = c.repeatCapaId; }
             try {
-                update rp;
+                update as user rp;
             } catch (DmlException e) {
                 warnings.add('The repeat decision was not saved: ' + e.getDmlMessage(0));
             }
@@ -240,15 +240,15 @@ public with sharing class CqTriageNext {
     /** Triage has started: a Draft NC goes to Triage through CQ's own Submit. Any other stage is left as it is. */
     @AuraEnabled
     public static Started startTriage(Id recordId) {
-        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+        compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         Started s = new Started();
         s.stage = cur.compliancequest__Record_Stage__c;
         if (s.stage != 'Draft') { return s; }
         try {
-            update new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Activity_Code__c = SUBMIT,
+            update as user new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Activity_Code__c = SUBMIT,
                 compliancequest__Activity_Comment__c = 'Triage started in CQ.AI Triage.');
             s.moved = true;
-            s.stage = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId].compliancequest__Record_Stage__c;
+            s.stage = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE].compliancequest__Record_Stage__c;
         } catch (DmlException e) {
             s.warning = 'CQ did not move the NC to Triage: ' + e.getDmlMessage(0);
         }
@@ -259,14 +259,14 @@ public with sharing class CqTriageNext {
     public static List<String> createDraftDispositions(Id recordId, Date due) {
         Set<Id> covered = new Set<Id>();
         for (compliancequest__SQX_Disposition__c x : [SELECT compliancequest__SQX_NC_Impacted_Product__c FROM compliancequest__SQX_Disposition__c
-                WHERE compliancequest__SQX_Nonconformance__c = :recordId AND compliancequest__Status__c NOT IN ('Complete', 'Void')]) {
+                WHERE compliancequest__SQX_Nonconformance__c = :recordId AND compliancequest__Status__c NOT IN ('Complete', 'Void') WITH USER_MODE]) {
             covered.add(x.compliancequest__SQX_NC_Impacted_Product__c);
         }
         List<compliancequest__SQX_Disposition__c> ins = new List<compliancequest__SQX_Disposition__c>();
         List<String> made = new List<String>();
         for (compliancequest__SQX_NC_Impacted_Product__c ip : [
                 SELECT Id, compliancequest__SQX_Impacted_Part__c, compliancequest__Lot_Number__c, compliancequest__Quantity_Left_To_Dispose__c
-                FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :recordId ORDER BY Name]) {
+                FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :recordId WITH USER_MODE ORDER BY Name]) {
             Decimal left = ip.compliancequest__Quantity_Left_To_Dispose__c;
             if (covered.contains(ip.Id) || left == null || left <= 0 || ip.compliancequest__Lot_Number__c == null) { continue; }
             String label = 'Disposition for Lot ' + ip.compliancequest__Lot_Number__c;
@@ -277,7 +277,7 @@ public with sharing class CqTriageNext {
                 compliancequest__Due_Date__c = due, compliancequest__SQX_User__c = UserInfo.getUserId()));
             made.add(label + ' (' + num(left) + ')');
         }
-        if (!ins.isEmpty()) { insert ins; }
+        if (!ins.isEmpty()) { insert as user ins; }
         return made;
     }
 

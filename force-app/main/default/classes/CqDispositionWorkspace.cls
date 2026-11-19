@@ -60,7 +60,7 @@ public with sharing class CqDispositionWorkspace {
                    toLabel(compliancequest__Record_Stage__c), compliancequest__Status__c, Owner.Name, Triage_Risk__c, Triage_Path__c,
                    compliancequest__SQX_Investigation__c, compliancequest__SQX_Investigation__r.Name,
                    compliancequest__Due_Date_Disposition__c, compliancequest__Disposition_Approval__c, compliancequest__Is_Disposition_Complete__c
-            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         View v = new View();
         v.name = nc.Name; v.title = nc.compliancequest__NC_Title__c; v.description = nc.compliancequest__Description__c;
         v.partId = nc.compliancequest__SQX_Part__c; v.lot = nc.compliancequest__Lot_Number__c;
@@ -78,7 +78,7 @@ public with sharing class CqDispositionWorkspace {
         for (compliancequest__SQX_NC_Impacted_Product__c ip : [
                 SELECT Id, compliancequest__SQX_Impacted_Part__c, compliancequest__SQX_Impacted_Part__r.Name, compliancequest__Lot_Number__c,
                        compliancequest__Lot_Quantity__c, compliancequest__Total_Quantity_Disposed__c, compliancequest__Quantity_Left_To_Dispose__c
-                FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :recordId ORDER BY Name]) {
+                FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :recordId WITH USER_MODE ORDER BY Name]) {
             Lot l = new Lot();
             l.impactedId = ip.Id; l.partId = ip.compliancequest__SQX_Impacted_Part__c; l.lot = ip.compliancequest__Lot_Number__c;
             l.partName = ip.compliancequest__SQX_Impacted_Part__r == null ? null : ip.compliancequest__SQX_Impacted_Part__r.Name;
@@ -91,7 +91,7 @@ public with sharing class CqDispositionWorkspace {
                 SELECT Id, Name, compliancequest__SQX_NC_Impacted_Product__c, compliancequest__Disposition_Type__c,
                        compliancequest__Disposition_Quantity__c, compliancequest__Actual_Quantity_Disposed__c, compliancequest__Status__c,
                        compliancequest__Completed_On__c
-                FROM compliancequest__SQX_Disposition__c WHERE compliancequest__SQX_Nonconformance__c = :recordId ORDER BY CreatedDate]) {
+                FROM compliancequest__SQX_Disposition__c WHERE compliancequest__SQX_Nonconformance__c = :recordId WITH USER_MODE ORDER BY CreatedDate]) {
             Lot l = byImpacted.get(d.compliancequest__SQX_NC_Impacted_Product__c);
             if (l == null) { continue; }
             l.records.add(rec(d));
@@ -109,7 +109,7 @@ public with sharing class CqDispositionWorkspace {
                     FROM compliancequest__SQX_Disposition__c
                     WHERE compliancequest__SQX_Part__c = :v.partId AND compliancequest__SQX_Nonconformance__c != :recordId
                       AND compliancequest__Status__c = 'Complete' AND compliancequest__Disposition_Type__c != null
-                    ORDER BY compliancequest__Completed_On__c DESC NULLS LAST, CreatedDate DESC LIMIT :HISTORY]) {
+                    WITH USER_MODE ORDER BY compliancequest__Completed_On__c DESC NULLS LAST, CreatedDate DESC LIMIT :HISTORY]) {
                 Past p = new Past();
                 p.ncId = d.compliancequest__SQX_Nonconformance__c; p.ncName = d.compliancequest__SQX_Nonconformance__r.Name;
                 p.type = d.compliancequest__Disposition_Type__c; p.lot = d.compliancequest__Lot_Number__c;
@@ -198,7 +198,7 @@ public with sharing class CqDispositionWorkspace {
                     fresh.add(d); all.add(d);
                 }
             }
-            if (!fresh.isEmpty()) { insert fresh; }
+            if (!fresh.isEmpty()) { insert as user fresh; }
             for (Integer i = 0; i < rows.size(); i++) {
                 Row r = rows[i];
                 compliancequest__SQX_Disposition__c d = new compliancequest__SQX_Disposition__c(Id = all[i].Id);
@@ -212,7 +212,7 @@ public with sharing class CqDispositionWorkspace {
                 d.compliancequest__Activity_Code__c = COMPLETE;
                 all[i] = d;
             }
-            update all;
+            update as user all;
             for (compliancequest__SQX_Disposition__c d : all) { doneIds.add(d.Id); }
         } catch (DmlException e) {
             Database.rollback(sp);
@@ -223,14 +223,14 @@ public with sharing class CqDispositionWorkspace {
         for (compliancequest__SQX_Disposition__c d : [
                 SELECT Id, Name, compliancequest__Disposition_Type__c, compliancequest__Disposition_Quantity__c, compliancequest__Actual_Quantity_Disposed__c,
                        compliancequest__Status__c, compliancequest__Completed_On__c
-                FROM compliancequest__SQX_Disposition__c WHERE Id IN :doneIds ORDER BY Name]) {
+                FROM compliancequest__SQX_Disposition__c WHERE Id IN :doneIds WITH USER_MODE ORDER BY Name]) {
             res.done.add(rec(d));
         }
         // whatever is still left on a lot gets a new draft, so the next person picks it up
         try {
             res.remainders = CqTriageNext.createDraftDispositions(recordId, v.dispDue == null ? Date.today().addDays(CqTriageNext.DISPOSITION_DAYS) : v.dispDue);
         } catch (DmlException e) { /* the dispositions are complete; a missing draft for the rest is not worth failing over */ }
-        res.ncComplete = [SELECT compliancequest__Is_Disposition_Complete__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId].compliancequest__Is_Disposition_Complete__c == true;
+        res.ncComplete = [SELECT compliancequest__Is_Disposition_Complete__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE].compliancequest__Is_Disposition_Complete__c == true;
         return res;
     }
 

@@ -10,10 +10,10 @@ public with sharing class CqTriageContainment {
             compliancequest__Due_Date__c = String.isBlank(dueDate) ? Date.today().addDays(1) : Date.valueOf(dueDate),
             compliancequest__SQX_User__c = assigneeId == null ? UserInfo.getUserId() : assigneeId);
         try {
-            insert c;
+            insert as user c;
         } catch (DmlException e) {
             throw new AuraHandledException('CQ did not accept the containment: ' + e.getDmlMessage(0));
         }
-        return [SELECT Name FROM compliancequest__SQX_Containment__c WHERE Id = :c.Id].Name;
+        return [SELECT Name FROM compliancequest__SQX_Containment__c WHERE Id = :c.Id WITH USER_MODE].Name;
     }
 }

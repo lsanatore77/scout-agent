@@ -18,7 +18,7 @@ public with sharing class CqTriageAssistant {
     public static Triage getTriage(Id recordId) {
         compliancequest__SQX_Nonconformance__c nc = [
             SELECT Triage_Risk__c, Triage_Path__c, Triage_Notes__c, Triage_By__r.Name, Triage_On__c
-            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         Triage t = new Triage();
         t.risk = nc.Triage_Risk__c; t.path = nc.Triage_Path__c; t.notes = nc.Triage_Notes__c;
         t.setBy = nc.Triage_By__r?.Name; t.setOn = nc.Triage_On__c;
@@ -43,7 +43,7 @@ public with sharing class CqTriageAssistant {
         compliancequest__SQX_Nonconformance__c nc = new compliancequest__SQX_Nonconformance__c(Id = recordId);
         nc.Triage_Risk__c = risk; nc.Triage_Path__c = path; nc.Triage_Notes__c = notes;
         nc.Triage_By__c = UserInfo.getUserId(); nc.Triage_On__c = Datetime.now();
-        update nc;
+        update as user nc;
 
         List<String> warnings = new List<String>();
         List<String> created = new List<String>();
@@ -53,7 +53,7 @@ public with sharing class CqTriageAssistant {
             Savepoint sp = Database.setSavepoint();
             try {
                 Date due = String.isBlank(dueDate) ? Date.today().addDays(1) : Date.valueOf(dueDate);
-                String ncName = [SELECT Name FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId].Name;
+                String ncName = [SELECT Name FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE].Name;
                 List<compliancequest__SQX_Containment__c> rows = new List<compliancequest__SQX_Containment__c>();
                 for (String title : containmentTitles) {
                     if (String.isBlank(title)) { continue; }
@@ -64,8 +64,8 @@ public with sharing class CqTriageAssistant {
                         compliancequest__Due_Date__c = due,
                         compliancequest__SQX_User__c = UserInfo.getUserId()));
                 }
-                insert rows;
-                for (compliancequest__SQX_Containment__c c : [SELECT Name FROM compliancequest__SQX_Containment__c WHERE Id IN :rows ORDER BY Name]) {
+                insert as user rows;
+                for (compliancequest__SQX_Containment__c c : [SELECT Name FROM compliancequest__SQX_Containment__c WHERE Id IN :rows WITH USER_MODE ORDER BY Name]) {
                     created.add(c.Name);
                 }
             } catch (Exception e) {
@@ -81,7 +81,7 @@ public with sharing class CqTriageAssistant {
                 flags.compliancequest__Containment_Required__c = containment == true;
                 flags.compliancequest__Investigation_Required__c = investigate == true;
                 flags.compliancequest__Disposition_Required__c = investigate != true;
-                update flags;
+                update as user flags;
             } catch (Exception e) {
                 warnings.add('CQ did not accept its Containment / Investigation / Disposition Required flags: ' + e.getMessage());
             }

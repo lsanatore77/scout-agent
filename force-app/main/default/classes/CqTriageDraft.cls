@@ -5,13 +5,13 @@
 public with sharing class CqTriageDraft {
     @AuraEnabled
     public static String getDraft(Id recordId) {
-        compliancequest__SQX_Nonconformance__c nc = [SELECT Triage_Draft__c, Triage_Risk__c, Triage_Path__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+        compliancequest__SQX_Nonconformance__c nc = [SELECT Triage_Draft__c, Triage_Risk__c, Triage_Path__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         // once triage is complete the draft is left over, never work in progress
         return nc.Triage_Risk__c != null && nc.Triage_Path__c != null ? null : nc.Triage_Draft__c;
     }
 
     @AuraEnabled
     public static void saveDraft(Id recordId, String draft) {
-        update new compliancequest__SQX_Nonconformance__c(Id = recordId, Triage_Draft__c = String.isBlank(draft) ? null : draft.left(20000));
+        update as user new compliancequest__SQX_Nonconformance__c(Id = recordId, Triage_Draft__c = String.isBlank(draft) ? null : draft.left(20000));
     }
 }

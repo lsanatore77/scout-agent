@@ -34,7 +34,7 @@ public with sharing class CqTriageLinks {
             SELECT compliancequest__SQX_Part__c, compliancequest__Lot_Number__c, compliancequest__Investigation_Required__c,
                    compliancequest__Due_Date_Investigation__c, compliancequest__SQX_Investigation__c, compliancequest__SQX_Investigation__r.Name,
                    compliancequest__SQX_Investigation__r.compliancequest__SQX_Nonconformance__c
-            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         Links r = new Links();
         r.required = nc.compliancequest__Investigation_Required__c == true;
         r.due = nc.compliancequest__Due_Date_Investigation__c;
@@ -46,7 +46,7 @@ public with sharing class CqTriageLinks {
         Set<Id> linked = new Set<Id>();
         for (compliancequest__SQX_NC_Investigation__c x : [
                 SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_NC_Investigation__c
-                WHERE compliancequest__SQX_Nonconformance__c = :recordId]) {
+                WHERE compliancequest__SQX_Nonconformance__c = :recordId WITH USER_MODE]) {
             linked.add(x.compliancequest__SQX_Investigation__c);
         }
 
@@ -59,7 +59,7 @@ public with sharing class CqTriageLinks {
                     WHERE compliancequest__SQX_Nonconformance__c != :recordId
                       AND (Id IN :linked OR (compliancequest__SQX_Nonconformance__r.compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c
                                              AND compliancequest__SQX_Nonconformance__r.compliancequest__SQX_Part__c != null))
-                    ORDER BY CreatedDate DESC LIMIT 25]) {
+                    WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 25]) {
                 Inv v = toInv(i, nc.compliancequest__Lot_Number__c);
                 v.linked = linked.contains(i.Id);
                 if (v.suggested || v.linked) { strong.add(v); } else { rest.add(v); }
@@ -72,11 +72,11 @@ public with sharing class CqTriageLinks {
     /** One investigation picked by hand, in the same shape as a suggestion. */
     @AuraEnabled
     public static Inv getOne(Id recordId, Id investigationId) {
-        String lot = [SELECT compliancequest__Lot_Number__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId].compliancequest__Lot_Number__c;
+        String lot = [SELECT compliancequest__Lot_Number__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE].compliancequest__Lot_Number__c;
         Inv v = toInv([
             SELECT Id, Name, compliancequest__Status__c, compliancequest__Investigation_Summary__c,
                    compliancequest__SQX_Nonconformance__r.Name, compliancequest__SQX_Nonconformance__r.compliancequest__Lot_Number__c
-            FROM compliancequest__SQX_Investigation__c WHERE Id = :investigationId], lot);
+            FROM compliancequest__SQX_Investigation__c WHERE Id = :investigationId WITH USER_MODE], lot);
         v.why = 'Added by you'; v.suggested = false;
         return v;
     }
@@ -89,7 +89,7 @@ public with sharing class CqTriageLinks {
         Set<Id> have = new Set<Id>();
         for (compliancequest__SQX_NC_Investigation__c x : [
                 SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_NC_Investigation__c
-                WHERE compliancequest__SQX_Nonconformance__c = :recordId]) {
+                WHERE compliancequest__SQX_Nonconformance__c = :recordId WITH USER_MODE]) {
             have.add(x.compliancequest__SQX_Investigation__c);
         }
         List<compliancequest__SQX_NC_Investigation__c> rows = new List<compliancequest__SQX_NC_Investigation__c>();
@@ -101,11 +101,11 @@ public with sharing class CqTriageLinks {
         }
         if (rows.isEmpty()) { return names; }
         try {
-            insert rows;
+            insert as user rows;
         } catch (DmlException e) {
             throw new AuraHandledException('CQ did not accept the investigation links: ' + e.getDmlMessage(0));
         }
-        for (compliancequest__SQX_Investigation__c i : [SELECT Name FROM compliancequest__SQX_Investigation__c WHERE Id IN :adding ORDER BY Name]) { names.add(i.Name); }
+        for (compliancequest__SQX_Investigation__c i : [SELECT Name FROM compliancequest__SQX_Investigation__c WHERE Id IN :adding WITH USER_MODE ORDER BY Name]) { names.add(i.Name); }
         return names;
     }
 }

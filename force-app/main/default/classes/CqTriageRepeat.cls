@@ -63,7 +63,7 @@ public with sharing class CqTriageRepeat {
     public static Repeat notSame(Id recordId, Id targetId, String targetName) {
         if (recordId == null || targetId == null) { throw new AuraHandledException('No record to mark.'); }
         try {
-            insert new Investigation_Not_Relevant__c(Nonconformance__c = recordId, Record_Id__c = targetId,
+            insert as user new Investigation_Not_Relevant__c(Nonconformance__c = recordId, Record_Id__c = targetId,
                 Record_Name__c = targetName == null ? null : targetName.left(80), Reason__c = 'Not the same problem (triage)');
         } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); }
         cache.remove(recordId);
