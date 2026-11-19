@@ -8,8 +8,8 @@
                 <template if:true={topNav}>
                     <div class="topnav">
                         <span class="blocker">{blocker}</span>
-                        <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
-                        <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+                        <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
+                        <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
                     </div>
                 </template>
             </header>
@@ -43,8 +43,8 @@
                                 <template if:true={repBox.noReview}><div class="lh muted">{repBox.capaName} closed with no effectiveness review on record.</div></template>
                                 <div class="lh"><strong>What this changes in triage:</strong> {repBox.changes}</div>
                                 <div class="repacts">
-                                    <a class="btn sm linkbtn" href={repBox.ncHref} target="_blank">Open {repBox.ncName}</a>
-                                    <a class="btn sm linkbtn" href={repBox.capaHref} target="_blank">Open {repBox.capaName}</a>
+                                    <a class="cq-btn-outline linkbtn" href={repBox.ncHref} target="_blank">Open {repBox.ncName}</a>
+                                    <a class="cq-btn-outline linkbtn" href={repBox.capaHref} target="_blank">Open {repBox.capaName}</a>
                                     <button class="smalllink" onclick={handleNotSame} disabled={repBusy}>Not the Same Problem</button>
                                 </div>
                             </div>
@@ -53,7 +53,7 @@
                             <div class="repoff">
                                 <span class="muted">Marked Not the Same Problem:</span>
                                 <template for:each={repDismissed} for:item="d">
-                                    <span key={d.key} class="repoffitem">{d.name} <button class="btn sm" data-id={d.id} onclick={handleRepRestore} disabled={repBusy}>Restore</button></span>
+                                    <span key={d.key} class="repoffitem">{d.name} <button class="cq-btn-outline" data-id={d.id} onclick={handleRepRestore} disabled={repBusy}>Restore</button></span>
                                 </template>
                             </div>
                         </template>
@@ -61,10 +61,10 @@
                     <template if:true={is0}>
                         <h3 class="q">Containment</h3>
                         <div class="cgrid">
-                            <div class="lab">Possible Actions</div>
+                            <div class="cq-card-title">Possible Actions</div>
                             <div class="chead">
                                 <template if:false={showAdd}>
-                                    <button class="btn addbtn" onclick={handleShowAdd}>Add Containment</button>
+                                    <button class="cq-btn-outline addbtn" onclick={handleShowAdd}>Add Containment</button>
                                 </template>
                             </div>
                             <div class="col">
@@ -83,14 +83,14 @@
                                     </table>
                                 </div>
                                 <template if:true={hasActs}>
-                                    <label class="fl">Due Date for the Ticked Actions *
-                                        <input class="ta date" type="date" data-f="due" value={due} onchange={handleInput} />
+                                    <label class="cq-field"><span class="cq-label">Due Date for the Ticked Actions<span class="cq-req">*</span></span>
+                                        <input class="date" type="date" data-f="due" value={due} onchange={handleInput} />
                                     </label>
                                     <p class="note">On Complete Triage, each ticked action is created as a CQ containment on this NC, assigned to you.</p>
                                 </template>
                                 <template if:true={noAction}>
-                                    <label class="fl">Why is No Action Needed? *
-                                        <textarea class="ta" rows="2" data-f="noActionWhy" value={noActionWhy} oninput={handleInput}></textarea>
+                                    <label class="cq-field"><span class="cq-label">Why is No Action Needed?<span class="cq-req">*</span></span>
+                                        <textarea rows="2" data-f="noActionWhy" value={noActionWhy} oninput={handleInput}></textarea>
                                     </label>
                                 </template>
                             </div>
@@ -100,30 +100,30 @@
                                 </template>
                                 <template if:true={showAdd}>
                                     <div class="addform">
-                                        <div class="lab">New Containment</div>
-                                        <label class="fl">Title *
-                                            <input class="ta sm" type="text" data-f="cTitle" value={cTitle} oninput={handleInput} />
+                                        <div class="cq-card-title">New Containment</div>
+                                        <label class="cq-field"><span class="cq-label">Title<span class="cq-req">*</span></span>
+                                            <input type="text" data-f="cTitle" value={cTitle} oninput={handleInput} />
                                         </label>
-                                        <label class="fl">Description
-                                            <textarea class="ta sm" rows="1" data-f="cDesc" value={cDesc} oninput={handleInput}></textarea>
+                                        <label class="cq-field"><span class="cq-label">Description</span>
+                                            <textarea rows="1" data-f="cDesc" value={cDesc} oninput={handleInput}></textarea>
                                         </label>
                                         <div class="pair">
-                                            <label class="fl">Due Date *
-                                                <input class="ta sm" type="date" data-f="cDue" value={cDue} onchange={handleInput} />
+                                            <label class="cq-field"><span class="cq-label">Due Date<span class="cq-req">*</span></span>
+                                                <input type="date" data-f="cDue" value={cDue} onchange={handleInput} />
                                             </label>
-                                            <div class="fl">
+                                            <div class="cq-field">
                                                 <lightning-record-picker label="Assignee" object-api-name="User" value={cAssignee} onchange={handleAssignee}></lightning-record-picker>
                                             </div>
                                         </div>
-                                        <template if:true={addError}><div class="errbox">{addError}</div></template>
+                                        <template if:true={addError}><div class="cq-msg crit errbox">{addError}</div></template>
                                         <div class="opts">
-                                            <button class="btn sm primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
-                                            <button class="btn sm" onclick={handleCancelAdd}>Cancel</button>
+                                            <button class="cq-btn-primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
+                                            <button class="cq-btn-outline" onclick={handleCancelAdd}>Cancel</button>
                                         </div>
                                     </div>
                                 </template>
                                 <div class="factcard">
-                                    <div class="fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={suggestedAct}></c-cq-ai-why> <strong>{suggestedAct}</strong></div>
+                                    <div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={suggestedAct}></c-cq-ai-why> <strong>{suggestedAct}</strong></div>
                                     <details class="know">
                                         <summary>What We Know</summary>
                                         <ul class="flist">
@@ -154,17 +154,17 @@
                         </div>
                         <div class="opts">
                             <template for:each={dataOpts} for:item="o">
-                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleData}>{o.label}</button>
+                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleData} aria-pressed={o.pressed}>{o.label}</button>
                             </template>
                         </div>
                         <template if:true={dataAsk}>
-                            <div class="lab top8">What Do You Need? *</div>
-                            <div class="chips">
+                            <div class="cq-card-title top8">What Do You Need? *</div>
+                            <div class="cq-chips">
                                 <template for:each={askChips} for:item="c">
                                     <button key={c.label} class={c.cls} data-id={c.label} onclick={handleAsk} aria-pressed={c.pressed}>{c.label}</button>
                                 </template>
                             </div>
-                            <textarea class="ta" rows="2" placeholder="Anything else" data-f="askNote" value={askNote} oninput={handleInput}></textarea>
+                            <div class="cq-field asknote"><textarea rows="2" placeholder="Anything else" data-f="askNote" value={askNote} oninput={handleInput}></textarea></div>
                             <p class="note">The request is recorded on the nonconformance. Sending it to the reporter is not built yet.</p>
                         </template>
                     </template>
@@ -207,8 +207,8 @@
                                     </div>
                                 </div>
                                 <div class="rside">
-                                    <div class="sugbox">
-                                        <div class="rec"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" lead="Why does CQ.AI suggest risk " subject={suggestedRisk}></c-cq-ai-why></div>
+                                    <div class="cq-ai-card">
+                                        <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" lead="Why does CQ.AI suggest risk " subject={suggestedRisk}></c-cq-ai-why></div>
                                         <div class="sughead"><span class={sugCls}>{suggestedRisk}</span><span class="rk">Score {suggestedScore} of 25</span></div>
                                         <div class="why">
                                             <div class="whyk">Severity: {sevHead}</div>
@@ -223,7 +223,7 @@
                                         <template if:true={escaped}><div class="why bad">{escapedWhy}. Risk is High whatever cell is chosen.</div></template>
                                     </div>
                                     <div class="yours">
-                                        <div class="lab">Selected</div>
+                                        <div class="cq-card-title">Selected</div>
                                         <div class="sughead"><span class={riskCls}>{risk}</span><span class="rk">Score {score} of 25</span></div>
                                         <div class="whyv">{sevLabel} severity &times; {likLabel} likelihood</div>
                                     </div>
@@ -241,32 +241,32 @@
                         <template if:true={nextReady}>
                         <div class="cgrid">
                             <div class="col">
-                                <div class="lab">Disposition</div>
-                                <div class="fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Does this nonconformance need a disposition?"></c-cq-ai-why> <strong>{dispSugText}.</strong> {nx.dispWhy}</div>
+                                <div class="cq-card-title">Disposition</div>
+                                <div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Does this nonconformance need a disposition?"></c-cq-ai-why> <strong>{dispSugText}.</strong> {nx.dispWhy}</div>
                                 <div class="opts">
                                     <template for:each={dispOpts} for:item="o">
                                         <button key={o.id} class={o.cls} data-id={o.id} onclick={handleDisp} aria-pressed={o.pressed}>{o.label}</button>
                                     </template>
                                 </div>
                                 <template if:true={dispReq}>
-                                    <label class="fl">Disposition Due *
-                                        <input class="ta date" type="date" data-f="dispDue" value={dispDue} onchange={handleInput} />
+                                    <label class="cq-field"><span class="cq-label">Disposition Due<span class="cq-req">*</span></span>
+                                        <input class="date" type="date" data-f="dispDue" value={dispDue} onchange={handleInput} />
                                     </label>
                                     <div class="opts"><button class={dispApprCls} onclick={handleDispAppr} aria-pressed={dispApprPressed}>Needs Approval</button></div>
                                     <p class="note">Decided in the Disposition workspace after triage.</p>
                                 </template>
                             </div>
                             <div class="col">
-                                <div class="lab">Investigation</div>
-                                <div class="fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this nonconformance be investigated or logged only?"></c-cq-ai-why> <strong>{invSugText}.</strong> {nx.invWhy}</div>
+                                <div class="cq-card-title">Investigation</div>
+                                <div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this nonconformance be investigated or logged only?"></c-cq-ai-why> <strong>{invSugText}.</strong> {nx.invWhy}</div>
                                 <div class="opts">
                                     <template for:each={invOpts} for:item="o">
                                         <button key={o.id} class={o.cls} data-id={o.id} onclick={handleInv} aria-pressed={o.pressed}>{o.label}</button>
                                     </template>
                                 </div>
                                 <template if:true={invReq}>
-                                    <label class="fl">Investigation Due *
-                                        <input class="ta date" type="date" data-f="invDue" value={invDue} onchange={handleInput} />
+                                    <label class="cq-field"><span class="cq-label">Investigation Due<span class="cq-req">*</span></span>
+                                        <input class="date" type="date" data-f="invDue" value={invDue} onchange={handleInput} />
                                     </label>
                                     <div class="opts"><button class={invApprCls} onclick={handleInvAppr} aria-pressed={invApprPressed}>Needs Approval</button></div>
                                 </template>
@@ -274,8 +274,8 @@
                         </div>
                         <template if:true={rep}>
                             <div class="recur top8">
-                                <div class="lab">CAPA</div>
-                                <div class="fsug nomt"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this repeat problem be escalated to a CAPA?"></c-cq-ai-why> <strong>Escalate to CAPA.</strong> {capaWhy}</div>
+                                <div class="cq-card-title">CAPA</div>
+                                <div class="cq-ai-card fsug nomt"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this repeat problem be escalated to a CAPA?"></c-cq-ai-why> <strong>Escalate to CAPA.</strong> {capaWhy}</div>
                                 <div class="opts">
                                     <template for:each={capaOpts} for:item="o">
                                         <button key={o.id} class={o.cls} data-id={o.id} onclick={handleCapa} aria-pressed={o.pressed}>{o.label}</button>
@@ -283,15 +283,15 @@
                                 </div>
                                 <p class="note lh"><strong>Escalate to CAPA:</strong> sets CQ&rsquo;s Initiate CAPA on this NC and records {rep.ncName} as what it repeats. A closed CAPA is not reopened. <strong>Link to {capaLinkName}:</strong> sets it as this NC&rsquo;s Related CAPA, with no new CAPA.</p>
                                 <template if:true={capaNeedsReason}>
-                                    <label class="fl">Why Not Escalated *
-                                        <input class="ta" type="text" data-f="capaReason" value={capaReason} oninput={handleInput} placeholder="For example, the cause is different: a new adhesive lot, not the fixture" />
+                                    <label class="cq-field"><span class="cq-label">Why Not Escalated<span class="cq-req">*</span></span>
+                                        <input type="text" data-f="capaReason" value={capaReason} oninput={handleInput} placeholder="For example, the cause is different: a new adhesive lot, not the fixture" />
                                     </label>
                                 </template>
                             </div>
                         </template>
                         <template if:true={needMatrix}>
-                            <label class="fl">Approval Matrix *
-                                <select class="sel" onchange={handleMatrix}>
+                            <label class="cq-field"><span class="cq-label">Approval Matrix<span class="cq-req">*</span></span>
+                                <select onchange={handleMatrix}>
                                     <template for:each={matrixOpts} for:item="m"><option key={m.value} value={m.value} selected={m.selected}>{m.label}</option></template>
                                 </select>
                             </label>
@@ -299,11 +299,11 @@
                             <p class="note">Approvers come from the matrix. CQ asks them when the disposition or investigation is submitted.</p>
                         </template>
                         <template if:true={invReq}>
-                            <div class="lab top8">Investigations to Link for Research</div>
+                            <div class="cq-card-title top8">Investigations to Link for Research</div>
                             <div class="ownbox"><strong>{ownLine}</strong> Linked investigations are for research only and do not replace it. Linking is optional.</div>
                                 <template if:false={linksReady}><p class="p">Looking for related investigations&hellip;</p></template>
                                 <template if:true={linksReady}>
-                                    <div class="lab">Related Investigations</div>
+                                    <div class="cq-card-title">Related Investigations</div>
                                     <template if:true={noLinks}><p class="note">No other investigations were found on this part.</p></template>
                                     <template if:true={hasSug}>
                                         <div class="tblwrap">
@@ -372,7 +372,7 @@
                                         <lightning-record-picker label="Add Another Investigation" placeholder="Search by investigation number"
                                             object-api-name="compliancequest__SQX_Investigation__c" onchange={handlePick}></lightning-record-picker>
                                     </div>
-                                    <template if:true={linkError}><div class="errbox">{linkError}</div></template>
+                                    <template if:true={linkError}><div class="cq-msg crit errbox">{linkError}</div></template>
                                     <p class="note">Ticked investigations are linked to this NC when you click Complete Triage.</p>
                                 </template>
                         </template>
@@ -384,19 +384,19 @@
                         <template for:each={summary} for:item="r">
                             <div key={r.key} class="row slim"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
                         </template>
-                        <template if:true={warning}><div class="warnbox">{warning}</div></template>
-                        <template if:true={popup}><div class="opts"><button class="btn primary" onclick={handleClose}>Back to the Nonconformance</button></div></template>
-                        <template if:true={inline}><div class="opts"><button class="btn primary" onclick={handleFinish}>Done</button></div></template>
+                        <template if:true={warning}><div class="cq-msg warn">{warning}</div></template>
+                        <template if:true={popup}><div class="opts"><button class="cq-btn-primary" onclick={handleClose}>Back to the Nonconformance</button></div></template>
+                        <template if:true={inline}><div class="opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div></template>
                     </template>
-                    <template if:true={error}><div class="errbox">{error}</div></template>
+                    <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
                 </div>
             </div>
             <template if:true={footNav}>
                 <footer class="foot">
                     <span class="grow"></span>
                     <span class="blocker">{blocker}</span>
-                    <button class="btn" onclick={handleBack} disabled={cantBack}>Back</button>
-                    <button class="btn primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+                    <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
+                    <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
                 </footer>
             </template>
         </div>

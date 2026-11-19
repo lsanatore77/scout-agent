@@ -197,7 +197,7 @@ export default class CqTriageAssistant extends LightningElement {
         const r = this.rep;
         if (!r) { return []; }
         return [[ESCALATE, ESCALATE], [LINK, 'Link to ' + r.capaName], [NOT_NEEDED, NOT_NEEDED]].map(([id, label]) => ({ id, label,
-            pressed: this.capa === id ? 'true' : 'false', cls: 'opt wide' + (this.capa === id ? ' on' : id === ESCALATE ? ' sug' : '') }));
+            pressed: this.capa === id ? 'true' : 'false', cls: 'cq-chip wide' + (id === ESCALATE ? ' ai' : '') }));
     }
     handleCapa(event) { this.capa = event.currentTarget.dataset.id; this.persist(); }
     get capaWhy() { return this.nx && this.nx.capaWhy ? this.nx.capaWhy : ''; }
@@ -391,10 +391,10 @@ export default class CqTriageAssistant extends LightningElement {
     get dataComplete() { return this.dataRows.every((r) => r.ok); }
     get dataOpts() {
         return [['ok', 'Good Enough, Send On', this.dataComplete], ['ask', 'Request More Information', false]]
-            .map(([id, label, cq]) => ({ id, label, cls: 'opt' + (this.data === id ? ' on' : cq ? ' sug' : '') }));
+            .map(([id, label, cq]) => ({ id, label, pressed: this.data === id ? 'true' : 'false', cls: 'cq-chip' + (cq ? ' ai' : '') }));
     }
     get dataAsk() { return this.data === 'ask'; }
-    get askChips() { return ASKS.map((l) => ({ label: l, pressed: this.asks[l] ? 'true' : 'false', cls: 'chip' + (this.asks[l] ? ' on' : '') })); }
+    get askChips() { return ASKS.map((l) => ({ label: l, pressed: this.asks[l] ? 'true' : 'false', cls: 'cq-chip' })); }
     get askList() { return ASKS.filter((l) => this.asks[l]); }
     handleData(event) { this.data = event.currentTarget.dataset.id; }
     handleAsk(event) { const l = event.currentTarget.dataset.id; this.asks = { ...this.asks, [l]: !this.asks[l] }; }
@@ -529,12 +529,12 @@ export default class CqTriageAssistant extends LightningElement {
     get invOpts() { return this.choiceOpts([['inv', 'Investigate'], ['log', 'Log Only']], this.inv, this.nx && this.nx.invSuggest); }
     choiceOpts(defs, chosen, sug) {
         return defs.map(([id, label]) => ({ id, label, pressed: chosen === id ? 'true' : 'false',
-            cls: 'opt wide' + (chosen === id ? ' on' : id === sug ? ' sug' : '') }));
+            cls: 'cq-chip wide' + (id === sug ? ' ai' : '') }));
     }
     get dispSugText() { return this.nx ? (this.nx.dispSuggest === 'req' ? 'Required' : 'Not Required') : ''; }
     get invSugText() { return this.nx ? (this.nx.invSuggest === 'inv' ? 'Investigate' : 'Log Only') : ''; }
-    get dispApprCls() { return 'opt' + (this.dispAppr ? ' on' : ''); }
-    get invApprCls() { return 'opt' + (this.invAppr ? ' on' : ''); }
+    get dispApprCls() { return 'cq-chip'; }
+    get invApprCls() { return 'cq-chip'; }
     get dispApprPressed() { return this.dispAppr ? 'true' : 'false'; }
     get invApprPressed() { return this.invAppr ? 'true' : 'false'; }
     get needMatrix() { return (this.dispReq && this.dispAppr) || (this.invReq && this.invAppr); }
