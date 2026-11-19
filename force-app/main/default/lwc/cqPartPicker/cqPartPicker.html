@@ -1,30 +1,30 @@
 <template>
-    <div class="wrap">
+    <div class="cq-pick wrap">
         <template if:true={picked}>
-            <div class="picked">
-                <span class="plabel">{pickedLabel}</span>
-                <button class="x" onclick={handleClear} aria-label="Clear the part" title="Clear">&times;</button>
+            <div class="cq-pick-picked">
+                <span class="cq-pick-label">{pickedLabel}</span>
+                <button class="cq-pick-x" onclick={handleClear} aria-label="Clear the part" title="Clear">&times;</button>
             </div>
         </template>
         <template if:false={picked}>
-            <div class="box">
-                <input class="in" type="text" placeholder={placeholder} value={term} onfocus={handleFocus} oninput={handleInput}
+            <div class="cq-pick-box">
+                <input class="cq-pick-in" type="text" placeholder={placeholder} value={term} onfocus={handleFocus} oninput={handleInput}
                     onkeydown={handleKey} onblur={handleBlur} role="combobox" aria-expanded={open} aria-autocomplete="list">
-                <lightning-icon icon-name="utility:search" size="x-small" class="sicon" alternative-text=""></lightning-icon>
+                <lightning-icon icon-name="utility:search" size="x-small" class="cq-pick-icon" alternative-text=""></lightning-icon>
             </div>
         </template>
         <template if:true={showList}>
             <div class={listCls} style={listStyle} role="listbox" onmousedown={handleDown}>
-                <div class="lhead">{heading}</div>
+                <div class="cq-pick-head">{heading}</div>
                 <template if:true={hasItems}>
                     <template for:each={rows} for:item="p">
-                        <div key={p.id} class="row" role="option" data-id={p.id} onclick={handlePick}>
-                            <span class="pn">{p.label}</span>
-                            <span class="pname">{p.sub}</span>
+                        <div key={p.id} class="cq-pick-row" role="option" data-id={p.id} onclick={handlePick}>
+                            <span class="cq-pick-n">{p.label}</span>
+                            <span class="cq-pick-sub">{p.sub}</span>
                         </div>
                     </template>
                 </template>
-                <template if:false={hasItems}><div class="empty">{emptyText}</div></template>
+                <template if:false={hasItems}><div class="cq-pick-empty">{emptyText}</div></template>
             </div>
         </template>
     </div>

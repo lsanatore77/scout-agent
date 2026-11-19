@@ -8,7 +8,7 @@
             <input class="idbox" type="text" placeholder="Complaint Id" onchange={handleIdChange} onkeyup={handleIdChange} />
         </template>
         <template if:true={error}>
-            <div class="error">{error}</div>
+            <div class="cq-panel-error">{error}</div>
         </template>
         <template if:true={hasRows}>
             <div class="top">
@@ -41,9 +41,9 @@
                         </div>
                     </template>
                     <template if:true={g.pager}>
-                        <div class="pager">
+                        <div class="cq-panel-pager">
                             <span class="cq-muted">{g.pager.range}</span>
-                            <span class="pages">
+                            <span class="cq-panel-pages">
                                 <template if:true={g.pager.hasPrev}>
                                     <button class="cq-link" type="button" data-tier={g.key} data-page="prev" onclick={handlePage}>Previous</button>
                                 </template>

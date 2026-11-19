@@ -11,12 +11,12 @@
         </template>
 
         <template if:true={hasError}>
-            <p class="error">{error}</p>
+            <p class="cq-panel-error">{error}</p>
         </template>
 
         <template if:false={hasAny}>
             <template if:false={loading}>
-                <p class="empty">{emptyMessage}</p>
+                <p class="cq-panel-empty">{emptyMessage}</p>
             </template>
         </template>
 
@@ -57,9 +57,9 @@
                                 </tbody>
                             </table>
                             <template if:true={tier.pager}>
-                                <div class="pager">
+                                <div class="cq-panel-pager">
                                     <span class="cq-muted">{tier.pager.range}</span>
-                                    <span class="pages">
+                                    <span class="cq-panel-pages">
                                         <template if:true={tier.pager.hasPrev}>
                                             <button class="cq-link" type="button" data-tier={tier.key} data-page="prev" onclick={handlePage}>Previous</button>
                                         </template>
@@ -75,14 +75,14 @@
                             </template>
                         </template>
                         <template if:false={tier.hasRows}>
-                            <p class="empty">{tier.empty}</p>
+                            <p class="cq-panel-empty">{tier.empty}</p>
                         </template>
                     </div>
                 </lightning-card>
             </template>
             <template if:true={hasNotAdded}>
                 <div class="notadded">
-                    <p class="empty">{notAddedNote}</p>
+                    <p class="cq-panel-empty">{notAddedNote}</p>
                     <lightning-input type="toggle" label="Show not added" checked={showNotAdded}
                         message-toggle-active="" message-toggle-inactive="" onchange={handleShowNotAdded}></lightning-input>
                 </div>
