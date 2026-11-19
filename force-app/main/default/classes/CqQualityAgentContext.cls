@@ -67,7 +67,7 @@ global with sharing class CqQualityAgentContext {
                    compliancequest__Containment_Required__c, compliancequest__Investigation_Required__c, compliancequest__Disposition_Required__c,
                    compliancequest__Record_Stage__c, compliancequest__Due_Date_Disposition__c, compliancequest__Disposition_Approval__c,
                    compliancequest__Due_Date_Investigation__c, compliancequest__Investigation_Approval__c, compliancequest__SQX_Approval_Matrix__r.Name
-            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         CqTriageController.Glance g = CqTriageController.getGlance(recordId);
         CqTriageRisk.Risk rr = CqTriageRisk.getRisk(recordId);
         CqTriageLinks.Links lk = CqTriageLinks.getLinks(recordId);
@@ -120,7 +120,7 @@ global with sharing class CqQualityAgentContext {
             l.add('Chosen at triage: ' + s(chose.get('Containment')) + '.');
             List<String> fromTriage = new List<String>();
             for (compliancequest__SQX_Containment__c c : [SELECT Name, compliancequest__Status__c, compliancequest__Description__c FROM compliancequest__SQX_Containment__c
-                                                         WHERE compliancequest__SQX_Nonconformance__c = :recordId ORDER BY Name LIMIT 50]) {
+                                                         WHERE compliancequest__SQX_Nonconformance__c = :recordId WITH USER_MODE ORDER BY Name LIMIT 50]) {
                 if (c.compliancequest__Description__c != null && c.compliancequest__Description__c.startsWith('Raised at triage')) { fromTriage.add(c.Name + ' (' + c.compliancequest__Status__c + ')'); }
             }
             if (!fromTriage.isEmpty()) { l.add('Containment records raised by that triage: ' + String.join(fromTriage, ', ') + '.'); }
@@ -292,33 +292,45 @@ global with sharing class CqQualityAgentContext {
                 SELECT Id, Name, compliancequest__NC_Title__c, compliancequest__Status__c, compliancequest__Lot_Number__c, CreatedDate
                 FROM compliancequest__SQX_Nonconformance__c
                 WHERE compliancequest__SQX_Part__c = :g.partId AND Id != :recordId AND CreatedDate >= :since
-                ORDER BY CreatedDate DESC LIMIT 200]) {
+                WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 200]) {
             ncs.add(new Row(o.Id, o.Name, o.compliancequest__NC_Title__c, o.compliancequest__Status__c, o.compliancequest__Lot_Number__c, o.CreatedDate, g.lot, 'compliancequest__SQX_Nonconformance__c'));
         }
         section(l, 'Other NCs on the part in the last ' + CqTriageController.REPEAT_DAYS + ' days', ncs, g.lot);
 
         List<Row> comps = new List<Row>();
-        for (compliancequest__SQX_Complaint__c c : [
-                SELECT Id, Name, compliancequest__Complaint_Title__c, compliancequest__Status__c, compliancequest__Lot_Number__c, CreatedDate
-                FROM compliancequest__SQX_Complaint__c WHERE compliancequest__SQX_Part__c = :g.partId ORDER BY CreatedDate DESC LIMIT 200]) {
-            comps.add(new Row(c.Id, c.Name, c.compliancequest__Complaint_Title__c, c.compliancequest__Status__c, c.compliancequest__Lot_Number__c, c.CreatedDate, g.lot, 'compliancequest__SQX_Complaint__c'));
+        try {
+            for (compliancequest__SQX_Complaint__c c : [
+                    SELECT Id, Name, compliancequest__Complaint_Title__c, compliancequest__Status__c, compliancequest__Lot_Number__c, CreatedDate
+                    FROM compliancequest__SQX_Complaint__c WHERE compliancequest__SQX_Part__c = :g.partId WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 200]) {
+                comps.add(new Row(c.Id, c.Name, c.compliancequest__Complaint_Title__c, c.compliancequest__Status__c, c.compliancequest__Lot_Number__c, c.CreatedDate, g.lot, 'compliancequest__SQX_Complaint__c'));
+            }
+            section(l, 'Complaints on the part', comps, g.lot);
+        } catch (QueryException e) {
+            l.add('Complaints on the part: not available with your access.');
         }
-        section(l, 'Complaints on the part', comps, g.lot);
 
         List<Row> capas = new List<Row>();
-        for (compliancequest__SQX_CAPA__c c : [
-                SELECT Id, Name, compliancequest__Title__c, compliancequest__Status__c, CreatedDate
-                FROM compliancequest__SQX_CAPA__c WHERE compliancequest__SQX_Part__c = :g.partId ORDER BY CreatedDate DESC LIMIT 200]) {
-            capas.add(new Row(c.Id, c.Name, c.compliancequest__Title__c, c.compliancequest__Status__c, null, c.CreatedDate, null, 'compliancequest__SQX_CAPA__c'));
+        try {
+            for (compliancequest__SQX_CAPA__c c : [
+                    SELECT Id, Name, compliancequest__Title__c, compliancequest__Status__c, CreatedDate
+                    FROM compliancequest__SQX_CAPA__c WHERE compliancequest__SQX_Part__c = :g.partId WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 200]) {
+                capas.add(new Row(c.Id, c.Name, c.compliancequest__Title__c, c.compliancequest__Status__c, null, c.CreatedDate, null, 'compliancequest__SQX_CAPA__c'));
+            }
+            section(l, 'CAPAs on the part', capas, null);
+        } catch (QueryException e) {
+            l.add('CAPAs on the part: not available with your access.');
         }
-        section(l, 'CAPAs on the part', capas, null);
 
         List<Row> fas = new List<Row>();
-        for (Field_Action__c f : [
-                SELECT Id, Name, Title__c, Status__c, CreatedDate FROM Field_Action__c WHERE Part__c = :g.partId ORDER BY CreatedDate DESC LIMIT 200]) {
-            fas.add(new Row(f.Id, f.Name, f.Title__c, f.Status__c, null, f.CreatedDate, null, 'Field_Action__c'));
+        try {
+            for (Field_Action__c f : [
+                    SELECT Id, Name, Title__c, Status__c, CreatedDate FROM Field_Action__c WHERE Part__c = :g.partId WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 200]) {
+                fas.add(new Row(f.Id, f.Name, f.Title__c, f.Status__c, null, f.CreatedDate, null, 'Field_Action__c'));
+            }
+            section(l, 'Field actions on the part', fas, null);
+        } catch (QueryException e) {
+            l.add('Field actions on the part: not available with your access.');
         }
-        section(l, 'Field actions on the part', fas, null);
     }
 
     /** One relevant record; sorts same lot first, then open, then newest. */

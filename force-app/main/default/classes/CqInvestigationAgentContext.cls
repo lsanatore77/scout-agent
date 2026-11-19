@@ -190,7 +190,7 @@ public with sharing class CqInvestigationAgentContext {
         try {
             CqTriageRepeat.Repeat r = CqTriageRepeat.getRepeat(ncId);
             compliancequest__SQX_Nonconformance__c nc = [SELECT Repeat_Of__c, Repeat_Of__r.Name, Repeat_Decision__c, Repeat_Decision_Reason__c
-                FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId];
+                FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId WITH USER_MODE];
             if (r == null || r.found != true) {
                 l.add('No earlier NC on the part had the same problem after a CAPA closed.');
             } else {
