@@ -228,3 +228,17 @@
 .cq-field.w-num input, .cq-field.w-num select { max-width: 6rem; }
 .cq-field.w-date input { max-width: 11rem; }
 .cq-field.w-code input { max-width: 18rem; }
+
+/* ---------- CARD HEADING ----------
+   The heading inside a card or above a block of content: bold, Title Case, body size, dark ink.
+   Same look as .cq-ai-sub ("Reported Answers"); never small, grey or uppercase. */
+.cq-card-title { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
+
+/* ---------- TONED ROWS ----------
+   A list of rows that each carry a status (signals, findings). A 3px bar down the left edge shows
+   the status; the bar is unbroken from row to row. Set data-tone to crit, warn, or a signal
+   strength (Escalate, Assess, Watch). No tone = neutral grey. Green is never used here. */
+.cq-tonerow { padding: 9px 0 9px 14px; border-left: 3px solid var(--cq-line-field); }
+.cq-card-title + .cq-tonerow { margin-top: 8px; }
+.cq-tonerow[data-tone="crit"], .cq-tonerow[data-tone="Escalate"] { border-left-color: var(--cq-crit-solid); }
+.cq-tonerow[data-tone="warn"], .cq-tonerow[data-tone="Assess"], .cq-tonerow[data-tone="Watch"] { border-left-color: var(--cq-warn-solid); }
