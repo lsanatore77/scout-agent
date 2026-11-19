@@ -1,12 +1,15 @@
 @import 'c/cqStyles';
 
 :host { display: inline-flex; flex: none; vertical-align: baseline; }
-.b { margin: 0; padding: 0; border: 0; background: none; font: inherit; color: var(--cq-ai-ink, var(--cq-accent)); font-weight: 600; line-height: inherit; cursor: pointer; text-align: left; }
+.b { margin: 0; font-family: inherit; cursor: pointer; text-align: left; }
+/* tag, label and star are plain purple text */
+.b:not(.cq-pill) { padding: 0; border: 0; background: none; font: inherit; color: var(--cq-ai-ink, var(--cq-accent)); font-weight: 600; line-height: inherit; }
 .t { padding-left: 0.25em; }
 .b:hover .t { text-decoration: underline; }
 .b:focus-visible { outline: 2px solid var(--cq-accent); outline-offset: 2px; border-radius: 3px; }
-.pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); font-size: 11px; white-space: nowrap; }
-.pill:focus-visible { border-radius: 999px; }
+/* the pill takes its look from the shared CQ.AI pill (.cq-pill.ai in cqStyles); that class spaces the star and the words */
+.cq-pill .t { padding-left: 0; }
+.cq-pill:focus-visible { border-radius: 999px; }
 .tag { font-size: 12px; white-space: nowrap; }
 .label { margin-right: 6px; }
 /* the star in a fixed space, so a line under a label can start exactly where the words do */

@@ -16,7 +16,8 @@ export default class CqAiWhy extends LightningElement {
     @api tail = '?';
     @api tip = 'Ask CQ.AI why';
 
-    get cls() { return 'b ' + (this.variant || 'pill'); }
+    // the pill is the shared CQ.AI pill (.cq-pill.ai in cqStyles); the other variants are plain purple text
+    get cls() { const v = this.variant || 'pill'; return 'b ' + v + (v === 'pill' ? ' cq-pill ai' : ''); }
     get hasText() { return this.variant !== 'star' && !!this.text; }
     get ask() { return this.question || (this.lead || '') + (this.subject || 'this') + (this.tail || ''); }
 
