@@ -17,9 +17,9 @@ Audit page: https://claude.ai/artifact/3FHHFJVoKeUeVJ8pUwQg6A (19 Nov 2026)
 
 ## Pass 1, step rail
 - cqStyles STEP RAIL section: deployed.
-- Deployed and matched: cqDispositionWorkspace (with item 6), askCqWorkspace, cqFieldActionManager.
-- In repo, NOT yet deployed (html + css each): cqFieldActionWorkspace, cqInvestigationWorkspace, cqTriageAssistant.
-  Until then those three keep their old rail in the org and look as before.
+- Deployed and matched (19 Nov): all six workspaces (Disposition with item 6, PHR, Field Action, Field Action Review, Investigation, Triage).
+- Triage also carries item 4: four Next Steps cards sit two by two (.cards:has).
+- Still to look at on screen: PHR, Field Action, Field Action Review, Investigation, Triage.
 
 ## Passes to come
 2 workspace frame (incl. item 2) · 3 table and pager (item 3) · 4 popup, cards (item 4), notes, links, rows · 5 stray colours

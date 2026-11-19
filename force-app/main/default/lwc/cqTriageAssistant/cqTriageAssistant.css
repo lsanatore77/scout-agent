@@ -139,6 +139,8 @@
 .box.inline .foot { border-top: none; padding: 0 20px 20px 264px; background: none; }
 /* Next Steps: one card per decision in a single row, all built the same: name and state, the suggestion, the choices */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; align-items: stretch; margin-bottom: 8px; }
+/* four cards (the review card plus three decisions) sit two by two, so each stays wide enough for its choices side by side */
+.cards:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .kard { display: flex; flex-direction: column; gap: 8px; min-width: 0; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .kard.warnk { border-color: var(--cq-warn-line); background: var(--cq-warn-bg); }
 .dname { font-size: 14px; font-weight: 700; }
