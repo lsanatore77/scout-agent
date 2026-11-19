@@ -56,7 +56,7 @@
                     <template if:true={col.title}><th>Title</th></template>
                     <template if:true={col.rootCause}><th>Root Cause</th></template>
                     <template if:true={col.match}><th>Matched On</th></template>
-                    <th class="c-why">&#10022; CQ.AI Suggested</th>
+                    <th class="c-why">Recommendation</th>
                     <th class="c-add">Add to PHR</th>
                 </tr>
             </thead>
@@ -75,7 +75,7 @@
                         <template if:true={col.match}><td class="muted">{r.match}</td></template>
                         <td class="c-why">
                             <template if:true={r.suggested}>
-                                <c-cq-ai-why variant="pill" text="CQ.AI Suggested" question={r.why}></c-cq-ai-why>
+                                <c-cq-ai-why variant="pill" question={r.why}></c-cq-ai-why>
                             </template>
                         </td>
                         <td>

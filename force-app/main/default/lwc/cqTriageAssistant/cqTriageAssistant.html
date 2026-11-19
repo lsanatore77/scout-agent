@@ -70,7 +70,7 @@
                             <div class="col">
                                 <div class="tblwrap" style="margin-top: 0">
                                     <table class="tbl">
-                                        <thead><tr><th class="center">Select</th><th>Action</th><th></th></tr></thead>
+                                        <thead><tr><th class="center">Select</th><th>Action</th><th>Recommendation</th></tr></thead>
                                         <tbody>
                                             <template for:each={actions} for:item="a">
                                                 <tr key={a.id}>
@@ -331,7 +331,7 @@
                                     <template if:true={hasSug}>
                                         <div class="tblwrap">
                                             <table class="tbl">
-                                                <thead><tr><th class="center">Link</th><th>Investigation</th><th>From NC</th><th>Status</th><th>Match</th><th></th></tr></thead>
+                                                <thead><tr><th class="center">Link</th><th>Investigation</th><th>From NC</th><th>Status</th><th>Match</th><th>Recommendation</th></tr></thead>
                                                 <tbody>
                                                     <template for:each={sugPg.shown} for:item="v">
                                                         <tr key={v.id}>
@@ -363,7 +363,7 @@
                                             <summary>{otherLabel}</summary>
                                             <div class="tblwrap">
                                                 <table class="tbl">
-                                                    <thead><tr><th class="center">Link</th><th>Investigation</th><th>From NC</th><th>Status</th><th>Match</th><th></th></tr></thead>
+                                                    <thead><tr><th class="center">Link</th><th>Investigation</th><th>From NC</th><th>Status</th><th>Match</th><th>Recommendation</th></tr></thead>
                                                     <tbody>
                                                         <template for:each={otherPg.shown} for:item="v">
                                                             <tr key={v.id}>

@@ -95,6 +95,13 @@
 .cq-pill.soft.pos  { background: var(--cq-pos-bg);  color: var(--cq-pos-fg); }
 .cq-pill.soft.neu  { background: var(--cq-neu-bg);  color: var(--cq-neu-fg); }
 .cq-pill.soft.info { background: var(--cq-info-bg); color: var(--cq-info-fg); }
+/* CQ.AI pill: marks an item CQ.AI suggests (a table row, an option). Soft purple, purple edge and text, always with the \2726 mark and the words
+   "CQ.AI Suggests". Clickable (it opens Ask CQ.AI with the reason), so it is a button. In a table it sits in a column headed "Recommendation".
+   c-cq-ai-why variant="pill" draws exactly this. */
+.cq-pill.ai { padding: 2px 8px; border: 1px solid var(--cq-accent-line); background: var(--cq-accent-soft); color: var(--cq-accent); font-weight: 600; line-height: inherit; }
+button.cq-pill.ai { font-family: inherit; cursor: pointer; }
+button.cq-pill.ai:hover { text-decoration: underline; }
+button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-offset: 2px; }
 
 /* =============================== CHIPS ================================== */
 /* 3px of bottom padding on chips and buttons lifts the text to optical center in Salesforce Sans, which sits low */

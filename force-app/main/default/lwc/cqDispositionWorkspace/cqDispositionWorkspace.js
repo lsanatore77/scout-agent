@@ -289,7 +289,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
         if (sug && total > 0) {
             const said = types.length === 1 && types[0] === sug ? ' · As Decided'
                 : chosen.length ? ' · You Chose ' + (chosen.length > 1 ? chosen.slice(0, -1).join(', ') + ' and ' + chosen[chosen.length - 1] : chosen[0]) : '';
-            rows.push({ key: 'sug', k: 'CQ.AI Suggested', v: sug + ' ' + this.fmt(total) + said });
+            rows.push({ key: 'sug', k: 'CQ.AI Suggests', v: sug + ' ' + this.fmt(total) + said });
         }
         if (this.v.investigationId) {
             rows.push({ key: 'next', k: 'Next', v: 'Investigation ' + this.v.investigationName + ' carries on; the NC closes after it.' });
