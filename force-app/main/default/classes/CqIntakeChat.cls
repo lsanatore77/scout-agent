@@ -40,6 +40,8 @@ public with sharing class CqIntakeChat {
         @AuraEnabled public Boolean ready = false;
         @AuraEnabled public String draftJson;
         @AuraEnabled public String reporter;
+        @AuraEnabled public String exJson;      // what the AI read from the description; the device sends it back so an unchanged description is not read again
+        @AuraEnabled public List<Id> clipQuestionIds = new List<Id>();   // the active questions, so the device can load their clips ahead of time
     }
 
     @AuraEnabled
@@ -76,7 +78,12 @@ public with sharing class CqIntakeChat {
             }
         }
 
-        CqEventExtract.Result ex = CqEventExtract.fromDescription(description);
+        // The AI read is the slow part of a turn. A tapped answer does not change the description, so the
+        // device hands back the last read and it is reused; any new words mean a fresh read.
+        CqEventExtract.Result ex = reuse(str(state.get('exJson')), str(state.get('exFor')), description);
+        if (ex == null) { ex = CqEventExtract.fromDescription(description); }
+        t.exJson = JSON.serialize(ex);
+        Boolean noAudio = state.get('noAudio') == true;   // the device loads clips itself, through clip()
 
         // Pull the core fields out of the extraction, then resolve lot + part canonically.
         String lotRaw = null, defect = null, units = null;
@@ -136,6 +143,7 @@ public with sharing class CqIntakeChat {
         ];
         Id injuryQId, whereQId;
         for (Event_Question__c q : active) {
+            if (noAudio) { t.clipQuestionIds.add(q.Id); }
             if (q.Role__c == 'Injury') { injuryQId = q.Id; }
             if (q.Role__c == 'Where Found') { whereQId = q.Id; }
         }
@@ -179,7 +187,7 @@ public with sharing class CqIntakeChat {
             t.askQuestion = nextGap.Question__c;
             t.askSuggested = nextGuess;
             t.askFeedsDescription = (nextGap.Role__c == 'Lot Or Part');
-            t.askAudio = clipFor(nextGap);   // the clip the device reads aloud for this prompt
+            t.askAudio = noAudio ? null : clipFor(nextGap);   // the clip the device reads aloud for this prompt
             t.choices = choicesFor(nextGap);
             String tail = String.isNotBlank(nextGuess)
                 ? ' (From what you said I’d put ' + nextGuess + ' — tap to confirm or change.)'
@@ -193,6 +201,27 @@ public with sharing class CqIntakeChat {
         t.reply = (rb == null ? 'Got it.' : rb) + ' That’s everything I need — want me to send this to a reviewer?';
         t.draftJson = draft(description, ex, answered, lotDisplay, partId);
         return t;
+    }
+
+    // The last AI read, when it was made for exactly this description. Anything else returns null.
+    static CqEventExtract.Result reuse(String exJson, String exFor, String description) {
+        if (String.isBlank(exJson) || exFor == null || exFor != description) { return null; }
+        try {
+            CqEventExtract.Result r = (CqEventExtract.Result) JSON.deserialize(exJson, CqEventExtract.Result.class);
+            return (r == null || r.suggestions == null) ? null : r;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    // One question's read-aloud clip. Cacheable, so the device keeps it and each question plays without a fetch.
+    @AuraEnabled(cacheable=true)
+    public static String clip(Id questionId) {
+        List<Event_Question__c> q = [
+            SELECT Id, Audio_Wav_Base64__c FROM Event_Question__c
+            WHERE Id = :questionId AND Active__c = true WITH USER_MODE LIMIT 1
+        ];
+        return q.isEmpty() ? null : clipFor(q[0]);
     }
 
     static String readback(String partLabel, Boolean partCertain, String lotDisplay, String defect, String units) {

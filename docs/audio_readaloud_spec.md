@@ -67,3 +67,10 @@ looks for a .wav file attached to the Event_Question__c record first (latest ver
 Audio_Wav_Base64__c. Target format for the professional clips: 44.1 kHz, 16-bit PCM, mono. The LWC is unchanged; it reads the
 sample rate from the WAV header. Reporters need read access to the question record for the attached file to reach them.
 Tests: CqIntakeChatClipTest (3 pass).
+
+## Faster turns (19 Nov 2026)
+- The AI read (CqEventExtract) ran on every turn. respond now returns it as exJson; the device sends it back with exFor (the
+  description it was made for) and it is reused when the description is unchanged, so a tapped answer makes no AI call.
+- Clips are no longer sent with each question. The device sends noAudio, gets the list of active question ids, and loads each
+  clip through the cacheable CqIntakeChat.clip in the background; a question whose clip is not loaded yet fetches just that one.
+- Because clip is cacheable, a replaced clip can take a while to reach a device that already loaded the old one.

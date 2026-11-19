@@ -1,6 +1,7 @@
 import { LightningElement, track } from 'lwc';
 import respond from '@salesforce/apex/CqIntakeChat.respond';
 import submitReport from '@salesforce/apex/CqEventIntake.submitReport';
+import fetchClip from '@salesforce/apex/CqIntakeChat.clip';
 
 /**
  * Intake in two stages:
@@ -43,6 +44,10 @@ export default class CqIntakeConversation extends LightningElement {
     readAloud = true;      // the reporter wants prompts read aloud
     audioCtx;              // one Web Audio context, unlocked on the first user gesture
     clipSrc;               // the clip currently playing, so a new prompt can stop the old one
+    clips = {};            // read-aloud clips by question id, loaded ahead so each question speaks at once ('' = none)
+    clipsQueued = false;   // the background load has been started
+    exJson = null;         // the last AI read of the description, handed back so a tapped answer skips a re-read
+    exFor = null;          // the exact description that read was made for
 
     // Reach the speech engine however the sandbox exposes it.
     getSynth() {
@@ -145,9 +150,13 @@ export default class CqIntakeConversation extends LightningElement {
         this.busy = true;
         this.choices = [];
         this.lotGate = null;
-        const state = JSON.stringify({ description: this.description, answers: this.answers });
+        const sentDescription = this.description;
+        const payload = { description: sentDescription, answers: this.answers, noAudio: true };
+        if (this.exJson && this.exFor === sentDescription) { payload.exJson = this.exJson; payload.exFor = this.exFor; }
+        const state = JSON.stringify(payload);
         respond({ stateJson: state })
             .then((t) => {
+                if (t.exJson) { this.exJson = t.exJson; this.exFor = sentDescription; }
                 this.understood = (t.understood || []).map((f, i) => ({ ...f, k: 'u' + i }));
                 this.stillNeeded = (t.stillNeeded || []).map((s, i) => ({ k: 's' + i, text: s }));
                 this.choices = (t.choices || []).map((c, i) => ({ k: 'c' + i, value: c }));
@@ -160,9 +169,9 @@ export default class CqIntakeConversation extends LightningElement {
                 this.ready = t.ready === true;
                 this.draftJson = t.draftJson || null;
                 this.pushAi(t.reply);
-                this.playClip(t.askAudio);
-                if (!t.askAudio) { this.speak(t.reply); }
+                if (t.askQuestionId) { this.sayQuestion(t.askQuestionId, t.reply); } else { this.speak(t.reply); }
                 this.busy = false;
+                this.preloadClips(t.clipQuestionIds);
             })
             .catch((e) => { this.pushAi(this.msg(e)); this.busy = false; });
     }
@@ -224,6 +233,37 @@ export default class CqIntakeConversation extends LightningElement {
             }
             if (this.audioCtx && this.audioCtx.state === 'suspended' && this.audioCtx.resume) { this.audioCtx.resume(); }
         } catch (e) { /* ignore */ }
+    }
+
+    // Speak the asked question: from memory when its clip is already loaded, otherwise fetch that one clip now.
+    sayQuestion(qid, reply) {
+        if (!this.readAloud) { return; }
+        const have = this.clips[qid];
+        if (have) { this.playClip(have); return; }
+        if (have === '') { this.speak(reply); return; }
+        fetchClip({ questionId: qid })
+            .then((b64) => {
+                this.clips[qid] = b64 || '';
+                if (this.pendingQuestionId !== qid) { return; }   // the chat has moved on
+                if (b64) { this.playClip(b64); } else { this.speak(reply); }
+            })
+            .catch(() => { /* silent: the question is on screen */ });
+    }
+
+    // Load the other questions' clips one at a time in the background, while the reporter reads and answers.
+    preloadClips(ids) {
+        if (this.clipsQueued || !ids || !ids.length) { return; }
+        this.clipsQueued = true;
+        const todo = ids.filter((id) => this.clips[id] === undefined);
+        const next = () => {
+            const id = todo.shift();
+            if (!id) { return; }
+            if (this.clips[id] !== undefined) { next(); return; }
+            fetchClip({ questionId: id })
+                .then((b64) => { if (this.clips[id] === undefined) { this.clips[id] = b64 || ''; } next(); })
+                .catch(() => { next(); });
+        };
+        next();
     }
 
     playClip(b64) {
