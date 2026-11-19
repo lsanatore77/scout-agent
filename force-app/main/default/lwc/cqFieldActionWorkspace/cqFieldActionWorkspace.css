@@ -1,10 +1,8 @@
 @import 'c/cqStyles';
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
-.restart { margin: 4px 8px 0; padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .resumed { margin: -6px 0 12px; font-size: 13px; color: var(--cq-muted); }
 .lab { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
-.top14 { margin-top: 14px; }
 .problem { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; height: 268px; box-sizing: border-box; padding: 14px; border-radius: 10px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); }
 .photo { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 130px; box-sizing: border-box; padding: 8px; border-radius: 8px; background: var(--cq-bg); border: 1px dashed var(--cq-line-field); overflow: hidden; }
 .photo.has { position: relative; min-height: 160px; padding: 0; border: none; background: #2b3138; }
@@ -17,29 +15,19 @@
 .quote { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 7; overflow: hidden; font-size: 15px; line-height: 1.45; white-space: pre-line; }
 .decided { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 12px; border-radius: 8px; background: var(--cq-pos-bg); color: var(--cq-pos-fg); font-weight: 600; }
 .decided .cq-link { margin-left: auto; }
-.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-.cols.wide { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
-.col.lead { gap: 14px; }
-.col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .ktable { margin-top: 6px; }
-.krow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); }
-.krow:last-child { border-bottom: none; padding-bottom: 0; }
 .kq { font-size: 14px; }
 .ka { flex: none; max-width: 50%; font-size: 14px; text-align: right; }
 .card { padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .card.sug { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
-.para { margin-top: 6px; font-size: 14px; line-height: 1.45; white-space: pre-line; }
 .rec { color: var(--cq-accent); font-weight: 600; }
 .sughead { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
-.big { font-size: 20px; font-weight: 700; }
 .score { font-size: 68px; font-weight: 700; line-height: 1; }
-.rk { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .lvl { font-weight: 700; font-size: 16px; }
 .lvl.low { color: var(--cq-pos-fg); }
 .lvl.medium { color: var(--cq-warn-fg); }
 .lvl.high { color: var(--cq-crit-fg); }
 .ftable { margin-top: 10px; border-top: 1px solid var(--cq-accent-line); }
-.fn { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
 .fname { font-size: 13px; font-weight: 700; }
 .list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .act { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; box-sizing: border-box; padding: 8px 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); font: inherit; color: var(--cq-ink); text-align: left; cursor: pointer; }
@@ -51,7 +39,7 @@
 .rt { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
 .rv { font-size: 14px; font-weight: 700; }
 .pill { flex: none; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); color: var(--cq-accent); font-size: 11px; font-weight: 600; white-space: nowrap; }
-.know { margin-top: 12px; }
+.cq-know { margin-top: 12px; }
 .sig { margin-top: 8px; border: 1px solid var(--cq-line); border-radius: 10px; background: var(--cq-bg); }
 .sig > summary { display: flex; align-items: center; gap: 10px; padding: 10px 14px; cursor: pointer; list-style: none; }
 .chev { display: inline-block; flex: none; width: 12px; font-size: 18px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
@@ -67,8 +55,6 @@
 .crow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--cq-line); }
 .cq-msg.back { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; }
 .backtext { white-space: pre-line; }
-.know summary { color: var(--cq-link); font-size: 13px; font-weight: 600; cursor: pointer; }
-.opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .cq { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--cq-line); }
 .cqt { flex: 1; min-width: 0; }
 .question { font-size: 14px; font-weight: 400; line-height: 32px; color: var(--cq-ink); }
@@ -76,7 +62,7 @@
 .paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .newfa { margin-top: 8px; padding: 2px 14px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-surface); }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-@media (max-width: 760px) { .cols, .cols.wide, .paths, .pair, .problem { grid-template-columns: 1fr; } .problem { height: auto; } .cq { flex-direction: column; } }
+@media (max-width: 760px) { .paths, .pair, .problem { grid-template-columns: 1fr; } .problem { height: auto; } .cq { flex-direction: column; } }
 .sigcols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
 .sigl { min-width: 0; }
 .sigl > .sig:first-child { margin-top: 0; }
@@ -124,7 +110,6 @@
 /* shared fields and messages keep this screen's vertical rhythm */
 .cq-field { margin-top: 14px; }
 .riskcard .cq-field { margin-top: 0; }
-.cq-msg.errbox { margin-top: 12px; }
 /* Recommendation: the outcome cards and what sits under them keep to two thirds of the page, so nothing is stretched across it */
 .main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: 66.667%; box-sizing: border-box; }
 @media (max-width: 1100px) { .main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: 100%; } }

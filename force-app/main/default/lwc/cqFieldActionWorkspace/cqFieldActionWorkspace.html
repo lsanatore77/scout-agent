@@ -41,8 +41,8 @@
                         </button>
                     </template>
                     <div class="progress">{progress}</div>
-                    <template if:true={canRestart}><button class="restart" onclick={handleRestart}>Start Over</button></template>
-                    <template if:true={canReopen}><button class="restart" onclick={handleReopen}>Reopen Review</button></template>
+                    <template if:true={canRestart}><button class="cq-restart" onclick={handleRestart}>Start Over</button></template>
+                    <template if:true={canReopen}><button class="cq-restart" onclick={handleReopen}>Reopen Review</button></template>
                 </nav>
                 <div class="cq-ws-main main">
                     <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
@@ -56,8 +56,8 @@
                                 <template if:true={hasFa}><button class="cq-link" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
                             </div>
                         </template>
-                        <div class="cols wide">
-                            <div class="col lead">
+                        <div class="cq-cols top wide32">
+                            <div class="cq-col lead">
                                 <div class="problem">
                                     <div class={photoCls}>
                                         <template if:true={photoUrl}><img src={photoUrl} alt="Photo of the problem" /></template>
@@ -84,8 +84,8 @@
                                     <div class="cq-ai-text">{v.suggestedWhy}</div>
                                     <template if:true={showReason}>
                                         <div class="ftable">
-                                            <div class="lab top14">{reasonLabel}</div>
-                                            <div class="para">{v.reason}</div>
+                                            <div class="lab cq-mt14">{reasonLabel}</div>
+                                            <div class="cq-para">{v.reason}</div>
                                         </div>
                                     </template>
                                 </div>
@@ -94,8 +94,8 @@
                                 <div class="lab">What We Know</div>
                                 <div class="ktable">
                                     <template for:each={v.know} for:item="k">
-                                        <div key={k.q} class="krow">
-                                            <span class="fn"><span class="kq">{k.q}</span><span class="rk">{k.src}</span></span>
+                                        <div key={k.q} class="cq-krow">
+                                            <span class="cq-stack"><span class="kq">{k.q}</span><span class="cq-sub">{k.src}</span></span>
                                             <template if:true={k.unknown}><span class="ka unk">Not known</span></template>
                                             <template if:false={k.unknown}><span class="ka">{k.a}</span></template>
                                         </div>
@@ -119,15 +119,15 @@
                                             <template if:true={r.isSig}>
                                                 <tr key={r.key} class={r.rowCls} data-id={r.id} onclick={handleSigToggle} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
                                                     <td class="chcol"><button class="chevbtn" aria-expanded={r.expanded} aria-label={r.rule}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></td>
-                                                    <td class="sigcell"><div class="sghead"><span class="cq-strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="rk">{r.sub}</div></td>
-                                                    <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="rk">{r.why}</div></template></td>
+                                                    <td class="sigcell"><div class="sghead"><span class="cq-strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="cq-sub">{r.sub}</div></td>
+                                                    <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="cq-sub">{r.why}</div></template></td>
                                                     <td class="num">{r.n}</td>
                                                 </tr>
                                             </template>
                                             <template if:true={r.isRec}>
                                                 <tr key={r.key} class="evrow">
                                                     <td></td>
-                                                    <td colspan="2"><div><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="rk">{r.meta}</div></td>
+                                                    <td colspan="2"><div><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="cq-sub">{r.meta}</div></td>
                                                     <td class="num"><template if:true={r.sameLot}><span class="cq-pill soft neu">This Lot</span></template></td>
                                                 </tr>
                                             </template>
@@ -145,16 +145,16 @@
                         <template if:false={hasSignals}>
                             <p class="cq-note">No signals at Assess or above on this part or lot.</p>
                             <template if:true={hasRecs}>
-                                <div class="lab top14">Relevant Records on This Part</div>
+                                <div class="lab cq-mt14">Relevant Records on This Part</div>
                                 <template for:each={recs} for:item="r">
                                     <div key={r.id} class="evt">
-                                        <span class="rt"><span><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="rk">{r.meta}</span></span>
+                                        <span class="rt"><span><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="cq-sub">{r.meta}</span></span>
                                     </div>
                                 </template>
                             </template>
                         </template>
                         <template if:true={hasMore}>
-                            <details class="know">
+                            <details class="cq-know">
                                 <summary>{moreLabel}</summary>
                                 <div class="cq-tblwrap">
                                     <table class="cq-tbl stbl">
@@ -164,15 +164,15 @@
                                                 <template if:true={r.isSig}>
                                                     <tr key={r.key} class={r.rowCls} data-id={r.id} onclick={handleSigToggle} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
                                                         <td class="chcol"><button class="chevbtn" aria-expanded={r.expanded} aria-label={r.rule}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></td>
-                                                        <td class="sigcell"><div class="sghead"><span class="cq-strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="rk">{r.sub}</div></td>
-                                                        <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="rk">{r.why}</div></template></td>
+                                                        <td class="sigcell"><div class="sghead"><span class="cq-strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="cq-sub">{r.sub}</div></td>
+                                                        <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="cq-sub">{r.why}</div></template></td>
                                                         <td class="num">{r.n}</td>
                                                     </tr>
                                                 </template>
                                                 <template if:true={r.isRec}>
                                                     <tr key={r.key} class="evrow">
                                                         <td></td>
-                                                        <td colspan="2"><div><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="rk">{r.meta}</div></td>
+                                                        <td colspan="2"><div><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="cq-sub">{r.meta}</div></td>
                                                         <td class="num"><template if:true={r.sameLot}><span class="cq-pill soft neu">This Lot</span></template></td>
                                                     </tr>
                                                 </template>
@@ -192,20 +192,20 @@
                         <div class="sigr">
                             <template if:true={hasBars}>
                                 <div class="card chart">
-                                    <div class="chead"><span class="lab">Against Normal</span><span class="rk">How many times its normal level each signal is now</span></div>
+                                    <div class="chead"><span class="lab">Against Normal</span><span class="cq-sub">How many times its normal level each signal is now</span></div>
                                     <template for:each={normalBars} for:item="b">
                                         <div key={b.id} class={b.rowCls} data-id={b.id} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
-                                            <span class="nl"><span class="nt">{b.rule}</span><span class="rk">{b.where}</span></span>
+                                            <span class="nl"><span class="nt">{b.rule}</span><span class="cq-sub">{b.where}</span></span>
                                             <span class="ntrack"><template if:true={b.has}><span class="nbar" style={b.barStyle}></span></template></span>
                                             <span class="nx" style={b.timesStyle}>{b.times}</span>
                                         </div>
                                     </template>
-                                    <span class="rk">The grey line is normal, from the last 12 months. Bars use a log scale so 2&times; and 67&times; both fit.</span>
+                                    <span class="cq-sub">The grey line is normal, from the last 12 months. Bars use a log scale so 2&times; and 67&times; both fit.</span>
                                 </div>
                             </template>
                             <template if:true={hasTrend}>
                                 <div class="card chart">
-                                    <div class="chead"><span class="lab">Records on This Part by Month</span><span class="rk">{trendChart.range}</span></div>
+                                    <div class="chead"><span class="lab">Records on This Part by Month</span><span class="cq-sub">{trendChart.range}</span></div>
                                     <svg class="trend" viewBox="0 0 600 210" role="img" aria-label={trendChart.label}>
                                         <template for:each={trendChart.ticks} for:item="t">
                                             <g key={t.key}>
@@ -230,7 +230,7 @@
                                         <template for:each={trendChart.lines} for:item="l">
                                             <span key={l.key} class="lg"><span class="sw" style={l.swatch}></span>{l.name}</span>
                                         </template>
-                                        <span class="rk">Nonconformances on lots of this part only.</span>
+                                        <span class="cq-sub">Nonconformances on lots of this part only.</span>
                                     </div>
                                 </div>
                             </template>
@@ -258,7 +258,7 @@
                             </div>
                             <div class="card sug riskcard">
                                 <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="How was the risk score worked out?"></c-cq-ai-why></div>
-                                <div class="sughead"><span class="score">{v.score}</span><span class="rk">out of 100</span><span class={bandCls}>{v.band}</span></div>
+                                <div class="sughead"><span class="score">{v.score}</span><span class="cq-sub">out of 100</span><span class={bandCls}>{v.band}</span></div>
                                 <div>
                                     <div class="cq-ai-sub">Score Factors <span class="cq-hint">&mdash; purple = what raised the score</span></div>
                                     <div class="cq-qa">
@@ -296,12 +296,12 @@
                             </template>
                         </div>
                         <template if:true={needed}>
-                            <div class="lab top14">Which Field Action?</div>
+                            <div class="lab cq-mt14">Which Field Action?</div>
                             <div class="list">
                                 <template for:each={faOpts} for:item="f">
                                     <button key={f.id} class={f.cls} data-id={f.id} onclick={handleFa}>
                                         <span class="tick round">{f.tick}</span>
-                                        <span class="rt"><span class="rv">{f.label}</span><span class="rk">{f.why}</span></span>
+                                        <span class="rt"><span class="rv">{f.label}</span><span class="cq-sub">{f.why}</span></span>
                                         <template if:true={f.cq}><c-cq-ai-why variant="pill" subject={f.label}></c-cq-ai-why></template>
                                     </button>
                                 </template>
@@ -325,7 +325,7 @@
                                             </select>
                                         </label>
                                     </div>
-                                    <div class="lab top14">Scope *</div>
+                                    <div class="lab cq-mt14">Scope *</div>
                                     <div class="cq-chips">
                                         <template for:each={scopeOpts} for:item="o">
                                             <button key={o.id} class={o.cls} data-id={o.id} onclick={handleScope} aria-pressed={o.pressed}><template if:true={o.cq}><c-cq-ai-why variant="star" subject={o.id} tail=" scope?"></c-cq-ai-why>&nbsp;</template>{o.id}</button>
@@ -347,7 +347,7 @@
                         <h3 class="cq-step-title">Committee Approval</h3>
                         <template if:true={live}>
                             <p class="cq-step-intro">Build the committee by functional role, then submit your recommendation for approval.</p>
-                            <div class="cols">
+                            <div class="cq-cols top">
                                 <div class="card">
                                     <div class="lab">Committee</div>
                                     <template if:true={normal}>
@@ -357,7 +357,7 @@
                                                     <option value="">Choose</option>
                                                     <template for:each={s.opts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
                                                 </select>
-                                                <template if:true={s.none}><span class="rk">No one holds this function yet.</span></template>
+                                                <template if:true={s.none}><span class="cq-sub">No one holds this function yet.</span></template>
                                             </label>
                                         </template>
                                     </template>
@@ -373,30 +373,30 @@
                                         </label>
                                     </template>
                                 </div>
-                                <div class="col">
+                                <div class="cq-col">
                                     <label class="chk"><input type="checkbox" checked={emergency} onchange={handleEmergency} />Escalate to Emergency Approval</label>
                                     <p class="cq-note">For emergencies only. One emergency approver signs off, so the decision does not wait for every function.</p>
                                     <div class="card sug">
                                         <div class="lab">Your Recommendation</div>
-                                        <div class="sughead"><span class="big">{outcomeNow}</span></div>
-                                        <div class="para">{rationale}</div>
+                                        <div class="sughead"><span class="cq-big">{outcomeNow}</span></div>
+                                        <div class="cq-para">{rationale}</div>
                                     </div>
                                 </div>
                             </div>
                         </template>
                         <template if:true={waiting}>
-                            <div class="cols">
+                            <div class="cq-cols top">
                                 <div class="card">
                                     <div class="lab">Recommendation</div>
                                     <template for:each={recRows} for:item="r">
-                                        <div key={r.key} class="rr"><div class="rk">{r.k}</div><div class="rv2">{r.v}</div></div>
+                                        <div key={r.key} class="rr"><div class="cq-sub">{r.k}</div><div class="rv2">{r.v}</div></div>
                                     </template>
                                 </div>
                                 <div class="card">
                                     <div class="lab">{committeeTitle}</div>
                                     <template for:each={csteps} for:item="s">
                                         <div key={s.id} class="crow">
-                                            <span class="fn"><span class="fname">{s.seat}</span><span class="rk">{s.line}</span><template if:true={s.quote}><span class="rk">{s.quote}</span></template></span>
+                                            <span class="cq-stack"><span class="fname">{s.seat}</span><span class="cq-sub">{s.line}</span><template if:true={s.quote}><span class="cq-sub">{s.quote}</span></template></span>
                                             <span class={s.cls}>{s.label}</span>
                                             <template if:true={s.canAct}>
                                                 <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
@@ -420,7 +420,7 @@
                         <template for:each={summaryRows} for:item="r">
                             <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
                         </template>
-                        <div class="opts">
+                        <div class="cq-opts">
                             <button class="cq-btn-primary" onclick={handleFinish}>Done</button>
                             <template if:true={hasFa}><button class="cq-btn-outline" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
                         </div>
