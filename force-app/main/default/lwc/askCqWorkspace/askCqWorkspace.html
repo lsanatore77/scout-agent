@@ -29,8 +29,8 @@
         </template>
 
         <div class="body">
-            <nav class="steps">
-                <div class="steps-title">Review Steps</div>
+            <nav class="cq-rail">
+                <div class="cq-rail-title"><span class="star">&#10022;</span> CQ.AI Review Steps</div>
                 <template for:each={steps} for:item="s">
                     <button key={s.key} class={s.cls} data-key={s.key} onclick={handleStep}>
                         <span class="mark">
@@ -39,7 +39,7 @@
                         </span>
                         <span class="txt">
                             <span class="lbl">{s.label}</span>
-                            <span class="sub">{s.sub}</span>
+                            <span class="ssub">{s.sub}</span>
                         </span>
                     </button>
                 </template>

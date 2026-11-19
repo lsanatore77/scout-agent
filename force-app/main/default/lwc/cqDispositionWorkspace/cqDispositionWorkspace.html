@@ -31,8 +31,8 @@
             </header>
 
             <div class="body">
-                <nav class="steps" aria-label="Disposition Steps">
-                    <div class="steps-title"><span class="star">&#10022;</span> CQ.AI Disposition Steps</div>
+                <nav class="cq-rail" aria-label="Disposition Steps">
+                    <div class="cq-rail-title"><span class="star">&#10022;</span> CQ.AI Disposition Steps</div>
                     <template for:each={steps} for:item="s">
                         <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep}>
                             <span class="mark">
@@ -128,7 +128,7 @@
                                 <div class="lothead">
                                     <span class="lotname">Lot {l.lot}</span>
                                     <span class="muted grow">{l.partName}</span>
-                                    <span class={l.countCls}>{l.countText}</span>
+                                    <template if:true={l.doneText}><span class="count green">{l.doneText}</span></template>
                                 </div>
                                 <template if:true={l.open}>
                                     <div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why> <strong>{l.suggestText}.</strong></div>
@@ -143,7 +143,7 @@
                                             </div>
                                             <div class="fields">
                                                 <label class="cq-field"><span class="cq-label">Quantity<span class="cq-req">*</span></span>
-                                                    <input class="qty" type="number" min="1" step="1" value={r.qty} data-lot={l.idx} data-row={r.idx} data-f="qty" onchange={handleField}>
+                                                    <input class="qty" type="number" min="1" step="1" value={r.qty} data-lot={l.idx} data-row={r.idx} data-f="qty" onchange={handleField} oninput={handleField}>
                                                 </label>
                                                 <label class="cq-field"><span class="cq-label">Completed On<span class="cq-req">*</span></span>
                                                     <input class="date" type="date" value={r.completedOn} data-lot={l.idx} data-row={r.idx} data-f="completedOn" onchange={handleField}>
@@ -165,6 +165,7 @@
                                         <button class="cq-btn-outline" data-lot={l.idx} onclick={handleSplit}>+ Split Quantity</button>
                                         <span class="note">For example, rework some units and scrap the rest.</span>
                                     </div>
+                                    <template if:true={l.qtyMsg}><p class="qtymsg" role="alert">{l.qtyMsg}</p></template>
                                     <template if:true={l.draftName}><p class="note">The draft {l.draftName} from triage is used for the first row, not duplicated.</p></template>
                                 </template>
                             </section>

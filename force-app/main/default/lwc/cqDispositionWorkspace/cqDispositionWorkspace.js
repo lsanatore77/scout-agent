@@ -166,8 +166,12 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
             return {
                 impactedId: l.impactedId, lot: l.lot, partName: l.partName, idx: fi, open: !!f, draftName: l.draftName,
                 suggestText: this.v.suggestType + ' ' + this.fmt(l.left),
-                countText: !f ? 'All ' + this.fmt(l.impacted) + ' Disposed' : this.fmt(planned) + ' of ' + this.fmt(l.left) + ' Left Planned',
-                countCls: 'count' + (!f ? ' green' : over ? ' red' : planned === this.num(l.left) ? ' green' : ' amber'),
+                doneText: !f ? 'All ' + this.fmt(l.impacted) + ' Disposed' : null,
+                // too many is an error; fewer is allowed today and the rest stays on the lot
+                qtyMsg: !f ? null
+                    : over ? 'Your Disposition Quantity is ' + this.fmt(l.left) + (f.rows.length > 1 ? ', please make sure your splits are equal to the Disposition Quantity.' : '.')
+                    : planned > 0 && planned < this.num(l.left) ? 'You\'ve entered ' + this.fmt(planned) + ', there are ' + this.fmt(this.num(l.left) - planned) + ' remaining items left to Disposition.'
+                    : null,
                 rows: f ? f.rows.map((r, ri) => ({
                     ...r, idx: ri, canRemove: f.rows.length > 1, needsWhy: r.type === USE_AS_IS,
                     typeOpts: types.map((t) => ({ label: t, pressed: String(r.type === t),
@@ -236,10 +240,11 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
                 if (r.type === USE_AS_IS && !(r.justification || '').trim()) { return name + 'Use As Is needs a justification'; }
                 total += this.num(r.qty);
             }
-            if (total > this.num(lot.left)) { return name + 'more than the ' + this.fmt(lot.left) + ' left'; }
         }
         return null;
     }
+    /** A lot with more entered than it has left. Its own message says so under the rows, so the footer stays quiet. */
+    get anyOver() { return this.lotForms.some((l) => l.open && l.rows.reduce((a, r) => a + this.num(r.qty), 0) > this.num((this.v.lots.find((x) => x.impactedId === l.impactedId) || {}).left)); }
     get blocker() { return this.showDispose ? this.stepBlocker() : null; }
     get cantComplete() { return this.saving || !!this.stepBlocker(); }
     get completeLabel() { return this.saving ? 'Completing…' : 'Complete Disposition'; }
@@ -257,7 +262,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     handleNext() { if (this.step < STEPS.length - 1) { this.go(this.step + 1); } }
 
     async handleComplete() {
-        if (this.cantComplete) { return; }
+        if (this.cantComplete || this.anyOver) { return; }
         this.saving = true;
         this.error = undefined;
         const rows = [];

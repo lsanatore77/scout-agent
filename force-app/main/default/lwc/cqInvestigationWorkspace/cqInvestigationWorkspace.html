@@ -34,8 +34,8 @@
             </header>
 
             <div class="body">
-                <nav class="steps" aria-label="Investigation Steps">
-                    <div class="steps-title"><span class="star">&#10022;</span> CQ.AI Investigation Steps</div>
+                <nav class="cq-rail" aria-label="Investigation Steps">
+                    <div class="cq-rail-title"><span class="star">&#10022;</span> CQ.AI Investigation Steps</div>
                     <template for:each={steps} for:item="s">
                         <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep}>
                             <span class="mark">

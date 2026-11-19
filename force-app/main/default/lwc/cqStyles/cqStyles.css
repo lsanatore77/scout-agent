@@ -114,7 +114,8 @@ button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-o
 .cq-chip[aria-pressed="true"] { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
 .cq-chip:disabled { cursor: default; }
 /* a chip that is the CQ.AI suggestion wears CQ.AI purple, never the neutral blue: tinted at rest, lavender with a purple edge when chosen */
-.cq-chip.ai { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
+/* suggested, not chosen: outline only, so a filled chip always means chosen */
+.cq-chip.ai { border-color: var(--cq-accent); background: var(--cq-bg); color: var(--cq-accent); }
 .cq-chip.ai[aria-pressed="true"] { border-color: var(--cq-accent); background: var(--cq-accent-fill); color: var(--cq-accent); }
 /* a row of chips; under a field label it gets extra air (chips are tall and rounded) */
 .cq-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
@@ -210,6 +211,26 @@ button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-o
 .cq-optcard.ai { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
 .cq-optcard.ai[aria-pressed="true"] { border: 2px solid var(--cq-accent); background: var(--cq-accent-soft); }
 @media (max-width: 47.5rem) { .cq-optcards { grid-template-columns: 1fr; } }
+
+/* ============================ STEP RAIL ================================
+   The list of steps down the left of every workspace. Put cq-rail on the <nav> and cq-rail-title on its heading;
+   the step button (step, plus active / done from the component), its mark, txt, lbl, ssub and the progress line
+   are styled from here. Title wording: "<star> CQ.AI <Name> Steps". */
+.cq-rail { width: 244px; flex: none; border-right: 1px solid var(--cq-line); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+.cq-rail-title { font-size: 15px; font-weight: 700; padding: 2px 8px 10px; white-space: nowrap; }
+.cq-rail-title .star { color: var(--cq-accent); margin-right: 5px; }
+.cq-rail .step { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; border-radius: 6px; padding: 8px; font: inherit; cursor: pointer; }
+.cq-rail .step:hover, .cq-rail .step.active { background: var(--cq-surface); }
+.cq-rail .step:disabled { cursor: default; }
+.cq-rail .step:disabled:hover { background: transparent; }
+.cq-rail .step.active:disabled:hover { background: var(--cq-surface); }
+.cq-rail .mark { flex: none; width: 14px; height: 14px; border-radius: 7px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-muted); font-size: 8px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 3px; }
+.cq-rail .step.done .mark { background: var(--cq-pos-solid); border-color: var(--cq-pos-fg); color: #fff; font-size: 7px; }
+.cq-rail .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cq-rail .lbl { font-size: 13px; font-weight: 700; color: var(--cq-ink); }
+.cq-rail .ssub { font-size: 11px; color: var(--cq-muted); }
+.cq-rail .progress { margin-top: auto; padding: 10px 8px 2px; font-size: 11px; color: var(--cq-faint); }
+@media (max-width: 760px) { .cq-rail { width: auto; border-right: none; border-bottom: 1px solid var(--cq-line); } }
 
 /* ============================ WORKSPACE HEADER ========================= */
 /* every record workspace opens with this: .cq-box > header.cq-hl > .cq-hl-top (+ optional .cq-hl-fields) */

@@ -6,18 +6,7 @@
 .link:hover { text-decoration: underline; }
 /* steps and main area: the same layout as the triage workspace in the page */
 .body { display: flex; min-height: 460px; }
-.steps { width: 200px; flex: none; border-right: 1px solid var(--cq-line); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
-.steps-title { font-size: 15px; font-weight: 700; padding: 2px 8px 10px; }
 .star { color: var(--cq-accent); margin-right: 5px; }
-.step { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; border-radius: 6px; padding: 8px; font: inherit; cursor: pointer; }
-.step:hover { background: var(--cq-surface); }
-.step.active { background: var(--cq-surface); }
-.mark { flex: none; width: 14px; height: 14px; border-radius: 7px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-muted); font-size: 8px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 3px; }
-.step.done .mark { background: var(--cq-pos-solid); border-color: var(--cq-pos-fg); color: #fff; font-size: 7px; }
-.txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.lbl { font-size: 13px; font-weight: 700; color: var(--cq-ink); }
-.ssub { font-size: 11px; color: var(--cq-muted); }
-.progress { margin-top: auto; padding: 10px 8px 2px; font-size: 11px; color: var(--cq-faint); }
 .main { flex: 1; min-width: 0; padding: 20px; border-radius: 0 0 12px 0; }
 .q { margin: 0 0 14px; font-size: 20px; font-weight: 700; }
 .q.nom { margin: 0; }
@@ -56,6 +45,7 @@
 .lotname { font-size: 15px; font-weight: 700; }
 .grow { flex: 1 1 auto; }
 .count { font-weight: 700; font-variant-numeric: tabular-nums; }
+.qtymsg { margin: 0; color: var(--cq-crit-fg); }
 .drow { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 8px; background: var(--cq-surface); border: 1px solid var(--cq-line); }
 .fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
@@ -74,7 +64,7 @@
 /* footer: blocker, the step's confirm button, Back, Next, at the bottom right of the work area */
 .foot { display: flex; align-items: center; gap: 12px; padding: 0 20px 20px 220px; }
 .blocker { color: var(--cq-warn-fg); font-weight: 600; }
-@media (max-width: 760px) { .body { flex-direction: column; } .steps { width: auto; border-right: none; border-bottom: 1px solid var(--cq-line); } .cols, .cols.wide { grid-template-columns: 1fr; } .foot { padding-left: 20px; flex-wrap: wrap; } .dk { flex-basis: 120px; } }
+@media (max-width: 760px) { .body { flex-direction: column; } .cols, .cols.wide { grid-template-columns: 1fr; } .foot { padding-left: 20px; flex-wrap: wrap; } .dk { flex-basis: 120px; } }
 /* shared pieces keep this screen's spacing */
 .pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .cq-card-title { margin-bottom: 6px; }
