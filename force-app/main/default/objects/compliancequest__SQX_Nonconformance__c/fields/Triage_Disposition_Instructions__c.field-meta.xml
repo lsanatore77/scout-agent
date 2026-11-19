@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Triage_Disposition_Instructions__c</fullName>
+    <label>Triage Disposition Instructions</label>
+    <description>Optional instructions from triage for whoever disposes the affected lots. Entered in Next Steps of CQ.AI Triage.</description>
+    <length>5000</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

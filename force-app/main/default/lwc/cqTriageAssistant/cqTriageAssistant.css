@@ -151,18 +151,29 @@
 /* in the page, Back and Next sit at the bottom right of the work area like the other workspaces */
 .box.inline .foot { border-top: none; padding: 0 20px 20px 220px; background: none; }
 .steps-title .star { margin-right: 5px; }
-.farwrap { margin: 0 0 8px; }
-/* Next Steps: one row per decision, all laid out the same: name and state, the suggestion, the choices */
-.drow { display: grid; grid-template-columns: 170px minmax(0, 1fr) auto; gap: 10px 16px; align-items: center; padding: 12px 14px; margin-bottom: 8px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+/* Next Steps: one card per decision in a single row, all built the same: name and state, the suggestion, the choices */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; align-items: stretch; margin-bottom: 8px; }
+.kard { display: flex; flex-direction: column; gap: 8px; min-width: 0; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.kard.warnk { border-color: var(--cq-warn-line); background: var(--cq-warn-bg); }
 .dname { font-size: 14px; font-weight: 700; }
-.dstate { margin-top: 2px; color: var(--cq-muted); }
-.dsug { min-width: 0; line-height: 1.45; }
-.dchips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
-.dextra { grid-column: 2 / 4; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 16px; padding-top: 10px; border-top: 1px solid var(--cq-line); }
-.dextra .cq-field { margin-top: 0; }
-.dextra .note { margin: 0; align-self: center; }
+.dstate { margin-top: 2px; min-height: 19px; color: var(--cq-muted); }
+.dsug { flex: 1 1 auto; min-width: 0; line-height: 1.45; }
+.dchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.kard .cq-chip.wide { min-width: 0; }
+.kard .cq-field { margin-top: 0; }
 .note.lead { margin: 2px 0 8px; }
-@media (max-width: 760px) { .drow { grid-template-columns: 1fr; } .dchips { justify-content: flex-start; } .dextra { grid-column: 1; } }
+/* the Required / Investigate popup: the same modal as Add a Hypothesis, above the triage popup */
+.modal-back { position: fixed; inset: 0; z-index: 9100; background: rgba(8, 7, 7, .45); display: flex; align-items: flex-start; justify-content: center; padding: 10vh 16px 16px; }
+.modal { width: 100%; max-width: 520px; background: var(--cq-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
+.modal-head { position: relative; padding: 16px 52px; border-bottom: 1px solid var(--cq-hl-line); text-align: center; }
+.modal-title { margin: 0; font-size: 20px; font-weight: 700; }
+.modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
+.modal-x:hover { background: var(--cq-hl-bg); }
+.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.modal-body .cq-field { margin-top: 0; }
+.modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--cq-hl-line); background: var(--cq-hl-bg); }
+.mrow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; }
+.note.mnote { margin: 0; }
 /* the repeat: happened before, and the fix did not hold */
 .recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-warn-line); background: var(--cq-warn-bg); display: flex; flex-direction: column; gap: 8px; }
 .recur .opts { margin-top: 0; }

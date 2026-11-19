@@ -75,6 +75,9 @@ export default class CqTriageAssistant extends LightningElement {
     disp = '';          // 'req' or 'no'
     dispDue;
     dispAppr = false;
+    dispNote = '';       // optional instructions for whoever disposes the lots
+    invNote = '';        // optional note on what the investigation should look into
+    dlg = null;          // the Required / Investigate popup while it is open: { kind, prev, due, appr, note, matrixId }
     inv = '';           // 'inv' or 'log'
     capa = '';          // the repeat: Escalate to CAPA, Link to Earlier CAPA or Not Needed
     capaReason = '';
@@ -90,7 +93,7 @@ export default class CqTriageAssistant extends LightningElement {
             try { const d = await getDraft({ recordId: this.recordId }); draft = d ? JSON.parse(d) : null; } catch (e) { draft = null; }
         }
         if (draft && draft.v === 1) {
-            ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId', 'capa', 'capaReason'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
+            ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'dispNote', 'inv', 'invDue', 'invAppr', 'invNote', 'matrixId', 'capa', 'capaReason'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
             // a draft saved before steps could be opened in any order: every step up to the furthest one was seen
             if (!draft.seen) { const m = {}; for (let i = 0; i <= this.maxStep; i++) { m[i] = true; } this.seen = m; }
             this.resumed = this.maxStep > 0;
@@ -207,6 +210,10 @@ export default class CqTriageAssistant extends LightningElement {
 
     // tells the page which step is open, so Ask CQ.AI can answer for it
     renderedCallback() {
+        if (this.dlgFocus && this.dlg) {
+            const el = this.template.querySelector('.modal input.date');
+            if (el) { el.focus(); this.dlgFocus = false; }
+        }
         const names = this.inline ? ['Triage at a Glance', ...STEPS] : STEPS;
         const now = this.done ? 'Triage complete' : names[this.step] || '';
         if (now !== this._toldStep) {
@@ -241,7 +248,7 @@ export default class CqTriageAssistant extends LightningElement {
     persist() {
         if (!this.inline || this.done) { return; }
         const s = {};
-        ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'inv', 'invDue', 'invAppr', 'matrixId', 'capa', 'capaReason'].forEach((k) => { s[k] = this[k]; });
+        ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'dispNote', 'inv', 'invDue', 'invAppr', 'invNote', 'matrixId', 'capa', 'capaReason'].forEach((k) => { s[k] = this[k]; });
         saveDraft({ recordId: this.recordId, draft: JSON.stringify({ v: 1, ...s }) }).catch(() => {});
     }
     handleRestart() {
@@ -251,7 +258,7 @@ export default class CqTriageAssistant extends LightningElement {
         this.data = ''; this.asks = {}; this.askNote = '';
         if (this.rk) { this.sev = this.rk.severity; this.lik = this.rk.likelihood; }
         this.picks = {}; this.extra = []; this.summary = []; this.sugPage = 0; this.otherPage = 0;
-        this.disp = ''; this.dispAppr = false; this.inv = ''; this.invAppr = false; this.capa = ''; this.capaReason = '';
+        this.disp = ''; this.dispAppr = false; this.dispNote = ''; this.inv = ''; this.invAppr = false; this.invNote = ''; this.dlg = null; this.capa = ''; this.capaReason = '';
         if (this.nx) { this.dispDue = this.nx.dispDue; this.invDue = this.nx.invDue; this.matrixId = this.nx.defaultMatrixId; }
         this.preselect();
         if (this.inline) { saveDraft({ recordId: this.recordId, draft: null }).catch(() => {}); }
@@ -555,11 +562,68 @@ export default class CqTriageAssistant extends LightningElement {
         return [this.disp ? (this.dispReq ? 'Disposition' : 'No disposition') : '', this.inv ? (this.invReq ? 'Investigate' : 'Log Only') : '']
             .filter(Boolean).join(' · ');
     }
-    handleDisp(event) { this.disp = event.currentTarget.dataset.id; }
-    handleInv(event) { this.inv = event.currentTarget.dataset.id; }
-    handleDispAppr() { this.dispAppr = !this.dispAppr; }
-    handleInvAppr() { this.invAppr = !this.invAppr; }
-    handleMatrix(event) { this.matrixId = event.target.value || undefined; }
+    // Required and Investigate open a popup for the due date, approval and an optional note; the other choice is one click
+    handleDisp(event) { const id = event.currentTarget.dataset.id; if (id === 'req') { this.openDlg('disp'); } else { this.disp = id; } }
+    handleInv(event) { const id = event.currentTarget.dataset.id; if (id === 'inv') { this.openDlg('inv'); } else { this.inv = id; } }
+    handleDlgEdit(event) { this.openDlg(event.currentTarget.dataset.kind); }
+    /** The chip shows as chosen while its popup is open; Cancel puts it back to what it was. */
+    openDlg(kind) {
+        this.dlg = { kind, prev: this[kind], due: this[kind + 'Due'], appr: this[kind + 'Appr'], note: this[kind + 'Note'] || '', matrixId: this.matrixId };
+        this[kind] = kind === 'disp' ? 'req' : 'inv';
+        this.dlgFocus = true;
+    }
+    handleDlgCancel() { if (this.dlg) { this[this.dlg.kind] = this.dlg.prev; this.dlg = null; } }
+    handleDlgKey(event) { if (event.key === 'Escape') { this.handleDlgCancel(); } }
+    handleDlgInput(event) { this.dlg = { ...this.dlg, [event.target.dataset.f]: event.target.value }; }
+    handleDlgAppr() { this.dlg = { ...this.dlg, appr: !this.dlg.appr }; }
+    handleDlgMatrix(event) { this.dlg = { ...this.dlg, matrixId: event.target.value || undefined }; }
+    handleDlgSave() {
+        const d = this.dlg;
+        if (!d || this.dlgCantSave) { return; }
+        this[d.kind + 'Due'] = d.due; this[d.kind + 'Appr'] = d.appr; this[d.kind + 'Note'] = (d.note || '').trim();
+        if (d.appr) { this.matrixId = d.matrixId; }
+        this.dlg = null;
+        this.persist();
+    }
+    get dlgIsDisp() { return !!this.dlg && this.dlg.kind === 'disp'; }
+    get dlgTitle() { return this.dlgIsDisp ? 'Disposition Required' : 'Investigate'; }
+    get dlgDueLabel() { return this.dlgIsDisp ? 'Disposition Due' : 'Investigation Due'; }
+    get dlgNoteLabel() { return this.dlgIsDisp ? 'Instructions' : 'What to Look Into'; }
+    get dlgNoteHint() { return this.dlgIsDisp ? 'Optional. For whoever disposes the lots.' : 'Optional. For whoever investigates.'; }
+    get dlgNotePh() { return this.dlgIsDisp ? 'For example: hold the lot in quarantine until engineering has looked at it' : 'For example: check whether the fixture change lines up with the first failures'; }
+    get dlgApprPressed() { return this.dlg && this.dlg.appr ? 'true' : 'false'; }
+    get dlgShowMatrix() { return !!this.dlg && this.dlg.appr; }
+    /** Matrices that cover this popup's approval, and the other decision's approval when that is on too. */
+    get dlgMatrixList() {
+        const k = this.dlgIsDisp;
+        const needD = k || (this.dispReq && this.dispAppr);
+        const needI = !k || (this.invReq && this.invAppr);
+        return ((this.nx && this.nx.matrices) || []).filter((m) => (!needD || m.disp) && (!needI || m.inv));
+    }
+    get dlgMatrixOk() { return !!this.dlg && this.dlgMatrixList.some((m) => m.id === this.dlg.matrixId); }
+    get dlgMatrixOpts() {
+        const list = this.dlgMatrixList.map((m) => ({ value: m.id, label: m.name, selected: !!this.dlg && m.id === this.dlg.matrixId }));
+        return this.dlgMatrixOk ? list : [{ value: '', label: 'Choose', selected: true }, ...list];
+    }
+    get dlgNoMatrix() { return this.dlgShowMatrix && this.dlgMatrixList.length === 0; }
+    get dlgCantSave() { return !this.dlg || !this.dlg.due || (this.dlg.appr && !this.dlgMatrixOk); }
+    /** The state under each card's name, so a card never grows when something is chosen. */
+    shortDate(v) {
+        if (!v) { return ''; }
+        const p = String(v).split('-');
+        const m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(p[1]) - 1];
+        return m ? m + ' ' + Number(p[2]) : v;
+    }
+    get dispState() {
+        if (!this.disp) { return 'Not set'; }
+        return this.dispReq ? 'Required \u00b7 due ' + this.shortDate(this.dispDue) + (this.dispAppr ? ' \u00b7 needs approval' : '') : 'Not required';
+    }
+    get invState() {
+        if (!this.inv) { return 'Not set'; }
+        if (!this.invReq) { return 'Log only'; }
+        const own = this.lk && this.lk.ownName ? this.lk.ownName + ' \u00b7 ' : '';
+        return own + 'due ' + this.shortDate(this.invDue) + (this.invAppr ? ' \u00b7 needs approval' : '');
+    }
 
     // ---- navigation: any step opens from the list, Back and Next always move; Complete Triage waits for every step
     names() { return this.inline ? ['Triage at a Glance', ...STEPS] : STEPS; }
@@ -672,9 +736,11 @@ export default class CqTriageAssistant extends LightningElement {
                 disposition: this.dispReq,
                 dispositionDue: this.dispDue,
                 dispositionApproval: this.dispReq && this.dispAppr,
+                dispositionNote: this.dispReq ? this.dispNote : null,
                 investigate: this.invReq,
                 investigationDue: this.invDue,
                 investigationApproval: this.invReq && this.invAppr,
+                investigationNote: this.invReq ? this.invNote : null,
                 matrixId: this.needMatrix ? this.matrixId : null,
                 repeatOfId: this.rep ? this.rep.ncId : null,
                 repeatCapaId: this.rep ? this.rep.capaId : null,

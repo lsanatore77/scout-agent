@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
     <description>CQ.AI Quality module: event intake (Report a Problem, Quick Log) for now; triage, disposition and investigation access is added as the set is built out.</description>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>compliancequest__SQX_Nonconformance__c.Triage_Disposition_Instructions__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
+        <field>compliancequest__SQX_Nonconformance__c.Triage_Investigation_Focus__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Event_Answer__c.Event_Question__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Event_Answer__c.Question_Text__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>Event_Answer__c.Role__c</field><readable>true</readable></fieldPermissions>
