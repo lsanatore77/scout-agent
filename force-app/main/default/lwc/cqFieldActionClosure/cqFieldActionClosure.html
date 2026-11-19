@@ -9,8 +9,8 @@
         <p class="cq-step-intro">{intro}</p>
 
         <div class="grid">
-            <section class="card">
-                <div class="ch"><span class="cn">1</span><span class="ct">Closure Checklist</span><span class="cq-grow"></span><span class="tot">{checkLine}</span></div>
+            <section class="cq-stepcard">
+                <div class="cq-stepcard-head"><span class="cq-stepcard-n">1</span><span class="cq-stepcard-title">Closure Checklist</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{checkLine}</span></div>
                 <div class="list">
                     <template for:each={checks} for:item="c">
                         <div key={c.key} class="lrow">
@@ -25,13 +25,13 @@
             </section>
 
             <div class="col">
-                <section class="card">
-                    <div class="ch"><span class="cn">2</span><span class="ct">Closure Summary</span><span class="cq-grow"></span>
+                <section class="cq-stepcard">
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">Closure Summary</span><span class="cq-grow"></span>
                         <template if:true={isDraft}><span class="aitag">&#10022; Drafted by CQ.AI</span></template></div>
                     <div class="cq-field"><textarea class="ta" rows="9" value={summaryText} disabled={locked} oninput={handleSummaryInput} onchange={handleSummary} aria-label="Closure summary"></textarea></div>
                 </section>
-                <section class="card">
-                    <div class="ch"><span class="cn">3</span><span class="ct">What Follows</span></div>
+                <section class="cq-stepcard">
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">3</span><span class="cq-stepcard-title">What Follows</span></div>
                     <div class="cq-field">
                         <span class="cq-label">CAPA<span class="cq-req">*</span></span>
                         <template if:true={hasCapa}>

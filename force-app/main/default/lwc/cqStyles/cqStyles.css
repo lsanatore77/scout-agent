@@ -410,3 +410,53 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-panel-pages .page { background: none; border: 0; padding: 0; color: var(--cq-link); cursor: pointer; font-size: 0.8125rem; }
 .cq-panel-pages .page:hover { text-decoration: underline; }
 .cq-panel-pages .page.current { color: var(--cq-ink); font-weight: 700; cursor: default; text-decoration: none; }
+
+/* ============================ PAGE LAYOUT PIECES =======================
+   Columns, cards and rows that several workspaces lay their steps out with. */
+/* two columns side by side. top = each column keeps its own height; wide = 1.4 to 1; wide32 = 3 to 2 */
+.cq-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.cq-cols.top { align-items: start; }
+.cq-cols.wide { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+.cq-cols.wide32 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+@media (max-width: 760px) { .cq-cols, .cq-cols.wide, .cq-cols.wide32 { grid-template-columns: 1fr; } }
+/* a column of blocks; lead = the main column, with more air between them */
+.cq-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cq-col.lead { gap: 14px; }
+/* a name with its detail lines under it, taking the room in a row */
+.cq-stack { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+/* a ruled row in a card: what it is on the left, its value or pill on the right */
+.cq-krow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); }
+.cq-krow:last-child { border-bottom: none; padding-bottom: 0; }
+.cq-para { margin-top: 6px; font-size: 14px; line-height: 1.45; white-space: pre-line; }
+.cq-big { font-size: 20px; font-weight: 700; }
+.cq-mt14 { margin-top: 14px; }
+/* The Problem: the grey card that opens a glance, and its text */
+.cq-pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cq-prob { margin: 0; font-size: 14px; line-height: 1.45; }
+/* a numbered card inside a step: .cq-stepcard > .cq-stepcard-head (.cq-stepcard-n + .cq-stepcard-title, then .cq-grow + .cq-stepcard-tot) */
+.cq-stepcard { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.cq-stepcard-head { display: flex; align-items: baseline; gap: 8px; }
+.cq-stepcard-n { font-size: 13px; font-weight: 700; color: var(--cq-muted); }
+.cq-stepcard-title { font-size: 15px; font-weight: 700; }
+.cq-stepcard-tot { font-size: 13px; font-weight: 600; }
+/* a stock location link and the dot between two of them */
+.cq-ploc { color: var(--cq-link); font-weight: 600; text-decoration: none; }
+.cq-ploc:hover { text-decoration: underline; }
+.cq-dotsep { color: var(--cq-faint); }
+/* a decision card in Next Steps: its name, its state line, the suggestion, the choices */
+.cq-dcard-name { font-size: 14px; font-weight: 700; }
+.cq-dcard-state { margin-top: 2px; min-height: 19px; color: var(--cq-muted); }
+.cq-dcard-sug { flex: 1 1 auto; min-width: 0; line-height: 1.45; }
+.cq-dcard-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* "what we know" fold-out and the Start Over link */
+.cq-know summary { color: var(--cq-link); font-size: 13px; font-weight: 600; cursor: pointer; }
+.cq-restart { margin: 4px 8px 0; padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+/* the small "From" / "For" card at the top of a popup, and the loading line */
+.cq-fromcard { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-hl-line); background: var(--cq-surface); display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
+.cq-spin { position: relative; display: inline-block; width: 24px; height: 24px; }
+.cq-spinwrap { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+/* "Happened Before": the amber warning box, its heading, the red link, and a button that is a link */
+.cq-recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-warn-line); background: var(--cq-warn-bg); display: flex; flex-direction: column; gap: 8px; }
+.cq-recur-head { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--cq-warn-fg); }
+.cq-redlink { color: var(--cq-crit-fg); font-weight: 600; text-decoration: underline; }
+.cq-linkbtn { display: inline-flex; align-items: center; text-decoration: none; color: var(--cq-ink); }

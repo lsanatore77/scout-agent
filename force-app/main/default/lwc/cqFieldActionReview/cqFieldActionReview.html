@@ -1,16 +1,16 @@
 <template>
     <div class="kard">
         <div>
-            <div class="dname">Field Action Review</div>
-            <div class="dstate">{statusText}<template if:true={hasReview}> &middot; <button class="cq-link" data-id={fa.reviewId} onclick={handleOpen}>{fa.reviewName}</button></template><template if:true={canDetail}> &middot; <button class="cq-link" onclick={handleDetails}>Details</button></template></div>
+            <div class="cq-dcard-name">Field Action Review</div>
+            <div class="cq-dcard-state">{statusText}<template if:true={hasReview}> &middot; <button class="cq-link" data-id={fa.reviewId} onclick={handleOpen}>{fa.reviewName}</button></template><template if:true={canDetail}> &middot; <button class="cq-link" onclick={handleDetails}>Details</button></template></div>
         </div>
-        <div class="dsug">
+        <div class="cq-dcard-sug">
             <template if:true={fa}>
                 <c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={fa.suggestion}></c-cq-ai-why> <strong>{fa.suggestion}.</strong> {fa.suggestionWhy}
             </template>
             <template if:true={rowError}><div class="cq-msg crit err">{error}</div></template>
         </div>
-        <div class="dchips">
+        <div class="cq-dcard-chips">
             <template for:each={opts} for:item="o">
                 <button key={o.id} class={o.cls} data-id={o.id} aria-pressed={o.pressed} disabled={o.off} onclick={handlePick}>{o.label}</button>
             </template>

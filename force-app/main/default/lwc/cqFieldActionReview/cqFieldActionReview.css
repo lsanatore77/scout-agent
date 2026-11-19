@@ -4,10 +4,6 @@
 /* one decision card, the same as Disposition and Investigation in Next Steps: name and state, the suggestion, the choices */
 :host { height: 100%; }
 .kard { display: flex; flex-direction: column; gap: 8px; min-width: 0; height: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
-.dname { font-size: 14px; font-weight: 700; }
-.dstate { margin-top: 2px; min-height: 19px; color: var(--cq-muted); }
-.dsug { flex: 1 1 auto; min-width: 0; line-height: 1.45; }
-.dchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .cq-msg.err { margin-top: 8px; }
 .cq-chip:disabled { opacity: 0.6; }
 .drowk { display: flex; gap: 12px; }
