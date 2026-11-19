@@ -128,7 +128,7 @@ export default class CqEventIntakeChat extends LightningElement {
                 needs: r.required && !r.answer,
                 badgeAi: r.fromAi,
                 badgeNeed: !r.fromAi && r.required && !r.answer,
-                opts: (r.choices || []).map((c) => ({ key: r.id + '::' + c, label: c, cls: c === r.answer ? 'opt on' : 'opt' }))
+                opts: (r.choices || []).map((c) => ({ key: r.id + '::' + c, label: c, pressed: String(c === r.answer), cls: 'cq-chip' + (c === r.answer && r.fromAi ? ' ai' : '') }))
             };
         });
     }

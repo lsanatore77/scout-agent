@@ -1,23 +1,30 @@
 <template>
     <div class="shell">
-        <div class="hd">
-            <span class="hd-ico">EV</span>
-            <div><div class="hd-obj">Quality Event</div><div class="hd-ttl">Report an Event</div></div>
-        </div>
+        <header class="cq-hl">
+            <div class="cq-hl-top">
+                <div class="cq-hl-who">
+                    <span class="cq-hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Quality Event"></lightning-icon></span>
+                    <div class="cq-hl-name">
+                        <span class="cq-hl-obj">Quality Event</span>
+                        <span class="cq-hl-title">Report an Event</span>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-        <template if:true={error}><div class="err">{error}</div></template>
+        <template if:true={error}><div class="cq-msg crit err">{error}</div></template>
 
         <template if:true={isDescribe}>
             <div class="body">
                 <h2 class="q">What happened?</h2>
                 <p class="p">Describe it the way you'd tell a coworker. CQ.AI fills in the rest.</p>
-                <textarea class="ta" rows="5" value={description} onchange={handleDesc} oninput={handleDesc}
-                    placeholder="e.g. Three CardioFlow balloons from lot 0908 were slow to deflate during final test. Nobody was hurt."></textarea>
-                <p class="hint">CQ.AI listens for the part and lot, how many, where you found it, and whether anyone was hurt.</p>
+                <div class="cq-field"><textarea rows="5" value={description} onchange={handleDesc} oninput={handleDesc}
+                    placeholder="e.g. Three CardioFlow balloons from lot 0908 were slow to deflate during final test. Nobody was hurt."></textarea></div>
+                <p class="cq-hint hintbox">CQ.AI listens for the part and lot, how many, where you found it, and whether anyone was hurt.</p>
             </div>
             <div class="ft">
                 <span class="sp"></span>
-                <button class="btn primary" disabled={analyzeDisabled} onclick={handleAnalyze}>
+                <button class="cq-btn-primary" disabled={analyzeDisabled} onclick={handleAnalyze}>
                     <template if:true={busy}>Reading&hellip;</template>
                     <template if:false={busy}>Continue</template>
                 </button>
@@ -28,16 +35,16 @@
             <div class="body">
                 <div class="said"><span class="said-lab">What you said</span>{saidText}</div>
 
-                <div class="band">Details CQ.AI Filled In</div>
+                <div class="cq-card-title band">Details CQ.AI Filled In</div>
 
-                <div class="fld">
-                    <label class="lab">Title</label>
-                    <input class="inp" type="text" value={title} onchange={handleTitle} />
+                <div class="cq-field">
+                    <span class="cq-label">Title</span>
+                    <input type="text" value={title} onchange={handleTitle} />
                 </div>
 
-                <div class="fld">
-                    <label class="lab">Lot</label>
-                    <input class="inp" type="text" value={lot} onchange={handleLot} />
+                <div class="cq-field">
+                    <span class="cq-label">Lot</span>
+                    <input type="text" value={lot} onchange={handleLot} />
                 </div>
 
                 <template if:true={lotOne}>
@@ -45,57 +52,57 @@
                 </template>
                 <template if:true={lotMany}>
                     <p class="src">That lot matches a few — pick the right one:</p>
-                    <div class="opts">
+                    <div class="cq-chips">
                         <template for:each={lotCands} for:item="c">
-                            <button key={c.lotName} class="opt" data-lot={c.lotName} onclick={handlePickCand}>{c.label}</button>
+                            <button key={c.lotName} class="cq-chip" data-lot={c.lotName} onclick={handlePickCand}>{c.label}</button>
                         </template>
                     </div>
                 </template>
 
-                <div class="fld">
-                    <label class="lab">Part</label>
+                <div class="cq-field">
+                    <span class="cq-label">Part</span>
                     <template if:true={showPicker}>
                         <c-cq-part-picker onchange={handlePartChange}></c-cq-part-picker>
                         <template if:true={lotNone}><p class="src">That lot isn't in the system — the reviewer will confirm the part.</p></template>
                         <template if:true={partRaw}><p class="src">CQ.AI heard "{partRaw}".</p></template>
                     </template>
                     <template if:false={showPicker}>
-                        <div class="picked"><span>{partLabel}</span><button class="link" onclick={changePart}>Change</button></div>
+                        <div class="picked"><span>{partLabel}</span><button class="cq-link change" onclick={changePart}>Change</button></div>
                     </template>
                 </div>
 
-                <div class="fld">
-                    <label class="lab">Units Affected</label>
-                    <input class="inp" type="number" value={units} onchange={handleUnits} />
+                <div class="cq-field">
+                    <span class="cq-label">Units Affected</span>
+                    <input type="number" value={units} onchange={handleUnits} />
                 </div>
                 <template if:true={defect}><p class="src">Defect CQ.AI read: {defect}</p></template>
 
-                <div class="band">Questions</div>
+                <div class="cq-card-title band">Questions</div>
                 <template for:each={rows} for:item="r">
-                    <div key={r.id} class="qq">
-                        <div class="qlabel">
+                    <div key={r.id} class="cq-field qq">
+                        <div class="cq-label qlabel">
                             <span>{r.question}</span>
-                            <template if:true={r.badgeAi}><span class="tag ai">CQ.AI Suggests</span></template>
-                            <template if:true={r.badgeNeed}><span class="tag need">Your answer</span></template>
+                            <template if:true={r.badgeAi}><span class="cq-pill soft ai">CQ.AI Suggests</span></template>
+                            <template if:true={r.badgeNeed}><span class="cq-pill soft warn">Your Answer</span></template>
                         </div>
                         <template if:true={r.isChoice}>
-                            <div class="opts">
+                            <div class="cq-chips">
                                 <template for:each={r.opts} for:item="o">
-                                    <button key={o.key} class={o.cls} data-id={r.id} data-value={o.label} onclick={handlePickOpt}>{o.label}</button>
+                                    <button key={o.key} class={o.cls} data-id={r.id} data-value={o.label} aria-pressed={o.pressed} onclick={handlePickOpt}>{o.label}</button>
                                 </template>
                             </div>
                         </template>
                         <template if:true={r.isText}>
-                            <input class="inp" type="text" data-id={r.id} value={r.answer} onchange={handleTextAns} />
+                            <input type="text" data-id={r.id} value={r.answer} onchange={handleTextAns} />
                         </template>
                     </div>
                 </template>
             </div>
             <div class="ft">
-                <button class="btn" onclick={handleBack}>Back</button>
+                <button class="cq-btn-outline" onclick={handleBack}>Back</button>
                 <template if:true={hasMissing}><span class="blocker">{missingLabel}</span></template>
                 <span class="sp"></span>
-                <button class="btn primary" disabled={submitDisabled} onclick={handleSubmit}>
+                <button class="cq-btn-primary" disabled={submitDisabled} onclick={handleSubmit}>
                     <template if:true={busy}>Sending&hellip;</template>
                     <template if:false={busy}>Send Report</template>
                 </button>
@@ -105,10 +112,10 @@
         <template if:true={isDone}>
             <div class="body done">
                 <div class="ok">&check;</div>
-                <h2 class="q">Report sent</h2>
+                <h2 class="q">Report Sent</h2>
                 <p class="p"><b>{sent.name}</b> is now waiting for review.</p>
-                <template if:true={sent.urgent}><div class="urgent">Marked Urgent &mdash; the reviewer is alerted.</div></template>
-                <button class="btn primary" onclick={handleRestart}>Report Another</button>
+                <template if:true={sent.urgent}><div class="cq-msg warn">Marked Urgent &mdash; the reviewer is alerted.</div></template>
+                <button class="cq-btn-primary" onclick={handleRestart}>Report Another</button>
             </div>
         </template>
     </div>
