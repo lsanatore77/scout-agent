@@ -2,7 +2,7 @@
     <div class="kard">
         <div>
             <div class="dname">Field Action Review</div>
-            <div class="dstate">{statusText}<template if:true={hasReview}> &middot; <button class="link" data-id={fa.reviewId} onclick={handleOpen}>{fa.reviewName}</button></template><template if:true={canDetail}> &middot; <button class="link" onclick={handleDetails}>Details</button></template></div>
+            <div class="dstate">{statusText}<template if:true={hasReview}> &middot; <button class="cq-link" data-id={fa.reviewId} onclick={handleOpen}>{fa.reviewName}</button></template><template if:true={canDetail}> &middot; <button class="cq-link" onclick={handleDetails}>Details</button></template></div>
         </div>
         <div class="dsug">
             <template if:true={fa}>
@@ -18,20 +18,20 @@
     </div>
 
     <template if:true={asking}>
-        <div class="modal-back" onkeydown={handleKey}>
-            <section class="modal" role="dialog" aria-modal="true" aria-labelledby="far-head">
-                <header class="modal-head">
-                    <h2 id="far-head" class="modal-title">Send for Field Action Review</h2>
-                    <button class="modal-x" aria-label="Close" onclick={handleCancel}>&times;</button>
+        <div class="cq-modal-back" onkeydown={handleKey}>
+            <section class="cq-modal" role="dialog" aria-modal="true" aria-labelledby="far-head">
+                <header class="cq-modal-head">
+                    <h2 id="far-head" class="cq-modal-title">Send for Field Action Review</h2>
+                    <button class="cq-modal-x" aria-label="Close" onclick={handleCancel}>&times;</button>
                 </header>
-                <div class="modal-body">
+                <div class="cq-modal-body">
                     <label class="cq-field"><span class="cq-label">Why Does This Need Field Action Review?<span class="cq-req">*</span></span>
                         <textarea class="reason" rows="4" oninput={handleReason} placeholder="For example: this lot may have shipped before the hold"></textarea>
                         <span class="cq-hint">The reviewer sees this reason. Sending opens a Field Action Review for this nonconformance.</span>
                     </label>
                     <template if:true={error}><div class="cq-msg crit">{error}</div></template>
                 </div>
-                <footer class="modal-foot">
+                <footer class="cq-modal-foot">
                     <button class="cq-btn-outline" onclick={handleCancel}>Cancel</button>
                     <button class="cq-btn-primary" onclick={handleSend} disabled={cannotSend}>Send for Review</button>
                 </footer>
@@ -40,19 +40,19 @@
     </template>
 
     <template if:true={detailing}>
-        <div class="modal-back" onkeydown={handleKey}>
-            <section class="modal" role="dialog" aria-modal="true" aria-labelledby="fard-head">
-                <header class="modal-head">
-                    <h2 id="fard-head" class="modal-title">Field Action Review</h2>
-                    <button class="modal-x" aria-label="Close" onclick={handleCloseDetails}>&times;</button>
+        <div class="cq-modal-back" onkeydown={handleKey}>
+            <section class="cq-modal" role="dialog" aria-modal="true" aria-labelledby="fard-head">
+                <header class="cq-modal-head">
+                    <h2 id="fard-head" class="cq-modal-title">Field Action Review</h2>
+                    <button class="cq-modal-x" aria-label="Close" onclick={handleCloseDetails}>&times;</button>
                 </header>
-                <div class="modal-body">
+                <div class="cq-modal-body">
                     <template for:each={details} for:item="d">
-                        <div key={d.k} class="drowk"><span class="dk">{d.k}</span><span class="dv">{d.v}</span></div>
+                        <div key={d.k} class="drowk"><span class="cq-kv-k">{d.k}</span><span class="cq-kv-v">{d.v}</span></div>
                     </template>
-                    <template if:true={hasFa}><div class="drowk"><span class="dk">Field Action</span><span class="dv"><button class="link" data-id={fa.faId} onclick={handleOpen}>{fa.faName}</button></span></div></template>
+                    <template if:true={hasFa}><div class="drowk"><span class="cq-kv-k">Field Action</span><span class="cq-kv-v"><button class="cq-link" data-id={fa.faId} onclick={handleOpen}>{fa.faName}</button></span></div></template>
                 </div>
-                <footer class="modal-foot">
+                <footer class="cq-modal-foot">
                     <button class="cq-btn-primary closebtn" onclick={handleCloseDetails}>Close</button>
                 </footer>
             </section>

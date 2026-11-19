@@ -29,3 +29,21 @@ Every edit means sending a screen's whole files to the org, so pattern-by-patter
 Instead: all the shared patterns are now in cqStyles (frame, table, pager, popup, small pieces, chip mark), and screens are
 converted one at a time, each sent once and checked on screen. Converted so far: cqDispositionWorkspace (75 rules down to 41), cqInvestigationWorkspace (162 down to 94), cqFieldActionManager (111 down to 71; Scope buttons now in the footer; checked on screen), cqFieldActionWorkspace (170 down to 126), cqTriageAssistant (193 down to 134; keeps its own box and popup footer because it is also a popup), askCqWorkspace and askCqRecordsDemo (PHR; work area stays flush, so its footer keeps local side padding).
 Order: Investigation, Field Action (with Back/Next moved), Field Action Review, Triage, PHR, then the smaller components.
+
+## Conversion finished (19 Nov 2026)
+
+Every component now takes the shared pieces from cqStyles. Custom rules: 1,666 at the audit, 1,245 now; cqStyles has 176.
+
+Converted in the last pass: Find the Cause, Field Action Strategy / Recovery / Closure, Field Action Review card, Event Intake, Event Intake Chat, Event Review, Triage at a Glance, Triage Workspace, PHR Lead Select and Lead Lists.
+
+Left as they are, because nothing in them maps to a shared piece without changing how the screen looks (for the per-screen review):
+- cqIntakeConversation and askCqPopover: chat screens with their own bubbles, chips and buttons, and hard-coded purples.
+- associatedItemsReport and phrQmsRecordsPanel: SLDS tables with a Previous / Next pager, not the numbered cq-pager.
+- phrLeadPackage, phrChecklist, phrMissingData, cqPartPicker, cqLotPicker, cqAiWhy: small, screen-specific.
+
+Open points for the per-screen review:
+- Field Action Strategy and Recovery use a tighter table (.ht) than cq-tbl; decide whether a compact table becomes a shared variant.
+- The Field Action tabs put the step title in a row with its status pill, so they override the intro's top gap locally.
+- Find the Cause popups are now the shared 560px width (were 640px).
+- Event Intake's footer moved inside the work area like the other workspaces.
+- Repeated local pieces still without a standard: .rk, plain .card, .ch/.cn/.ct card heads, .tabs/.tab, .plainbtn/.smalllink, .ownbox/.plainbox.

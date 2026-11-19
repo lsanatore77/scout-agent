@@ -41,7 +41,7 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
     get triaged() { return !!(this.triage && this.triage.setOn); }
     get triageLine() {
         const t = this.triage || {};
-        return 'Triaged' + (t.setBy ? ' by ' + t.setBy : '') + ' \u00b7 Risk ' + t.risk + ' \u00b7 ' + t.path;
+        return 'Triaged' + (t.setBy ? ' by ' + t.setBy : '') + ' · Risk ' + t.risk + ' · ' + t.path;
     }
     get triageNotes() { return (this.triage && this.triage.notes) || ''; }
     get hasPhoto() { return !!this.photoId; }
@@ -58,7 +58,7 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
 
     get photoUrl() { return this.photoId ? '/sfc/servlet.shepherd/version/download/' + this.photoId : null; }
     get photoCls() { return 'photo' + (this.photoId ? ' has' : '') + (this.dragging ? ' drag' : ''); }
-    get addLabel() { return this.uploading ? 'Saving\u2026' : 'Add a Photo'; }
+    get addLabel() { return this.uploading ? 'Saving…' : 'Add a Photo'; }
 
     handlePick() { this.template.querySelector('input.file').click(); }
     handleFile(event) {
@@ -125,7 +125,7 @@ export default class CqTriageGlance extends NavigationMixin(LightningElement) {
             { key: 'part', label: 'Part', value: g.partNumber || g.partName || '—' },
             { key: 'lot', label: 'Lot', value: g.lot || '—' },
             { key: 'qty', label: 'Affected', value: n(g.defectiveQuantity) + ' of ' + n(g.lotQuantity), red: g.defectiveQuantity != null }
-        ].map((t) => ({ ...t, cls: 'tv' + (t.red ? ' red' : '') }));
+        ].map((t) => ({ ...t, cls: 'cq-tile-v' + (t.red ? ' red' : '') }));
     }
     get cards() {
         return ((this.g && this.g.cards) || []).map((c) => ({

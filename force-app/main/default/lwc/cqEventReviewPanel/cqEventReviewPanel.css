@@ -28,9 +28,6 @@
 .choices .cq-chip { gap: 0.35rem; white-space: nowrap; }
 .choices .cq-chip.ai { color: var(--cq-accent); }
 .choices .cq-chip:disabled { opacity: 1; }
-/* the CQ.AI mark sits before the label, as on every other suggested chip */
-.cmark { color: var(--cq-accent); }
-.cq-chip.ai .cmark { order: -1; }
-.note { font-size: var(--cq-fs-meta); color: var(--cq-muted); margin: 0.75rem 0 0; }
+/* the CQ.AI mark on the suggested choice comes from cqStyles */
 
 /* the CQ.AI recommendation card and its answer rows come from cqStyles (.cq-ai-*, .cq-qa*) */

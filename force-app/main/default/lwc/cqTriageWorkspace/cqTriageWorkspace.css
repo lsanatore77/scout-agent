@@ -1,4 +1,3 @@
 @import 'c/cqStyles';
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
-.box { display: flex; flex-direction: column; border-radius: 12px; background: var(--cq-bg); border: 1px solid var(--cq-line); }

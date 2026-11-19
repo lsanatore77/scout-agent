@@ -1,7 +1,7 @@
 <template>
     <template if:true={loadError}><div class="cq-msg crit errbox">{loadError}</div></template>
     <template if:true={ready}>
-        <div class="box">
+        <div class="cq-box">
             <header class="cq-hl">
                 <div class="cq-hl-top">
                     <div class="cq-hl-who">
@@ -13,7 +13,7 @@
                     </div>
                 </div>
             </header>
-            <div class="main">
+            <div class="cq-ws-main">
                 <div class="tabs" role="tablist">
                     <button class={reportTabCls} data-t="report" role="tab" onclick={handleTab}>Full Report</button>
                     <button class={quickTabCls} data-t="quick" role="tab" onclick={handleTab}>Quick Log (Trend Only)</button>
@@ -21,7 +21,7 @@
 
                 <!-- Full Report -->
                 <template if:true={showForm}>
-                    <p class="p">Describe the problem on the left and answer the quick questions on the right. The event reviewer decides what it becomes.</p>
+                    <p class="cq-step-intro">Describe the problem on the left and answer the quick questions on the right. The event reviewer decides what it becomes.</p>
                     <div class="cols">
                         <div class="stack">
                             <label class="cq-field"><span class="cq-label">Problem Statement<span class="cq-req">*</span></span>
@@ -38,7 +38,7 @@
                                 </div>
                                 <span class="cq-hint">Start with the lot if you know it and the part fills in. Leave blank if no product was affected.</span>
                             </div>
-                            <div class="note">{capturedText}</div>
+                            <div class="cq-note">{capturedText}</div>
                         </div>
                         <div class="stack">
                             <template for:each={questions} for:item="q">
@@ -67,10 +67,10 @@
                 </template>
                 <template if:true={showSent}>
                     <div class="sentrow">
-                        <span class="okdot">&#10003;</span>
-                        <div class="grow">
-                            <div class="q nom">{sentTitle}</div>
-                            <div class="note sm0">Thanks. You're done. An event reviewer decides what it becomes.</div>
+                        <span class="cq-okdot">&#10003;</span>
+                        <div class="cq-grow">
+                            <div class="cq-step-title nom">{sentTitle}</div>
+                            <div class="cq-note">Thanks. You're done. An event reviewer decides what it becomes.</div>
                         </div>
                         <button class="cq-btn-outline" data-id={sent.id} onclick={handleOpenEvent}>Open {sent.name}</button>
                         <button class="cq-btn-primary" onclick={handleAnother}>Report Another</button>
@@ -79,7 +79,7 @@
 
                 <!-- Quick Log -->
                 <template if:true={isQuick}>
-                    <p class="p">Quick log creates a normal NC marked trend only, closed with the category's disposition. No triage or investigation unless the count reaches the limit.</p>
+                    <p class="cq-step-intro">Quick log creates a normal NC marked trend only, closed with the category's disposition. No triage or investigation unless the count reaches the limit.</p>
                     <div class="cols">
                         <div class="stack">
                             <div class="cq-field"><span class="cq-label">1. What was it?<span class="cq-req">*</span></span>
@@ -107,15 +107,15 @@
                         <div class="plainbox trendbox">
                             <div class="cq-card-title">{trendHead}</div>
                             <template if:true={showCount}>
-                                <div class="count"><span class="bignum">{totalText}</span> <span class="muted">{ofText}</span></div>
+                                <div class="count"><span class="bignum">{totalText}</span> <span class="cq-muted">{ofText}</span></div>
                                 <div class="bar"><i style={barStyle}></i></div>
                             </template>
                             <div class="whyv">{trendNote}</div>
                             <template if:true={cat}>
                                 <div class="cq-card-title top8">Category Rule</div>
-                                <div class="drow"><span class="dk">Disposition</span><span class="dv">{ruleDisposition}</span></div>
-                                <div class="drow"><span class="dk">Opens an event at</span><span class="dv">{ruleOpens}</span></div>
-                                <div class="drow"><span class="dk">Approved by</span><span class="dv">{ruleApproved}</span></div>
+                                <div class="cq-kv"><span class="cq-kv-k">Disposition</span><span class="cq-kv-v">{ruleDisposition}</span></div>
+                                <div class="cq-kv"><span class="cq-kv-k">Opens an event at</span><span class="cq-kv-v">{ruleOpens}</span></div>
+                                <div class="cq-kv"><span class="cq-kv-k">Approved by</span><span class="cq-kv-v">{ruleApproved}</span></div>
                             </template>
                         </div>
                     </div>
@@ -124,19 +124,19 @@
                 </template>
 
                 <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
+                <template if:true={showForm}>
+                    <footer class="cq-ws-foot">
+                        <span class="cq-blocker">{reportBlocker}</span>
+                        <button class="cq-btn-primary" onclick={handleSend} disabled={cantSend}>{sendLabel}</button>
+                    </footer>
+                </template>
+                <template if:true={isQuick}>
+                    <footer class="cq-ws-foot">
+                        <span class="cq-blocker">{quickBlocker}</span>
+                        <button class="cq-btn-primary" onclick={handleLog} disabled={cantLog}>{logLabel}</button>
+                    </footer>
+                </template>
             </div>
-            <template if:true={showForm}>
-                <footer class="foot">
-                    <span class="blocker">{reportBlocker}</span>
-                    <button class="cq-btn-primary" onclick={handleSend} disabled={cantSend}>{sendLabel}</button>
-                </footer>
-            </template>
-            <template if:true={isQuick}>
-                <footer class="foot">
-                    <span class="blocker">{quickBlocker}</span>
-                    <button class="cq-btn-primary" onclick={handleLog} disabled={cantLog}>{logLabel}</button>
-                </footer>
-            </template>
         </div>
     </template>
 </template>

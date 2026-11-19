@@ -58,17 +58,17 @@
                             </table>
                             <template if:true={tier.pager}>
                                 <div class="pager">
-                                    <span class="muted">{tier.pager.range}</span>
+                                    <span class="cq-muted">{tier.pager.range}</span>
                                     <span class="pages">
                                         <template if:true={tier.pager.hasPrev}>
-                                            <button class="link" type="button" data-tier={tier.key} data-page="prev" onclick={handlePage}>Previous</button>
+                                            <button class="cq-link" type="button" data-tier={tier.key} data-page="prev" onclick={handlePage}>Previous</button>
                                         </template>
                                         <template for:each={tier.pager.pages} for:item="p">
                                             <button key={p.key} class={p.cls} type="button" data-tier={tier.key} data-page={p.num} onclick={handlePage}
                                                 aria-current={p.current}>{p.num}</button>
                                         </template>
                                         <template if:true={tier.pager.hasNext}>
-                                            <button class="link" type="button" data-tier={tier.key} data-page="next" onclick={handlePage}>Next</button>
+                                            <button class="cq-link" type="button" data-tier={tier.key} data-page="next" onclick={handlePage}>Next</button>
                                         </template>
                                     </span>
                                 </div>

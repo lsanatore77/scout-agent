@@ -1,12 +1,9 @@
 @import 'c/cqStyles';
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
-.box { display: flex; flex-direction: column; border-radius: 12px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
-.main { padding: 20px; }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--cq-hl-line); margin: -6px 0 18px; }
 .tab { padding: 8px 14px; border: none; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--cq-muted); border-bottom: 3px solid transparent; cursor: pointer; }
 .tab.on { color: var(--cq-link); border-bottom-color: var(--cq-link); }
-.p { margin: 0 0 16px; color: var(--cq-muted); max-width: 72ch; }
 .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
 /* form fields use the shared .cq-field / .cq-group patterns from cqStyles */
 .stack { display: flex; flex-direction: column; gap: var(--cq-row-gap); min-width: 0; }
@@ -24,26 +21,18 @@
 .whyv { line-height: 1.45; color: var(--cq-ink); }
 .count { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .bignum { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.muted { color: var(--cq-muted); }
 .bar { height: 8px; border-radius: 4px; background: var(--cq-neu-bg); overflow: hidden; }
 .bar i { display: block; height: 100%; }
-.drow { display: flex; gap: 12px; padding: 8px 12px; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line); background: var(--cq-bg); }
-.dk { flex: 0 0 130px; color: var(--cq-muted); }
-.dv { font-weight: 600; min-width: 0; }
-.note { margin: 0; font-size: 13px; font-weight: 400; color: var(--cq-muted); }
-.note.sm0 { margin: 0; }
 .top8 { margin-top: 8px; }
 .top16 { margin-top: 16px; }
 .sentrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.okdot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: 13px; font-weight: 700; flex: none; }
-.q { font-size: 20px; font-weight: 700; }
-.q.nom { margin: 0; }
-.grow { flex: 1 1 auto; min-width: 0; }
 .smalllink { font-size: 13px; color: var(--cq-link); font-weight: 600; cursor: pointer; }
 .plainbtn { padding: 0; border: none; background: none; font-family: inherit; }
-.foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 20px 20px; }
-.blocker { color: var(--cq-warn-fg); font-weight: 600; }
 @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* shared pieces keep this screen's spacing: the intro follows the tabs, notes sit in a spaced column */
+.cq-step-intro { margin: 0 0 16px; }
+.cq-note { margin: 0; }
+.plainbox .cq-kv { min-height: 0; margin-bottom: 0; }
 .cq-msg.errbox { margin-top: 12px; }
 .cq-msg.okbox { margin-top: 16px; font-weight: 600; }
 .cq-msg.warn { margin: 4px 0 0; }

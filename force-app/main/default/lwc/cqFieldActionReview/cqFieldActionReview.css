@@ -8,21 +8,6 @@
 .dstate { margin-top: 2px; min-height: 19px; color: var(--cq-muted); }
 .dsug { flex: 1 1 auto; min-width: 0; line-height: 1.45; }
 .dchips { display: flex; flex-wrap: wrap; gap: 6px; }
-.link { padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.link:hover { text-decoration: underline; }
 .cq-msg.err { margin-top: 8px; }
 .cq-chip:disabled { opacity: 0.6; }
-/* a chip that is the CQ.AI suggestion always carries the CQ.AI mark, chosen or not */
-.cq-chip.ai::before { content: '\2726'; margin-right: 6px; }
 .drowk { display: flex; gap: 12px; }
-.dk { flex: 0 0 110px; color: var(--cq-muted); }
-.dv { flex: 1 1 auto; min-width: 0; font-weight: 600; }
-/* the reason popup: the same modal as Add a Hypothesis, above the triage popup */
-.modal-back { position: fixed; inset: 0; z-index: 9100; background: rgba(8, 7, 7, .45); display: flex; align-items: flex-start; justify-content: center; padding: 10vh 16px 16px; }
-.modal { width: 100%; max-width: 560px; background: var(--cq-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
-.modal-head { position: relative; padding: 16px 52px; border-bottom: 1px solid var(--cq-hl-line); text-align: center; }
-.modal-title { margin: 0; font-size: 20px; font-weight: 700; }
-.modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
-.modal-x:hover { background: var(--cq-hl-bg); }
-.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-.modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--cq-hl-line); background: var(--cq-hl-bg); }

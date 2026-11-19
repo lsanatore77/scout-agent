@@ -100,7 +100,7 @@
             </div>
             <div class="ft">
                 <button class="cq-btn-outline" onclick={handleBack}>Back</button>
-                <template if:true={hasMissing}><span class="blocker">{missingLabel}</span></template>
+                <template if:true={hasMissing}><span class="cq-blocker">{missingLabel}</span></template>
                 <span class="sp"></span>
                 <button class="cq-btn-primary" disabled={submitDisabled} onclick={handleSubmit}>
                     <template if:true={busy}>Sending&hellip;</template>

@@ -3,7 +3,7 @@
         <template if:true={standalone}><h2 class="h">Triage at a Glance</h2></template>
         <template if:true={error}><div class="cq-msg crit err">{error}</div></template>
         <template if:true={ready}>
-            <template if:true={triaged}><div class="triaged" title={triageNotes}><span class="okdot">&#10003;</span>{triageLine}</div></template>
+            <template if:true={triaged}><div class="triaged" title={triageNotes}><span class="cq-okdot sm">&#10003;</span>{triageLine}</div></template>
             <div class="problem">
                 <div class={photoCls} ondragover={handleDragOver} ondragleave={handleDragLeave} ondrop={handleDrop}>
                     <input class="file" type="file" accept="image/*" onchange={handleFile} />
@@ -24,9 +24,9 @@
                     <div class="cq-card-title">The Problem</div>
                     <div class="quote">{description}</div>
                     <div class="prow">
-                        <div class="tiles">
+                        <div class="cq-tiles">
                             <template for:each={tiles} for:item="t">
-                                <div key={t.key} class="tile"><div class="tl">{t.label}</div><div class={t.cls}>{t.value}</div></div>
+                                <div key={t.key} class="cq-tile"><div class="cq-tile-k">{t.label}</div><div class={t.cls}>{t.value}</div></div>
                             </template>
                         </div>
                         <div class="actions">

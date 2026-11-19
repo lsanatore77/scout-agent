@@ -24,8 +24,5 @@ lightning-card { display: block; border: 1px solid var(--cq-hl-line); border-rad
 .pager { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.375rem; }
 .pages { display: flex; gap: 0.625rem; align-items: center; flex-wrap: wrap; }
 .page { background: none; border: 0; padding: 0; color: var(--cq-link); cursor: pointer; font-size: 0.8125rem; }
-.page:hover, .link:hover { text-decoration: underline; }
+.page:hover { text-decoration: underline; }
 .page.current { color: var(--cq-ink); font-weight: 700; cursor: default; text-decoration: none; }
-.link { background: none; border: 0; padding: 0; color: var(--cq-link); cursor: pointer; font-size: 0.8125rem; }
-.muted { color: var(--cq-muted); font-size: 0.8125rem; }
-
