@@ -118,7 +118,6 @@
                 <footer class="foot">
                     <span class="grow"></span>
                     <span class="blocker">{blocker}</span>
-                    <template if:true={touched}><button class="cq-btn-outline" onclick={handleDiscard}>Discard Changes</button></template>
                     <template if:true={isChecklist}><button class="cq-btn-primary" onclick={handleSaveChecklist} disabled={cantSave}>Save Checklist</button></template>
                     <template if:true={hasBack}><button class="cq-btn-outline" onclick={handleBack}>Back</button></template>
                     <template if:true={hasNext}><button class={nextCls} onclick={handleNext}>Next</button></template>

@@ -44,11 +44,13 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
     draft = {};      // answers clicked but not saved yet: question id -> answer
     saving = false;
     blocker = '';
+    leaveArmed = false;   // the user has been warned once about unsaved answers
 
     async loadChecklist() {
         this.raw = await getChecklist({ phrId: this.recordId });
         this.draft = {};
         this.blocker = '';
+        this.leaveArmed = false;
     }
 
     /** The answer on screen before any click: the saved one, else CQ.AI's suggestion. */
@@ -165,14 +167,16 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         }
     }
 
-    /** Moves to a step. Clicked answers are never dropped silently: save or discard them first. */
+    /** Moves to a step. Clicked answers are never dropped silently: the first try to leave warns, the second leaves. */
     async go(key) {
         if (!key || key === this.current) { return; }
-        if (this.current === 'checklist' && this.touched) {
-            this.blocker = 'Save the checklist or discard your changes before leaving this step.';
+        if (this.current === 'checklist' && this.touched && !this.leaveArmed) {
+            this.blocker = 'You have unsaved answers. Save Checklist, or press again to leave without saving.';
+            this.leaveArmed = true;
             return;
         }
         this.blocker = '';
+        this.leaveArmed = false;
         this.saveNote = undefined;
         this.current = key;
         if (key === 'checklist') { await this.loadChecklist(); }
@@ -210,8 +214,9 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         if (!this.raw.some((x) => x.id === id)) { return; }
         this.draft = { ...this.draft, [id]: value };
         this.saveNote = undefined;
+        this.blocker = '';
+        this.leaveArmed = false;
     }
-    handleDiscard() { this.draft = {}; this.blocker = ''; }
 
     async handleSaveChecklist() {
         const rows = this.toSave;
