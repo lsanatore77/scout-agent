@@ -1,7 +1,7 @@
 <template>
     <section class={panelCls}>
         <template if:true={standalone}><h2 class="h">Triage at a Glance</h2></template>
-        <template if:true={error}><div class="err">{error}</div></template>
+        <template if:true={error}><div class="cq-msg crit err">{error}</div></template>
         <template if:true={ready}>
             <template if:true={triaged}><div class="triaged" title={triageNotes}><span class="okdot">&#10003;</span>{triageLine}</div></template>
             <div class="problem">
@@ -21,7 +21,7 @@
                     <template if:true={photoError}><div class="perr">{photoError}</div></template>
                 </div>
                 <div class="ptext">
-                    <div class="plabel">The Problem</div>
+                    <div class="cq-card-title">The Problem</div>
                     <div class="quote">{description}</div>
                     <div class="prow">
                         <div class="tiles">
@@ -30,10 +30,10 @@
                             </template>
                         </div>
                         <div class="actions">
-                            <template if:true={standalone}><button class="btn primary" onclick={handleAssistant}><span class="star w">&#10022;</span>Triage Assistant</button></template>
+                            <template if:true={standalone}><button class="cq-btn-ai" onclick={handleAssistant}><span class="star w">&#10022;</span>Triage Assistant</button></template>
                             <template if:true={standalone}>
-                                <button class="btn outline" onclick={handleEdit}>Edit</button>
-                                <template if:true={hasGaps}><button class="btn" onclick={handleGaps}>{gapsLabel}</button></template>
+                                <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
+                                <template if:true={hasGaps}><button class="cq-btn-outline" onclick={handleGaps}>{gapsLabel}</button></template>
                             </template>
                         </div>
                     </div>
@@ -47,7 +47,7 @@
             <div class="cards">
                 <template for:each={cards} for:item="c">
                     <div key={c.id} class={c.cls}>
-                        <div class="chead"><span class="ct">{c.title}</span><template if:true={c.isSuggestion}><c-cq-ai-why variant="star" lead="What does CQ.AI suggest for " subject={c.title} tail=", and why?"></c-cq-ai-why></template></div>
+                        <div class="chead"><span class="cq-card-title">{c.title}</span><template if:true={c.isSuggestion}><c-cq-ai-why variant="star" lead="What does CQ.AI suggest for " subject={c.title} tail=", and why?"></c-cq-ai-why></template></div>
                         <div class="cheadline">{c.headline}</div>
                         <div class="cwhy">{c.why}</div>
                         <template if:true={c.flag}><div class="cflag">{c.flag}</div></template>

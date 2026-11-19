@@ -1,9 +1,4 @@
 @import 'c/cqStyles';
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
-.err { padding: 10px 14px; border-radius: 8px; background: var(--cq-crit-bg); border: 1px solid var(--cq-crit-line); color: var(--cq-crit-fg); }
 .box { display: flex; flex-direction: column; border-radius: 12px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
-/* record header: the same layout as the Field Action and Field Action Review workspaces */
-.link { color: var(--cq-link); font-weight: 600; text-decoration: none; }
-.link:hover { text-decoration: underline; }
-.btn { min-height: 40px; padding: 0 16px 3px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
