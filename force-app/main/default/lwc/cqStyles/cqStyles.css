@@ -134,6 +134,8 @@ button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-o
 .cq-btn-outline:disabled, .cq-btn-primary:disabled, .cq-btn-ai:disabled { opacity: 0.45; cursor: not-allowed; }
 .cq-link { color: var(--cq-link); font-weight: 600; font-size: var(--cq-fs-meta); background: none; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .cq-link:hover { text-decoration: underline; }
+/* the same link as a button (it opens something in the page) */
+button.cq-link { padding: 0; font-family: inherit; }
 
 /* ============================ FORM FIELDS ============================== */
 /* one field = label + control (+ hint or error). Density comes from the tokens. */

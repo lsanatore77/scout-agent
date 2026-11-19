@@ -1,7 +1,7 @@
 <template>
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
-        <div class="box">
+        <div class="cq-box">
             <header class="cq-hl">
                 <div class="cq-hl-top">
                     <div class="cq-hl-who">
@@ -24,7 +24,7 @@
                     <div class="cq-hl-f"><span class="cq-hl-k">Status</span><span class="cq-hl-v">{v.status}</span></div>
                 </div>
             </header>
-            <div class="body">
+            <div class="cq-ws-body">
                 <nav class="cq-rail" aria-label="Field Action Steps">
                     <div class="cq-rail-title"><span class="star">&#10022;</span> CQ.AI Field Action Steps</div>
                     <template for:each={steps} for:item="s">
@@ -38,10 +38,10 @@
                     </template>
                     <div class="progress">{progress}</div>
                 </nav>
-                <div class="main">
+                <div class="cq-ws-main">
 
                     <template if:true={is0}>
-                        <h3 class="q">Field Action at a Glance</h3>
+                        <h3 class="cq-step-title">Field Action at a Glance</h3>
                         <div class="cols wide">
                             <div class="col lead">
                                 <div class="card sug sumcard">
@@ -54,9 +54,9 @@
                                         <span class="rk">{decidedLine}</span>
                                     </div>
                                     <template if:true={v.rationale}><div class="para">{v.rationale}</div></template>
-                                    <div class="tiles">
+                                    <div class="cq-tiles">
                                         <template for:each={tiles} for:item="t">
-                                            <div key={t.key} class="tile"><div class="tl">{t.label}</div><div class="tv">{t.value}</div></div>
+                                            <div key={t.key} class="cq-tile"><div class="cq-tile-k">{t.label}</div><div class="cq-tile-v">{t.value}</div></div>
                                         </template>
                                     </div>
                                 </div>
@@ -72,14 +72,14 @@
                                         <template for:each={reviews} for:item="r">
                                             <div key={r.id} class="revrow">
                                                 <span class="fn">
-                                                    <span><button class="link" data-id={r.id} onclick={handleOpen}>{r.name}</button> <span class="rk">{r.meta}</span></span>
+                                                    <span><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button> <span class="rk">{r.meta}</span></span>
                                                     <span class="rk">{r.approval}</span>
                                                     <template if:true={r.rationale}><span class="rk">{r.rationale}</span></template>
                                                 </span>
                                             </div>
                                         </template>
                                     </template>
-                                    <template if:false={hasReviews}><p class="note">No review is linked to this field action.</p></template>
+                                    <template if:false={hasReviews}><p class="cq-note">No review is linked to this field action.</p></template>
                                 </div>
                             </div>
                             <div class="card">
@@ -91,17 +91,17 @@
                                         </div>
                                     </template>
                                 </template>
-                                <template if:false={hasSignals}><p class="note">No signals at Assess or above on this part.</p></template>
+                                <template if:false={hasSignals}><p class="cq-note">No signals at Assess or above on this part.</p></template>
                             </div>
                         </div>
                     </template>
 
                     <template if:true={is1}>
-                        <div class="sechead"><h3 class="q nom">Scope</h3>
+                        <div class="sechead"><h3 class="cq-step-title nom">Scope</h3>
                             <template if:true={v.scope}><span class={scopePill}>{v.scope}</span></template>
                             <span class={statePill}>{stateText}</span>
                         </div>
-                        <template if:true={noScope}><p class="p top14">This field action has no scope set. It was decided before scope was part of the review.</p></template>
+                        <template if:true={noScope}><p class="cq-step-intro top14">This field action has no scope set. It was decided before scope was part of the review.</p></template>
 
                         <template if:true={hasLots}>
                             <div class="tbar">
@@ -110,17 +110,9 @@
                                     <button class={inTab} data-v="in" onclick={handleView} aria-pressed={inPressed}>In Scope</button>
                                 </div>
                                 <template if:true={pendingLine}><span class="pendline warn">{pendingLine}</span></template>
-                                <div class="cact">
-                                    <template if:true={isPartial}>
-                                        <button class="cq-btn-primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
-                                        <span class="vdiv"></span>
-                                    </template>
-                                    <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
-                                    <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>Next</button>
-                                </div>
                             </div>
-                            <div class="tblwrap tree" style={tableStyle}>
-                                <table class="lottable">
+                            <div class="cq-tblwrap tree" style={tableStyle}>
+                                <table class="cq-tbl">
                                     <thead><tr>
                                         <th class="cscope"><span class="sc"><button class="chev" onclick={handleAll} aria-label={allLabel} title={allLabel} aria-expanded={allExpanded}>{allChev}</button>Scope</span></th><th>Level / Item</th><th>Part &middot; Rev</th><th>Lot</th><th class="num">Qty</th><th>Supplier</th><th>Trace</th>
                                         <th class="num">Shipped</th><th class="num">On Hand</th><th>Location</th>
@@ -162,9 +154,9 @@
                                                             <template if:false={r.canOpen}>{r.onHandText}</template>
                                                             <template if:true={r.stockOpen}>
                                                                 <div class="pop" role="dialog" aria-label={r.popLabel}>
-                                                                    <div class="pophead"><span class="b">Lot {r.name}</span><span class="grow"></span><span class="rk">{r.onHandText} on hand</span></div>
+                                                                    <div class="pophead"><span class="b">Lot {r.name}</span><span class="cq-grow"></span><span class="rk">{r.onHandText} on hand</span></div>
                                                                     <template for:each={r.places} for:item="k">
-                                                                        <div key={k.key} class="poprow"><a class="ploc" href={k.href} target="_blank">{k.location}</a><span class="grow"></span><span>{k.units}</span></div>
+                                                                        <div key={k.key} class="poprow"><a class="ploc" href={k.href} target="_blank">{k.location}</a><span class="cq-grow"></span><span>{k.units}</span></div>
                                                                     </template>
                                                                     <span class="rk">{r.asOfText}</span>
                                                                 </div>
@@ -200,8 +192,8 @@
                                 </table>
                             </div>
                             <template if:true={hasPages}>
-                                <div class="pager">
-                                    <nav class="pages" aria-label="Lot pages">
+                                <div class="cq-pager">
+                                    <nav class="cq-pages" aria-label="Lot pages">
                                         <button class="pg" onclick={handlePrevPage} disabled={cantPrevPage} aria-label="Previous page">&laquo;</button>
                                         <template for:each={pageItems} for:item="p">
                                             <button key={p.key} class={p.cls} data-p={p.p} onclick={handlePage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
@@ -211,7 +203,7 @@
                                 </div>
                             </template>
                         </template>
-                        <template if:false={hasLots}><p class="note">No lots of this part were found.</p></template>
+                        <template if:false={hasLots}><p class="cq-note">No lots of this part were found.</p></template>
 
                         <div class="sec">
                             <div class="lab">Scope Changes</div>
@@ -220,7 +212,7 @@
                                     <div key={c.key} class="logrow"><span class="logwhen">{c.at}</span><span class="fn"><span>{c.line}</span><span class="rk">{c.by}</span></span></div>
                                 </template>
                             </template>
-                            <template if:false={hasChanges}><p class="note">No confirmed changes yet.</p></template>
+                            <template if:false={hasChanges}><p class="cq-note">No confirmed changes yet.</p></template>
                         </div>
                     </template>
 
@@ -235,16 +227,17 @@
                     </template>
 
                     <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
-                    <template if:true={showFoot}>
-                    <div class="foot">
+                    <div class="cq-ws-foot">
                         <template if:true={showStepAction}>
-                            <span class="fblock">{foot.blocker}</span>
+                            <span class="cq-blocker">{foot.blocker}</span>
                             <button class="cq-btn-primary" onclick={handleStepAction} disabled={foot.disabled}>{foot.label}</button>
                         </template>
+                        <template if:true={is1}><template if:true={isPartial}><template if:true={hasLots}>
+                            <button class="cq-btn-primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
+                        </template></template></template>
                         <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
                         <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
                     </div>
-                    </template>
                 </div>
             </div>
         </div>
