@@ -67,7 +67,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get lotText() { return this.dash(this.v.lot); }
     get stageText() { return this.v.stage ? this.v.stage.replace(/\s*\/\s*/, ' / ') : '—'; }
     get riskText() { return this.dash(this.v.risk); }
-    get riskCls() { return 'v lvl ' + (this.v.risk ? this.v.risk.toLowerCase() : ''); }
+    get riskCls() { return 'cq-hl-v lvl ' + (this.v.risk ? this.v.risk.toLowerCase() : ''); }
     get dueText() { return this.dateText(this.v.dispDue); }
     get ownerText() { return this.dash(this.v.owner); }
     get partHref() { return '/lightning/r/compliancequest__SQX_Part__c/' + this.v.partId + '/view'; }
@@ -171,7 +171,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
                 rows: f ? f.rows.map((r, ri) => ({
                     ...r, idx: ri, canRemove: f.rows.length > 1, needsWhy: r.type === USE_AS_IS,
                     typeOpts: types.map((t) => ({ label: t, pressed: String(r.type === t),
-                        cls: 'opt' + (r.type === t ? ' on' : t === this.v.suggestType ? ' sug' : '') }))
+                        cls: 'cq-chip' + (t === this.v.suggestType ? ' ai' : '') }))
                 })) : []
             };
         });
@@ -245,7 +245,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get completeLabel() { return this.saving ? 'Completing…' : 'Complete Disposition'; }
     get cantBack() { return this.step === 0; }
     get cantNext() { return this.step >= STEPS.length - 1; }
-    get nextCls() { return 'btn' + (this.cantNext ? '' : ' primary'); }
+    get nextCls() { return this.cantNext ? 'cq-btn-outline' : 'cq-btn-primary'; }
 
     go(i) {
         this.step = i;
