@@ -4,7 +4,6 @@
 .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .cols.wide { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
 .top8 { margin-top: 16px; }
-.top16 { margin-top: 16px; }
 .strong { font-weight: 700; }
 .green { color: var(--cq-pos-fg); }
 .amber { color: var(--cq-warn-fg); }
@@ -24,12 +23,6 @@
 .count { font-weight: 700; font-variant-numeric: tabular-nums; }
 .qtymsg { margin: 0; color: var(--cq-crit-fg); }
 .drow { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 8px; background: var(--cq-surface); border: 1px solid var(--cq-line); }
-.fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
-.opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.splitline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.splitline .cq-note { margin: 0; }
-.ownbox { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-line); background: var(--cq-surface); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
-.ownbox strong { color: var(--cq-ink); }
 @media (max-width: 760px) { .cols, .cols.wide { grid-template-columns: 1fr; } }
 /* shared pieces keep this screen's spacing */
 .pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -38,7 +31,5 @@
 .cq-ai-card { min-width: 0; }
 .cq-ai-card.fsug { padding: 10px 12px; font-size: 14px; }
 .cq-msg.warn { margin: 8px 0 14px; }
-.cq-msg.errbox { margin-top: 12px; }
-.cq-field.growf { flex: 1 1 220px; }
 .cq-field input.qty { width: 110px; }
 .cq-field input.date { width: 170px; }

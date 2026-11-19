@@ -2,21 +2,9 @@
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
 .star { color: var(--cq-accent); margin-right: 5px; }
-.top16 { margin-top: 16px; }
-.whyv { font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
-.fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
-.opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-.opts.tight { margin-top: 0; gap: 8px; }
-.splitline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.splitline .cq-note { margin: 0; }
-.ownbox { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-line); background: var(--cq-surface); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
-.sughead { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--cq-accent); }
-.sughead .star { margin-right: 0; }
+.cq-ai-head .star { margin-right: 0; }
 .spin { position: relative; display: inline-block; width: 24px; height: 24px; }
-.nowrap { white-space: nowrap; }
-.cq-note.sm0 { margin: 0; }
 .spinwrap { display: flex; align-items: center; gap: 10px; min-height: 40px; }
-.ruleicon { --slds-c-icon-color-foreground-default: var(--cq-accent); }
 .smalllink { font-size: 13px; color: var(--cq-link); cursor: pointer; }
 .smalllink:hover { text-decoration: underline; }
 .fromcard { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-hl-line); background: var(--cq-surface); display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
@@ -103,7 +91,6 @@
 .cq-ai-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 14px; }
 .cq-card-title { margin-bottom: 6px; }
 .cq-card-title.nomb { margin-bottom: 0; }
-.cq-field.owner { flex: 0 1 260px; min-width: 200px; }
 .cq-field input.date { width: 170px; }
 .cq-field textarea.hk, .cq-field textarea.cell { min-height: 48px; }
 .cq-field textarea.cell { font-size: 13px; }
@@ -113,8 +100,6 @@
 .cq-field textarea.newta { min-height: 72px; }
 .cq-field.sel select { max-width: 240px; }
 .cq-field.sel.code select { min-width: 200px; }
-.cq-msg.errbox, .cq-msg.okbox { margin-top: 12px; }
-.cq-msg.okbox { font-weight: 600; }
 .cq-btn-outline.selbtn { border-color: var(--cq-link); background: var(--cq-link-soft); color: var(--cq-link); }
 /* small chips inside a table row; Against, when chosen, is red */
 .cq-chip.xs { min-height: 26px; padding: 0 10px 1px; font-size: 13px; }

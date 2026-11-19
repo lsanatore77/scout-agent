@@ -11,14 +11,14 @@
         <!-- Hypotheses -->
         <template if:true={onHyp}>
             <template if:true={noHyps}>
-                <div class="ownbox">No hypotheses yet. Add them from What Changed or Check History with Add as Hypothesis.</div>
+                <div class="cq-infobox">No hypotheses yet. Add them from What Changed or Check History with Add as Hypothesis.</div>
             </template>
             <template if:true={hasHyps}>
                 <div class="cq-ai-card">
-                    <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                    <div class="whyv">{hypStandsOut}</div>
+                    <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                    <div class="cq-ai-says">{hypStandsOut}</div>
                 </div>
-                <div class="cq-tblwrap top16">
+                <div class="cq-tblwrap cq-mt16">
                     <table class="cq-tbl">
                         <thead><tr><th>Hypothesis</th><th>Category</th><th><span class="star">&#10022;</span>CQ.AI Suggests</th><th>Status</th><th>Tests</th><th></th></tr></thead>
                         <tbody>
@@ -32,7 +32,7 @@
                                         <template if:true={h.canPlan}><button class="cq-btn-outline top6" data-id={h.id} onclick={handlePlan}>Plan This Test</button></template>
                                     </td>
                                     <td><span class={h.statusCls}>{h.status}</span></td>
-                                    <td class="nowrap">{h.tests}</td>
+                                    <td class="cq-nowrap">{h.tests}</td>
                                     <td><button class={h.btnCls} data-id={h.id} onclick={handleSelect}>{h.btn}</button></td>
                                 </tr>
                             </template>
@@ -60,7 +60,7 @@
                             <div class="cq-note sm0 cq-strong">{selHead}</div>
                             <div class="seltitle">{sel.title}</div>
                         </div>
-                        <div class="opts tight">
+                        <div class="cq-opts tight">
                             <template for:each={statusOpts} for:item="s">
                                 <button key={s.label} class={s.cls} aria-pressed={s.pressed} data-s={s.label} onclick={handleStatus} disabled={saving}>{s.label}</button>
                             </template>
@@ -96,10 +96,10 @@
                         </template>
                     </div>
                     <p class="cq-note sm0">To keep an Ask CQ.AI answer here, ask it in Ask CQ.AI above and click Add to Evidence under the answer.</p>
-                    <label class="cq-field top16"><span class="cq-label">How Do You Know?<span class="cq-req">*</span></span>
+                    <label class="cq-field cq-mt16"><span class="cq-label">How Do You Know?<span class="cq-req">*</span></span>
                         <textarea class="hk" rows="2" value={howKnowText} data-val={howKnowText} oninput={handleHowKnow} placeholder="For example, pin measured 0.12 mm under nominal; only BF-02 units leak"></textarea>
                     </label>
-                    <div class="splitline">
+                    <div class="cq-splitline">
                         <span class="cq-note sm0"><template if:true={howKnowPrefilled}>Prefilled from the evidence. </template>It becomes the CQ root cause&rsquo;s Justification.</span>
                         <template if:true={howKnowDirty}><button class="cq-btn-outline" onclick={handleSaveHowKnow} disabled={saving}>Save</button></template>
                     </div>
@@ -116,10 +116,10 @@
                     <tbody>
                         <template for:each={isTable} for:item="r">
                             <tr key={r.key}>
-                                <td class="cq-strong nowrap">{r.label}</td>
+                                <td class="cq-strong cq-nowrap">{r.label}</td>
                                 <td><div class="cq-field"><textarea class="cell" rows="2" data-k={r.key} data-f="isText" value={r.isText} data-val={r.isText} onchange={handleIsField} aria-label="Is"></textarea></div></td>
                                 <td><div class="cq-field"><textarea class="cell" rows="2" data-k={r.key} data-f="isNotText" value={r.isNotText} data-val={r.isNotText} onchange={handleIsField} aria-label="Is Not"></textarea></div></td>
-                                <td class="nowrap">
+                                <td class="cq-nowrap">
                                     <template for:each={r.fits} for:item="f">
                                         <button key={f.key} class={f.cls} title={f.title} data-h={f.hypId} data-r={f.row} onclick={handleFit} disabled={saving}>{f.mark} {f.label}</button>
                                     </template>
@@ -129,11 +129,11 @@
                     </tbody>
                 </table>
             </div>
-            <div class="cq-ai-card top16">
-                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                <div class="whyv">{isStandsOut}</div>
+            <div class="cq-ai-card cq-mt16">
+                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                <div class="cq-ai-says">{isStandsOut}</div>
             </div>
-            <div class="bar top16">
+            <div class="bar cq-mt16">
                 <span class="cq-grow cq-note sm0">Saved to CQ&rsquo;s 5W2H on {v.investigationName}, Is and Is Not in each field.</span>
                 <button class="cq-btn-outline" onclick={handleSaveIs} disabled={cantSaveIs}>Save Is / Is Not</button>
                 <template if:true={ruleOutLabel}><button class="cq-btn-outline" onclick={handleRuleOut} disabled={saving}>{ruleOutLabel}</button></template>
@@ -142,7 +142,7 @@
 
         <!-- 5 Why -->
         <template if:true={onWhy}>
-            <template if:false={hasWhyHyp}><div class="ownbox">Add a hypothesis first; each one can have its own 5 Why.</div></template>
+            <template if:false={hasWhyHyp}><div class="cq-infobox">Add a hypothesis first; each one can have its own 5 Why.</div></template>
             <template if:true={hasWhyHyp}>
                 <div class="forrow">
                     <span class="cq-strong">For</span>
@@ -177,11 +177,11 @@
                     </template>
                     <div><button class="cq-btn-outline" onclick={handleWhyAdd}>+ Add Why</button></div>
                 </div>
-                <div class="cq-ai-card top16">
-                    <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                    <div class="whyv">{whyStandsOut}</div>
+                <div class="cq-ai-card cq-mt16">
+                    <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                    <div class="cq-ai-says">{whyStandsOut}</div>
                 </div>
-                <div class="bar top16">
+                <div class="bar cq-mt16">
                     <span class="cq-grow cq-note sm0">Saved in CQ&rsquo;s own 5 Why on the investigation<template if:true={whyToolHref}> (<a class="cq-link" href={whyToolHref} target="_blank">{whyToolName}</a>)</template>, a 5 Why tool with its Why records. Evidence can be added to a why once it is saved.</span>
                     <template if:true={whyDirty}><button class="cq-btn-outline" onclick={handleWhyUndo}>Undo</button></template>
                     <button class="cq-btn-primary" onclick={handleSaveWhy} disabled={cantSaveWhy}>Save 5 Why</button>
@@ -220,20 +220,20 @@
                 </div>
                 <div class="fishhead">{fishHead}<div class="cq-note sm0">{fishHeadSub}</div></div>
             </div>
-            <div class="cq-ai-card top16">
-                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                <div class="whyv">{fishStandsOut}</div>
+            <div class="cq-ai-card cq-mt16">
+                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                <div class="cq-ai-says">{fishStandsOut}</div>
             </div>
         </template>
 
         <!-- Root Causes -->
         <template if:true={onRoots}>
             <div class="cq-ai-card">
-                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                <div class="whyv">{rootStandsOut}</div>
+                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                <div class="cq-ai-says">{rootStandsOut}</div>
             </div>
             <template if:true={hasRoots}>
-                <div class="cq-tblwrap top16">
+                <div class="cq-tblwrap cq-mt16">
                     <table class="cq-tbl">
                         <thead><tr><th>Root Cause</th><th>Role</th><th>Category</th><th>CQ Cause Code</th><th>Evidence</th><th>Verified</th><th></th></tr></thead>
                         <tbody>
@@ -244,7 +244,7 @@
                                         <template if:false={r.isNew}><div class="cq-strong">{r.text}</div></template>
                                         <div class="cq-note sm0">{r.source}<template if:true={r.savedHref}> &middot; <a class="cq-link" href={r.savedHref} target="_blank">In CQ</a></template></div>
                                     </td>
-                                    <td class="nowrap">
+                                    <td class="cq-nowrap">
                                         <div class="roles">
                                             <template for:each={r.roleOpts} for:item="o">
                                                 <button key={o.label} class={o.cls} aria-pressed={o.pressed} data-i={r.idx} data-v={o.label} onclick={handleRootRole}>{o.label}</button>
@@ -272,7 +272,7 @@
                 </div>
                 <p class="cq-note">Rows come from confirmed hypotheses and the whys marked Root Cause in their 5 Why; root causes already in CQ show here too. There can be more than one Primary. Evidence starts from the evidence on the why, or How Do You Know?</p>
             </template>
-            <div class="bar top16">
+            <div class="bar cq-mt16">
                 <span class="cq-grow cq-note sm0"><strong>On Save Root Causes:</strong> each row is saved as a CQ root cause on {v.investigationName} with its role, category, cause code, the evidence as justification, and Verified. Ruled-out hypotheses stay on the investigation with their evidence.</span>
                 <button class="cq-btn-outline" onclick={handleRootAdd}>+ Add Root Cause</button>
             </div>
@@ -356,7 +356,7 @@
                                     <input type="text" data-k="result" value={form.result} oninput={handleFormField} placeholder="For example, pin 0.12 mm under nominal">
                                 </label>
                             </template>
-                            <div class="fields">
+                            <div class="cq-fields">
                                 <div class="cq-field owner"><span class="cq-label">Owner</span>
                                     <lightning-record-picker label="Owner" variant="label-hidden" object-api-name="User" placeholder="You, if left empty" value={form.ownerId} onchange={handleFormOwner}></lightning-record-picker>
                                 </div>

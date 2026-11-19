@@ -3,9 +3,6 @@
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
 /* the heading sits in a row with its status, so the intro keeps its own gap */
 .cq-step-intro { margin-top: 10px; }
-.sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.rk { display: block; font-size: 13px; font-weight: 400; color: var(--cq-muted); }
-.rk.in { display: inline; }
 .b { font-weight: 600; }
 
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
@@ -34,5 +31,4 @@
 .capaopts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .or { font-size: 13px; color: var(--cq-muted); }
 /* shared fields, buttons, pills and messages come from cqStyles */
-.cq-msg.errbox { margin-top: 12px; }
 .capaopts select { flex: 1; width: auto; }

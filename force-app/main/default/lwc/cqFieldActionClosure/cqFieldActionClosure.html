@@ -1,10 +1,10 @@
 <template>
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
-        <div class="sechead">
+        <div class="cq-sechead">
             <h3 class="cq-step-title nom">Closure</h3>
             <span class={statePill}>{stateText}</span>
-            <template if:true={closedLine}><span class="rk in">{closedLine}</span></template>
+            <template if:true={closedLine}><span class="cq-sub">{closedLine}</span></template>
         </div>
         <p class="cq-step-intro">{intro}</p>
 
@@ -15,7 +15,7 @@
                     <template for:each={checks} for:item="c">
                         <div key={c.key} class="lrow">
                             <span class={c.markCls} aria-hidden="true">{c.mark}</span>
-                            <span class="fn"><span class="b">{c.text}</span><span class="rk">{c.detail}</span>
+                            <span class="fn"><span class="b">{c.text}</span><span class="cq-sub block">{c.detail}</span>
                                 <template if:true={c.createCapa}><button class="mklink" onclick={handleCreateCapa}>Create CAPA</button></template>
                             </span>
                         </div>
@@ -36,7 +36,7 @@
                         <span class="cq-label">CAPA<span class="cq-req">*</span></span>
                         <template if:true={hasCapa}>
                             <div class="capa">
-                                <span class="fn"><a class="clink" href={capaUrl} target="_blank">{v.capaName}</a><span class="rk">{v.capaTitle}</span></span>
+                                <span class="fn"><a class="clink" href={capaUrl} target="_blank">{v.capaName}</a><span class="cq-sub block">{v.capaTitle}</span></span>
                                 <template if:true={v.capaStatus}><span class={capaStatusCls}>{v.capaStatus}</span></template>
                                 <template if:false={locked}><button class="cq-btn-outline" onclick={handleUnlink} disabled={busy}>Unlink</button></template>
                             </div>
