@@ -1,78 +1,30 @@
 @import 'c/cqStyles';
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
-.box { display: flex; flex-direction: column; border-radius: 12px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
-/* steps and main area: the same layout as the triage workspace in the page */
-.body { display: flex; min-height: 460px; }
-.star { color: var(--cq-accent); margin-right: 5px; }
-.main { flex: 1; min-width: 0; padding: 20px; border-radius: 0 0 12px 0; }
-.q { margin: 0 0 14px; font-size: 20px; font-weight: 700; }
-.q.nom { margin: 0; }
-.p { margin: -6px 0 14px; color: var(--cq-muted); max-width: 72ch; }
 .cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .cols.wide { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
 .top8 { margin-top: 16px; }
 .top16 { margin-top: 16px; }
-.muted { color: var(--cq-muted); }
-.note { margin: 8px 0 0; font-size: 13px; color: var(--cq-muted); }
-.strong { font-weight: 700; }
-.green { color: var(--cq-pos-fg); }
-.amber { color: var(--cq-warn-fg); }
 .red { color: var(--cq-crit-fg); }
 .lvl { font-weight: 700; }
 .lvl.low { color: var(--cq-pos-fg); }
 .lvl.medium { color: var(--cq-warn-fg); }
 .lvl.high { color: var(--cq-crit-fg); }
 .prob { margin: 0; font-size: 14px; line-height: 1.45; }
-.big { font-size: 20px; font-weight: 700; }
 .whyv { font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
-.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-.tile { padding: 6px 10px; border-radius: 6px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
-.tl { font-size: 11px; color: var(--cq-muted); }
-.tv { font-size: 13px; font-weight: 700; }
-.tblwrap { overflow-x: auto; border: 1px solid var(--cq-line); border-radius: 8px; }
-.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
-.tbl th { padding: 8px 12px; background: var(--cq-hl-bg); text-align: left; font-weight: 600; white-space: nowrap; }
-.tbl td { padding: 10px 12px; border-top: 1px solid var(--cq-hl-line); vertical-align: top; }
-.tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
-.tbl td.wide { width: 100%; min-width: 220px; }
-.tbl td.ttl { min-width: 180px; max-width: 320px; }
+.cq-tbl td.ttl { min-width: 180px; max-width: 320px; }
 .plainbtn { padding: 0; border: none; background: none; font-family: inherit; }
-.yours { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); min-width: 0; }
 .triaged { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--cq-pos-bg); color: var(--cq-pos-fg); font-weight: 600; margin-bottom: 8px; }
-.flist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; line-height: 1.5; }
-.plainlist { padding-left: 0; list-style: none; }
-/* Dispose by Lot */
-.lot { padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
-.lothead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.lotname { font-size: 15px; font-weight: 700; }
-.grow { flex: 1 1 auto; }
-.count { font-weight: 700; font-variant-numeric: tabular-nums; }
-.fsug { padding: 10px 12px; border-radius: 4px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); font-size: 14px; }
-.drow { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 8px; background: var(--cq-surface); border: 1px solid var(--cq-line); }
 .fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
 .opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .opts.tight { margin-top: 0; gap: 8px; }
 .splitline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.splitline .note { margin: 0; }
+.splitline .cq-note { margin: 0; }
 .ownbox { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-line); background: var(--cq-surface); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
 .ownbox strong { color: var(--cq-ink); }
-/* done */
-.donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.okdot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: 13px; font-weight: 700; flex: none; }
-.okdot.sm { width: 18px; height: 18px; font-size: 10px; }
-.row { display: flex; align-items: center; gap: 12px; box-sizing: border-box; padding: 8px 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); max-width: 760px; }
-.row.slim { min-height: 44px; margin-bottom: 8px; }
-.dk { flex: 0 0 220px; color: var(--cq-muted); }
-.dv { flex: 1 1 auto; min-width: 0; font-weight: 600; }
-/* footer: blocker, the step's confirm button, Back, Next, at the bottom right of the work area */
-.foot { display: flex; align-items: center; gap: 12px; padding: 0 20px 20px 264px; }
-.blocker { color: var(--cq-warn-fg); font-weight: 600; }
-@media (max-width: 760px) { .body { flex-direction: column; } .cols, .cols.wide { grid-template-columns: 1fr; } .foot { padding-left: 20px; flex-wrap: wrap; } .dk { flex-basis: 120px; } }
+@media (max-width: 760px) { .cols, .cols.wide { grid-template-columns: 1fr; } }
 /* Investigation workspace additions */
 .sughead { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--cq-accent); }
-.sughead .star { margin-right: 0; }
-.drow { margin-bottom: 12px; }
 .spin { position: relative; display: inline-block; width: 24px; height: 24px; }
 /* What Changed */
 .lookback { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0; }
@@ -102,19 +54,13 @@
 .tl-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--cq-muted); }
 .lg.change { color: var(--cq-accent); } .lg.lot { color: var(--cq-link); } .lg.band { color: var(--cq-warn-fg); } .lg-shade { color: var(--cq-accent); }
 .nowrap { white-space: nowrap; }
-.note.sm0 { margin: 0; }
+.cq-note.sm0 { margin: 0; }
 .added { color: var(--cq-pos-fg); font-weight: 600; white-space: nowrap; }
-.formrow td { background: var(--cq-link-soft); border-top: none; }
-.hypform { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
 .notincq { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--cq-line); background: var(--cq-surface); margin: 14px 0; }
 .addchange { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 10px; border: 2px solid var(--cq-link); background: var(--cq-link-soft); margin: 14px 0; }
 .big2 { font-size: 15px; }
 .hyprow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--cq-line); }
 .spinwrap { display: flex; align-items: center; gap: 10px; min-height: 40px; }
-/* the timeline's lot marks share the class "lot" with the lot cards above: keep the card padding and border off them */
-.tl-dot.lot, .tl-line.lot, .lg.lot { padding: 0; margin-bottom: 0; display: inline-block; gap: 0; }
-.tl-line.lot, .lg.lot { border: none; border-radius: 0; }
-.tl-box.lot { display: block; margin-bottom: 0; }
 .tl-text::first-letter { text-transform: uppercase; }
 /* a little space between the date labels and the shaded 14 days */
 .tl-tick { margin-top: -10px; }
@@ -133,20 +79,7 @@
 .smalllink { font-size: 13px; color: var(--cq-link); cursor: pointer; }
 .smalllink:hover { text-decoration: underline; }
 .dismissed { display: inline-flex; align-items: center; gap: 6px; }
-/* Add as Hypothesis popup */
-.modal-back { position: fixed; inset: 0; z-index: 9000; background: rgba(8, 7, 7, .45); display: flex; align-items: flex-start; justify-content: center; padding: 10vh 16px 16px; }
-.modal { width: 100%; max-width: 640px; background: var(--cq-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
-.modal-head { position: relative; padding: 16px 52px; border-bottom: 1px solid var(--cq-hl-line); text-align: center; }
-.modal-title { margin: 0; font-size: 20px; font-weight: 700; }
-.modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
-.modal-x:hover { background: var(--cq-hl-bg); }
-.modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 60vh; overflow-y: auto; }
-.modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--cq-hl-line); background: var(--cq-hl-bg); }
 .fromcard { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-hl-line); background: var(--cq-surface); display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
-/* Add Action popup: the Owner search list opens below the box, so the popup does not clip it */
-.modal.popov { overflow: visible; }
-.modal.popov .modal-body { overflow: visible; max-height: none; }
-.modal.popov .modal-foot { border-radius: 0 0 8px 8px; }
 /* CQ.AI Suggested Summary on Conclusion */
 .ibtn { display: inline-flex; align-items: center; gap: 6px; }
 .sumbusy { box-sizing: border-box; min-height: 200px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-surface); color: var(--cq-muted); font-size: 14px; font-weight: 400; }
@@ -154,8 +87,6 @@
 @keyframes pspin { to { transform: rotate(360deg); } }
 .sumask { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0 0; }
 /* shared pieces keep this screen's spacing */
-.link { color: var(--cq-link); font-weight: 600; text-decoration: none; }
-.link:hover { text-decoration: underline; }
 .pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .cq-ai-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 14px; }
 .cq-card-title { margin-bottom: 6px; }
