@@ -67,14 +67,14 @@
                                 </div>
                             </div>
                             <div class="cq-ai-card">
-                                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> Where This Stands</div>
-                                <div class="whyv">{standsText}</div>
-                                <template if:true={recurGlance}><div class="whyv redtext">{recurGlance}</div></template>
-                                <template if:true={gapsText}><div class="whyv"><strong>Gaps:</strong> {gapsText}</div></template>
-                                <div class="whyv"><strong>Next:</strong> {nextText}</div>
+                                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> Where This Stands</div>
+                                <div class="cq-ai-says">{standsText}</div>
+                                <template if:true={recurGlance}><div class="cq-ai-says redtext">{recurGlance}</div></template>
+                                <template if:true={gapsText}><div class="cq-ai-says"><strong>Gaps:</strong> {gapsText}</div></template>
+                                <div class="cq-ai-says"><strong>Next:</strong> {nextText}</div>
                             </div>
                         </div>
-                        <div class="cq-card-title top16">What We Already Know</div>
+                        <div class="cq-card-title cq-mt16">What We Already Know</div>
                         <div class="cq-tblwrap">
                             <table class="cq-tbl">
                                 <thead><tr><th>Source</th><th>What It Says</th><th>Status</th></tr></thead>
@@ -100,8 +100,8 @@
                         <template if:true={wcLoading}><div class="spinwrap"><lightning-spinner alternative-text="Reading the changes" size="small" class="spin"></lightning-spinner><span class="cq-muted">Reading the changes CQ holds…</span></div></template>
                         <template if:true={wcReady}>
                             <div class="cq-ai-card">
-                                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                                <div class="whyv">{standOut}</div>
+                                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                                <div class="cq-ai-says">{standOut}</div>
                             </div>
                             <div class="lookback">
                                 <span class="cq-strong">Look Back</span>
@@ -150,10 +150,10 @@
                                                         <template if:true={r.byHand}><span class="cq-pill soft neu">Added by You</span><div class="cq-note">{r.category}</div></template>
                                                     </td>
                                                     <td>{r.whatChanged}</td>
-                                                    <td class="nowrap"><div class="cq-strong">{r.whenText}</div><div class="cq-note sm0">{r.rel}</div></td>
+                                                    <td class="cq-nowrap"><div class="cq-strong">{r.whenText}</div><div class="cq-note sm0">{r.rel}</div></td>
                                                     <td class="cq-muted">{r.foundIn}</td>
                                                     <td><span class={r.ratingCls}>{r.rating}</span></td>
-                                                    <td class="nowrap">
+                                                    <td class="cq-nowrap">
                                                         <template if:true={r.added}><span class="added">{r.added}</span></template>
                                                         <template if:true={r.canAdd}><button class="cq-btn-outline" data-key={r.key} onclick={handleHypOpen}>Add as Hypothesis</button></template>
                                                     </td>
@@ -175,7 +175,7 @@
                             <template if:true={changeForm}>
                                 <div class="addchange">
                                     <div class="cq-strong big2">Add a Change</div>
-                                    <div class="fields">
+                                    <div class="cq-fields">
                                         <label class="cq-field growf"><span class="cq-label">What Changed<span class="cq-req">*</span></span>
                                             <input type="text" value={changeForm.whatChanged} data-f="whatChanged" onchange={handleChangeField} placeholder="For example, locating pin not checked after the fixture move">
                                         </label>
@@ -190,7 +190,7 @@
                                             </template>
                                         </div>
                                     </div>
-                                    <div class="fields">
+                                    <div class="cq-fields">
                                         <label class="cq-field growf"><span class="cq-label">Where Found</span>
                                             <input type="text" value={changeForm.whereFound} data-f="whereFound" onchange={handleChangeField} placeholder="For example, maintenance log, line 3">
                                         </label>
@@ -198,7 +198,7 @@
                                             <input type="text" value={changeForm.reference} data-f="reference" onchange={handleChangeField} placeholder="Optional">
                                         </label>
                                     </div>
-                                    <div class="opts tight">
+                                    <div class="cq-opts tight">
                                         <button class="cq-btn-primary" onclick={handleChangeSave} disabled={cantSaveChange}>Save Change</button>
                                         <button class="cq-btn-outline" onclick={handleChangeSaveHyp} disabled={cantSaveChangeHyp}>Save and Add as Hypothesis</button>
                                         <button class="cq-btn-outline" onclick={handleChangeCancel}>Cancel</button>
@@ -227,8 +227,8 @@
                         <template if:true={histLoading}><div class="spinwrap"><lightning-spinner alternative-text="Reading the history" size="small" class="spin"></lightning-spinner><span class="cq-muted">Ranking past records on this part…</span></div></template>
                         <template if:true={histReady}>
                             <div class="cq-ai-card">
-                                <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                                <div class="whyv">{histStandOut}</div>
+                                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
+                                <div class="cq-ai-says">{histStandOut}</div>
                             </div>
                             <template for:each={recurBoxes} for:item="r">
                                 <div key={r.key} class="recur">
@@ -238,7 +238,7 @@
                                         <div class={r.efrCls}><a class="redlink" href={r.efrHref} target="_blank">{r.efrName}</a>{r.efrText}</div>
                                     </template>
                                     <template if:true={r.noReview}><div class="lh cq-muted">{r.capaName} closed with no effectiveness review on record.</div></template>
-                                    <div class="opts tight top8x">
+                                    <div class="cq-opts tight top8x">
                                         <template if:true={r.added}><span class="added">{r.added}</span></template>
                                         <template if:true={r.canAdd}><button class="cq-btn-outline" data-key={r.histKey} onclick={handleHistHypOpen}>Add as Hypothesis</button></template>
                                         <a class="cq-btn-outline linkbtn" href={r.capaHref} target="_blank">Open {r.capaName}</a>
@@ -246,7 +246,7 @@
                                 </div>
                             </template>
                             <template if:true={hasHistRows}>
-                                <div class="cq-tblwrap top16">
+                                <div class="cq-tblwrap cq-mt16">
                                     <table class="cq-tbl">
                                         <thead><tr><th>Record</th><th>What Happened</th><th>Root Cause</th><th>How It Was Fixed</th><th>Match</th><th></th></tr></thead>
                                         <tbody>
@@ -264,7 +264,7 @@
                                                         <div class="cq-note sm0">{r.fixNote}</div>
                                                     </td>
                                                     <td><span class={r.matchCls}>{r.matchText}</span><div class="cq-note sm0">{r.why}</div></td>
-                                                    <td class="nowrap">
+                                                    <td class="cq-nowrap">
                                                         <div class="actcol">
                                                             <template if:true={r.added}><span class="added">{r.added}</span></template>
                                                             <template if:true={r.canAdd}><button class="cq-btn-outline" data-key={r.key} onclick={handleHistHypOpen}>Add as Hypothesis</button></template>
@@ -296,7 +296,7 @@
                                                         <td><a class="cq-link" href={r.href} target="_blank">{r.name}</a><div class="cq-note sm0">{r.sub}</div></td>
                                                         <td>{r.what}</td>
                                                         <td><span class={r.matchCls}>{r.matchText}</span><div class="cq-note sm0">{r.why}</div></td>
-                                                        <td class="nowrap"><a class="smalllink" data-key={r.key} onclick={handleNotRelevant}>Not Relevant</a></td>
+                                                        <td class="cq-nowrap"><a class="smalllink" data-key={r.key} onclick={handleNotRelevant}>Not Relevant</a></td>
                                                     </tr>
                                                 </template>
                                             </tbody>
@@ -312,7 +312,7 @@
                                     </template>
                                 </div>
                             </template>
-                            <div class="cq-card-title top16">How These Were Found</div>
+                            <div class="cq-card-title cq-mt16">How These Were Found</div>
                             <p class="cq-note sm0 lh">The same relevance ranking as the Product History Review: the part, its bill of materials components and products that share them; the words in the title and description, the defect code and failed inspections; and whether the record is open or recent. Red meets three of these, Yellow two. Records you mark Not Relevant drop off this list for this investigation.</p>
                         </template>
                         <template if:true={histError}><div class="cq-msg crit errbox">{histError}</div></template>
@@ -337,10 +337,10 @@
                                             <tr key={p.key}>
                                                 <td class="ttl"><div class="cq-strong">{p.title}</div><template if:true={p.unsaved}><div class="cq-note sm0">Not saved yet</div></template></td>
                                                 <td class="wide">{p.descText}</td>
-                                                <td class="nowrap">{p.type}</td>
-                                                <td class="nowrap">{p.ownerText}</td>
-                                                <td class="nowrap">{p.dueText}</td>
-                                                <td class="nowrap"><button class="smalllink plainbtn" data-i={p.idx} onclick={handleEditPlan}>Edit</button><span class="cq-note sm0"> &middot; </span><button class="smalllink plainbtn" data-i={p.idx} onclick={handleRemovePlan}>Remove</button></td>
+                                                <td class="cq-nowrap">{p.type}</td>
+                                                <td class="cq-nowrap">{p.ownerText}</td>
+                                                <td class="cq-nowrap">{p.dueText}</td>
+                                                <td class="cq-nowrap"><button class="smalllink plainbtn" data-i={p.idx} onclick={handleEditPlan}>Edit</button><span class="cq-note sm0"> &middot; </span><button class="smalllink plainbtn" data-i={p.idx} onclick={handleRemovePlan}>Remove</button></td>
                                             </tr>
                                         </template>
                                     </tbody>
@@ -348,9 +348,9 @@
                             </div>
                         </template>
                         <template if:false={hasPlans}><p class="cq-note">No actions yet. Add one for each thing to be done.</p></template>
-                        <div class="splitline top8"><button class="cq-btn-outline" onclick={handleAddPlan}>+ Add Action</button><span class="cq-grow"></span><button class="cq-btn-outline" onclick={handlePlanDoc} title="Build an FDA warning letter response or an 8D customer report from these actions">Create Action Plan Document</button></div>
-                        <template if:true={planDocNote}><div class="ownbox top8"><strong>Action Plan Document:</strong> {planDocNote}</div></template>
-                        <div class="ownbox top16"><strong>What happens to these:</strong> they are saved as CQ action plans on the investigation. When the investigation is complete, the NC moves to Implement and CQ turns them into actions with their owners and due dates.</div>
+                        <div class="cq-splitline top8"><button class="cq-btn-outline" onclick={handleAddPlan}>+ Add Action</button><span class="cq-grow"></span><button class="cq-btn-outline" onclick={handlePlanDoc} title="Build an FDA warning letter response or an 8D customer report from these actions">Create Action Plan Document</button></div>
+                        <template if:true={planDocNote}><div class="cq-infobox top8"><strong>Action Plan Document:</strong> {planDocNote}</div></template>
+                        <div class="cq-infobox cq-mt16"><strong>What happens to these:</strong> they are saved as CQ action plans on the investigation. When the investigation is complete, the NC moves to Implement and CQ turns them into actions with their owners and due dates.</div>
                         <template if:true={notice}><div class="cq-msg pos okbox">{notice}</div></template>
                     </template>
 
@@ -366,19 +366,19 @@
                         </div>
                         <template if:true={recurWarn}><div class="cq-msg warn">{recurWarn}</div></template>
                         <template if:true={noCauseWarn}><div class="cq-msg warn">Confirmed usually means the root cause is known, but no root cause is recorded on this investigation yet.</div></template>
-                        <label class="cq-field top16"><span class="cq-label">Investigation Summary<span class="cq-req">*</span></span>
+                        <label class="cq-field cq-mt16"><span class="cq-label">Investigation Summary<span class="cq-req">*</span></span>
                             <template if:true={showSumBox}><textarea class="summary" rows="9" value={summary} onchange={handleSummary} placeholder="Write the summary, or use CQ.AI Suggested Summary."></textarea></template>
                             <template if:true={sumWriting}><div class="sumbusy"><span class="pspin"></span>CQ.AI is writing the summary&hellip;</div></template>
                         </label>
-                        <div class="splitline top8">
-                            <button class="cq-btn-outline ibtn" onclick={handleSuggestSummary} disabled={sumWriting}><lightning-icon icon-name="utility:summary" size="xx-small" class="ruleicon" alternative-text=""></lightning-icon>{sumLabel}</button>
+                        <div class="cq-splitline top8">
+                            <button class="cq-btn-outline ibtn" onclick={handleSuggestSummary} disabled={sumWriting}><lightning-icon icon-name="utility:summary" size="xx-small" class="cq-ai-icon" alternative-text=""></lightning-icon>{sumLabel}</button>
                             <template if:true={sumNote}><span class="cq-note">{sumNote}</span></template>
                         </div>
                         <template if:true={sumConfirm}>
                             <div class="cq-msg warn sumask"><span class="cq-grow">Replace the summary in the box with a new one from CQ.AI?</span><button class="cq-btn-outline" onclick={handleSumReplace}>Replace It</button><button class="cq-btn-outline" onclick={handleSumKeep}>Keep Mine</button></div>
                         </template>
                         <template if:true={sumError}><div class="cq-msg crit errbox">{sumError}</div></template>
-                        <div class="ownbox top16"><strong>On {completeLabel}:</strong> {onCompleteText}</div>
+                        <div class="cq-infobox cq-mt16"><strong>On {completeLabel}:</strong> {onCompleteText}</div>
                     </template>
 
                     <!-- done -->
@@ -393,7 +393,7 @@
                         <template for:each={doneRows} for:item="r">
                             <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
                         </template>
-                        <div class="opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div>
+                        <div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div>
                     </template>
 
                     <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
@@ -431,7 +431,7 @@
                                     </template>
                                 </div>
                             </div>
-                            <div class="fields">
+                            <div class="cq-fields">
                                 <div class="cq-field owner"><span class="cq-label">Owner</span>
                                     <lightning-record-picker label="Owner" variant="label-hidden" object-api-name="User" placeholder="You, if left empty" value={planForm.userId} onchange={handlePlanFormOwner}></lightning-record-picker>
                                 </div>

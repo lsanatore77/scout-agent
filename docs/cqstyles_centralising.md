@@ -47,3 +47,20 @@ Open points for the per-screen review:
 - Find the Cause popups are now the shared 560px width (were 640px).
 - Event Intake's footer moved inside the work area like the other workspaces.
 - Repeated local pieces still without a standard: .rk, plain .card, .ch/.cn/.ct card heads, .tabs/.tab, .plainbtn/.smalllink, .ownbox/.plainbox.
+
+## Identical-rule cleanup (19 Nov 2026, in progress)
+
+Rules that were written word for word in several components are moving into cqStyles under cq- names. No visible change intended.
+
+Done:
+- Search picker (part and lot pickers): all styling is now .cq-pick* in cqStyles.
+- Chat panel cards (checklist, missing data, worth reviewing, lead lists, lead select): .cq-panel, .cq-panel-intro / -error / -empty / -card, .cq-panel-pager / -pages.
+- Shared helpers added: .cq-opts(.tight), .cq-fields, .cq-splitline, .cq-sechead, .cq-infobox, .cq-sub(.block), .cq-ai-head, .cq-ai-icon, .cq-ai-says, .cq-nowrap, .cq-mt16, and the errbox / okbox / sm0 / owner / growf adjustments.
+- Using the helpers: Disposition, Investigation, Find the Cause, Field Action Closure.
+
+Still to do (same helpers, their own local copies are still in place and still work):
+- Triage Assistant, Field Action Workspace, Field Action Manager, Recovery, Strategy, Event Intake.
+- Pieces shared by only two screens (Field Action Manager / Workspace cards and rows, Triage / Field Action Review decision card, Disposition / Investigation glance columns, the lvl risk colours, which are set from script).
+
+Left out on purpose: .cq-field input.date at 170px is not shared, because Triage uses a different width.
+
