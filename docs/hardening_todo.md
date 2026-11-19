@@ -99,6 +99,7 @@ Search results, dropdown lists, date pickers and popovers must open where there 
 
 ## Save handlers and agent context: deploy status (19 Nov 2026)
 The repo has `catch (SecurityException …)` beside every `catch (DmlException …)` in the user-mode classes (helper: `CqSave`).
-Deployed to cqse-golden--dev: CqSave, CqSaveTest, CqTriageContainment, CqTriageRepeat, CqTriageRisk, CqTriageLinks, CqTriageNext, CqDispositionWorkspace.
-NOT yet deployed (repo is ahead of the org): CqInvestigationCause, CqInvestigationChanges, CqInvestigationHistory, CqInvestigationWorkspace,
-AskCqWorkspaceController, CqQualityAgentContext, CqInvestigationAgentContext.
+Deployed to cqse-golden--dev and checked against the repo: CqSave, CqSaveTest, CqTriageContainment, CqTriageRepeat, CqTriageRisk, CqTriageLinks,
+CqTriageNext, CqDispositionWorkspace, CqInvestigationHistory, CqInvestigationChanges.
+NOT yet deployed (repo is ahead of the org): CqInvestigationCause, CqInvestigationWorkspace, AskCqWorkspaceController,
+CqQualityAgentContext, CqInvestigationAgentContext.
