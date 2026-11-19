@@ -104,6 +104,8 @@ public with sharing class CqTriageLinks {
             insert as user rows;
         } catch (DmlException e) {
             throw new AuraHandledException('CQ did not accept the investigation links: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            throw new AuraHandledException('CQ did not accept the investigation links: ' + CqSave.DENIED);
         }
         for (compliancequest__SQX_Investigation__c i : [SELECT Name FROM compliancequest__SQX_Investigation__c WHERE Id IN :adding WITH USER_MODE ORDER BY Name]) { names.add(i.Name); }
         return names;

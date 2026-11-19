@@ -211,6 +211,8 @@ public with sharing class CqInvestigationWorkspace {
             upsert as user keep;
         } catch (DmlException e) {
             throw new AuraHandledException('The actions were not saved: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            throw new AuraHandledException('The actions were not saved: ' + CqSave.DENIED);
         }
         List<Plan> out = new List<Plan>();
         for (compliancequest__SQX_Action_Plan__c a : [
@@ -269,6 +271,9 @@ public with sharing class CqInvestigationWorkspace {
         } catch (DmlException e) {
             Database.rollback(sp);
             throw new AuraHandledException('The investigation was not submitted: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException('The investigation was not submitted: ' + CqSave.DENIED);
         }
         return res;
     }

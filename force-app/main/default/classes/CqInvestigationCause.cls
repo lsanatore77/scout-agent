@@ -454,7 +454,7 @@ public with sharing class CqInvestigationCause {
         if (status != 'Open' && String.isBlank(howKnow)) { throw new AuraHandledException('Say how you know.'); }
         try {
             update as user new Investigation_Hypothesis__c(Id = hypId, Status__c = status, How_Do_You_Know__c = howKnow == null ? null : howKnow.trim().left(255));
-        } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); }
+        } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('It was not saved: ' + CqSave.DENIED); }
         return build(recordId, false);
     }
 
@@ -480,7 +480,7 @@ public with sharing class CqInvestigationCause {
             if (!ROW_FIELD.containsKey(k)) { continue; }
             f.put(ROW_FIELD.get(k), join((String) r.get('isText'), (String) r.get('isNotText')));
         }
-        try { upsert as user f; } catch (DmlException e) { throw new AuraHandledException('The Is / Is Not was not saved: ' + e.getDmlMessage(0)); }
+        try { upsert as user f; } catch (DmlException e) { throw new AuraHandledException('The Is / Is Not was not saved: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('The Is / Is Not was not saved: ' + CqSave.DENIED); }
         return build(recordId, false);
     }
 
@@ -513,13 +513,13 @@ public with sharing class CqInvestigationCause {
             throw new AuraHandledException('Unknown kind of evidence.');
         }
         if (e.Hypothesis__c == null && e.Why__c == null && e.Id == null) { throw new AuraHandledException('Choose the hypothesis or why it is for.'); }
-        try { upsert as user e; } catch (DmlException ex) { throw new AuraHandledException('The evidence was not saved: ' + ex.getDmlMessage(0)); }
+        try { upsert as user e; } catch (DmlException ex) { throw new AuraHandledException('The evidence was not saved: ' + ex.getDmlMessage(0)); } catch (SecurityException ex) { throw new AuraHandledException('The evidence was not saved: ' + CqSave.DENIED); }
         return build(recordId, false);
     }
 
     @AuraEnabled
     public static View deleteEvidence(Id recordId, Id evidenceId) {
-        try { delete as user [SELECT Id FROM Investigation_Evidence__c WHERE Id = :evidenceId WITH USER_MODE]; } catch (DmlException e) { throw new AuraHandledException('It was not removed: ' + e.getDmlMessage(0)); }
+        try { delete as user [SELECT Id FROM Investigation_Evidence__c WHERE Id = :evidenceId WITH USER_MODE]; } catch (DmlException e) { throw new AuraHandledException('It was not removed: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('It was not removed: ' + CqSave.DENIED); }
         return build(recordId, false);
     }
 
@@ -569,6 +569,9 @@ public with sharing class CqInvestigationCause {
         } catch (DmlException e) {
             Database.rollback(sp);
             throw new AuraHandledException('The 5 Why was not saved: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException('The 5 Why was not saved: ' + CqSave.DENIED);
         }
         return build(recordId, false);
     }
@@ -620,6 +623,9 @@ public with sharing class CqInvestigationCause {
         } catch (DmlException e) {
             Database.rollback(sp);
             throw new AuraHandledException('The root causes were not saved: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException('The root causes were not saved: ' + CqSave.DENIED);
         }
         return build(recordId, false);
     }

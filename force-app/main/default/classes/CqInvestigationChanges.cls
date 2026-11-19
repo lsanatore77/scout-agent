@@ -253,7 +253,7 @@ public with sharing class CqInvestigationChanges {
         if (String.isBlank(cat)) { throw new AuraHandledException('Choose a category.'); }
         Investigation_Change__c c = new Investigation_Change__c(Investigation__c = invId, What_Changed__c = what.trim().left(255),
             Change_Date__c = Date.valueOf(day), Category__c = cat, Where_Found__c = str(m.get('whereFound')), Reference__c = str(m.get('reference')));
-        try { insert as user c; } catch (DmlException e) { throw new AuraHandledException('The change was not saved: ' + e.getDmlMessage(0)); }
+        try { insert as user c; } catch (DmlException e) { throw new AuraHandledException('The change was not saved: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('The change was not saved: ' + CqSave.DENIED); }
         return c.Id;
     }
 
@@ -276,7 +276,7 @@ public with sharing class CqInvestigationChanges {
         AggregateResult[] top = [SELECT MAX(Number__c) n FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId WITH USER_MODE];
         Decimal n = (Decimal) top[0].get('n');
         h.Number__c = (n == null ? 0 : n) + 1;
-        try { insert as user h; } catch (DmlException e) { throw new AuraHandledException('The hypothesis was not saved: ' + e.getDmlMessage(0)); }
+        try { insert as user h; } catch (DmlException e) { throw new AuraHandledException('The hypothesis was not saved: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('The hypothesis was not saved: ' + CqSave.DENIED); }
         return h.Number__c.intValue();
     }
 

@@ -13,6 +13,8 @@ public with sharing class CqTriageContainment {
             insert as user c;
         } catch (DmlException e) {
             throw new AuraHandledException('CQ did not accept the containment: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            throw new AuraHandledException('CQ did not accept the containment: ' + CqSave.DENIED);
         }
         return [SELECT Name FROM compliancequest__SQX_Containment__c WHERE Id = :c.Id WITH USER_MODE].Name;
     }

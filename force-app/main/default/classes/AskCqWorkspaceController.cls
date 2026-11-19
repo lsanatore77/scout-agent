@@ -285,7 +285,7 @@ public with sharing class AskCqWorkspaceController {
         Boolean none = String.isBlank(payload) || payload.trim() == '{}';
         try {
             update as user new compliancequest__SQX_Product_History_Review__c(Id = phrId, Checklist_Draft__c = none ? null : payload.left(20000));
-        } catch (DmlException e) { throw new AuraHandledException('The draft was not saved: ' + e.getDmlMessage(0)); }
+        } catch (DmlException e) { throw new AuraHandledException('The draft was not saved: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('The draft was not saved: ' + CqSave.DENIED); }
     }
 
     public class AnswerRow { public Id id; public String answer; public Boolean suggested; public String basis; }
@@ -327,6 +327,9 @@ public with sharing class AskCqWorkspaceController {
         } catch (DmlException e) {
             Database.rollback(sp);
             throw new AuraHandledException('The checklist was not submitted: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException('The checklist was not submitted: ' + CqSave.DENIED);
         }
     }
 

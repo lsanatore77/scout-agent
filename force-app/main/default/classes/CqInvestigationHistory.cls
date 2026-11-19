@@ -266,7 +266,7 @@ public with sharing class CqInvestigationHistory {
         try {
             insert as user new Investigation_Not_Relevant__c(Investigation__c = invId, Record_Id__c = targetId, Record_Name__c = targetName == null ? null : targetName.left(80),
                 Reason__c = reason == null ? null : reason.left(255));
-        } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); }
+        } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('It was not saved: ' + CqSave.DENIED); }
     }
 
     /** Puts a record marked Not Relevant back on the list. */
@@ -274,7 +274,7 @@ public with sharing class CqInvestigationHistory {
     public static void restore(Id dismissedId) {
         try {
             delete as user [SELECT Id FROM Investigation_Not_Relevant__c WHERE Id = :dismissedId WITH USER_MODE];
-        } catch (DmlException e) { throw new AuraHandledException('It was not restored: ' + e.getDmlMessage(0)); }
+        } catch (DmlException e) { throw new AuraHandledException('It was not restored: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('It was not restored: ' + CqSave.DENIED); }
     }
 
     static String joinText(String title, String descr) {

@@ -217,6 +217,9 @@ public with sharing class CqDispositionWorkspace {
         } catch (DmlException e) {
             Database.rollback(sp);
             throw new AuraHandledException('CQ did not complete the disposition: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException('CQ did not complete the disposition: ' + CqSave.DENIED);
         }
 
         Result res = new Result();
@@ -229,7 +232,7 @@ public with sharing class CqDispositionWorkspace {
         // whatever is still left on a lot gets a new draft, so the next person picks it up
         try {
             res.remainders = CqTriageNext.createDraftDispositions(recordId, v.dispDue == null ? Date.today().addDays(CqTriageNext.DISPOSITION_DAYS) : v.dispDue);
-        } catch (DmlException e) { /* the dispositions are complete; a missing draft for the rest is not worth failing over */ }
+        } catch (DmlException e) { /* the dispositions are complete; a missing draft for the rest is not worth failing over */ } catch (SecurityException e) { /* as above */ }
         res.ncComplete = [SELECT compliancequest__Is_Disposition_Complete__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE].compliancequest__Is_Disposition_Complete__c == true;
         return res;
     }

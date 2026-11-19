@@ -204,6 +204,14 @@ public with sharing class CqTriageNext {
                 update as user new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Containment_Required__c = contain,
                     compliancequest__Disposition_Required__c = dispFlag, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
             } catch (Exception e2) { /* the triage is saved; the warning above says CQ refused the move */ }
+        } catch (SecurityException e) {
+            Database.rollback(sp);
+            warnings.add('CQ did not move the NC to Disposition / Investigate: ' + CqSave.DENIED);
+            // still record what was decided, in CQ's own Required flags
+            try {
+                update as user new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Containment_Required__c = contain,
+                    compliancequest__Disposition_Required__c = dispFlag, compliancequest__Investigation_Required__c = inv, Triage_Draft__c = null);
+            } catch (Exception e2) { /* the triage is saved; the warning above says CQ refused the move */ }
         }
 
         // the repeat: CQ's Initiate CAPA, or the earlier CAPA as Related CAPA (a closed CAPA is never reopened), and what was decided
@@ -216,6 +224,8 @@ public with sharing class CqTriageNext {
                 update as user rp;
             } catch (DmlException e) {
                 warnings.add('The repeat decision was not saved: ' + e.getDmlMessage(0));
+            } catch (SecurityException e) {
+                warnings.add('The repeat decision was not saved: ' + CqSave.DENIED);
             }
         }
 
@@ -227,6 +237,8 @@ public with sharing class CqTriageNext {
                 d.created.addAll(made);
             } catch (DmlException e) {
                 warnings.add('The draft dispositions were not created: ' + e.getDmlMessage(0));
+            } catch (SecurityException e) {
+                warnings.add('The draft dispositions were not created: ' + CqSave.DENIED);
             }
         }
 
@@ -254,6 +266,8 @@ public with sharing class CqTriageNext {
             s.stage = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE].compliancequest__Record_Stage__c;
         } catch (DmlException e) {
             s.warning = 'CQ did not move the NC to Triage: ' + e.getDmlMessage(0);
+        } catch (SecurityException e) {
+            s.warning = 'CQ did not move the NC to Triage: ' + CqSave.DENIED;
         }
         return s;
     }

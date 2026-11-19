@@ -65,7 +65,7 @@ public with sharing class CqTriageRepeat {
         try {
             insert as user new Investigation_Not_Relevant__c(Nonconformance__c = recordId, Record_Id__c = targetId,
                 Record_Name__c = targetName == null ? null : targetName.left(80), Reason__c = 'Not the same problem (triage)');
-        } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); }
+        } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); } catch (SecurityException e) { throw new AuraHandledException('It was not saved: ' + CqSave.DENIED); }
         cache.remove(recordId);
         return find(recordId);
     }

@@ -100,6 +100,8 @@ public with sharing class CqTriageRisk {
             update as user nc;
         } catch (DmlException e) {
             throw new AuraHandledException('CQ did not accept Severity and Probability: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            throw new AuraHandledException('CQ did not accept Severity and Probability: ' + CqSave.DENIED);
         }
     }
 }

@@ -96,3 +96,9 @@ Still open: free-typed lots that are not in Lot Info cannot be entered; a lot wh
 ## Design rule: anything that opens over the page (2026-11-17)
 
 Search results, dropdown lists, date pickers and popovers must open where there is room and never push the page. Measure before opening: downward when it fits, upward when it does not, and cap the height to the space available so the list scrolls inside itself. Otherwise a list that runs past the bottom of a short screen adds a page scroll bar and the screen jumps (seen on the Quick Log tab). Reference implementation: `place()` in `cqLotPicker` and `cqPartPicker`. To check during the screen-by-screen pass: the Ask CQ.AI popover and any other custom dropdowns.
+
+## Save handlers and agent context: deploy status (19 Nov 2026)
+The repo has `catch (SecurityException …)` beside every `catch (DmlException …)` in the user-mode classes (helper: `CqSave`).
+Deployed to cqse-golden--dev: CqSave, CqSaveTest, CqTriageContainment, CqTriageRepeat, CqTriageRisk, CqTriageLinks, CqTriageNext, CqDispositionWorkspace.
+NOT yet deployed (repo is ahead of the org): CqInvestigationCause, CqInvestigationChanges, CqInvestigationHistory, CqInvestigationWorkspace,
+AskCqWorkspaceController, CqQualityAgentContext, CqInvestigationAgentContext.
