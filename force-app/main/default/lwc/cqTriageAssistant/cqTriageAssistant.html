@@ -30,21 +30,21 @@
                         </button>
                     </template>
                     <div class="progress">{progress}</div>
-                    <template if:true={canRestart}><button class="restart" onclick={handleRestart}>Start Over</button></template>
+                    <template if:true={canRestart}><button class="cq-restart" onclick={handleRestart}>Start Over</button></template>
                 </nav>
                 <div class="cq-ws-main main">
                     <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
                     <template if:true={isGlance}><template if:true={inline}><h3 class="cq-step-title">Triage at a Glance</h3></template><slot></slot>
                         <template if:true={showRepGlance}>
-                            <div class="recur">
-                                <div class="recur-head"><span aria-hidden="true">&#9888;</span> Happened Before, and the Fix Didn&rsquo;t Hold</div>
+                            <div class="cq-recur">
+                                <div class="cq-recur-head"><span aria-hidden="true">&#9888;</span> Happened Before, and the Fix Didn&rsquo;t Hold</div>
                                 <div class="lh"><a class="cq-link" href={repBox.ncHref} target="_blank">{repBox.ncName}</a>{repBox.text1}<a class="cq-link" href={repBox.capaHref} target="_blank">{repBox.capaName}</a>{repBox.text2}</div>
-                                <template if:true={repBox.efrText}><div class={repBox.efrCls}><a class="redlink" href={repBox.efrHref} target="_blank">{repBox.efrName}</a>{repBox.efrText}</div></template>
+                                <template if:true={repBox.efrText}><div class={repBox.efrCls}><a class="cq-redlink" href={repBox.efrHref} target="_blank">{repBox.efrName}</a>{repBox.efrText}</div></template>
                                 <template if:true={repBox.noReview}><div class="lh cq-muted">{repBox.capaName} closed with no effectiveness review on record.</div></template>
                                 <div class="lh"><strong>What this changes in triage:</strong> {repBox.changes}</div>
                                 <div class="repacts">
-                                    <a class="cq-btn-outline linkbtn" href={repBox.ncHref} target="_blank">Open {repBox.ncName}</a>
-                                    <a class="cq-btn-outline linkbtn" href={repBox.capaHref} target="_blank">Open {repBox.capaName}</a>
+                                    <a class="cq-btn-outline cq-linkbtn" href={repBox.ncHref} target="_blank">Open {repBox.ncName}</a>
+                                    <a class="cq-btn-outline cq-linkbtn" href={repBox.capaHref} target="_blank">Open {repBox.capaName}</a>
                                     <button class="smalllink" onclick={handleNotSame} disabled={repBusy}>Not the Same Problem</button>
                                 </div>
                             </div>
@@ -67,7 +67,7 @@
                                     <button class="cq-btn-outline addbtn" onclick={handleShowAdd}>Add Containment</button>
                                 </template>
                             </div>
-                            <div class="col">
+                            <div class="cq-col">
                                 <div class="cq-tblwrap" style="margin-top: 0">
                                     <table class="cq-tbl">
                                         <thead><tr><th class="center">Select</th><th>Action</th><th>Recommendation</th></tr></thead>
@@ -76,7 +76,7 @@
                                                 <tr key={a.id}>
                                                     <td class="center"><input type="checkbox" class="cb" data-id={a.id} checked={a.on} onchange={handleAct} aria-label={a.label}></td>
                                                     <td class="wide"><div class="cq-strong">{a.label}</div><div class="isum">{a.why}</div></td>
-                                                    <td class="nowrap"><template if:true={a.cq}><c-cq-ai-why variant="pill" subject={a.label} tail=" here?"></c-cq-ai-why></template></td>
+                                                    <td class="cq-nowrap"><template if:true={a.cq}><c-cq-ai-why variant="pill" subject={a.label} tail=" here?"></c-cq-ai-why></template></td>
                                                 </tr>
                                             </template>
                                         </tbody>
@@ -94,7 +94,7 @@
                                     </label>
                                 </template>
                             </div>
-                            <div class="col">
+                            <div class="cq-col">
                                 <template for:each={added} for:item="a">
                                     <div key={a.key} class="cq-kv added"><span class="ic">&#10003;</span><span class="cq-kv-v">{a.name} &middot; {a.title}</span></div>
                                 </template>
@@ -116,7 +116,7 @@
                                             </div>
                                         </div>
                                         <template if:true={addError}><div class="cq-msg crit errbox">{addError}</div></template>
-                                        <div class="opts">
+                                        <div class="cq-opts">
                                             <button class="cq-btn-primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
                                             <button class="cq-btn-outline" onclick={handleCancelAdd}>Cancel</button>
                                         </div>
@@ -124,7 +124,7 @@
                                 </template>
                                 <div class="factcard">
                                     <div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" subject={suggestedAct}></c-cq-ai-why> <strong>{suggestedAct}</strong></div>
-                                    <details class="know">
+                                    <details class="cq-know">
                                         <summary>What We Know</summary>
                                         <ul class="flist">
                                             <template for:each={factLines} for:item="f"><li key={f.key} class={f.cls}>{f.text}</li></template>
@@ -145,20 +145,20 @@
                                     <template for:each={dataRows} for:item="r">
                                         <tr key={r.key}>
                                             <td class="center"><template if:true={r.ok}><span class="ic" style="width: 24px; margin: 0 auto">&#10003;</span></template><template if:false={r.ok}><span class="warn"><span class="ic" style="width: 24px; margin: 0 auto">!</span></span></template></td>
-                                            <td class="nowrap" style="color: #5b6470">{r.k}</td>
+                                            <td class="cq-nowrap" style="color: #5b6470">{r.k}</td>
                                             <td class="wide cq-strong">{r.v}</td>
                                         </tr>
                                     </template>
                                 </tbody>
                             </table>
                         </div>
-                        <div class="opts">
+                        <div class="cq-opts">
                             <template for:each={dataOpts} for:item="o">
                                 <button key={o.id} class={o.cls} data-id={o.id} onclick={handleData} aria-pressed={o.pressed}>{o.label}</button>
                             </template>
                         </div>
                         <template if:true={dataAsk}>
-                            <div class="cq-card-title top8">What Do You Need? *</div>
+                            <div class="cq-card-title cq-mt16">What Do You Need? *</div>
                             <div class="cq-chips">
                                 <template for:each={askChips} for:item="c">
                                     <button key={c.label} class={c.cls} data-id={c.label} onclick={handleAsk} aria-pressed={c.pressed}>{c.label}</button>
@@ -209,23 +209,23 @@
                                 <div class="rside">
                                     <div class="cq-ai-card">
                                         <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" lead="Why does CQ.AI suggest risk " subject={suggestedRisk}></c-cq-ai-why></div>
-                                        <div class="sughead"><span class={sugCls}>{suggestedRisk}</span><span class="rk">Score {suggestedScore} of 25</span></div>
+                                        <div class="sughead"><span class={sugCls}>{suggestedRisk}</span><span class="cq-sub">Score {suggestedScore} of 25</span></div>
                                         <div class="why">
                                             <div class="whyk">Severity: {sevHead}</div>
-                                            <div class="whyv">{sevWhy}</div>
+                                            <div class="cq-ai-says">{sevWhy}</div>
                                         </div>
                                         <div class="why">
                                             <div class="whyk">Likelihood: {likHead} <span class="raised">{likRaised}</span></div>
-                                            <div class="whyv">{likWhy}</div>
-                                            <template if:true={rep}><div class="whyv redtext">{repRiskLine}</div></template>
-                                            <template if:true={recentList}><div class="whyv cq-muted">Latest: {recentList}</div></template>
+                                            <div class="cq-ai-says">{likWhy}</div>
+                                            <template if:true={rep}><div class="cq-ai-says redtext">{repRiskLine}</div></template>
+                                            <template if:true={recentList}><div class="cq-ai-says cq-muted">Latest: {recentList}</div></template>
                                         </div>
                                         <template if:true={escaped}><div class="why bad">{escapedWhy}. Risk is High whatever cell is chosen.</div></template>
                                     </div>
                                     <div class="yours">
                                         <div class="cq-card-title">Selected</div>
-                                        <div class="sughead"><span class={riskCls}>{risk}</span><span class="rk">Score {score} of 25</span></div>
-                                        <div class="whyv">{sevLabel} severity &times; {likLabel} likelihood</div>
+                                        <div class="sughead"><span class={riskCls}>{risk}</span><span class="cq-sub">Score {score} of 25</span></div>
+                                        <div class="cq-ai-says">{sevLabel} severity &times; {likLabel} likelihood</div>
                                     </div>
                                 </div>
                             </div>
@@ -241,11 +241,11 @@
                             <template if:true={nextReady}>
                                 <div class="kard">
                                     <div>
-                                        <div class="dname">Disposition</div>
-                                        <div class="dstate">{dispState}<template if:true={dispReq}> &middot; <button class="smalllink" data-kind="disp" onclick={handleDlgEdit}>Edit</button></template></div>
+                                        <div class="cq-dcard-name">Disposition</div>
+                                        <div class="cq-dcard-state">{dispState}<template if:true={dispReq}> &middot; <button class="smalllink" data-kind="disp" onclick={handleDlgEdit}>Edit</button></template></div>
                                     </div>
-                                    <div class="dsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Does this nonconformance need a disposition?"></c-cq-ai-why> <strong>{dispSugText}.</strong> {nx.dispWhy}</div>
-                                    <div class="dchips">
+                                    <div class="cq-dcard-sug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Does this nonconformance need a disposition?"></c-cq-ai-why> <strong>{dispSugText}.</strong> {nx.dispWhy}</div>
+                                    <div class="cq-dcard-chips">
                                         <template for:each={dispOpts} for:item="o">
                                             <button key={o.id} class={o.cls} data-id={o.id} onclick={handleDisp} aria-pressed={o.pressed}>{o.label}</button>
                                         </template>
@@ -253,11 +253,11 @@
                                 </div>
                                 <div class="kard">
                                     <div>
-                                        <div class="dname">Investigation</div>
-                                        <div class="dstate">{invState}<template if:true={invReq}> &middot; <button class="smalllink" data-kind="inv" onclick={handleDlgEdit}>Edit</button></template></div>
+                                        <div class="cq-dcard-name">Investigation</div>
+                                        <div class="cq-dcard-state">{invState}<template if:true={invReq}> &middot; <button class="smalllink" data-kind="inv" onclick={handleDlgEdit}>Edit</button></template></div>
                                     </div>
-                                    <div class="dsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this nonconformance be investigated or logged only?"></c-cq-ai-why> <strong>{invSugText}.</strong> {nx.invWhy}</div>
-                                    <div class="dchips">
+                                    <div class="cq-dcard-sug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this nonconformance be investigated or logged only?"></c-cq-ai-why> <strong>{invSugText}.</strong> {nx.invWhy}</div>
+                                    <div class="cq-dcard-chips">
                                         <template for:each={invOpts} for:item="o">
                                             <button key={o.id} class={o.cls} data-id={o.id} onclick={handleInv} aria-pressed={o.pressed}>{o.label}</button>
                                         </template>
@@ -265,9 +265,9 @@
                                 </div>
                                 <template if:true={rep}>
                                     <div class="kard warnk">
-                                        <div><div class="dname">CAPA</div><div class="dstate">Happened before</div></div>
-                                        <div class="dsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this repeat problem be escalated to a CAPA?"></c-cq-ai-why> <strong>Escalate to CAPA.</strong> {capaWhy}</div>
-                                        <div class="dchips">
+                                        <div><div class="cq-dcard-name">CAPA</div><div class="cq-dcard-state">Happened before</div></div>
+                                        <div class="cq-dcard-sug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Should this repeat problem be escalated to a CAPA?"></c-cq-ai-why> <strong>Escalate to CAPA.</strong> {capaWhy}</div>
+                                        <div class="cq-dcard-chips">
                                             <template for:each={capaOpts} for:item="o">
                                                 <button key={o.id} class={o.cls} data-id={o.id} onclick={handleCapa} aria-pressed={o.pressed}>{o.label}</button>
                                             </template>
@@ -323,7 +323,7 @@
                             </div>
                         </template>
                         <template if:true={invReq}>
-                            <div class="cq-card-title top8">Relevant Investigations to Link for Research</div>
+                            <div class="cq-card-title cq-mt16">Relevant Investigations to Link for Research</div>
                             <p class="cq-note lead">Optional. Linked investigations are for research only and do not replace this NC&rsquo;s own investigation.</p>
                                 <template if:false={linksReady}><p class="cq-note">Looking for relevant investigations&hellip;</p></template>
                                 <template if:true={linksReady}>
@@ -337,10 +337,10 @@
                                                         <tr key={v.id}>
                                                             <td class="center"><input type="checkbox" class="cb" data-id={v.id} checked={v.on} disabled={v.linked} onchange={handleLink} aria-label={v.name}></td>
                                                             <td class="wide"><div class="cq-strong">{v.name}</div><template if:true={v.summary}><div class="isum">{v.summary}</div></template></td>
-                                                            <td class="nowrap">{v.ncName}</td>
-                                                            <td class="nowrap">{v.status}</td>
-                                                            <td class="nowrap"><template if:true={v.linked}>Already linked</template><template if:false={v.linked}>{v.why}</template></td>
-                                                            <td class="nowrap"><template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template></td>
+                                                            <td class="cq-nowrap">{v.ncName}</td>
+                                                            <td class="cq-nowrap">{v.status}</td>
+                                                            <td class="cq-nowrap"><template if:true={v.linked}>Already linked</template><template if:false={v.linked}>{v.why}</template></td>
+                                                            <td class="cq-nowrap"><template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template></td>
                                                         </tr>
                                                     </template>
                                                 </tbody>
@@ -359,7 +359,7 @@
                                         </template>
                                     </template>
                                     <template if:true={hasOther}>
-                                        <details class="know">
+                                        <details class="cq-know">
                                             <summary>{otherLabel}</summary>
                                             <div class="cq-tblwrap">
                                                 <table class="cq-tbl">
@@ -369,10 +369,10 @@
                                                             <tr key={v.id}>
                                                                 <td class="center"><input type="checkbox" class="cb" data-id={v.id} checked={v.on} disabled={v.linked} onchange={handleLink} aria-label={v.name}></td>
                                                                 <td class="wide"><div class="cq-strong">{v.name}</div><template if:true={v.summary}><div class="isum">{v.summary}</div></template></td>
-                                                                <td class="nowrap">{v.ncName}</td>
-                                                                <td class="nowrap">{v.status}</td>
-                                                                <td class="nowrap"><template if:true={v.linked}>Already linked</template><template if:false={v.linked}>{v.why}</template></td>
-                                                                <td class="nowrap"><template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template></td>
+                                                                <td class="cq-nowrap">{v.ncName}</td>
+                                                                <td class="cq-nowrap">{v.status}</td>
+                                                                <td class="cq-nowrap"><template if:true={v.linked}>Already linked</template><template if:false={v.linked}>{v.why}</template></td>
+                                                                <td class="cq-nowrap"><template if:true={v.suggested}><c-cq-ai-why variant="pill" lead="Why does CQ.AI suggest linking " subject={v.name}></c-cq-ai-why></template></td>
                                                             </tr>
                                                         </template>
                                                     </tbody>
@@ -408,8 +408,8 @@
                             <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
                         </template>
                         <template if:true={warning}><div class="cq-msg warn">{warning}</div></template>
-                        <template if:true={popup}><div class="opts"><button class="cq-btn-primary" onclick={handleClose}>Back to the Nonconformance</button></div></template>
-                        <template if:true={inline}><div class="opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div></template>
+                        <template if:true={popup}><div class="cq-opts"><button class="cq-btn-primary" onclick={handleClose}>Back to the Nonconformance</button></div></template>
+                        <template if:true={inline}><div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div></template>
                     </template>
                     <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
                     <template if:true={inline}><template if:true={footNav}>

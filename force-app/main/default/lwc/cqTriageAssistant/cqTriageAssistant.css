@@ -11,13 +11,10 @@
 .x { width: 36px; height: 36px; border: none; border-radius: 8px; background: none; font-size: 24px; line-height: 1; color: var(--cq-muted); cursor: pointer; }
 /* this screen is also a popup: there the body scrolls inside the box */
 .body { overflow: auto; background: var(--cq-bg); }
-.col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.top8 { margin-top: 16px; }
 .act { display: flex; align-items: center; gap: 12px; min-height: 56px; box-sizing: border-box; padding: 8px 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .ic { flex: 0 0 24px; height: 24px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; background: var(--cq-pos-bg); color: var(--cq-pos-fg); }
 .bad .ic { background: var(--cq-crit-bg); color: var(--cq-crit-fg); }
 .warn .ic { background: #fdf1e1; color: var(--cq-warn-fg); }
-.rk { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .act { width: 100%; font: inherit; color: var(--cq-ink); cursor: pointer; }
 .act.sug { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
 .act.on { border: 2px solid var(--cq-link); background: var(--cq-link-soft); padding: 7px 13px; }
@@ -27,15 +24,13 @@
 .flist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; line-height: 1.45; }
 .fline.bad { color: var(--cq-crit-fg); font-weight: 600; }
 .fline.muted { color: var(--cq-muted); }
-.opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .addbtn { align-self: flex-start; }
 .addform { padding: 10px 12px 12px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-surface); }
-.addform .opts { margin-top: 10px; gap: 8px; }
+.addform .cq-opts { margin-top: 10px; gap: 8px; }
 .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 10px; align-items: end; }
 .cq-kv.added { margin-bottom: 0; }
-.know { margin-top: 10px; }
-.know summary { color: var(--cq-link); font-size: 13px; font-weight: 600; cursor: pointer; }
-.know .flist { margin-top: 8px; }
+.cq-know { margin-top: 10px; }
+.cq-know .flist { margin-top: 8px; }
 .riskwrap { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 20px; align-items: start; }
 .heat { min-width: 0; }
 .hrow { display: grid; grid-template-columns: 112px repeat(5, minmax(0, 1fr)); gap: 4px; margin-bottom: 4px; align-items: center; }
@@ -65,13 +60,11 @@
 .why { margin-top: 10px; }
 .why.bad { color: var(--cq-crit-fg); font-weight: 600; }
 .whyk { font-size: 13px; font-weight: 700; }
-.whyv { font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
 .yours { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); }
 .lvl { font-weight: 700; }
 .lvl.low { color: var(--cq-pos-fg); }
 .lvl.medium { color: var(--cq-warn-fg); }
 .lvl.high { color: var(--cq-crit-fg); }
-.nowrap { white-space: nowrap; }
 .cb { width: 18px; height: 18px; margin: 0; }
 .act.inv { align-items: flex-start; }
 .act.inv .tick { margin-top: 2px; }
@@ -85,11 +78,10 @@
 .box.inline .top { border-radius: 12px 12px 0 0; }
 .box.inline .body { overflow: visible; background: none; }
 .topnav { display: flex; align-items: center; gap: 12px; flex: none; }
-.restart { margin: 4px 8px 0; padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 .resumed { margin: -6px 0 12px; font-size: 13px; color: var(--cq-muted); }
 /* containment: a label row over both columns, so the action list and the CQ.AI card start on the same line */
 .cgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; row-gap: 8px; align-items: end; }
-.cgrid > .col { align-self: start; }
+.cgrid > .cq-col { align-self: start; }
 .chead { display: flex; align-items: flex-end; min-height: 0; }
 /* Next Steps: one card per decision in a single row, all built the same: name and state, the suggestion, the choices */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; align-items: stretch; margin-bottom: 8px; }
@@ -97,10 +89,6 @@
 .cards:has(> :nth-child(4):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .kard { display: flex; flex-direction: column; gap: 8px; min-width: 0; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .kard.warnk { border-color: var(--cq-warn-line); background: var(--cq-warn-bg); }
-.dname { font-size: 14px; font-weight: 700; }
-.dstate { margin-top: 2px; min-height: 19px; color: var(--cq-muted); }
-.dsug { flex: 1 1 auto; min-width: 0; line-height: 1.45; }
-.dchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .kard .cq-chip.wide { min-width: 0; }
 .kard .cq-field { margin-top: 0; }
 .cq-note.lead { margin: 2px 0 8px; }
@@ -108,15 +96,11 @@
 .mrow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; }
 .cq-note.mnote { margin: 0; }
 /* the repeat: happened before, and the fix did not hold */
-.recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-warn-line); background: var(--cq-warn-bg); display: flex; flex-direction: column; gap: 8px; }
-.recur .opts { margin-top: 0; }
-.recur .cq-field { margin-top: 0; }
-.recur-head { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--cq-warn-fg); }
+.cq-recur .cq-opts { margin-top: 0; }
+.cq-recur .cq-field { margin-top: 0; }
 .lh { line-height: 1.5; }
 .redtext { color: var(--cq-crit-fg); font-weight: 600; }
-.redlink { color: var(--cq-crit-fg); font-weight: 600; text-decoration: underline; }
 .repacts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.linkbtn { display: inline-flex; align-items: center; text-decoration: none; color: var(--cq-ink); }
 .smalllink { border: none; background: transparent; padding: 0; font: inherit; font-size: 13px; color: var(--cq-link); cursor: pointer; }
 .smalllink:hover { text-decoration: underline; }
 .repoff { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--cq-line); background: var(--cq-surface); }
@@ -138,5 +122,4 @@
 .cq-ai-card.fsug { margin-top: 12px; padding: 10px 12px; font-size: 14px; }
 .cq-ai-card.fsug.nomt, .factcard .cq-ai-card.fsug { margin-top: 0; }
 .cq-msg.warn { margin-top: 8px; }
-.cq-msg.errbox { margin-top: 12px; }
 .addform .cq-msg.errbox { margin-top: 8px; }

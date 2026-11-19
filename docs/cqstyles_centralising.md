@@ -48,7 +48,7 @@ Open points for the per-screen review:
 - Event Intake's footer moved inside the work area like the other workspaces.
 - Repeated local pieces still without a standard: .rk, plain .card, .ch/.cn/.ct card heads, .tabs/.tab, .plainbtn/.smalllink, .ownbox/.plainbox.
 
-## Identical-rule cleanup (19 Nov 2026, in progress)
+## Identical-rule cleanup (19 Nov 2026, finished)
 
 Rules that were written word for word in several components are moving into cqStyles under cq- names. No visible change intended.
 
@@ -60,10 +60,14 @@ Done:
 
 Also using the helpers now: Field Action Manager, Recovery, Strategy, Event Intake.
 
-Still to do:
-- Triage Assistant and Field Action Workspace still carry their own copies of the helpers (8 rules between them). Each template is about 35K, so they are better converted in the same pass as the pieces only those two share (about 12 identical rules: the action cards, tick marks, restart and resumed lines).
-- Pieces shared by only two screens (Field Action Manager / Workspace cards and rows, Triage / Field Action Review decision card, Disposition / Investigation glance columns).
-- The lvl risk colours and Recovery's nw are set from script, so moving them means redeploying those scripts.
+Page layout pieces (finished 19 Nov 2026): .cq-cols (top / wide / wide32), .cq-col, .cq-stack, .cq-krow, .cq-para, .cq-big, .cq-pcard, .cq-prob, .cq-stepcard*, .cq-ploc, .cq-dcard-*, .cq-know, .cq-restart, .cq-recur*, .cq-redlink, .cq-linkbtn. Used by Triage, Field Action Workspace / Manager / Strategy / Recovery / Closure / Review, Disposition and Investigation.
+
+Count after this pass: cqStyles about 260 rules; about 1,030 rules remain in component files (1,666 at the first audit).
+
+Still local, and why:
+- Classes built in script (lvl risk colours, card / card.sug, pill, act, tick, tab, lh, redtext, resumed, Recovery's nw). Moving them means redeploying the scripts.
+- Same name, different values between screens (for example .sughead, .pair, .cq-field top margins). Each needs a decision on which value wins, so they wait for the page-by-page review.
+- Pieces only one screen has (Triage heat map, Field Action signals chart, Find the Cause tree and fromcard / spin, Recovery's compact table).
 
 Left out on purpose: .cq-field input.date at 170px is not shared, because Triage uses a different width.
 
