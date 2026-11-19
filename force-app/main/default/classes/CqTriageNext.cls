@@ -47,6 +47,7 @@ public with sharing class CqTriageNext {
         public Boolean disposition; public String dispositionDue; public Boolean dispositionApproval;
         public Boolean investigate; public String investigationDue; public Boolean investigationApproval;
         public Id matrixId;
+        public String dispositionNote; public String investigationNote;     // optional: instructions for the disposer, what the investigator should look into
         public String repeatDecision; public String repeatReason; public Id repeatOfId; public Id repeatCapaId;
     }
     public static final List<String> REPEAT_DECISIONS = new List<String>{ 'Escalate to CAPA', 'Link to Earlier CAPA', 'Not Needed' };
@@ -187,6 +188,8 @@ public with sharing class CqTriageNext {
         nc.compliancequest__Activity_Comment__c = String.isBlank(c.notes) ? 'Completed in CQ.AI Triage.' : c.notes.left(4000);
         nc.compliancequest__Activity_Code__c = COMPLETE_TRIAGE;
         nc.Triage_Draft__c = null;      // the work in progress goes in the same save: one save after the stage change
+        nc.Triage_Disposition_Instructions__c = disp && String.isNotBlank(c.dispositionNote) ? c.dispositionNote.trim().left(5000) : null;
+        nc.Triage_Investigation_Focus__c = inv && String.isNotBlank(c.investigationNote) ? c.investigationNote.trim().left(5000) : null;
         // CQ's Submit hands the NC to a queue; whoever completes triage takes it, as CQ's take-ownership would. A person owner stays.
         if (cur.OwnerId != null && cur.OwnerId.getSObjectType() == Group.SObjectType) { nc.OwnerId = UserInfo.getUserId(); }
         Savepoint sp = Database.setSavepoint();
