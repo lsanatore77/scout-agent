@@ -179,7 +179,7 @@ public with sharing class CqIntakeChat {
             t.askQuestion = nextGap.Question__c;
             t.askSuggested = nextGuess;
             t.askFeedsDescription = (nextGap.Role__c == 'Lot Or Part');
-            t.askAudio = nextGap.Audio_Wav_Base64__c;   // the clip the device reads aloud for this prompt
+            t.askAudio = clipFor(nextGap);   // the clip the device reads aloud for this prompt
             t.choices = choicesFor(nextGap);
             String tail = String.isNotBlank(nextGuess)
                 ? ' (From what you said I’d put ' + nextGuess + ' — tap to confirm or change.)'
@@ -229,6 +229,31 @@ public with sharing class CqIntakeChat {
         }
         d.put('answers', answers);
         return JSON.serialize(d);
+    }
+
+    // The read-aloud clip for a question, as base64 PCM WAV. A .wav file attached to the question wins
+    // (full quality, no field size limit); the text field is the fallback for clips stored the old way.
+    // Only this one question's clip is read, so the response stays small.
+    static final Integer MAX_CLIP_BYTES = 2000000;
+    @TestVisible
+    static String clipFor(Event_Question__c q) {
+        try {
+            Set<Id> docIds = new Set<Id>();
+            for (ContentDocumentLink l : [SELECT ContentDocumentId FROM ContentDocumentLink WHERE LinkedEntityId = :q.Id WITH USER_MODE]) {
+                docIds.add(l.ContentDocumentId);
+            }
+            if (!docIds.isEmpty()) {
+                List<ContentVersion> v = [
+                    SELECT VersionData FROM ContentVersion
+                    WHERE ContentDocumentId IN :docIds AND IsLatest = true AND FileExtension = 'wav' AND ContentSize <= :MAX_CLIP_BYTES
+                    WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 1
+                ];
+                if (!v.isEmpty() && v[0].VersionData != null) { return EncodingUtil.base64Encode(v[0].VersionData); }
+            }
+        } catch (Exception e) {
+            // No access to the file, or it could not be read: fall back, never block the question.
+        }
+        return q.Audio_Wav_Base64__c;
     }
 
     static List<String> choicesFor(Event_Question__c q) {

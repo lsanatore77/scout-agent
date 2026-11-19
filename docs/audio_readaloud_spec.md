@@ -60,3 +60,10 @@ Playback mechanism is settled by on-device testing in the Salesforce Android app
 2. **Apex** — when a Turn asks a question, also return `askAudio` (base64 of that one question's clip) when read-aloud is enabled.
 3. **LWC** — on an asking turn, decode + play via Web Audio; per-reporter mute toggle; one shared AudioContext opened on first gesture.
 4. **Clips** — the 9 fixed prompts need neutral voice clips (this build env has no TTS/no network, so they're sourced once and uploaded).
+
+## Clips as files (19 Nov 2026)
+The 131,072-character field caps a clip at about 98 KB, which only fits phone-line quality (8 kHz). CqIntakeChat.clipFor now
+looks for a .wav file attached to the Event_Question__c record first (latest version, up to 2 MB) and falls back to
+Audio_Wav_Base64__c. Target format for the professional clips: 44.1 kHz, 16-bit PCM, mono. The LWC is unchanged; it reads the
+sample rate from the WAV header. Reporters need read access to the question record for the attached file to reach them.
+Tests: CqIntakeChatClipTest (3 pass).
