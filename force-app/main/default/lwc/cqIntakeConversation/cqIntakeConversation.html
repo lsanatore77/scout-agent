@@ -58,8 +58,8 @@
                 </div>
             </template>
 
-            <!-- answer a text question, or add a later detail; voice only when there are no chips -->
-            <template if:false={done}>
+            <!-- answer a text question, or add a later detail; voice only when there are no chips; hidden while the lot Yes/No is waiting -->
+            <template if:true={showComposer}>
                 <div class="composer">
                     <textarea class="box draftbox" rows="1" placeholder={inputPlaceholder}
                         value={draft} oninput={handleInput} onkeydown={handleKey} disabled={inputDisabled}></textarea>

@@ -21,6 +21,7 @@ export default class CqIntakeConversation extends LightningElement {
     answers = [];
     pendingQuestionId = null;
     pendingFeedsDescription = false;   // the lot/part prompt: its answer is also description
+    lotGate = null;        // the lot prompt is a Yes/No first: 'ask' shows the chips, 'open' shows the box for the number
 
     draftJson = null;
     ready = false;
@@ -87,7 +88,7 @@ export default class CqIntakeConversation extends LightningElement {
         this.description = s;
         // fresh conversation each time the story is (re)submitted
         this.messages = []; this.answers = []; this.understood = []; this.stillNeeded = []; this.choices = [];
-        this.pendingQuestionId = null; this.pendingFeedsDescription = false;
+        this.pendingQuestionId = null; this.pendingFeedsDescription = false; this.lotGate = null;
         this.ready = false; this.done = false; this.draftJson = null;
         this.stage = 'chat';
         this.turn();
@@ -99,7 +100,19 @@ export default class CqIntakeConversation extends LightningElement {
     handleInput(e) { this.draft = e.target.value; }
     handleKey(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); this.send(this.draft); } }
     handleSendClick() { this.send(this.draft); }
-    handleChoice(e) { this.send(e.target.dataset.value); }
+    handleChoice(e) {
+        const v = e.target.dataset.value;
+        // "Do you have a lot or batch number?" Yes opens the box to type or speak it, with no extra prompt.
+        if (this.lotGate === 'ask' && v === 'Yes') {
+            if (this.busy || this.done) { return; }
+            this.ensureAudio();
+            this.pushMe('Yes');
+            this.choices = [];
+            this.lotGate = 'open';
+            return;
+        }
+        this.send(v);
+    }
 
     send(text) {
         const said = (text || '').trim();
@@ -116,7 +129,10 @@ export default class CqIntakeConversation extends LightningElement {
             // The lot/part prompt's answer is also description, so the part/lot can resolve —
             // but a "no / don't know" shouldn't get appended to the reporter's narrative.
             if (this.pendingFeedsDescription && !this.isNegative(said)) {
-                this.description = this.description ? this.description + ' ' + said : said;
+                // After the Yes chip the reply is often just the number, so name it as a lot for the reader.
+                const bare = this.lotGate === 'open' && /\d/.test(said) && !/\b(lot|batch|part)\b/i.test(said);
+                const extra = bare ? 'Lot ' + said + '.' : said;
+                this.description = this.description ? this.description + ' ' + extra : extra;
             }
         } else {
             // A free thought in the chat folds into the report narrative.
@@ -128,6 +144,7 @@ export default class CqIntakeConversation extends LightningElement {
     turn() {
         this.busy = true;
         this.choices = [];
+        this.lotGate = null;
         const state = JSON.stringify({ description: this.description, answers: this.answers });
         respond({ stateJson: state })
             .then((t) => {
@@ -136,6 +153,10 @@ export default class CqIntakeConversation extends LightningElement {
                 this.choices = (t.choices || []).map((c, i) => ({ k: 'c' + i, value: c }));
                 this.pendingQuestionId = t.askQuestionId || null;
                 this.pendingFeedsDescription = t.askFeedsDescription === true;
+                if (this.pendingFeedsDescription && this.choices.length === 0) {
+                    this.choices = [{ k: 'c0', value: 'Yes' }, { k: 'c1', value: 'No' }];
+                    this.lotGate = 'ask';
+                }
                 this.ready = t.ready === true;
                 this.draftJson = t.draftJson || null;
                 this.pushAi(t.reply);
@@ -355,7 +376,9 @@ export default class CqIntakeConversation extends LightningElement {
     get showQHeader() { return !this.ready && !this.done; }
     get showSubmit() { return this.ready && !this.done; }
     get inputDisabled() { return this.busy || this.done; }
+    get showComposer() { return !this.done && this.lotGate !== 'ask'; }
     get inputPlaceholder() {
+        if (this.lotGate === 'open') { return 'Type or speak the lot or batch number…'; }
         if (this.pendingQuestionId) { return 'Type your answer…'; }
         if (this.ready) { return 'Remembered something? Add it…'; }
         return 'Type your answer…';
