@@ -1,21 +1,15 @@
 @import 'c/cqStyles';
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
-.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-.cols.wide { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
-.top8 { margin-top: 16px; }
 .red { color: var(--cq-crit-fg); }
 .lvl { font-weight: 700; }
 .lvl.low { color: var(--cq-pos-fg); }
 .lvl.medium { color: var(--cq-warn-fg); }
 .lvl.high { color: var(--cq-crit-fg); }
-.prob { margin: 0; font-size: 14px; line-height: 1.45; }
 .cq-tbl td.ttl { min-width: 180px; max-width: 320px; }
 .plainbtn { padding: 0; border: none; background: none; font-family: inherit; }
 .triaged { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--cq-pos-bg); color: var(--cq-pos-fg); font-weight: 600; margin-bottom: 8px; }
-@media (max-width: 760px) { .cols, .cols.wide { grid-template-columns: 1fr; } }
 /* Investigation workspace additions */
-.spin { position: relative; display: inline-block; width: 24px; height: 24px; }
 /* What Changed */
 .lookback { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0; }
 .card { padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
@@ -48,25 +42,19 @@
 .addchange { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 10px; border: 2px solid var(--cq-link); background: var(--cq-link-soft); margin: 14px 0; }
 .big2 { font-size: 15px; }
 .hyprow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--cq-line); }
-.spinwrap { display: flex; align-items: center; gap: 10px; min-height: 40px; }
 .tl-text::first-letter { text-transform: uppercase; }
 /* a little space between the date labels and the shaded 14 days */
 .tl-tick { margin-top: -10px; }
 .tl-shade { margin-top: 3px; height: 20px; }
 /* boxes worded from the records by rule: the summary icon in CQ.AI purple, not the CQ.AI star */
 /* Check History */
-.recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-warn-line); background: var(--cq-warn-bg); display: flex; flex-direction: column; gap: 8px; }
-.recur-head { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--cq-warn-fg); }
 .lh { line-height: 1.5; }
 .redtext { color: var(--cq-crit-fg); font-weight: 600; }
-.redlink { color: var(--cq-crit-fg); font-weight: 600; text-decoration: underline; }
 .top8x { margin-top: 2px; align-items: center; }
-.linkbtn { display: inline-flex; align-items: center; text-decoration: none; color: var(--cq-ink); }
 .actcol { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .smalllink { font-size: 13px; color: var(--cq-link); cursor: pointer; }
 .smalllink:hover { text-decoration: underline; }
 .dismissed { display: inline-flex; align-items: center; gap: 6px; }
-.fromcard { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-hl-line); background: var(--cq-surface); display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
 /* CQ.AI Suggested Summary on Conclusion */
 .ibtn { display: inline-flex; align-items: center; gap: 6px; }
 .sumbusy { box-sizing: border-box; min-height: 200px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-surface); color: var(--cq-muted); font-size: 14px; font-weight: 400; }
@@ -74,10 +62,9 @@
 @keyframes pspin { to { transform: rotate(360deg); } }
 .sumask { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0 0; }
 /* shared pieces keep this screen's spacing */
-.pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .cq-ai-card { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 14px; }
 .cq-card-title { margin-bottom: 6px; }
-.pcard .cq-card-title, .card .cq-card-title { margin-bottom: 0; }
+.cq-pcard .cq-card-title, .card .cq-card-title { margin-bottom: 0; }
 .cq-field input.date { width: 170px; }
 .cq-field textarea.summary { min-height: 200px; line-height: 1.5; }
 .cq-field textarea.hypta, .cq-field textarea.plandesc { min-height: 72px; }
