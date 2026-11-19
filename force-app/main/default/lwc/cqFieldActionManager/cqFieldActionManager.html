@@ -42,18 +42,18 @@
 
                     <template if:true={is0}>
                         <h3 class="cq-step-title">Field Action at a Glance</h3>
-                        <div class="cols wide">
-                            <div class="col lead">
+                        <div class="cq-cols top wide32">
+                            <div class="cq-col lead">
                                 <div class="card sug sumcard">
                                     <div class="lab">What Was Decided</div>
-                                    <div class="big">{v.title}</div>
+                                    <div class="cq-big">{v.title}</div>
                                     <div class="sumrow">
                                         <span class="cq-pill soft neu">{v.actionType}</span>
                                         <template if:true={v.recallClass}><span class="cq-pill soft neu">{v.recallClass}</span></template>
                                         <template if:true={v.scope}><span class={scopePill}>{v.scope} Scope</span></template>
                                         <span class="cq-sub">{decidedLine}</span>
                                     </div>
-                                    <template if:true={v.rationale}><div class="para">{v.rationale}</div></template>
+                                    <template if:true={v.rationale}><div class="cq-para">{v.rationale}</div></template>
                                     <div class="cq-tiles">
                                         <template for:each={tiles} for:item="t">
                                             <div key={t.key} class="cq-tile"><div class="cq-tile-k">{t.label}</div><div class="cq-tile-v">{t.value}</div></div>
@@ -63,7 +63,7 @@
                                 <template if:true={v.hazard}>
                                     <div class="card">
                                         <div class="lab">Health Hazard Summary</div>
-                                        <div class="para">{v.hazard}</div>
+                                        <div class="cq-para">{v.hazard}</div>
                                     </div>
                                 </template>
                                 <div class="card">
@@ -71,7 +71,7 @@
                                     <template if:true={hasReviews}>
                                         <template for:each={reviews} for:item="r">
                                             <div key={r.id} class="revrow">
-                                                <span class="fn">
+                                                <span class="cq-stack">
                                                     <span><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button> <span class="cq-sub">{r.meta}</span></span>
                                                     <span class="cq-sub">{r.approval}</span>
                                                     <template if:true={r.rationale}><span class="cq-sub">{r.rationale}</span></template>
@@ -86,8 +86,8 @@
                                 <div class="lab">Signals on This Part</div>
                                 <template if:true={hasSignals}>
                                     <template for:each={signals} for:item="s">
-                                        <div key={s.id} class="krow" data-tone={s.strength}>
-                                            <span class="fn"><span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="cq-sub">{s.where}</span></span><span class="cq-sub">{s.label}</span></span>
+                                        <div key={s.id} class="cq-krow" data-tone={s.strength}>
+                                            <span class="cq-stack"><span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="cq-sub">{s.where}</span></span><span class="cq-sub">{s.label}</span></span>
                                         </div>
                                     </template>
                                 </template>
@@ -101,7 +101,7 @@
                             <template if:true={v.scope}><span class={scopePill}>{v.scope}</span></template>
                             <span class={statePill}>{stateText}</span>
                         </div>
-                        <template if:true={noScope}><p class="cq-step-intro top14">This field action has no scope set. It was decided before scope was part of the review.</p></template>
+                        <template if:true={noScope}><p class="cq-step-intro cq-mt14">This field action has no scope set. It was decided before scope was part of the review.</p></template>
 
                         <template if:true={hasLots}>
                             <div class="tbar">
@@ -142,10 +142,10 @@
                                                         <template if:true={r.pendingAdd}><span class="cq-pill soft warn notconf">Not Confirmed</span></template>
                                                         <template if:true={r.suggested}>&nbsp;&nbsp;<c-cq-ai-why variant="pill" tip={r.why} lead="Why does CQ.AI suggest including " subject={r.item}></c-cq-ai-why></template>
                                                     </td>
-                                                    <td class="cq-nowrap mut">{r.partRev}</td>
+                                                    <td class="cq-nowrap cq-muted">{r.partRev}</td>
                                                     <td class="cq-nowrap">{r.lot}</td>
                                                     <td class="num">{r.qty}</td>
-                                                    <td class="cq-nowrap mut">{r.supplier}</td>
+                                                    <td class="cq-nowrap cq-muted">{r.supplier}</td>
                                                     <td class="cq-nowrap"><span class={r.traceCls}>{r.trace}</span></td>
                                                     <template if:true={r.showStock}>
                                                         <td class="num">{r.shippedText}</td>
@@ -156,16 +156,16 @@
                                                                 <div class="pop" role="dialog" aria-label={r.popLabel}>
                                                                     <div class="pophead"><span class="b">Lot {r.name}</span><span class="cq-grow"></span><span class="cq-sub">{r.onHandText} on hand</span></div>
                                                                     <template for:each={r.places} for:item="k">
-                                                                        <div key={k.key} class="poprow"><a class="ploc" href={k.href} target="_blank">{k.location}</a><span class="cq-grow"></span><span>{k.units}</span></div>
+                                                                        <div key={k.key} class="poprow"><a class="cq-ploc" href={k.href} target="_blank">{k.location}</a><span class="cq-grow"></span><span>{k.units}</span></div>
                                                                     </template>
                                                                     <span class="cq-sub">{r.asOfText}</span>
                                                                 </div>
                                                             </template>
                                                         </td>
                                                         <td class="cq-nowrap">
-                                                            <template if:true={r.noPlaces}><span class="mut">{r.locText}</span></template>
+                                                            <template if:true={r.noPlaces}><span class="cq-muted">{r.locText}</span></template>
                                                             <template for:each={r.places} for:item="k">
-                                                                <span key={k.key}><a class="ploc" href={k.href} target="_blank">{k.location}</a> {k.units}<template if:true={k.sep}><span class="dotsep"> &middot; </span></template></span>
+                                                                <span key={k.key}><a class="cq-ploc" href={k.href} target="_blank">{k.location}</a> {k.units}<template if:true={k.sep}><span class="cq-dotsep"> &middot; </span></template></span>
                                                             </template>
                                                         </td>
                                                     </template>
@@ -179,10 +179,10 @@
                                                         <template if:true={r.noKids}><span class="chev0"></span></template>
                                                         <span class={r.itemCls}>{r.item}</span>
                                                     </td>
-                                                    <td class="cq-nowrap mut">{r.partRev}</td>
+                                                    <td class="cq-nowrap cq-muted">{r.partRev}</td>
                                                     <td class="cq-nowrap">{r.lot}</td>
                                                     <td class="num">{r.qty}</td>
-                                                    <td class="cq-nowrap mut">{r.supplier}</td>
+                                                    <td class="cq-nowrap cq-muted">{r.supplier}</td>
                                                     <td class="cq-nowrap"><span class={r.traceCls}>{r.trace}</span></td>
                                                     <td></td><td></td><td></td>
                                                 </template>
@@ -209,7 +209,7 @@
                             <div class="lab">Scope Changes</div>
                             <template if:true={hasChanges}>
                                 <template for:each={changes} for:item="c">
-                                    <div key={c.key} class="logrow"><span class="logwhen">{c.at}</span><span class="fn"><span>{c.line}</span><span class="cq-sub">{c.by}</span></span></div>
+                                    <div key={c.key} class="logrow"><span class="logwhen">{c.at}</span><span class="cq-stack"><span>{c.line}</span><span class="cq-sub">{c.by}</span></span></div>
                                 </template>
                             </template>
                             <template if:false={hasChanges}><p class="cq-note">No confirmed changes yet.</p></template>

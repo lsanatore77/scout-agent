@@ -51,10 +51,10 @@
                 <div class="cq-ws-main">
                     <template if:true={showGlance}>
                         <h3 class="cq-step-title">Disposition at a Glance</h3>
-                        <div class="cols wide">
-                            <div class="pcard">
+                        <div class="cq-cols wide">
+                            <div class="cq-pcard">
                                 <div class="cq-card-title">The Problem</div>
-                                <p class="prob">{problemText}</p>
+                                <p class="cq-prob">{problemText}</p>
                                 <div class="cq-tiles">
                                     <div class="cq-tile"><div class="cq-tile-k">Left to Dispose</div><div class="cq-tile-v">{leftText}</div></div>
                                     <div class="cq-tile"><div class="cq-tile-k">Lots</div><div class="cq-tile-v">{lotCount}</div></div>
@@ -69,7 +69,7 @@
                             </div>
                         </div>
 
-                        <div class="cq-card-title top8">Parts and Lots to Dispose</div>
+                        <div class="cq-card-title cq-mt16">Parts and Lots to Dispose</div>
                         <div class="cq-tblwrap">
                             <table class="cq-tbl">
                                 <thead><tr><th>Part</th><th>Lot</th><th class="num">Impacted</th><th class="num">Disposed</th><th class="num">Left</th><th>Disposition Records</th></tr></thead>
@@ -94,7 +94,7 @@
                         </div>
                         <template if:true={noLots}><p class="cq-note">This NC has no impacted parts or lots, so there is nothing to dispose.</p></template>
 
-                        <div class="cols cq-mt16">
+                        <div class="cq-cols cq-mt16">
                             <div class="yours">
                                 <div class="cq-card-title">Decided at Triage</div>
                                 <div class="triaged"><span class="cq-okdot sm">&#10003;</span> {triagedText}</div>

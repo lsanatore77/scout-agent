@@ -13,8 +13,8 @@
 
             <template if:true={isNotice}><p class="cq-note">An advisory notice leaves the product in use, so there are no units to recover. Effectiveness rests on the customers acknowledging.</p></template>
             <template if:true={showRecovery}>
-            <section class="card">
-                <div class="ch"><span class="cn">1</span><span class="ct">Recovery by Lot</span><span class="cq-grow"></span><span class="tot">{recoveryLine}</span></div>
+            <section class="cq-stepcard">
+                <div class="cq-stepcard-head"><span class="cq-stepcard-n">1</span><span class="cq-stepcard-title">Recovery by Lot</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{recoveryLine}</span></div>
                 <div class="cq-tblwrap">
                     <table class="ht">
                         <thead><tr>
@@ -52,8 +52,8 @@
             </div>
 
             <div class="grid">
-                <section class="card">
-                    <div class="ch mid"><span class="cn">2</span><span class="ct">Customers and Tasks</span><span class="cq-grow"></span>
+                <section class="cq-stepcard">
+                    <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">Customers and Tasks</span><span class="cq-grow"></span>
                         <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
                         <button class="cq-btn-outline" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
                     </div>
@@ -171,8 +171,8 @@
                     <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table. {respLine}; {targetText}.</span>
                 </section>
 
-                <section class="card">
-                    <div class="ch"><span class="cn">3</span><span class="ct">Held Stock</span><span class="cq-grow"></span><span class="tot">{dispLine}</span></div>
+                <section class="cq-stepcard">
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">3</span><span class="cq-stepcard-title">Held Stock</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{dispLine}</span></div>
                     <template if:true={hasHolds}>
                         <div class="list">
                             <template for:each={holdRows} for:item="h">
@@ -192,8 +192,8 @@
                 </section>
             </div>
 
-            <section class="card">
-                <div class="ch"><span class="cn">4</span><span class="ct">Effectiveness Verdict</span></div>
+            <section class="cq-stepcard">
+                <div class="cq-stepcard-head"><span class="cq-stepcard-n">4</span><span class="cq-stepcard-title">Effectiveness Verdict</span></div>
                 <div class="vrow">
                     <div class="cq-field">
                         <span class="cq-label">Verdict<span class="cq-req">*</span></span>

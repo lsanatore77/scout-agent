@@ -8,13 +8,8 @@
 
 .grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 16px; }
 @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
-.card { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
-.grid + .card, .card + .card { margin-top: 16px; }
-.grid > .card + .card { margin-top: 0; }
-.ch { display: flex; align-items: baseline; gap: 8px; }
-.cn { font-size: 13px; font-weight: 700; color: var(--cq-muted); }
-.ct { font-size: 15px; font-weight: 700; }
-.tot { font-size: 13px; font-weight: 600; }
+.grid + .cq-stepcard, .cq-stepcard + .cq-stepcard { margin-top: 16px; }
+.grid > .cq-stepcard + .cq-stepcard { margin-top: 0; }
 
 .ht { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ht th { text-align: left; font-size: 11px; font-weight: 700; color: var(--cq-muted); padding: 6px 8px; background: var(--cq-surface); border-bottom: 1px solid var(--cq-line); white-space: nowrap; }
@@ -48,7 +43,7 @@
 .tnum { font-size: 28px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
 .badc { color: var(--cq-crit-fg); }
 
-.ch.mid { align-items: center; }
+.cq-stepcard-head.mid { align-items: center; }
 .sugg { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--cq-accent-line); border-radius: 8px; }
 .srow { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--cq-line); cursor: pointer; }
 .formbtns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 6px; }

@@ -4,22 +4,11 @@
 .ssub.alert { color: var(--cq-crit-fg); font-weight: 600; }
 /* card headings: bold, Title Case, body size, the same as the sub-heading on a CQ.AI suggestion card (Reported Answers) */
 .lab { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
-.top14 { margin-top: 14px; }
-.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
-.cols.wide { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
-.col.lead { gap: 14px; }
-.col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.krow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); }
-.krow:last-child { border-bottom: none; padding-bottom: 0; }
 .card { padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .card.sug { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
-.para { margin-top: 6px; font-size: 14px; line-height: 1.45; white-space: pre-line; }
-.big { font-size: 20px; font-weight: 700; }
-.fn { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
 .pill { flex: none; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); color: var(--cq-accent); font-size: 11px; font-weight: 600; white-space: nowrap; }
 .sgh { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .sgt { font-size: 14px; font-weight: 700; }
-@media (max-width: 760px) { .cols, .cols.wide { grid-template-columns: 1fr; } }
 .sumcard { display: flex; flex-direction: column; gap: 10px; }
 .sumrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .revrow { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--cq-line); }
@@ -41,7 +30,6 @@
 .sc { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .tick { width: 16px; height: 16px; margin: 0; accent-color: var(--cq-link); cursor: pointer; }
 .tick:disabled { cursor: not-allowed; }
-.mut { color: var(--cq-muted); }
 .ind { display: inline-block; }
 .chev { width: 24px; height: 24px; padding: 0; border: none; border-radius: 6px; background: none; color: var(--cq-ink); font-size: 16px; line-height: 1; cursor: pointer; vertical-align: middle; }
 .chev:hover { background: var(--cq-hl-bg); }
@@ -62,14 +50,11 @@
 .pophead { display: flex; align-items: baseline; gap: 8px; }
 .poprow { display: flex; gap: 8px; padding-top: 6px; border-top: 1px solid var(--cq-line); font-variant-numeric: tabular-nums; }
 .b { font-weight: 600; }
-.ploc { color: var(--cq-link); font-weight: 600; text-decoration: none; }
-.ploc:hover { text-decoration: underline; }
-.dotsep { color: var(--cq-faint); }
 /* buttons, pills, chips and messages come from cqStyles */
 .cq-pill.notconf { margin-left: 8px; }
 /* signals: a side bar in the colour of the signal's strength, the same device as the flagged rows on a CQ.AI suggestion card */
 /* the rows sit flush so the bars join into one solid line; even padding above and below each row, and room beside the bar */
-.krow[data-tone] { padding: 9px 0 9px 14px; border-left: 3px solid var(--cq-line-field); }
-.lab + .krow[data-tone] { margin-top: 8px; }
-.krow[data-tone="Escalate"] { border-left-color: var(--cq-crit-solid); }
-.krow[data-tone="Assess"], .krow[data-tone="Watch"] { border-left-color: var(--cq-warn-solid); }
+.cq-krow[data-tone] { padding: 9px 0 9px 14px; border-left: 3px solid var(--cq-line-field); }
+.lab + .cq-krow[data-tone] { margin-top: 8px; }
+.cq-krow[data-tone="Escalate"] { border-left-color: var(--cq-crit-solid); }
+.cq-krow[data-tone="Assess"], .cq-krow[data-tone="Watch"] { border-left-color: var(--cq-warn-solid); }
