@@ -18,7 +18,7 @@ const TABS = [{ key: 'hyp', label: 'Hypotheses' }, { key: 'isnot', label: 'Is / 
 const TEST_TYPES = ['Measure or Inspect', 'Compare', 'Reproduce', 'Remove the Cause', 'Check Records'];
 const SUPPORTS = [{ v: 'For', label: 'Supports It' }, { v: 'Against', label: 'Goes Against It' }, { v: 'Inconclusive', label: 'Inconclusive' }];
 const TEST_FOR = { Machine: 'Measure or Inspect', Method: 'Compare', Materials: 'Check Records', Measurement: 'Measure or Inspect', People: 'Check Records', 'Environment (Nature)': 'Check Records' };
-const STATUS_CLS = { Confirmed: 'chip ok', 'Ruled Out': 'chip', Open: 'chip warn' };
+const STATUS_CLS = { Confirmed: 'cq-pill soft pos', 'Ruled Out': 'cq-pill soft neu', Open: 'cq-pill soft warn' };
 const SUGGEST_CLS = { Likely: 'sug likely', Unlikely: 'sug unlikely', 'Needs Evidence': 'sug needs' };
 const TAG_CLS = { 'From CQ': 'tag', 'Test Done': 'tag ok', 'Test Planned': 'tag warn', 'From Ask CQ.AI': 'tag ai', 'CQ Record': 'tag' };
 
@@ -173,8 +173,8 @@ export default class CqInvestigationCause extends LightningElement {
                 category: h.category || '—', suggest: h.suggest, suggestWhy: h.suggestWhy, sugCls: SUGGEST_CLS[h.suggest] || 'sug',
                 askWhy: 'Why does CQ.AI suggest ' + this.hname(h) + ' is ' + (h.suggest || '').toLowerCase() + '? Give the facts.',
                 canPlan: h.suggest === 'Needs Evidence' && h.status === 'Open' && !h.testsPlanned,
-                status: h.status, statusCls: STATUS_CLS[h.status] || 'chip', tests: tests || '—',
-                btn: sel ? 'Selected' : 'View', btnCls: 'btn sm' + (sel ? ' selbtn' : ''), rowCls: sel ? 'selrow' : ''
+                status: h.status, statusCls: STATUS_CLS[h.status] || 'cq-pill soft neu', tests: tests || '—',
+                btn: sel ? 'Selected' : 'View', btnCls: 'cq-btn-outline' + (sel ? ' selbtn' : ''), rowCls: sel ? 'selrow' : ''
             };
         });
     }
@@ -194,7 +194,7 @@ export default class CqInvestigationCause extends LightningElement {
     get selHead() { const h = this.sel; return this.hname(h) + (h.category ? ' · ' + h.category : ''); }
     get statusOpts() {
         const s = this.sel.status;
-        return ['Open', 'Confirmed', 'Ruled Out'].map((x) => ({ label: x, pressed: String(s === x), cls: 'opt' + (s === x ? ' on' : '') }));
+        return ['Open', 'Confirmed', 'Ruled Out'].map((x) => ({ label: x, pressed: String(s === x), cls: 'cq-chip' }));
     }
     get checks() {
         return this.sel.checks.map((c) => ({ ...c, cls: 'chk ' + (c.ok ? 'ok' : 'todo'), mark: c.ok ? '✓' : '○', isBack: c.key === 'back' && !c.ok }));
@@ -312,13 +312,13 @@ export default class CqInvestigationCause extends LightningElement {
     get formShowsSupports() { return !this.formIsTest || this.formDone; }
     get pinTargets() {
         return this.v.hyps.filter((h) => h.status !== 'Ruled Out').map((h) => ({ id: h.id, label: this.hname(h), pressed: String(h.id === this.form.hypId),
-            cls: 'opt sm' + (h.id === this.form.hypId ? ' on' : '') }));
+            cls: 'cq-chip' }));
     }
-    get testTypeOpts() { return TEST_TYPES.map((t) => ({ label: t, pressed: String(this.form.testType === t), cls: 'opt sm' + (this.form.testType === t ? ' on' : '') })); }
+    get testTypeOpts() { return TEST_TYPES.map((t) => ({ label: t, pressed: String(this.form.testType === t), cls: 'cq-chip' })); }
     get testStatusOpts() {
-        return [{ v: 'Planned', label: 'Planned' }, { v: 'Done', label: 'Done' }].map((s) => ({ ...s, pressed: String(this.form.status === s.v), cls: 'opt sm' + (this.form.status === s.v ? ' on' : '') }));
+        return [{ v: 'Planned', label: 'Planned' }, { v: 'Done', label: 'Done' }].map((s) => ({ ...s, pressed: String(this.form.status === s.v), cls: 'cq-chip' }));
     }
-    get supportOpts() { return SUPPORTS.map((s) => ({ ...s, pressed: String(this.form.supports === s.v), cls: 'opt sm' + (this.form.supports === s.v ? ' on' : '') + (s.v === 'Against' && this.form.supports === s.v ? ' neg' : '') })); }
+    get supportOpts() { return SUPPORTS.map((s) => ({ ...s, pressed: String(this.form.supports === s.v), cls: 'cq-chip' + (s.v === 'Against' ? ' neg' : '') })); }
     get detailLabel() { return this.formPlanned ? 'What Will Be Done *' : 'What Was Done *'; }
     get detailPlaceholder() { return this.formPlanned ? 'For example, bond 20 units with a new pin and pressure test them' : 'For example, gauged the locating pin on BF-02'; }
     setForm(k, val) { this.form = { ...this.form, [k]: val }; }
@@ -473,7 +473,7 @@ export default class CqInvestigationCause extends LightningElement {
     }
     get whyHyps() {
         return this.v.hyps.filter((h) => h.status !== 'Ruled Out').map((h) => ({ id: h.id, label: this.hname(h) + ' · ' + this.short(h.title),
-            pressed: String(h.id === this.whyHypId), cls: 'opt sm' + (h.id === this.whyHypId ? ' on' : '') }));
+            pressed: String(h.id === this.whyHypId), cls: 'cq-chip' }));
     }
     short(t) { const s = (t || '').replace(/,\s*as in [A-Z]+-\d+$/, ''); return s.length > 40 ? s.slice(0, 38) + '…' : s; }
     get hasWhyHyp() { return !!this.whyHypId; }
@@ -488,7 +488,7 @@ export default class CqInvestigationCause extends LightningElement {
         const saved = this.whyHyp ? this.whyHyp.whys : [];
         return this.whys.map((w, i) => {
             const s = w.id ? saved.find((x) => x.id === w.id) : null;
-            return { ...w, idx: i, label: 'Why ' + (i + 1), cls: 'whybox' + (w.isRoot ? ' root' : ''), rootCls: 'opt sm' + (w.isRoot ? ' on' : ''), rootPressed: String(!!w.isRoot),
+            return { ...w, idx: i, label: 'Why ' + (i + 1), cls: 'whybox' + (w.isRoot ? ' root' : ''), rootCls: 'cq-chip', rootPressed: String(!!w.isRoot),
                 evidence: s ? this.evRows(s.evidence).map((e) => ({ ...e, line: (e.against ? '× ' : e.isPlanned ? '○ ' : '✓ ') + (e.tag === 'Test Done' || e.tag === 'Test Planned' ? 'Test: ' : e.tag === 'CQ Record' ? 'Linked CQ record: ' : '') + e.text,
                     lineCls: 'wev ' + (e.against ? 'neg' : e.isPlanned ? 'plan' : 'pos') })) : [],
                 canEvidence: !!w.id && !this.whyDirty, canRemove: this.whys.length > 1 };
@@ -549,7 +549,7 @@ export default class CqInvestigationCause extends LightningElement {
         const items = this.v.hyps.filter((h) => h.category === cat).map((h) => ({
             key: h.id, label: this.hname(h) + ' · ' + this.short(h.title),
             title: this.hname(h) + ': ' + h.title, status: h.status,
-            cls: 'cause ' + (h.status === 'Confirmed' ? 'ok' : h.status === 'Ruled Out' ? 'out' : 'open'), pillCls: STATUS_CLS[h.status] || 'chip'
+            cls: 'cause ' + (h.status === 'Confirmed' ? 'ok' : h.status === 'Ruled Out' ? 'out' : 'open'), pillCls: STATUS_CLS[h.status] || 'cq-pill soft neu'
         }));
         return { key: cat, cat, items, top, bottom: !top };
     }
@@ -573,7 +573,7 @@ export default class CqInvestigationCause extends LightningElement {
     get hypNewOpen() { return !!this.hypNew; }
     get hypNewCats() {
         const c = this.hypNew ? this.hypNew.category : null;
-        return this.fishCats.map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
+        return this.fishCats.map((x) => ({ label: x, pressed: String(c === x), cls: 'cq-chip' }));
     }
     handleNewTitle(event) { this.hypNew = { ...this.hypNew, title: event.target.value }; }
     handleNewCat(event) { this.hypNew = { ...this.hypNew, category: event.currentTarget.dataset.c }; }
@@ -609,7 +609,7 @@ export default class CqInvestigationCause extends LightningElement {
         const codes = this.v.codes || [];
         return this.roots.map((r, i) => ({
             ...r, idx: i, isNew: !r.hypId && !r.whyId && !r.saved,
-            roleOpts: ['Primary', 'Contributing'].map((x) => ({ label: x, pressed: String(r.role === x), cls: 'opt xs' + (r.role === x ? ' on' : '') + (x === 'Primary' && r.role === x ? ' prim' : '') })),
+            roleOpts: ['Primary', 'Contributing'].map((x) => ({ label: x, pressed: String(r.role === x), cls: 'cq-chip xs' })),
             catOpts: this.v.categories.map((c) => ({ value: c, label: c, sel: c === r.category })),
             codeOpts: [{ value: '', label: 'Choose a code', sel: !r.codeId }].concat(codes.filter((c) => !r.category || c.category === r.category)
                 .map((c) => ({ value: c.id, label: c.name + (c.sub ? ' (' + c.sub + ')' : ''), sel: c.id === r.codeId }))),
