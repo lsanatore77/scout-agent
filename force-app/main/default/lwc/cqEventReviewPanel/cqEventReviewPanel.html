@@ -25,7 +25,7 @@
                     <!-- LEFT: the problem, its facts, and the decision -->
                     <div class="colmain">
                         <div class="card">
-                            <div class="probhd">The Problem <span class="probby">&middot; reported by {review.reportedBy}</span></div>
+                            <div class="cq-card-title probhd">The Problem <span class="probby">&middot; reported by {review.reportedBy}</span></div>
                             <p class="stmt">{review.problem}</p>
                             <div class="facts">
                                 <div class="factrow"><span class="factlabel">Where</span><span class="factval">{review.whereFound}</span></div>
@@ -40,7 +40,7 @@
                         </div>
 
                         <div class="decide">
-                            <div class="becomes">What Should This Event Become?</div>
+                            <div class="cq-card-title becomes">What Should This Event Become?</div>
                             <div class="choices">
                                 <template for:each={review.choices} for:item="c">
                                     <button key={c.key} class={c.cls} disabled>{c.label} <span class="cmark">{c.mark}</span></button>
@@ -51,17 +51,17 @@
                     </div>
 
                     <!-- RIGHT: CQ.AI recommendation, its reasoning, and the answers it flagged -->
-                    <div class="ai">
-                        <div class="aieyebrow">&#10022; CQ.AI Suggests</div>
-                        <div class="aiverdict">{review.suggestion.becomes}</div>
-                        <p class="aisummary">{review.summary}</p>
+                    <div class="cq-ai-card">
+                        <div class="cq-ai-eyebrow">&#10022; CQ.AI Suggests</div>
+                        <div class="cq-ai-verdict">{review.suggestion.becomes}</div>
+                        <p class="cq-ai-text">{review.summary}</p>
 
-                        <div class="airule"></div>
+                        <div class="cq-ai-rule"></div>
 
-                        <div class="aiwhy">Reported Answers <span class="hint">&mdash; purple = what CQ.AI flagged</span></div>
-                        <div class="qa">
+                        <div class="cq-ai-sub">Reported Answers <span class="cq-hint">&mdash; purple = what CQ.AI flagged</span></div>
+                        <div class="cq-qa">
                             <template for:each={review.answers} for:item="a">
-                                <div key={a.question} class={a.cls}><span class="qk">{a.question}</span><span class="qv">{a.answer}</span></div>
+                                <div key={a.question} class={a.cls}><span class="cq-qa-k">{a.question}</span><span class="cq-qa-v">{a.answer}</span></div>
                             </template>
                         </div>
                     </div>

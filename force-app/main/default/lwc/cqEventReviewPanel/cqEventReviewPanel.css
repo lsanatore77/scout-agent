@@ -10,7 +10,7 @@
 .colmain { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
 
 .card { border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-bg); }
-.probhd { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); margin-bottom: 0.5rem; }
+.probhd { margin-bottom: 0.5rem; }
 .probby { font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-muted); }
 .stmt { margin: 0 0 0.875rem; line-height: 1.5; color: var(--cq-ink); }
 
@@ -23,29 +23,12 @@
 
 /* decision card: uniform 2x2 */
 .decide { border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-bg); }
-.becomes { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); margin: 0 0 0.6rem; }
+.becomes { margin: 0 0 0.6rem; }
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
-.choice { display: flex; align-items: center; justify-content: center; gap: 0.35rem; min-height: 2.75rem; padding: 0 0.75rem; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: var(--cq-fs-btn); font-weight: 600; color: var(--cq-ink); text-align: center; white-space: nowrap; }
-.choice.ai { border: 1px solid var(--cq-accent-line); background: var(--cq-accent-soft); color: var(--cq-accent); }
-.choice:disabled { opacity: 0.95; cursor: default; }
+.choices .cq-chip { gap: 0.35rem; white-space: nowrap; }
+.choices .cq-chip.ai { color: var(--cq-accent); }
+.choices .cq-chip:disabled { opacity: 1; }
 .cmark { color: var(--cq-accent); }
 .note { font-size: var(--cq-fs-meta); color: var(--cq-muted); margin: 0.75rem 0 0; }
 
-/* CQ.AI recommendation card (verdict + summary + answers) */
-.ai { border: 1px solid var(--cq-accent-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-accent-soft); }
-.aieyebrow { display: flex; align-items: center; gap: 0.3rem; font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cq-accent); }
-.aiverdict { font-size: 1.0625rem; font-weight: 700; color: var(--cq-ink); margin: 0.15rem 0 0.4rem; line-height: 1.25; }
-.aisummary { margin: 0; line-height: 1.5; color: var(--cq-ink); }
-.aiwhy { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); margin-bottom: 0.4rem; }
-.aiwhy .hint { font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-faint); }
-.airule { height: 1px; background: var(--cq-accent-line); margin: 0.85rem 0; }
-
-/* answers, with CQ.AI-flagged rows in purple */
-.qa { display: flex; flex-direction: column; }
-.qarow { display: flex; justify-content: space-between; gap: 1rem; padding: 0.4rem 0; border-top: 1px solid var(--cq-accent-line); }
-.qarow:first-child { border-top: 0; }
-.qk { color: var(--cq-muted); line-height: 1.35; }
-.qv { font-weight: 600; text-align: right; white-space: nowrap; }
-.qarow.hot { border-left: 3px solid var(--cq-accent); padding-left: 0.5rem; }
-.qarow.hot .qk { color: var(--cq-ink); font-weight: 600; }
-.qarow.hot .qv { color: var(--cq-accent); font-weight: 700; }
+/* the CQ.AI recommendation card and its answer rows come from cqStyles (.cq-ai-*, .cq-qa*) */

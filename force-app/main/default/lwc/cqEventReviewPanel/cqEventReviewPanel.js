@@ -37,12 +37,12 @@ export default class CqEventReviewPanel extends NavigationMixin(LightningElement
             { key: 'cp', label: 'New Complaint', ai: becomes === 'New Complaint' },
             { key: 'add', label: 'Add to an Open Record', ai: false },
             { key: 'no', label: 'Not a Quality Issue', ai: false }
-        ].map((c) => ({ ...c, cls: c.ai ? 'choice ai' : 'choice', mark: c.ai ? '✦' : '' }));
+        ].map((c) => ({ ...c, cls: c.ai ? 'cq-chip ai' : 'cq-chip', mark: c.ai ? '✦' : '' }));
         // Flag the answers CQ.AI is calling out (affirmative risk signals for now).
         const answers = (d.answers || []).map((a) => {
             const v = (a.answer || '').trim().toLowerCase();
             const hot = v === 'yes';
-            return { question: a.question, answer: a.answer, cls: hot ? 'qarow hot' : 'qarow' };
+            return { question: a.question, answer: a.answer, cls: hot ? 'cq-qa-row hot' : 'cq-qa-row' };
         });
         return {
             ...d,
