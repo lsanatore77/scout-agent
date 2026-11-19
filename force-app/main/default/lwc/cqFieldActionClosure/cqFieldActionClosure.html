@@ -2,15 +2,15 @@
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="sechead">
-            <h3 class="q">Closure</h3>
+            <h3 class="cq-step-title nom">Closure</h3>
             <span class={statePill}>{stateText}</span>
             <template if:true={closedLine}><span class="rk in">{closedLine}</span></template>
         </div>
-        <p class="p">{intro}</p>
+        <p class="cq-step-intro">{intro}</p>
 
         <div class="grid">
             <section class="card">
-                <div class="ch"><span class="cn">1</span><span class="ct">Closure Checklist</span><span class="grow"></span><span class="tot">{checkLine}</span></div>
+                <div class="ch"><span class="cn">1</span><span class="ct">Closure Checklist</span><span class="cq-grow"></span><span class="tot">{checkLine}</span></div>
                 <div class="list">
                     <template for:each={checks} for:item="c">
                         <div key={c.key} class="lrow">
@@ -26,7 +26,7 @@
 
             <div class="col">
                 <section class="card">
-                    <div class="ch"><span class="cn">2</span><span class="ct">Closure Summary</span><span class="grow"></span>
+                    <div class="ch"><span class="cn">2</span><span class="ct">Closure Summary</span><span class="cq-grow"></span>
                         <template if:true={isDraft}><span class="aitag">&#10022; Drafted by CQ.AI</span></template></div>
                     <div class="cq-field"><textarea class="ta" rows="9" value={summaryText} disabled={locked} oninput={handleSummaryInput} onchange={handleSummary} aria-label="Closure summary"></textarea></div>
                 </section>
@@ -46,7 +46,7 @@
                             <div class="capaopts">
                                 <button class="cq-btn-primary" onclick={handleCreateCapa} disabled={cantCreate}>Create CAPA</button>
                                 <span class="or">or</span>
-                                <select class="grow" onchange={handleCapa} disabled={cantCreate} aria-label="Link an Existing CAPA">
+                                <select class="cq-grow" onchange={handleCapa} disabled={cantCreate} aria-label="Link an Existing CAPA">
                                     <template for:each={capaOpts} for:item="o">
                                         <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                     </template>

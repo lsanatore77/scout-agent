@@ -2,13 +2,13 @@
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="sechead">
-            <h3 class="q">Strategy</h3>
+            <h3 class="cq-step-title nom">Strategy</h3>
             <span class={statePill}>{stateText}</span>
             <template if:true={confirmedLine}><span class="rk">{confirmedLine}</span></template>
         </div>
 
         <template if:true={needsScope}>
-            <p class="note">Confirm the scope first: the strategy works from the confirmed lot list.</p>
+            <p class="cq-note">Confirm the scope first: the strategy works from the confirmed lot list.</p>
         </template>
 
         <template if:true={showStep}>
@@ -65,7 +65,7 @@
                     </label>
                     </template>
                     <template if:true={isHolds}>
-                    <div class="tblwrap">
+                    <div class="cq-tblwrap">
                         <table class="ht">
                             <thead><tr><th class="hc">Hold</th><th>Lot</th><th>What</th><th class="num">On Hand</th><th>Location</th><th>Held Since</th><th>Status</th></tr></thead>
                             <tbody>

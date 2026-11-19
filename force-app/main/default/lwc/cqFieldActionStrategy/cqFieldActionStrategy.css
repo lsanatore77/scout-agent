@@ -2,9 +2,6 @@
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
 .sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.q { margin: 0; font-size: 20px; font-weight: 700; }
-.p { margin: 10px 0 14px; color: var(--cq-muted); }
-.note { margin: 10px 0 0; font-size: 13px; color: var(--cq-muted); }
 .rk { display: block; font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .sechead .rk { display: inline; }
 
@@ -17,9 +14,6 @@
 .tnum.ok { border: none; background: var(--cq-pos-bg); color: var(--cq-pos-fg); }
 .tnum.warn { border: none; background: var(--cq-warn-bg); color: var(--cq-warn-fg); }
 .panel { display: flex; flex-direction: column; gap: 14px; height: 440px; box-sizing: border-box; padding: 18px 20px; overflow: auto; }
-.cols2 { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
-.colx { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-@media (max-width: 1100px) { .cols2 { grid-template-columns: 1fr; } }
 .mut { color: var(--cq-muted); }
 .ploc { color: var(--cq-link); font-weight: 600; text-decoration: none; }
 .ploc:hover { text-decoration: underline; }
@@ -27,9 +21,7 @@
 
 
 
-.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 
-.tblwrap { overflow-x: auto; border: 1px solid var(--cq-line); border-radius: 8px; }
 .ht { width: 100%; border-collapse: collapse; font-size: 13px; }
 .ht th { text-align: left; font-size: 11px; font-weight: 700; color: var(--cq-muted); padding: 6px 8px; background: var(--cq-surface); border-bottom: 1px solid var(--cq-line); white-space: nowrap; }
 .ht td { padding: 6px 8px; border-bottom: 1px solid var(--cq-line); vertical-align: middle; }
@@ -44,8 +36,6 @@
 .tick:disabled { cursor: not-allowed; }
 .addrow { display: flex; align-items: center; gap: 8px; }
 
-.cfoot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
-.block { color: var(--cq-warn-fg); font-weight: 600; }
 .cards { display: grid; gap: 10px; }
 .cards.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .cards.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }

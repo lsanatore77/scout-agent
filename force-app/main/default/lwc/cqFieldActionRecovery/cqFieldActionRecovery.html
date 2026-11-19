@@ -2,20 +2,20 @@
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <div class="sechead">
-            <h3 class="q">Recovery and Effectiveness</h3>
+            <h3 class="cq-step-title nom">Recovery and Effectiveness</h3>
             <span class={statePill}>{stateText}</span>
             <template if:true={verdictLine}><span class="rk in">{verdictLine}</span></template>
         </div>
-        <template if:true={needsStrategy}><p class="note">Confirm the strategy first: recovery is measured against it.</p></template>
+        <template if:true={needsStrategy}><p class="cq-note">Confirm the strategy first: recovery is measured against it.</p></template>
 
         <template if:true={showStep}>
-            <p class="p">{intro}</p>
+            <p class="cq-step-intro">{intro}</p>
 
-            <template if:true={isNotice}><p class="note">An advisory notice leaves the product in use, so there are no units to recover. Effectiveness rests on the customers acknowledging.</p></template>
+            <template if:true={isNotice}><p class="cq-note">An advisory notice leaves the product in use, so there are no units to recover. Effectiveness rests on the customers acknowledging.</p></template>
             <template if:true={showRecovery}>
             <section class="card">
-                <div class="ch"><span class="cn">1</span><span class="ct">Recovery by Lot</span><span class="grow"></span><span class="tot">{recoveryLine}</span></div>
-                <div class="tblwrap">
+                <div class="ch"><span class="cn">1</span><span class="ct">Recovery by Lot</span><span class="cq-grow"></span><span class="tot">{recoveryLine}</span></div>
+                <div class="cq-tblwrap">
                     <table class="ht">
                         <thead><tr>
                             <th>Lot</th><th class="num">Shipped</th>
@@ -53,7 +53,7 @@
 
             <div class="grid">
                 <section class="card">
-                    <div class="ch mid"><span class="cn">2</span><span class="ct">Customers and Tasks</span><span class="grow"></span>
+                    <div class="ch mid"><span class="cn">2</span><span class="ct">Customers and Tasks</span><span class="cq-grow"></span>
                         <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
                         <button class="cq-btn-outline" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
                     </div>
@@ -97,7 +97,7 @@
 
                     <template if:true={hasSuggestions}>
                         <div class="cq-ai-card row">
-                            <span class="grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{t.suggestLine}</span></span>
+                            <span class="cq-grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{t.suggestLine}</span></span>
                             <button class="cq-btn-outline xs ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
                         </div>
                         <template if:true={reviewing}>
@@ -105,7 +105,7 @@
                                 <template for:each={suggestRows} for:item="s">
                                     <label key={s.key} class="srow">
                                         <input type="checkbox" data-key={s.key} checked={s.checked} onchange={handleKeep} aria-label={s.label} />
-                                        <span class="grow">{s.subject}</span><span class="rk in nw">{s.due}</span>
+                                        <span class="cq-grow">{s.subject}</span><span class="rk in nw">{s.due}</span>
                                     </label>
                                 </template>
                                 <div class="formbtns">
@@ -118,7 +118,7 @@
                     </template>
 
                     <template if:true={hasRows}>
-                        <div class="tblwrap">
+                        <div class="cq-tblwrap">
                             <table class="ht tt">
                                 <thead><tr>
                                     <th><span class="hcell"><button class="chev" onclick={handleToggleAll} aria-label={allLabel}>{allChev}</button>Customer / Lot / Task</span></th>
@@ -167,12 +167,12 @@
                             </table>
                         </div>
                     </template>
-                    <template if:false={hasRows}><p class="note">{emptyLine}</p></template>
+                    <template if:false={hasRows}><p class="cq-note">{emptyLine}</p></template>
                     <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table. {respLine}; {targetText}.</span>
                 </section>
 
                 <section class="card">
-                    <div class="ch"><span class="cn">3</span><span class="ct">Held Stock</span><span class="grow"></span><span class="tot">{dispLine}</span></div>
+                    <div class="ch"><span class="cn">3</span><span class="ct">Held Stock</span><span class="cq-grow"></span><span class="tot">{dispLine}</span></div>
                     <template if:true={hasHolds}>
                         <div class="list">
                             <template for:each={holdRows} for:item="h">
@@ -187,7 +187,7 @@
                             </template>
                         </div>
                     </template>
-                    <template if:false={hasHolds}><p class="note">No stock was held in the strategy.</p></template>
+                    <template if:false={hasHolds}><p class="cq-note">No stock was held in the strategy.</p></template>
                     <span class="cq-hint">Stock still in our control, held in the Strategy step. A finished lot's disposition also covers the units customers send back. &#10022; marks CQ.AI's suggestion; dispositions are fixed when the verdict is confirmed.</span>
                 </section>
             </div>
@@ -213,7 +213,7 @@
                             </select>
                         </label>
                     </template>
-                    <div class="cq-ai-card grow"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="What does CQ.AI suggest for the recovery verdict, and why?"></c-cq-ai-why></div><div class="cq-ai-text">{v.aiLine}</div></div>
+                    <div class="cq-ai-card cq-grow"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="What does CQ.AI suggest for the recovery verdict, and why?"></c-cq-ai-why></div><div class="cq-ai-text">{v.aiLine}</div></div>
                 </div>
             </section>
 
