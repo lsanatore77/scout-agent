@@ -121,6 +121,19 @@ export default class AskCqRecordsDemo extends LightningElement {
     get prevDisabled() { return this.page <= 1; }
     get nextDisabled() { return this.page >= this.pageCount; }
     get hasPages() { return this.pageCount > 1; }
+    /** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
+    get pageItems() {
+        const n = this.pageCount; const cur = this.page;
+        const keep = [];
+        for (let i = 1; i <= n; i++) { if (n <= 7 || i === 1 || i === n || Math.abs(i - cur) <= 2) { keep.push(i); } }
+        const out = [];
+        keep.forEach((i, k) => {
+            if (k > 0 && i - keep[k - 1] > 1) { out.push({ key: 'g' + i, text: '\u2026', cls: 'pg gap', off: true, label: 'More pages' }); }
+            const on = i === cur;
+            out.push({ key: 'p' + i, p: i, text: String(i), cls: 'pg' + (on ? ' on' : ''), off: on, current: on ? 'page' : 'false', label: 'Page ' + i });
+        });
+        return out;
+    }
 
     handleTab(event) { this.tab = event.currentTarget.dataset.key; }
     handleBom(event) {
@@ -141,6 +154,7 @@ export default class AskCqRecordsDemo extends LightningElement {
         writeCols(this.col);
     }
 
+    handlePage(event) { this.pages = { ...this.pages, [this.tab]: Number(event.currentTarget.dataset.p) }; }
     handlePrev() { if (this.page > 1) { this.pages = { ...this.pages, [this.tab]: this.page - 1 }; } }
     handleNext() { if (this.page < this.pageCount) { this.pages = { ...this.pages, [this.tab]: this.page + 1 }; } }
 

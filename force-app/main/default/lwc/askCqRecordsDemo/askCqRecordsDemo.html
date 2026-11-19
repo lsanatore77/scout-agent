@@ -28,10 +28,10 @@
         </template>
 
         <template if:true={error}>
-            <div class="err">{error}</div>
+            <div class="cq-msg crit msg">{error}</div>
         </template>
         <template if:true={notice}>
-            <div class="ok">{notice}</div>
+            <div class="cq-msg pos msg">{notice}</div>
         </template>
         <template if:true={loading}>
             <div class="loading"><lightning-spinner alternative-text="Scouting" size="small"></lightning-spinner></div>
@@ -46,6 +46,7 @@
             </template>
         </div>
 
+        <div class="tblwrap">
         <table class="grid">
             <thead>
                 <tr>
@@ -89,15 +90,22 @@
                 </template>
             </tbody>
         </table>
+        </div>
 
         <div class="pager">
             <span class="page-label">{pageLabel}</span>
-            <template if:true={hasPages}>
-                <lightning-button-icon icon-name="utility:chevronleft" variant="border-filled" size="small" alternative-text="Previous" onclick={handlePrev} disabled={prevDisabled}></lightning-button-icon>
-                <lightning-button-icon icon-name="utility:chevronright" variant="border-filled" size="small" alternative-text="Next" onclick={handleNext} disabled={nextDisabled}></lightning-button-icon>
-            </template>
             <span class="gap"></span>
-            <lightning-button label={submitLabel} variant="brand" onclick={handleSubmit} disabled={submitDisabled}></lightning-button>
+            <template if:true={hasPages}>
+                <nav class="pages" aria-label="Record pages">
+                    <button class="pg" onclick={handlePrev} disabled={prevDisabled} aria-label="Previous page">&laquo;</button>
+                    <template for:each={pageItems} for:item="p">
+                        <button key={p.key} class={p.cls} data-p={p.p} onclick={handlePage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
+                    </template>
+                    <button class="pg" onclick={handleNext} disabled={nextDisabled} aria-label="Next page">&raquo;</button>
+                </nav>
+                <span class="vdiv"></span>
+            </template>
+            <button class="cq-btn-primary" onclick={handleSubmit} disabled={submitDisabled}>{submitLabel}</button>
         </div>
     </lightning-card>
 </template>
