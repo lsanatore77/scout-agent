@@ -15,7 +15,6 @@
 .card.sug { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
 .para { margin-top: 6px; font-size: 14px; line-height: 1.45; white-space: pre-line; }
 .big { font-size: 20px; font-weight: 700; }
-.rk { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .fn { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
 .pill { flex: none; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); color: var(--cq-accent); font-size: 11px; font-weight: 600; white-space: nowrap; }
 .sgh { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
@@ -31,7 +30,6 @@
 .logrow:last-child { border-bottom: none; }
 .logwhen { flex: 0 0 150px; color: var(--cq-muted); }
 .sec { margin-top: 20px; }
-.sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
 .pendline { font-size: 13px; color: var(--cq-muted); }
 .pendline.warn { color: var(--cq-warn-fg); font-weight: 600; }
@@ -43,7 +41,6 @@
 .sc { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .tick { width: 16px; height: 16px; margin: 0; accent-color: var(--cq-link); cursor: pointer; }
 .tick:disabled { cursor: not-allowed; }
-.nw { white-space: nowrap; }
 .mut { color: var(--cq-muted); }
 .ind { display: inline-block; }
 .chev { width: 24px; height: 24px; padding: 0; border: none; border-radius: 6px; background: none; color: var(--cq-ink); font-size: 16px; line-height: 1; cursor: pointer; vertical-align: middle; }
@@ -69,7 +66,6 @@
 .ploc:hover { text-decoration: underline; }
 .dotsep { color: var(--cq-faint); }
 /* buttons, pills, chips and messages come from cqStyles */
-.cq-msg.errbox { margin-top: 12px; }
 .cq-pill.notconf { margin-left: 8px; }
 /* signals: a side bar in the colour of the signal's strength, the same device as the flagged rows on a CQ.AI suggestion card */
 /* the rows sit flush so the bars join into one solid line; even padding above and below each row, and room beside the bar */

@@ -58,9 +58,12 @@ Done:
 - Shared helpers added: .cq-opts(.tight), .cq-fields, .cq-splitline, .cq-sechead, .cq-infobox, .cq-sub(.block), .cq-ai-head, .cq-ai-icon, .cq-ai-says, .cq-nowrap, .cq-mt16, and the errbox / okbox / sm0 / owner / growf adjustments.
 - Using the helpers: Disposition, Investigation, Find the Cause, Field Action Closure.
 
-Still to do (same helpers, their own local copies are still in place and still work):
-- Triage Assistant, Field Action Workspace, Field Action Manager, Recovery, Strategy, Event Intake.
-- Pieces shared by only two screens (Field Action Manager / Workspace cards and rows, Triage / Field Action Review decision card, Disposition / Investigation glance columns, the lvl risk colours, which are set from script).
+Also using the helpers now: Field Action Manager, Recovery, Strategy, Event Intake.
+
+Still to do:
+- Triage Assistant and Field Action Workspace still carry their own copies of the helpers (8 rules between them). Each template is about 35K, so they are better converted in the same pass as the pieces only those two share (about 12 identical rules: the action cards, tick marks, restart and resumed lines).
+- Pieces shared by only two screens (Field Action Manager / Workspace cards and rows, Triage / Field Action Review decision card, Disposition / Investigation glance columns).
+- The lvl risk colours and Recovery's nw are set from script, so moving them means redeploying those scripts.
 
 Left out on purpose: .cq-field input.date at 170px is not shared, because Triage uses a different width.
 

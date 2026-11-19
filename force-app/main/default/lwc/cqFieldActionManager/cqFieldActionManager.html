@@ -51,7 +51,7 @@
                                         <span class="cq-pill soft neu">{v.actionType}</span>
                                         <template if:true={v.recallClass}><span class="cq-pill soft neu">{v.recallClass}</span></template>
                                         <template if:true={v.scope}><span class={scopePill}>{v.scope} Scope</span></template>
-                                        <span class="rk">{decidedLine}</span>
+                                        <span class="cq-sub">{decidedLine}</span>
                                     </div>
                                     <template if:true={v.rationale}><div class="para">{v.rationale}</div></template>
                                     <div class="cq-tiles">
@@ -72,9 +72,9 @@
                                         <template for:each={reviews} for:item="r">
                                             <div key={r.id} class="revrow">
                                                 <span class="fn">
-                                                    <span><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button> <span class="rk">{r.meta}</span></span>
-                                                    <span class="rk">{r.approval}</span>
-                                                    <template if:true={r.rationale}><span class="rk">{r.rationale}</span></template>
+                                                    <span><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button> <span class="cq-sub">{r.meta}</span></span>
+                                                    <span class="cq-sub">{r.approval}</span>
+                                                    <template if:true={r.rationale}><span class="cq-sub">{r.rationale}</span></template>
                                                 </span>
                                             </div>
                                         </template>
@@ -87,7 +87,7 @@
                                 <template if:true={hasSignals}>
                                     <template for:each={signals} for:item="s">
                                         <div key={s.id} class="krow" data-tone={s.strength}>
-                                            <span class="fn"><span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="rk">{s.where}</span></span><span class="rk">{s.label}</span></span>
+                                            <span class="fn"><span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="cq-sub">{s.where}</span></span><span class="cq-sub">{s.label}</span></span>
                                         </div>
                                     </template>
                                 </template>
@@ -97,7 +97,7 @@
                     </template>
 
                     <template if:true={is1}>
-                        <div class="sechead"><h3 class="cq-step-title nom">Scope</h3>
+                        <div class="cq-sechead"><h3 class="cq-step-title nom">Scope</h3>
                             <template if:true={v.scope}><span class={scopePill}>{v.scope}</span></template>
                             <span class={statePill}>{stateText}</span>
                         </div>
@@ -122,7 +122,7 @@
                                             <tr key={r.key} class={r.rowCls}>
                                                 <template if:true={r.isNote}>
                                                     <td></td>
-                                                    <td colspan="9"><span class="ind" style={r.indentStyle}></span><span class="chev0"></span><span class="rk">{r.text}</span></td>
+                                                    <td colspan="9"><span class="ind" style={r.indentStyle}></span><span class="chev0"></span><span class="cq-sub">{r.text}</span></td>
                                                 </template>
                                                 <template if:true={r.isLot}>
                                                     <td class="cscope">
@@ -134,7 +134,7 @@
                                                             <template if:true={r.removing}><span class="cq-pill soft crit">Removing</span></template>
                                                         </span>
                                                     </td>
-                                                    <td class="nw">
+                                                    <td class="cq-nowrap">
                                                         <span class="ind" style={r.indentStyle}></span>
                                                         <template if:true={r.hasKids}><button class="chev" data-key={r.key} onclick={handleToggle} aria-label={r.toggleLabel} aria-expanded={r.openText}>{r.chev}</button></template>
                                                         <template if:true={r.noKids}><span class="chev0"></span></template>
@@ -142,11 +142,11 @@
                                                         <template if:true={r.pendingAdd}><span class="cq-pill soft warn notconf">Not Confirmed</span></template>
                                                         <template if:true={r.suggested}>&nbsp;&nbsp;<c-cq-ai-why variant="pill" tip={r.why} lead="Why does CQ.AI suggest including " subject={r.item}></c-cq-ai-why></template>
                                                     </td>
-                                                    <td class="nw mut">{r.partRev}</td>
-                                                    <td class="nw">{r.lot}</td>
+                                                    <td class="cq-nowrap mut">{r.partRev}</td>
+                                                    <td class="cq-nowrap">{r.lot}</td>
                                                     <td class="num">{r.qty}</td>
-                                                    <td class="nw mut">{r.supplier}</td>
-                                                    <td class="nw"><span class={r.traceCls}>{r.trace}</span></td>
+                                                    <td class="cq-nowrap mut">{r.supplier}</td>
+                                                    <td class="cq-nowrap"><span class={r.traceCls}>{r.trace}</span></td>
                                                     <template if:true={r.showStock}>
                                                         <td class="num">{r.shippedText}</td>
                                                         <td class="num pos">
@@ -154,15 +154,15 @@
                                                             <template if:false={r.canOpen}>{r.onHandText}</template>
                                                             <template if:true={r.stockOpen}>
                                                                 <div class="pop" role="dialog" aria-label={r.popLabel}>
-                                                                    <div class="pophead"><span class="b">Lot {r.name}</span><span class="cq-grow"></span><span class="rk">{r.onHandText} on hand</span></div>
+                                                                    <div class="pophead"><span class="b">Lot {r.name}</span><span class="cq-grow"></span><span class="cq-sub">{r.onHandText} on hand</span></div>
                                                                     <template for:each={r.places} for:item="k">
                                                                         <div key={k.key} class="poprow"><a class="ploc" href={k.href} target="_blank">{k.location}</a><span class="cq-grow"></span><span>{k.units}</span></div>
                                                                     </template>
-                                                                    <span class="rk">{r.asOfText}</span>
+                                                                    <span class="cq-sub">{r.asOfText}</span>
                                                                 </div>
                                                             </template>
                                                         </td>
-                                                        <td class="nw">
+                                                        <td class="cq-nowrap">
                                                             <template if:true={r.noPlaces}><span class="mut">{r.locText}</span></template>
                                                             <template for:each={r.places} for:item="k">
                                                                 <span key={k.key}><a class="ploc" href={k.href} target="_blank">{k.location}</a> {k.units}<template if:true={k.sep}><span class="dotsep"> &middot; </span></template></span>
@@ -173,17 +173,17 @@
                                                 </template>
                                                 <template if:true={r.isNode}>
                                                     <td class="cscope"></td>
-                                                    <td class="nw">
+                                                    <td class="cq-nowrap">
                                                         <span class="ind" style={r.indentStyle}></span>
                                                         <template if:true={r.hasKids}><button class="chev" data-key={r.key} onclick={handleToggle} aria-label={r.toggleLabel} aria-expanded={r.openText}>{r.chev}</button></template>
                                                         <template if:true={r.noKids}><span class="chev0"></span></template>
                                                         <span class={r.itemCls}>{r.item}</span>
                                                     </td>
-                                                    <td class="nw mut">{r.partRev}</td>
-                                                    <td class="nw">{r.lot}</td>
+                                                    <td class="cq-nowrap mut">{r.partRev}</td>
+                                                    <td class="cq-nowrap">{r.lot}</td>
                                                     <td class="num">{r.qty}</td>
-                                                    <td class="nw mut">{r.supplier}</td>
-                                                    <td class="nw"><span class={r.traceCls}>{r.trace}</span></td>
+                                                    <td class="cq-nowrap mut">{r.supplier}</td>
+                                                    <td class="cq-nowrap"><span class={r.traceCls}>{r.trace}</span></td>
                                                     <td></td><td></td><td></td>
                                                 </template>
                                             </tr>
@@ -209,7 +209,7 @@
                             <div class="lab">Scope Changes</div>
                             <template if:true={hasChanges}>
                                 <template for:each={changes} for:item="c">
-                                    <div key={c.key} class="logrow"><span class="logwhen">{c.at}</span><span class="fn"><span>{c.line}</span><span class="rk">{c.by}</span></span></div>
+                                    <div key={c.key} class="logrow"><span class="logwhen">{c.at}</span><span class="fn"><span>{c.line}</span><span class="cq-sub">{c.by}</span></span></div>
                                 </template>
                             </template>
                             <template if:false={hasChanges}><p class="cq-note">No confirmed changes yet.</p></template>
