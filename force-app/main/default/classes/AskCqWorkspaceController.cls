@@ -140,7 +140,7 @@ public with sharing class AskCqWorkspaceController {
         @AuraEnabled public Boolean answered;
         @AuraEnabled public List<String> options = new List<String>();   // allowed answers from the question's result type
         @AuraEnabled public Boolean suggested = false;                     // answered by the checklist agent and accepted
-        @AuraEnabled public String suggestedAnswer;                        // what the checklist logic would answer (unanswered questions only)
+        @AuraEnabled public String suggestedAnswer;                        // what the checklist logic would answer, whether or not the question is answered
         @AuraEnabled public String suggestedBasis;
     }
 
@@ -226,7 +226,7 @@ public with sharing class AskCqWorkspaceController {
             else if (key != null && allowed.containsKey(key.left(15))) { q.options = allowed.get(key.left(15)); }
             if (q.options.isEmpty()) { q.options = new List<String>{ 'Yes', 'No', 'N/A' }; }
             PhrChecklistItem sug = suggestions.get(a.Id);
-            if (!q.answered && sug != null && sug.sure == true && String.isNotBlank(sug.suggestedAnswer)) {
+            if (sug != null && sug.sure == true && String.isNotBlank(sug.suggestedAnswer)) {
                 q.suggestedAnswer = sug.suggestedAnswer;
                 q.suggestedBasis = sug.basis;
             }
@@ -235,12 +235,10 @@ public with sharing class AskCqWorkspaceController {
         return out;
     }
 
-    /** The checklist logic's suggestions (no save), keyed by answer Id. Empty when every question is answered. */
+    /** The checklist logic's suggestions (no save), keyed by answer Id. Answered questions get one too, so the screen can keep showing what CQ.AI suggested. */
     private static Map<String, PhrChecklistItem> suggestionsFor(Id phrId, List<compliancequest__SQX_Product_History_Answer__c> answers) {
         Map<String, PhrChecklistItem> out = new Map<String, PhrChecklistItem>();
-        Boolean anyOpen = false;
-        for (compliancequest__SQX_Product_History_Answer__c a : answers) { if (String.isBlank(a.compliancequest__Answer__c)) { anyOpen = true; } }
-        if (!anyOpen) { return out; }
+        if (answers.isEmpty()) { return out; }
         try {
             PhrChecklistAction.Request req = new PhrChecklistAction.Request();
             req.recordId = phrId;
@@ -264,6 +262,40 @@ public with sharing class AskCqWorkspaceController {
             compliancequest__Answer_Value__c = answer,
             compliancequest__Notes__c = PhrChecklistAction.CQ_MARK + (basis == null ? '' : basis)
         );
+    }
+
+    public class AnswerRow { public Id id; public String answer; public Boolean suggested; public String basis; }
+
+    /**
+     * Save Checklist: every answer on the screen in one save. An answer that is CQ.AI's suggestion is saved with its
+     * evidence and the "suggested" stamp, whether the user clicked it or left it as suggested; any other answer is
+     * the user's own, so the stamp comes off and their notes stay.
+     */
+    @AuraEnabled
+    public static void saveChecklist(Id phrId, String payload) {
+        List<AnswerRow> rows = (List<AnswerRow>) JSON.deserialize(payload, List<AnswerRow>.class);
+        if (rows == null || rows.isEmpty()) { return; }
+        Set<Id> ids = new Set<Id>();
+        for (AnswerRow r : rows) { if (r.id != null) { ids.add(r.id); } }
+        Map<Id, compliancequest__SQX_Product_History_Answer__c> have = new Map<Id, compliancequest__SQX_Product_History_Answer__c>([
+            SELECT Id, compliancequest__Notes__c FROM compliancequest__SQX_Product_History_Answer__c
+            WHERE Id IN :ids AND compliancequest__SQX_Product_History_Review__c = :phrId WITH USER_MODE]);
+        List<compliancequest__SQX_Product_History_Answer__c> ups = new List<compliancequest__SQX_Product_History_Answer__c>();
+        for (AnswerRow r : rows) {
+            compliancequest__SQX_Product_History_Answer__c a = have.get(r.id);
+            if (a == null || String.isBlank(r.answer)) { continue; }
+            a.compliancequest__Answer__c = r.answer;
+            a.compliancequest__Answer_Value__c = r.answer;
+            String notes = a.compliancequest__Notes__c;
+            if (r.suggested == true) {
+                a.compliancequest__Notes__c = PhrChecklistAction.CQ_MARK + (r.basis == null ? '' : r.basis);
+            } else if (notes != null && notes.startsWith(PhrChecklistAction.CQ_MARK)) {
+                a.compliancequest__Notes__c = notes.substring(PhrChecklistAction.CQ_MARK.length());
+            }
+            ups.add(a);
+        }
+        if (ups.isEmpty()) { return; }
+        try { update as user ups; } catch (DmlException e) { throw new AuraHandledException('The checklist was not saved: ' + e.getDmlMessage(0)); }
     }
 
     /** Saves an answer picked by the user. A changed answer is the user's, so the "suggested" stamp comes off. */

@@ -2,10 +2,10 @@ import { LightningElement, api } from 'lwc';
 import { NavigationMixin } from 'lightning/navigation';
 import getStatus from '@salesforce/apex/AskCqWorkspaceController.getStatus';
 import getChecklist from '@salesforce/apex/AskCqWorkspaceController.getChecklist';
-import saveAnswer from '@salesforce/apex/AskCqWorkspaceController.saveAnswer';
-import acceptSuggestion from '@salesforce/apex/AskCqWorkspaceController.acceptSuggestion';
+import saveChecklist from '@salesforce/apex/AskCqWorkspaceController.saveChecklist';
 
 const OPTION_ORDER = ['Yes', 'No', 'N/A'];
+const STEP_ORDER = ['records', 'checklist', 'summary', 'reports'];
 
 /** Yes before No before anything else, whatever order the result type lists them in. */
 function orderOptions(options) {
@@ -17,12 +17,13 @@ function orderOptions(options) {
  * PHR workspace: highlights header, review steps down the left (a green check when a step is done),
  * the step's work area beside it, and one Ask CQ popover (Scout through the Agent API) shared by
  * every step. Checklist suggestions are pre-selected in purple from the same logic the Checklist
- * agent uses; clicking the purple answer accepts it, clicking another answer makes it the user's.
+ * agent uses. Clicking only stages an answer; Save Checklist writes them all, and a suggestion left as it is
+ * is saved as accepted. The suggested answer keeps its purple mark when the user picks another, so what
+ * CQ.AI suggested stays on screen. Back and Next sit under every step.
  */
 export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
     @api recordId;
     status;
-    checklist = [];
     current = 'records';
     error;
     saveNote;
@@ -39,30 +40,57 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         }
     }
 
+    raw = [];        // the questions as saved, with what CQ.AI suggests for each
+    draft = {};      // answers clicked but not saved yet: question id -> answer
+    saving = false;
+    blocker = '';
+
     async loadChecklist() {
-        const qs = await getChecklist({ phrId: this.recordId });
-        this.checklist = qs.map((q) => {
-            const pending = !q.answered && !!q.suggestedAnswer;        // suggestion shown, not accepted yet
-            const shownAnswer = q.answered ? q.answer : (pending ? q.suggestedAnswer : null);
-            const purple = q.suggested || pending;
+        this.raw = await getChecklist({ phrId: this.recordId });
+        this.draft = {};
+        this.blocker = '';
+    }
+
+    /** The answer on screen before any click: the saved one, else CQ.AI's suggestion. */
+    baseline(q) { return q.answered ? q.answer : (q.suggestedAnswer || null); }
+    shown(q) { return Object.prototype.hasOwnProperty.call(this.draft, q.id) ? this.draft[q.id] : this.baseline(q); }
+    /** What CQ.AI suggests: worked out now, else the suggestion that was accepted earlier. */
+    aiAnswer(q) { return q.suggestedAnswer || (q.suggested ? q.answer : null); }
+    aiBasis(q) { return q.suggestedBasis || (q.suggested ? q.notes : ''); }
+
+    get checklist() {
+        return this.raw.map((q) => {
+            const shown = this.shown(q);
+            const ai = this.aiAnswer(q);
             return {
                 ...q,
-                showPill: q.suggested || pending,
-                evidence: q.answered ? q.notes : (pending ? q.suggestedBasis : ''),
+                showPill: !!ai,
+                evidence: ai ? (this.aiBasis(q) || q.notes) : q.notes,
                 buttons: orderOptions(q.options).map((o) => ({
                     key: q.id + ':' + o,
                     value: o,
-                    cls: 'cq-chip' + (o === shownAnswer && purple ? ' ai' : ''),
-                    pressed: String(o === shownAnswer)
+                    cls: 'cq-chip' + (o === ai ? ' ai' : ''),     // the suggestion stays purple, chosen or not
+                    pressed: String(o === shown)
                 })),
-                why: q.suggested || pending
-                    ? 'Why is the suggested answer to "' + q.question + '" ' + shownAnswer + '?'
+                why: ai
+                    ? 'Why is the suggested answer to "' + q.question + '" ' + ai + '?'
                     : 'Explain the checklist question "' + q.question + '".'
             };
         });
-        this.suggestedPending = this.checklist.filter((q) => !q.answered && q.suggestedAnswer).length;
     }
-    suggestedPending = 0;
+    get suggestedPending() { return this.raw.filter((q) => !q.answered && q.suggestedAnswer).length; }
+    /** Everything Save Checklist would write: answers that differ from what is saved, untouched suggestions included. */
+    get toSave() {
+        return this.raw.filter((q) => {
+            const s = this.shown(q);
+            // also an answer that matches the suggestion but was never marked as one, so the record says where it came from
+            return s && (s !== (q.answered ? q.answer : null) || (s === this.aiAnswer(q) && !q.suggested));
+        })
+            .map((q) => { const s = this.shown(q); const ai = s === this.aiAnswer(q);
+                return { id: q.id, answer: s, suggested: ai, basis: ai ? this.aiBasis(q) : null }; });
+    }
+    /** Answers the user clicked and has not saved. */
+    get touched() { return this.raw.some((q) => Object.prototype.hasOwnProperty.call(this.draft, q.id) && this.draft[q.id] !== this.baseline(q)); }
 
     // ----- steps -----
 
@@ -137,10 +165,28 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         }
     }
 
-    async handleStep(event) {
-        this.current = event.currentTarget.dataset.key;
-        if (this.current === 'checklist') { await this.loadChecklist(); }
+    /** Moves to a step. Clicked answers are never dropped silently: save or discard them first. */
+    async go(key) {
+        if (!key || key === this.current) { return; }
+        if (this.current === 'checklist' && this.touched) {
+            this.blocker = 'Save the checklist or discard your changes before leaving this step.';
+            return;
+        }
+        this.blocker = '';
+        this.saveNote = undefined;
+        this.current = key;
+        if (key === 'checklist') { await this.loadChecklist(); }
     }
+    handleStep(event) { return this.go(event.currentTarget.dataset.key); }
+    get stepIndex() { return STEP_ORDER.indexOf(this.current); }
+    get hasBack() { return this.stepIndex > 0; }
+    get hasNext() { return this.stepIndex < STEP_ORDER.length - 1; }
+    handleBack() { return this.go(STEP_ORDER[this.stepIndex - 1]); }
+    handleNext() { return this.go(STEP_ORDER[this.stepIndex + 1]); }
+    get canSave() { return this.isChecklist && this.toSave.length > 0; }
+    get cantSave() { return this.saving || !this.canSave; }
+    /** One blue button in the footer: Save Checklist while there is something to save, otherwise Next. */
+    get nextCls() { return this.canSave ? 'cq-btn-outline' : 'cq-btn-primary'; }
 
     // ----- Ask CQ -----
 
@@ -157,21 +203,30 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
 
     // ----- checklist answers -----
 
-    async handleAnswer(event) {
+    /** A click only stages the answer; nothing is written until Save Checklist. */
+    handleAnswer(event) {
         const id = event.currentTarget.dataset.id;
         const value = event.currentTarget.dataset.value;
-        const q = this.checklist.find((x) => x.id === id);
-        if (!q) { return; }
+        if (!this.raw.some((x) => x.id === id)) { return; }
+        this.draft = { ...this.draft, [id]: value };
+        this.saveNote = undefined;
+    }
+    handleDiscard() { this.draft = {}; this.blocker = ''; }
+
+    async handleSaveChecklist() {
+        const rows = this.toSave;
+        if (!rows.length || this.saving) { return; }
+        this.saving = true;
         try {
-            if (!q.answered && q.suggestedAnswer && value === q.suggestedAnswer) {
-                await acceptSuggestion({ answerId: q.id, answer: value, basis: q.suggestedBasis });   // the user agreed with CQ
-            } else {
-                await saveAnswer({ answerId: q.id, answer: value });                                   // the user's own answer
-            }
-            this.saveNote = 'Saved.';
-            await this.refresh();
+            await saveChecklist({ phrId: this.recordId, payload: JSON.stringify(rows) });
+            this.status = await getStatus({ phrId: this.recordId });
+            await this.loadChecklist();
+            this.error = undefined;
+            this.saveNote = 'Checklist saved.';
         } catch (e) {
-            this.error = (e.body && e.body.message) || 'Could not save the answer.';
+            this.error = (e.body && e.body.message) || 'Could not save the checklist.';
+        } finally {
+            this.saving = false;
         }
     }
 }
