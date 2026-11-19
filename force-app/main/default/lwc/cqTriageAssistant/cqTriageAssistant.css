@@ -187,3 +187,6 @@
 .cq-msg.warn { margin-top: 8px; }
 .cq-msg.errbox { margin-top: 12px; }
 .addform .cq-msg.errbox { margin-top: 8px; }
+
+/* a chip that is the CQ.AI suggestion always carries the CQ.AI mark, chosen or not */
+.cq-chip.ai::before { content: '\2726'; margin-right: 6px; }

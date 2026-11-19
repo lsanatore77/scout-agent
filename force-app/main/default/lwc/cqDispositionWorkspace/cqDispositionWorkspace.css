@@ -86,3 +86,6 @@
 .cq-field.growf { flex: 1 1 220px; }
 .cq-field input.qty { width: 110px; }
 .cq-field input.date { width: 170px; }
+
+/* a chip that is the CQ.AI suggestion always carries the CQ.AI mark, chosen or not */
+.cq-chip.ai::before { content: '\2726'; margin-right: 6px; }
