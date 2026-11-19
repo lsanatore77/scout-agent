@@ -1,6 +1,6 @@
 <template>
     <template if:true={loadError}><div class="cq-msg crit errbox">{loadError}</div></template>
-    <template if:false={ready}><template if:false={loadError}><div class="spinwrap"><lightning-spinner alternative-text="Reading the hypotheses" size="small" class="spin"></lightning-spinner><span class="muted">Reading the hypotheses and evidence…</span></div></template></template>
+    <template if:false={ready}><template if:false={loadError}><div class="spinwrap"><lightning-spinner alternative-text="Reading the hypotheses" size="small" class="spin"></lightning-spinner><span class="cq-muted">Reading the hypotheses and evidence…</span></div></template></template>
     <template if:true={ready}>
         <div class="tabs" role="tablist">
             <template for:each={tabs} for:item="t">
@@ -18,17 +18,17 @@
                     <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
                     <div class="whyv">{hypStandsOut}</div>
                 </div>
-                <div class="tblwrap top16">
-                    <table class="tbl">
+                <div class="cq-tblwrap top16">
+                    <table class="cq-tbl">
                         <thead><tr><th>Hypothesis</th><th>Category</th><th><span class="star">&#10022;</span>CQ.AI Suggests</th><th>Status</th><th>Tests</th><th></th></tr></thead>
                         <tbody>
                             <template for:each={hypRows} for:item="h">
                                 <tr key={h.id} class={h.rowCls}>
-                                    <td class="wide"><div class="strong">{h.title}</div><div class="note sm0">{h.sub}</div></td>
+                                    <td class="wide"><div class="cq-strong">{h.title}</div><div class="cq-note sm0">{h.sub}</div></td>
                                     <td>{h.category}</td>
                                     <td class="wide">
                                         <c-cq-ai-why variant="label" text={h.suggest} question={h.askWhy}></c-cq-ai-why>
-                                        <div class="note sm0">{h.suggestWhy}</div>
+                                        <div class="cq-note sm0">{h.suggestWhy}</div>
                                         <template if:true={h.canPlan}><button class="cq-btn-outline top6" data-id={h.id} onclick={handlePlan}>Plan This Test</button></template>
                                     </td>
                                     <td><span class={h.statusCls}>{h.status}</span></td>
@@ -39,14 +39,14 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="note">Every hypothesis starts Open; you decide Confirmed or Ruled Out. CQ.AI&rsquo;s suggestion comes from the evidence, and clicking &#10022; shows the facts behind it.</p>
+                <p class="cq-note">Every hypothesis starts Open; you decide Confirmed or Ruled Out. CQ.AI&rsquo;s suggestion comes from the evidence, and clicking &#10022; shows the facts behind it.</p>
             </template>
 
             <template if:true={hasNewHyps}>
                 <template for:each={newHyps} for:item="n">
                     <div key={n.key} class="newhyp">
                         <span class="sugword"><span class="star">&#10022;</span>CQ.AI Suggests a Hypothesis:</span>
-                        <span class="grow">{n.text}</span>
+                        <span class="cq-grow">{n.text}</span>
                         <button class="cq-btn-outline" data-key={n.key} onclick={handleNewHyp}>Add as Hypothesis</button>
                         <button class="smalllink plainbtn" data-key={n.key} onclick={handleNewHypHide}>Not Relevant</button>
                     </div>
@@ -56,8 +56,8 @@
             <template if:true={hasSel}>
                 <div class="selcard">
                     <div class="selhead">
-                        <div class="grow">
-                            <div class="note sm0 strong">{selHead}</div>
+                        <div class="cq-grow">
+                            <div class="cq-note sm0 cq-strong">{selHead}</div>
                             <div class="seltitle">{sel.title}</div>
                         </div>
                         <div class="opts tight">
@@ -74,7 +74,7 @@
                     </div>
                     <div class="evhead">
                         <span class="cq-card-title nomb">Evidence</span>
-                        <span class="grow"></span>
+                        <span class="cq-grow"></span>
                         <button class="cq-btn-outline" onclick={handleAddTest}>+ Add Test</button>
                         <button class="cq-btn-outline" onclick={handleLink}>+ Link a CQ Record</button>
                     </div>
@@ -83,8 +83,8 @@
                             <div key={e.key} class="ev">
                                 <span class={e.tagCls}>{e.tag}</span>
                                 <div class="evtext">
-                                    <div>{e.text}<template if:true={e.against}> <span class="negword">Goes against it</span></template><template if:true={e.inconclusive}> <span class="muted">(inconclusive)</span></template></div>
-                                    <div class="note sm0">{e.origin}<template if:true={e.hasRecord}> &middot; <a class="link" href={e.recordHref} target="_blank">{e.recordName}</a></template><template if:true={e.files}> &middot; {e.files}</template></div>
+                                    <div>{e.text}<template if:true={e.against}> <span class="negword">Goes against it</span></template><template if:true={e.inconclusive}> <span class="cq-muted">(inconclusive)</span></template></div>
+                                    <div class="cq-note sm0">{e.origin}<template if:true={e.hasRecord}> &middot; <a class="cq-link" href={e.recordHref} target="_blank">{e.recordName}</a></template><template if:true={e.files}> &middot; {e.files}</template></div>
                                 </div>
                                 <template if:true={e.canEdit}>
                                     <div class="evact">
@@ -95,12 +95,12 @@
                             </div>
                         </template>
                     </div>
-                    <p class="note sm0">To keep an Ask CQ.AI answer here, ask it in Ask CQ.AI above and click Add to Evidence under the answer.</p>
+                    <p class="cq-note sm0">To keep an Ask CQ.AI answer here, ask it in Ask CQ.AI above and click Add to Evidence under the answer.</p>
                     <label class="cq-field top16"><span class="cq-label">How Do You Know?<span class="cq-req">*</span></span>
                         <textarea class="hk" rows="2" value={howKnowText} data-val={howKnowText} oninput={handleHowKnow} placeholder="For example, pin measured 0.12 mm under nominal; only BF-02 units leak"></textarea>
                     </label>
                     <div class="splitline">
-                        <span class="note sm0"><template if:true={howKnowPrefilled}>Prefilled from the evidence. </template>It becomes the CQ root cause&rsquo;s Justification.</span>
+                        <span class="cq-note sm0"><template if:true={howKnowPrefilled}>Prefilled from the evidence. </template>It becomes the CQ root cause&rsquo;s Justification.</span>
                         <template if:true={howKnowDirty}><button class="cq-btn-outline" onclick={handleSaveHowKnow} disabled={saving}>Save</button></template>
                     </div>
                 </div>
@@ -109,14 +109,14 @@
 
         <!-- Is / Is Not -->
         <template if:true={onIs}>
-            <p class="p">Say where the problem is and where it could be but is not. A hypothesis that cannot explain an Is Not is unlikely.<template if:true={isPrefilledNote}> Filled in from the NC; edit any cell, then save.</template></p>
-            <div class="tblwrap">
-                <table class="tbl istbl">
+            <p class="cq-step-intro">Say where the problem is and where it could be but is not. A hypothesis that cannot explain an Is Not is unlikely.<template if:true={isPrefilledNote}> Filled in from the NC; edit any cell, then save.</template></p>
+            <div class="cq-tblwrap">
+                <table class="cq-tbl istbl">
                     <thead><tr><th></th><th>Is</th><th>Is Not</th><th>Which Hypotheses Fit</th></tr></thead>
                     <tbody>
                         <template for:each={isTable} for:item="r">
                             <tr key={r.key}>
-                                <td class="strong nowrap">{r.label}</td>
+                                <td class="cq-strong nowrap">{r.label}</td>
                                 <td><div class="cq-field"><textarea class="cell" rows="2" data-k={r.key} data-f="isText" value={r.isText} data-val={r.isText} onchange={handleIsField} aria-label="Is"></textarea></div></td>
                                 <td><div class="cq-field"><textarea class="cell" rows="2" data-k={r.key} data-f="isNotText" value={r.isNotText} data-val={r.isNotText} onchange={handleIsField} aria-label="Is Not"></textarea></div></td>
                                 <td class="nowrap">
@@ -134,7 +134,7 @@
                 <div class="whyv">{isStandsOut}</div>
             </div>
             <div class="bar top16">
-                <span class="grow note sm0">Saved to CQ&rsquo;s 5W2H on {v.investigationName}, Is and Is Not in each field.</span>
+                <span class="cq-grow cq-note sm0">Saved to CQ&rsquo;s 5W2H on {v.investigationName}, Is and Is Not in each field.</span>
                 <button class="cq-btn-outline" onclick={handleSaveIs} disabled={cantSaveIs}>Save Is / Is Not</button>
                 <template if:true={ruleOutLabel}><button class="cq-btn-outline" onclick={handleRuleOut} disabled={saving}>{ruleOutLabel}</button></template>
             </div>
@@ -145,15 +145,15 @@
             <template if:false={hasWhyHyp}><div class="ownbox">Add a hypothesis first; each one can have its own 5 Why.</div></template>
             <template if:true={hasWhyHyp}>
                 <div class="forrow">
-                    <span class="strong">For</span>
+                    <span class="cq-strong">For</span>
                     <template for:each={whyHyps} for:item="h">
                         <button key={h.id} class={h.cls} aria-pressed={h.pressed} data-id={h.id} onclick={handleWhyHyp}>{h.label}</button>
                     </template>
-                    <span class="note sm0">One 5 Why per hypothesis; stop when the answer is something you can fix.</span>
+                    <span class="cq-note sm0">One 5 Why per hypothesis; stop when the answer is something you can fix.</span>
                 </div>
                 <div class="probbox">
                     <div class="cq-card-title">The Problem</div>
-                    <div class="strong">{problemText}</div>
+                    <div class="cq-strong">{problemText}</div>
                 </div>
                 <div class="whycard">
                     <template for:each={whyRows} for:item="w">
@@ -162,7 +162,7 @@
                             <div class={w.cls}>
                                 <div class="cq-field"><textarea class="whyta" rows="2" data-i={w.idx} value={w.text} data-val={w.text} oninput={handleWhyText} placeholder="Because…" aria-label={w.label}></textarea></div>
                                 <template for:each={w.evidence} for:item="e">
-                                    <div key={e.key} class={e.lineCls}>{e.line}<template if:true={e.hasRecord}> &middot; <a class="link" href={e.recordHref} target="_blank">{e.recordName}</a></template></div>
+                                    <div key={e.key} class={e.lineCls}>{e.line}<template if:true={e.hasRecord}> &middot; <a class="cq-link" href={e.recordHref} target="_blank">{e.recordName}</a></template></div>
                                 </template>
                                 <div class="whyacts">
                                     <button class={w.rootCls} aria-pressed={w.rootPressed} data-i={w.idx} onclick={handleWhyRoot}>Root Cause</button>
@@ -182,7 +182,7 @@
                     <div class="whyv">{whyStandsOut}</div>
                 </div>
                 <div class="bar top16">
-                    <span class="grow note sm0">Saved in CQ&rsquo;s own 5 Why on the investigation<template if:true={whyToolHref}> (<a class="link" href={whyToolHref} target="_blank">{whyToolName}</a>)</template>, a 5 Why tool with its Why records. Evidence can be added to a why once it is saved.</span>
+                    <span class="cq-grow cq-note sm0">Saved in CQ&rsquo;s own 5 Why on the investigation<template if:true={whyToolHref}> (<a class="cq-link" href={whyToolHref} target="_blank">{whyToolName}</a>)</template>, a 5 Why tool with its Why records. Evidence can be added to a why once it is saved.</span>
                     <template if:true={whyDirty}><button class="cq-btn-outline" onclick={handleWhyUndo}>Undo</button></template>
                     <button class="cq-btn-primary" onclick={handleSaveWhy} disabled={cantSaveWhy}>Save 5 Why</button>
                 </div>
@@ -191,7 +191,7 @@
 
         <!-- Fishbone -->
         <template if:true={onFish}>
-            <p class="p">Every hypothesis on its category&rsquo;s bone, with its status. Use it to see which categories nobody has looked at yet.</p>
+            <p class="cq-step-intro">Every hypothesis on its category&rsquo;s bone, with its status. Use it to see which categories nobody has looked at yet.</p>
             <div class="fish">
                 <div class="fishbody">
                     <div class="bones">
@@ -218,7 +218,7 @@
                         </template>
                     </div>
                 </div>
-                <div class="fishhead">{fishHead}<div class="note sm0">{fishHeadSub}</div></div>
+                <div class="fishhead">{fishHead}<div class="cq-note sm0">{fishHeadSub}</div></div>
             </div>
             <div class="cq-ai-card top16">
                 <div class="sughead"><lightning-icon icon-name="utility:summary" size="x-small" class="ruleicon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
@@ -233,16 +233,16 @@
                 <div class="whyv">{rootStandsOut}</div>
             </div>
             <template if:true={hasRoots}>
-                <div class="tblwrap top16">
-                    <table class="tbl">
+                <div class="cq-tblwrap top16">
+                    <table class="cq-tbl">
                         <thead><tr><th>Root Cause</th><th>Role</th><th>Category</th><th>CQ Cause Code</th><th>Evidence</th><th>Verified</th><th></th></tr></thead>
                         <tbody>
                             <template for:each={rootRows} for:item="r">
                                 <tr key={r.key}>
                                     <td class="wide">
                                         <template if:true={r.isNew}><div class="cq-field"><textarea class="cell" rows="2" data-i={r.idx} data-f="text" value={r.text} data-val={r.text} onchange={handleRootField} placeholder="Describe the cause" aria-label="Root Cause"></textarea></div></template>
-                                        <template if:false={r.isNew}><div class="strong">{r.text}</div></template>
-                                        <div class="note sm0">{r.source}<template if:true={r.savedHref}> &middot; <a class="link" href={r.savedHref} target="_blank">In CQ</a></template></div>
+                                        <template if:false={r.isNew}><div class="cq-strong">{r.text}</div></template>
+                                        <div class="cq-note sm0">{r.source}<template if:true={r.savedHref}> &middot; <a class="cq-link" href={r.savedHref} target="_blank">In CQ</a></template></div>
                                     </td>
                                     <td class="nowrap">
                                         <div class="roles">
@@ -270,10 +270,10 @@
                         </tbody>
                     </table>
                 </div>
-                <p class="note">Rows come from confirmed hypotheses and the whys marked Root Cause in their 5 Why; root causes already in CQ show here too. There can be more than one Primary. Evidence starts from the evidence on the why, or How Do You Know?</p>
+                <p class="cq-note">Rows come from confirmed hypotheses and the whys marked Root Cause in their 5 Why; root causes already in CQ show here too. There can be more than one Primary. Evidence starts from the evidence on the why, or How Do You Know?</p>
             </template>
             <div class="bar top16">
-                <span class="grow note sm0"><strong>On Save Root Causes:</strong> each row is saved as a CQ root cause on {v.investigationName} with its role, category, cause code, the evidence as justification, and Verified. Ruled-out hypotheses stay on the investigation with their evidence.</span>
+                <span class="cq-grow cq-note sm0"><strong>On Save Root Causes:</strong> each row is saved as a CQ root cause on {v.investigationName} with its role, category, cause code, the evidence as justification, and Verified. Ruled-out hypotheses stay on the investigation with their evidence.</span>
                 <button class="cq-btn-outline" onclick={handleRootAdd}>+ Add Root Cause</button>
             </div>
         </template>
@@ -283,13 +283,13 @@
 
         <!-- + Add a Hypothesis from the fishbone -->
         <template if:true={hypNewOpen}>
-            <div class="modal-back" onkeydown={handleNewKey}>
-                <section class="modal" role="dialog" aria-modal="true" aria-labelledby="nh-head">
-                    <header class="modal-head">
-                        <h2 id="nh-head" class="modal-title">Add a Hypothesis</h2>
-                        <button class="modal-x" aria-label="Close" onclick={handleNewCancel}>&times;</button>
+            <div class="cq-modal-back" onkeydown={handleNewKey}>
+                <section class="cq-modal modal" role="dialog" aria-modal="true" aria-labelledby="nh-head">
+                    <header class="cq-modal-head">
+                        <h2 id="nh-head" class="cq-modal-title">Add a Hypothesis</h2>
+                        <button class="cq-modal-x" aria-label="Close" onclick={handleNewCancel}>&times;</button>
                     </header>
-                    <div class="modal-body">
+                    <div class="cq-modal-body">
                         <label class="cq-field"><span class="cq-label">Hypothesis<span class="cq-req">*</span></span>
                             <textarea class="newta" rows="3" value={hypNew.title} data-val={hypNew.title} oninput={handleNewTitle} placeholder="For example, second-shift operators were not trained on WI-2210 Rev D"></textarea>
                         </label>
@@ -300,10 +300,10 @@
                                 </template>
                             </div>
                         </div>
-                        <div class="note sm0">It starts Open; test it on the Hypotheses tab.</div>
+                        <div class="cq-note sm0">It starts Open; test it on the Hypotheses tab.</div>
                     </div>
-                    <footer class="modal-foot">
-                        <span class="blocker">{hypNewBlocker}</span>
+                    <footer class="cq-modal-foot">
+                        <span class="cq-blocker">{hypNewBlocker}</span>
                         <button class="cq-btn-outline" onclick={handleNewCancel}>Cancel</button>
                         <button class="cq-btn-primary" onclick={handleNewSave} disabled={cantAddNew}>Add Hypothesis</button>
                     </footer>
@@ -313,13 +313,13 @@
 
         <!-- the evidence popup -->
         <template if:true={formOpen}>
-            <div class="modal-back" onkeydown={handleFormKey}>
-                <section class="modal" role="dialog" aria-modal="true" aria-labelledby="ev-head">
-                    <header class="modal-head">
-                        <h2 id="ev-head" class="modal-title">{formTitle}</h2>
-                        <button class="modal-x" aria-label="Close" onclick={handleFormCancel}>&times;</button>
+            <div class="cq-modal-back" onkeydown={handleFormKey}>
+                <section class="cq-modal modal" role="dialog" aria-modal="true" aria-labelledby="ev-head">
+                    <header class="cq-modal-head">
+                        <h2 id="ev-head" class="cq-modal-title">{formTitle}</h2>
+                        <button class="cq-modal-x" aria-label="Close" onclick={handleFormCancel}>&times;</button>
                     </header>
-                    <div class="modal-body">
+                    <div class="cq-modal-body">
                         <template if:true={formIsPin}>
                             <div class="cq-field"><span class="cq-label">For<span class="cq-req">*</span></span>
                                 <div class="cq-chips">
@@ -330,7 +330,7 @@
                             </div>
                         </template>
                         <div class="fromcard">
-                            <div class="note sm0">For</div>
+                            <div class="cq-note sm0">For</div>
                             <div>{formFor}</div>
                         </div>
                         <template if:true={formIsTest}>
@@ -379,10 +379,10 @@
                                         </template>
                                     </div>
                                 </template>
-                                <template if:true={noneFound}><div class="note sm0">No CQ record starts with that number.</div></template>
+                                <template if:true={noneFound}><div class="cq-note sm0">No CQ record starts with that number.</div></template>
                             </template>
                             <template if:true={form.recordId}>
-                                <div class="picked"><a class="link" href={pickedHref} target="_blank">{form.recordName}</a> <span class="muted">{form.recordType}</span> <button class="smalllink plainbtn" onclick={handleClearRecord}>Change</button></div>
+                                <div class="picked"><a class="cq-link" href={pickedHref} target="_blank">{form.recordName}</a> <span class="cq-muted">{form.recordType}</span> <button class="smalllink plainbtn" onclick={handleClearRecord}>Change</button></div>
                             </template>
                             <label class="cq-field"><span class="cq-label">What It Shows</span>
                                 <input type="text" data-k="result" value={form.result} oninput={handleFormField} placeholder="For example, BF-02 maintenance plan has no pin check">
@@ -392,7 +392,7 @@
                             <label class="cq-field"><span class="cq-label">The Answer<span class="cq-req">*</span></span>
                                 <textarea class="pin" rows="5" data-first="1" data-k="detail" value={form.detail} data-val={form.detail} oninput={handleFormField}></textarea>
                             </label>
-                            <template if:true={form.recordName}><div class="note sm0">Source kept with it: {form.recordName}</div></template>
+                            <template if:true={form.recordName}><div class="cq-note sm0">Source kept with it: {form.recordName}</div></template>
                         </template>
                         <template if:true={formShowsSupports}>
                             <div class="cq-field"><span class="cq-label">Does It Support the Hypothesis?<span class="cq-req">*</span></span>
@@ -404,8 +404,8 @@
                             </div>
                         </template>
                     </div>
-                    <footer class="modal-foot">
-                        <span class="blocker">{formBlocker}</span>
+                    <footer class="cq-modal-foot">
+                        <span class="cq-blocker">{formBlocker}</span>
                         <button class="cq-btn-outline" onclick={handleFormCancel}>Cancel</button>
                         <button class="cq-btn-primary" onclick={handleFormSave} disabled={cantSaveForm}>{formSaveLabel}</button>
                     </footer>
