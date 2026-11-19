@@ -7,14 +7,14 @@
                 <template if:true={popup}><button class="x" onclick={handleClose} aria-label="Close">&times;</button></template>
                 <template if:true={topNav}>
                     <div class="topnav">
-                        <span class="blocker">{blocker}</span>
+                        <span class="cq-blocker">{blocker}</span>
                         <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
                         <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
                     </div>
                 </template>
             </header>
             </template>
-            <div class="body">
+            <div class="cq-ws-body body">
                 <nav class="cq-rail" aria-label="Triage Steps">
                     <div class="cq-rail-title"><span class="star">&#10022;</span> CQ.AI Triage Steps</div>
                     <template for:each={steps} for:item="s">
@@ -32,15 +32,15 @@
                     <div class="progress">{progress}</div>
                     <template if:true={canRestart}><button class="restart" onclick={handleRestart}>Start Over</button></template>
                 </nav>
-                <div class="main">
+                <div class="cq-ws-main main">
                     <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
-                    <template if:true={isGlance}><template if:true={inline}><h3 class="q">Triage at a Glance</h3></template><slot></slot>
+                    <template if:true={isGlance}><template if:true={inline}><h3 class="cq-step-title">Triage at a Glance</h3></template><slot></slot>
                         <template if:true={showRepGlance}>
                             <div class="recur">
                                 <div class="recur-head"><span aria-hidden="true">&#9888;</span> Happened Before, and the Fix Didn&rsquo;t Hold</div>
-                                <div class="lh"><a class="link" href={repBox.ncHref} target="_blank">{repBox.ncName}</a>{repBox.text1}<a class="link" href={repBox.capaHref} target="_blank">{repBox.capaName}</a>{repBox.text2}</div>
+                                <div class="lh"><a class="cq-link" href={repBox.ncHref} target="_blank">{repBox.ncName}</a>{repBox.text1}<a class="cq-link" href={repBox.capaHref} target="_blank">{repBox.capaName}</a>{repBox.text2}</div>
                                 <template if:true={repBox.efrText}><div class={repBox.efrCls}><a class="redlink" href={repBox.efrHref} target="_blank">{repBox.efrName}</a>{repBox.efrText}</div></template>
-                                <template if:true={repBox.noReview}><div class="lh muted">{repBox.capaName} closed with no effectiveness review on record.</div></template>
+                                <template if:true={repBox.noReview}><div class="lh cq-muted">{repBox.capaName} closed with no effectiveness review on record.</div></template>
                                 <div class="lh"><strong>What this changes in triage:</strong> {repBox.changes}</div>
                                 <div class="repacts">
                                     <a class="cq-btn-outline linkbtn" href={repBox.ncHref} target="_blank">Open {repBox.ncName}</a>
@@ -51,7 +51,7 @@
                         </template>
                         <template if:true={showRepDismissed}>
                             <div class="repoff">
-                                <span class="muted">Marked Not the Same Problem:</span>
+                                <span class="cq-muted">Marked Not the Same Problem:</span>
                                 <template for:each={repDismissed} for:item="d">
                                     <span key={d.key} class="repoffitem">{d.name} <button class="cq-btn-outline" data-id={d.id} onclick={handleRepRestore} disabled={repBusy}>Restore</button></span>
                                 </template>
@@ -59,7 +59,7 @@
                         </template>
                     </template>
                     <template if:true={is0}>
-                        <h3 class="q">Containment</h3>
+                        <h3 class="cq-step-title">Containment</h3>
                         <div class="cgrid">
                             <div class="cq-card-title">Possible Actions</div>
                             <div class="chead">
@@ -68,14 +68,14 @@
                                 </template>
                             </div>
                             <div class="col">
-                                <div class="tblwrap" style="margin-top: 0">
-                                    <table class="tbl">
+                                <div class="cq-tblwrap" style="margin-top: 0">
+                                    <table class="cq-tbl">
                                         <thead><tr><th class="center">Select</th><th>Action</th><th>Recommendation</th></tr></thead>
                                         <tbody>
                                             <template for:each={actions} for:item="a">
                                                 <tr key={a.id}>
                                                     <td class="center"><input type="checkbox" class="cb" data-id={a.id} checked={a.on} onchange={handleAct} aria-label={a.label}></td>
-                                                    <td class="wide"><div class="strong">{a.label}</div><div class="isum">{a.why}</div></td>
+                                                    <td class="wide"><div class="cq-strong">{a.label}</div><div class="isum">{a.why}</div></td>
                                                     <td class="nowrap"><template if:true={a.cq}><c-cq-ai-why variant="pill" subject={a.label} tail=" here?"></c-cq-ai-why></template></td>
                                                 </tr>
                                             </template>
@@ -86,7 +86,7 @@
                                     <label class="cq-field"><span class="cq-label">Due Date for the Ticked Actions<span class="cq-req">*</span></span>
                                         <input class="date" type="date" data-f="due" value={due} onchange={handleInput} />
                                     </label>
-                                    <p class="note">On Complete Triage, each ticked action is created as a CQ containment on this NC, assigned to you.</p>
+                                    <p class="cq-note">On Complete Triage, each ticked action is created as a CQ containment on this NC, assigned to you.</p>
                                 </template>
                                 <template if:true={noAction}>
                                     <label class="cq-field"><span class="cq-label">Why is No Action Needed?<span class="cq-req">*</span></span>
@@ -96,7 +96,7 @@
                             </div>
                             <div class="col">
                                 <template for:each={added} for:item="a">
-                                    <div key={a.key} class="row slim added"><span class="ic">&#10003;</span><span class="dv">{a.name} &middot; {a.title}</span></div>
+                                    <div key={a.key} class="cq-kv added"><span class="ic">&#10003;</span><span class="cq-kv-v">{a.name} &middot; {a.title}</span></div>
                                 </template>
                                 <template if:true={showAdd}>
                                     <div class="addform">
@@ -136,17 +136,17 @@
                     </template>
 
                     <template if:true={is1}>
-                        <h3 class="q">Data Check</h3>
-                        <p class="p">What was reported, and is it enough to send on? Photos and a description may be all you get.</p>
-                        <div class="tblwrap" style="margin-top: 0">
-                            <table class="tbl">
+                        <h3 class="cq-step-title">Data Check</h3>
+                        <p class="cq-step-intro">What was reported, and is it enough to send on? Photos and a description may be all you get.</p>
+                        <div class="cq-tblwrap" style="margin-top: 0">
+                            <table class="cq-tbl">
                                 <thead><tr><th class="center">Status</th><th>Data</th><th>Recorded</th></tr></thead>
                                 <tbody>
                                     <template for:each={dataRows} for:item="r">
                                         <tr key={r.key}>
                                             <td class="center"><template if:true={r.ok}><span class="ic" style="width: 24px; margin: 0 auto">&#10003;</span></template><template if:false={r.ok}><span class="warn"><span class="ic" style="width: 24px; margin: 0 auto">!</span></span></template></td>
                                             <td class="nowrap" style="color: #5b6470">{r.k}</td>
-                                            <td class="wide strong">{r.v}</td>
+                                            <td class="wide cq-strong">{r.v}</td>
                                         </tr>
                                     </template>
                                 </tbody>
@@ -165,13 +165,13 @@
                                 </template>
                             </div>
                             <div class="cq-field asknote"><textarea rows="2" placeholder="Anything else" data-f="askNote" value={askNote} oninput={handleInput}></textarea></div>
-                            <p class="note">The request is recorded on the nonconformance. Sending it to the reporter is not built yet.</p>
+                            <p class="cq-note">The request is recorded on the nonconformance. Sending it to the reporter is not built yet.</p>
                         </template>
                     </template>
 
                     <template if:true={is2}>
-                        <h3 class="q">Confirm the Risk</h3>
-                        <template if:false={riskReady}><p class="p">Working out the risk&hellip;</p></template>
+                        <h3 class="cq-step-title">Confirm the Risk</h3>
+                        <template if:false={riskReady}><p class="cq-step-intro">Working out the risk&hellip;</p></template>
                         <template if:true={riskReady}>
                             <div class="riskwrap">
                                 <div class="heat">
@@ -218,7 +218,7 @@
                                             <div class="whyk">Likelihood: {likHead} <span class="raised">{likRaised}</span></div>
                                             <div class="whyv">{likWhy}</div>
                                             <template if:true={rep}><div class="whyv redtext">{repRiskLine}</div></template>
-                                            <template if:true={recentList}><div class="whyv muted">Latest: {recentList}</div></template>
+                                            <template if:true={recentList}><div class="whyv cq-muted">Latest: {recentList}</div></template>
                                         </div>
                                         <template if:true={escaped}><div class="why bad">{escapedWhy}. Risk is High whatever cell is chosen.</div></template>
                                     </div>
@@ -229,13 +229,13 @@
                                     </div>
                                 </div>
                             </div>
-                            <p class="note">The purple &#10022; cell is CQ.AI's suggestion and is already selected. Click another cell to change it; hover over a cell for its score.</p>
+                            <p class="cq-note">The purple &#10022; cell is CQ.AI's suggestion and is already selected. Click another cell to change it; hover over a cell for its score.</p>
                         </template>
                     </template>
 
                     <template if:true={is3}>
-                        <h3 class="q">Next Steps</h3>
-                        <p class="p">CQ.AI suggests; you decide. Complete Triage moves the NC to Disposition / Investigate.</p>
+                        <h3 class="cq-step-title">Next Steps</h3>
+                        <p class="cq-step-intro">CQ.AI suggests; you decide. Complete Triage moves the NC to Disposition / Investigate.</p>
                         <div class="cards">
                             <c-cq-field-action-review record-id={recordId}></c-cq-field-action-review>
                             <template if:true={nextReady}>
@@ -281,19 +281,19 @@
                                 </template>
                             </template>
                         </div>
-                        <template if:false={nextReady}><p class="note">Working out the next steps&hellip;</p></template>
+                        <template if:false={nextReady}><p class="cq-note">Working out the next steps&hellip;</p></template>
                         <template if:true={nextReady}>
                         <template if:true={rep}>
-                            <p class="note lh"><strong>Escalate to CAPA:</strong> sets CQ&rsquo;s Initiate CAPA on this NC and records {rep.ncName} as what it repeats. A closed CAPA is not reopened. <strong>Link to {capaLinkName}:</strong> sets it as this NC&rsquo;s Related CAPA, with no new CAPA.</p>
+                            <p class="cq-note lh"><strong>Escalate to CAPA:</strong> sets CQ&rsquo;s Initiate CAPA on this NC and records {rep.ncName} as what it repeats. A closed CAPA is not reopened. <strong>Link to {capaLinkName}:</strong> sets it as this NC&rsquo;s Related CAPA, with no new CAPA.</p>
                         </template>
                         <template if:true={dlg}>
-                            <div class="modal-back" onkeydown={handleDlgKey}>
-                                <section class="modal" role="dialog" aria-modal="true" aria-labelledby="dlg-head">
-                                    <header class="modal-head">
-                                        <h2 id="dlg-head" class="modal-title">{dlgTitle}</h2>
-                                        <button class="modal-x" aria-label="Close" onclick={handleDlgCancel}>&times;</button>
+                            <div class="cq-modal-back" onkeydown={handleDlgKey}>
+                                <section class="cq-modal modal" role="dialog" aria-modal="true" aria-labelledby="dlg-head">
+                                    <header class="cq-modal-head">
+                                        <h2 id="dlg-head" class="cq-modal-title">{dlgTitle}</h2>
+                                        <button class="cq-modal-x" aria-label="Close" onclick={handleDlgCancel}>&times;</button>
                                     </header>
-                                    <div class="modal-body">
+                                    <div class="cq-modal-body">
                                         <div class="mrow">
                                             <label class="cq-field"><span class="cq-label">{dlgDueLabel}<span class="cq-req">*</span></span>
                                                 <input class="date" type="date" data-f="due" value={dlg.due} onchange={handleDlgInput} />
@@ -313,9 +313,9 @@
                                             <textarea rows="3" data-f="note" value={dlg.note} oninput={handleDlgInput} placeholder={dlgNotePh}></textarea>
                                             <span class="cq-hint">{dlgNoteHint}</span>
                                         </label>
-                                        <template if:true={dlgIsDisp}><p class="note mnote">The disposition itself is decided in the Disposition workspace after triage.</p></template>
+                                        <template if:true={dlgIsDisp}><p class="cq-note mnote">The disposition itself is decided in the Disposition workspace after triage.</p></template>
                                     </div>
-                                    <footer class="modal-foot">
+                                    <footer class="cq-modal-foot">
                                         <button class="cq-btn-outline" onclick={handleDlgCancel}>Cancel</button>
                                         <button class="cq-btn-primary" onclick={handleDlgSave} disabled={dlgCantSave}>Save</button>
                                     </footer>
@@ -324,19 +324,19 @@
                         </template>
                         <template if:true={invReq}>
                             <div class="cq-card-title top8">Relevant Investigations to Link for Research</div>
-                            <p class="note lead">Optional. Linked investigations are for research only and do not replace this NC&rsquo;s own investigation.</p>
-                                <template if:false={linksReady}><p class="note">Looking for relevant investigations&hellip;</p></template>
+                            <p class="cq-note lead">Optional. Linked investigations are for research only and do not replace this NC&rsquo;s own investigation.</p>
+                                <template if:false={linksReady}><p class="cq-note">Looking for relevant investigations&hellip;</p></template>
                                 <template if:true={linksReady}>
-                                    <template if:true={noLinks}><p class="note">No other investigations were found on this part.</p></template>
+                                    <template if:true={noLinks}><p class="cq-note">No other investigations were found on this part.</p></template>
                                     <template if:true={hasSug}>
-                                        <div class="tblwrap">
-                                            <table class="tbl">
+                                        <div class="cq-tblwrap">
+                                            <table class="cq-tbl">
                                                 <thead><tr><th class="center">Link</th><th>Investigation</th><th>From NC</th><th>Status</th><th>Match</th><th>Recommendation</th></tr></thead>
                                                 <tbody>
                                                     <template for:each={sugPg.shown} for:item="v">
                                                         <tr key={v.id}>
                                                             <td class="center"><input type="checkbox" class="cb" data-id={v.id} checked={v.on} disabled={v.linked} onchange={handleLink} aria-label={v.name}></td>
-                                                            <td class="wide"><div class="strong">{v.name}</div><template if:true={v.summary}><div class="isum">{v.summary}</div></template></td>
+                                                            <td class="wide"><div class="cq-strong">{v.name}</div><template if:true={v.summary}><div class="isum">{v.summary}</div></template></td>
                                                             <td class="nowrap">{v.ncName}</td>
                                                             <td class="nowrap">{v.status}</td>
                                                             <td class="nowrap"><template if:true={v.linked}>Already linked</template><template if:false={v.linked}>{v.why}</template></td>
@@ -347,8 +347,8 @@
                                             </table>
                                         </div>
                                         <template if:true={sugPg.has}>
-                                            <div class="pager">
-                                                <nav class="pages" aria-label="Investigation pages">
+                                            <div class="cq-pager">
+                                                <nav class="cq-pages" aria-label="Investigation pages">
                                                     <button class="pg" data-w="sug" data-p="prev" onclick={handleLinkPage} disabled={sugPg.prevOff} aria-label="Previous page">&laquo;</button>
                                                     <template for:each={sugPg.items} for:item="p">
                                                         <button key={p.key} class={p.cls} data-w="sug" data-p={p.p} onclick={handleLinkPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
@@ -361,14 +361,14 @@
                                     <template if:true={hasOther}>
                                         <details class="know">
                                             <summary>{otherLabel}</summary>
-                                            <div class="tblwrap">
-                                                <table class="tbl">
+                                            <div class="cq-tblwrap">
+                                                <table class="cq-tbl">
                                                     <thead><tr><th class="center">Link</th><th>Investigation</th><th>From NC</th><th>Status</th><th>Match</th><th>Recommendation</th></tr></thead>
                                                     <tbody>
                                                         <template for:each={otherPg.shown} for:item="v">
                                                             <tr key={v.id}>
                                                                 <td class="center"><input type="checkbox" class="cb" data-id={v.id} checked={v.on} disabled={v.linked} onchange={handleLink} aria-label={v.name}></td>
-                                                                <td class="wide"><div class="strong">{v.name}</div><template if:true={v.summary}><div class="isum">{v.summary}</div></template></td>
+                                                                <td class="wide"><div class="cq-strong">{v.name}</div><template if:true={v.summary}><div class="isum">{v.summary}</div></template></td>
                                                                 <td class="nowrap">{v.ncName}</td>
                                                                 <td class="nowrap">{v.status}</td>
                                                                 <td class="nowrap"><template if:true={v.linked}>Already linked</template><template if:false={v.linked}>{v.why}</template></td>
@@ -379,8 +379,8 @@
                                                 </table>
                                             </div>
                                             <template if:true={otherPg.has}>
-                                                <div class="pager">
-                                                    <nav class="pages" aria-label="Investigation pages">
+                                                <div class="cq-pager">
+                                                    <nav class="cq-pages" aria-label="Investigation pages">
                                                         <button class="pg" data-w="other" data-p="prev" onclick={handleLinkPage} disabled={otherPg.prevOff} aria-label="Previous page">&laquo;</button>
                                                         <template for:each={otherPg.items} for:item="p">
                                                             <button key={p.key} class={p.cls} data-w="other" data-p={p.p} onclick={handleLinkPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
@@ -396,32 +396,39 @@
                                             object-api-name="compliancequest__SQX_Investigation__c" onchange={handlePick}></lightning-record-picker>
                                     </div>
                                     <template if:true={linkError}><div class="cq-msg crit errbox">{linkError}</div></template>
-                                    <p class="note">Ticked investigations are linked to this NC when you click Complete Triage.</p>
+                                    <p class="cq-note">Ticked investigations are linked to this NC when you click Complete Triage.</p>
                                 </template>
                         </template>
                         </template>
                     </template>
 
                     <template if:true={showSummary}>
-                        <div class="donehead"><span class="okdot">&#10003;</span><h3 class="q nom">Triage Complete</h3></div>
+                        <div class="cq-donehead"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">Triage Complete</h3></div>
                         <template for:each={summary} for:item="r">
-                            <div key={r.key} class="row slim"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
+                            <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
                         </template>
                         <template if:true={warning}><div class="cq-msg warn">{warning}</div></template>
                         <template if:true={popup}><div class="opts"><button class="cq-btn-primary" onclick={handleClose}>Back to the Nonconformance</button></div></template>
                         <template if:true={inline}><div class="opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div></template>
                     </template>
                     <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
+                    <template if:true={inline}><template if:true={footNav}>
+                        <footer class="cq-ws-foot">
+                            <span class="cq-blocker">{blocker}</span>
+                            <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
+                            <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
+                        </footer>
+                    </template></template>
                 </div>
             </div>
-            <template if:true={footNav}>
+            <template if:true={popup}><template if:true={footNav}>
                 <footer class="foot">
-                    <span class="grow"></span>
-                    <span class="blocker">{blocker}</span>
+                    <span class="cq-grow"></span>
+                    <span class="cq-blocker">{blocker}</span>
                     <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
                     <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
                 </footer>
-            </template>
+            </template></template>
         </div>
     </div>
 </template>
