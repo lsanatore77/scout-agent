@@ -103,6 +103,6 @@ All fifteen classes are deployed to cqse-golden--dev and match the repo (19 Nov 
 CqTriageRisk, CqTriageLinks, CqTriageNext, CqDispositionWorkspace, CqInvestigationHistory, CqInvestigationChanges, CqInvestigationWorkspace,
 CqInvestigationCause, CqInvestigationAgentContext, CqQualityAgentContext, AskCqWorkspaceController (the org shows the ellipsis in
 AskCqWorkspaceController as a literal character where the repo has the Apex escape; same behaviour).
-Tests: first batch 23 passed, 0 failed (job 707W40000VmfRL7). Second batch running: job 707W40000VmfEPp (investigation, agent context, Ask CQ, PHR checklist).
+Tests: first batch 23 passed, 0 failed (job 707W40000VmfRL7). Second batch 28 passed, 0 failed (job 707W40000VmfEPp: investigation, agent context, Ask CQ, PHR checklist). 51 passed in all.
 Next: the user approved converting the Field Action classes to user mode (one screen at a time, tests after each,
 SecurityException handling from the start, flag any step that must stay system mode).
