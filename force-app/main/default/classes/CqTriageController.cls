@@ -59,9 +59,9 @@ public with sharing class CqTriageController {
             others = [SELECT Id, Name, compliancequest__Lot_Number__c, compliancequest__Status__c, CreatedDate
                       FROM compliancequest__SQX_Nonconformance__c
                       WHERE compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c AND Id != :nc.Id AND CreatedDate >= :since
-                      ORDER BY CreatedDate DESC LIMIT 200];
+                      WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 200];
             complaints = [SELECT Id, Name, compliancequest__Lot_Number__c FROM compliancequest__SQX_Complaint__c
-                          WHERE compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c ORDER BY CreatedDate DESC LIMIT 200];
+                          WHERE compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 200];
         }
         Integer sameLot = 0;
         for (compliancequest__SQX_Nonconformance__c o : others) {
@@ -87,7 +87,7 @@ public with sharing class CqTriageController {
         // 2. Containment: counts the CQ containment records on this NC (CQ's own Has Containment box lags behind them)
         List<compliancequest__SQX_Containment__c> cons = [
             SELECT Name, compliancequest__Status__c, compliancequest__Is_Complete__c FROM compliancequest__SQX_Containment__c
-            WHERE compliancequest__SQX_Nonconformance__c = :nc.Id AND compliancequest__Status__c != 'Void' ORDER BY CreatedDate LIMIT 50];
+            WHERE compliancequest__SQX_Nonconformance__c = :nc.Id AND compliancequest__Status__c != 'Void' WITH USER_MODE ORDER BY CreatedDate LIMIT 50];
         Integer openCons = 0; List<String> conLabels = new List<String>();
         for (compliancequest__SQX_Containment__c c : cons) {
             conLabels.add(c.Name + ' (' + c.compliancequest__Status__c + ')');
@@ -157,7 +157,7 @@ public with sharing class CqTriageController {
         }
         List<Field_Action_Review__c> revs = [
             SELECT Id, Name, Status__c, Outcome__c, Field_Action__c, Field_Action__r.Name
-            FROM Field_Action_Review__c WHERE Nonconformance__c = :nc.Id ORDER BY CreatedDate DESC LIMIT 1];
+            FROM Field_Action_Review__c WHERE Nonconformance__c = :nc.Id WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 1];
         if (!revs.isEmpty()) {
             fa.reviewId = revs[0].Id; fa.reviewName = revs[0].Name; fa.reviewStatus = revs[0].Status__c; fa.reviewOutcome = revs[0].Outcome__c;
             fa.faId = revs[0].Field_Action__c; fa.faName = revs[0].Field_Action__r?.Name;
@@ -175,18 +175,18 @@ public with sharing class CqTriageController {
         nc.Field_Action_Review_Reason__c = decision == 'Sent for Review' ? reason : null;
         nc.Field_Action_Review_By__c = decision == null ? null : UserInfo.getUserId();
         nc.Field_Action_Review_On__c = decision == null ? null : Datetime.now();
-        update nc;
+        update as user nc;
 
         // Send for Review opens a Field Action Review for this NC. Any other choice withdraws one that is still open.
         List<Field_Action_Review__c> open = [SELECT Id FROM Field_Action_Review__c
-                                             WHERE Nonconformance__c = :recordId AND Status__c IN ('New', 'In Review')];
+                                             WHERE Nonconformance__c = :recordId AND Status__c IN ('New', 'In Review') WITH USER_MODE];
         if (decision == 'Sent for Review') {
             if (open.isEmpty()) {
                 compliancequest__SQX_Nonconformance__c src = [
                     SELECT Name, compliancequest__NC_Title__c, compliancequest__SQX_Part__c, compliancequest__Lot_Number__c,
                            compliancequest__Defective_Quantity__c, Triage_Risk__c
-                    FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
-                insert new Field_Action_Review__c(
+                    FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
+                insert as user new Field_Action_Review__c(
                     Title__c = ('Review: ' + src.Name + (src.compliancequest__NC_Title__c == null ? '' : ' ' + src.compliancequest__NC_Title__c)).left(255),
                     Status__c = 'New', Nonconformance__c = recordId, Reason_for_Review__c = reason,
                     Requested_By__c = UserInfo.getUserId(), Requested_On__c = Datetime.now(), Due_Date__c = Date.today().addDays(5),
@@ -194,11 +194,11 @@ public with sharing class CqTriageController {
                     Quantity_Affected__c = src.compliancequest__Defective_Quantity__c, Risk_Level__c = src.Triage_Risk__c);
             } else {
                 open[0].Reason_for_Review__c = reason;
-                update open[0];
+                update as user open[0];
             }
         } else if (!open.isEmpty()) {
             for (Field_Action_Review__c r : open) { r.Status__c = 'Closed'; r.Outcome_Rationale__c = 'Withdrawn from the nonconformance before a decision.'; }
-            update open;
+            update as user open;
         }
         return getGlance(recordId).fieldAction;
     }
@@ -211,6 +211,6 @@ public with sharing class CqTriageController {
                        compliancequest__SQX_Part__c, compliancequest__SQX_Part__r.Name, compliancequest__SQX_Part__r.compliancequest__Part_Number__c,
                        Field_Action_Review__c, Field_Action_Review_Reason__c, Field_Action_Review_By__r.Name, Field_Action_Review_On__c,
                        compliancequest__Type__c, compliancequest__Type_Of_Issue__c, Owner.Name
-                FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+                FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
     }
 }

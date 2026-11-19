@@ -132,7 +132,7 @@ public with sharing class CqInvestigationSummary {
             Map<String, Object> m = (Map<String, Object>) o;
             if (m.get('userId') != null) { userIds.add((Id) String.valueOf(m.get('userId'))); }
         }
-        Map<Id, User> users = new Map<Id, User>([SELECT Id, Name FROM User WHERE Id IN :userIds]);
+        Map<Id, User> users = new Map<Id, User>([SELECT Id, Name FROM User WHERE Id IN :userIds WITH USER_MODE]);
         for (Object o : rows) {
             Map<String, Object> m = (Map<String, Object>) o;
             Id uid = m.get('userId') == null ? null : (Id) String.valueOf(m.get('userId'));
@@ -219,7 +219,7 @@ public with sharing class CqInvestigationSummary {
             .replaceAll('(?i)<li[^>]*>', '- ')
             .replaceAll('(?i)</li>|</ul>|</ol>', '\n')
             .replaceAll('<[^>]+>', '')
-            .unescapeHtml4().replace('\u00a0', ' ');
+            .unescapeHtml4().replace(' ', ' ');
         List<String> out = new List<String>();
         for (String line : t.split('\n')) { out.add(line.trim()); }
         return String.join(out, '\n').replaceAll('\n{3,}', '\n\n').trim();

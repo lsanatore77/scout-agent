@@ -8,7 +8,7 @@ public with sharing class CqTriagePhoto {
             FROM ContentDocumentLink
             WHERE LinkedEntityId = :recordId
               AND ContentDocument.FileType IN ('JPG', 'JPEG', 'PNG', 'GIF')
-            ORDER BY ContentDocument.CreatedDate DESC
+            WITH USER_MODE ORDER BY ContentDocument.CreatedDate DESC
             LIMIT 1
         ];
         return links.isEmpty() ? null : links[0].ContentDocument.LatestPublishedVersionId;
@@ -25,7 +25,7 @@ public with sharing class CqTriagePhoto {
             Title = name, PathOnClient = name,
             VersionData = EncodingUtil.base64Decode(base64Data),
             FirstPublishLocationId = recordId);
-        insert cv;
+        insert as user cv;
         return cv.Id;
     }
 }

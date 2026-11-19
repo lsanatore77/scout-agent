@@ -38,7 +38,7 @@ public with sharing class CqTriageRisk {
             SELECT Id, compliancequest__Severity__c, compliancequest__Defect_Severity__c, compliancequest__Lot_Number__c, compliancequest__SQX_Part__c,
                    compliancequest__SQX_Defect_Code__r.Name, compliancequest__SQX_Defect_Code__r.compliancequest__Impact__c,
                    compliancequest__SQX_Part__r.compliancequest__Part_Risk_Level__c
-            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         Risk r = new Risk();
 
         // Likelihood from recent NCs on the same part (this NC is not counted)
@@ -48,7 +48,7 @@ public with sharing class CqTriageRisk {
             for (compliancequest__SQX_Nonconformance__c o : [
                     SELECT Name FROM compliancequest__SQX_Nonconformance__c
                     WHERE compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c AND Id != :nc.Id AND CreatedDate >= :since
-                    ORDER BY CreatedDate DESC LIMIT 200]) {
+                    WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 200]) {
                 r.count++;
                 if (r.recent.size() < 5) { r.recent.add(o.Name); }
             }
@@ -78,7 +78,7 @@ public with sharing class CqTriageRisk {
         // Escape: complaints on the same part and lot
         if (nc.compliancequest__SQX_Part__c != null && nc.compliancequest__Lot_Number__c != null) {
             Integer c = [SELECT COUNT() FROM compliancequest__SQX_Complaint__c
-                         WHERE compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c AND compliancequest__Lot_Number__c = :nc.compliancequest__Lot_Number__c];
+                         WHERE compliancequest__SQX_Part__c = :nc.compliancequest__SQX_Part__c AND compliancequest__Lot_Number__c = :nc.compliancequest__Lot_Number__c WITH USER_MODE];
             if (c > 0) { r.escaped = true; r.escapedWhy = c + ' complaint(s) on lot ' + nc.compliancequest__Lot_Number__c + ': it has reached customers'; }
         }
 
@@ -97,7 +97,7 @@ public with sharing class CqTriageRisk {
         nc.compliancequest__Severity__c = SEV[severity - 1];
         nc.compliancequest__Probability__c = LIK[likelihood - 1];
         try {
-            update nc;
+            update as user nc;
         } catch (DmlException e) {
             throw new AuraHandledException('CQ did not accept Severity and Probability: ' + e.getDmlMessage(0));
         }

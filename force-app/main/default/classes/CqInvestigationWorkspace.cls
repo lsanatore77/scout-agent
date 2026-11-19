@@ -61,7 +61,7 @@ public with sharing class CqInvestigationWorkspace {
     public static Id investigationFor(Id recordId) {
         if (recordId == null) { throw new AuraHandledException('No record.'); }
         if (recordId.getSObjectType() == compliancequest__SQX_Nonconformance__c.SObjectType) {
-            compliancequest__SQX_Nonconformance__c nc = [SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId];
+            compliancequest__SQX_Nonconformance__c nc = [SELECT compliancequest__SQX_Investigation__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
             if (nc.compliancequest__SQX_Investigation__c == null) { throw new AuraHandledException('This nonconformance has no investigation yet.'); }
             return nc.compliancequest__SQX_Investigation__c;
         }
@@ -75,7 +75,7 @@ public with sharing class CqInvestigationWorkspace {
             SELECT Id, Name, compliancequest__Status__c, toLabel(compliancequest__Record_Stage__c), compliancequest__Conclusion__c,
                    compliancequest__Investigation_Summary__c, compliancequest__Completed_By__c, compliancequest__Completed_On__c,
                    compliancequest__SQX_Nonconformance__c
-            FROM compliancequest__SQX_Investigation__c WHERE Id = :invId];
+            FROM compliancequest__SQX_Investigation__c WHERE Id = :invId WITH USER_MODE];
         View v = new View();
         v.investigationId = inv.Id; v.investigationName = inv.Name;
         v.status = inv.compliancequest__Status__c; v.stage = inv.compliancequest__Record_Stage__c;
@@ -98,7 +98,7 @@ public with sharing class CqInvestigationWorkspace {
                        toLabel(compliancequest__Record_Stage__c), Owner.Name, Triage_Risk__c, Triage_Path__c, compliancequest__Defective_Quantity__c,
                        compliancequest__Due_Date_Investigation__c, compliancequest__Investigation_Approval__c,
                        compliancequest__Disposition_Required__c, compliancequest__Is_Disposition_Complete__c
-                FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId];
+                FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId WITH USER_MODE];
             v.ncId = nc.Id; v.ncName = nc.Name; v.title = nc.compliancequest__NC_Title__c; v.description = nc.compliancequest__Description__c;
             v.partId = nc.compliancequest__SQX_Part__c; v.lot = nc.compliancequest__Lot_Number__c;
             v.partNumber = nc.compliancequest__SQX_Part__r == null ? null : nc.compliancequest__SQX_Part__r.compliancequest__Part_Number__c;
@@ -112,7 +112,7 @@ public with sharing class CqInvestigationWorkspace {
             Integer dispositions = 0;
             for (compliancequest__SQX_Disposition__c d : [
                     SELECT compliancequest__Disposition_Type__c, compliancequest__Actual_Quantity_Disposed__c, compliancequest__Disposition_Quantity__c, compliancequest__Status__c
-                    FROM compliancequest__SQX_Disposition__c WHERE compliancequest__SQX_Nonconformance__c = :ncId ORDER BY CreatedDate]) {
+                    FROM compliancequest__SQX_Disposition__c WHERE compliancequest__SQX_Nonconformance__c = :ncId WITH USER_MODE ORDER BY CreatedDate]) {
                 dispositions++;
                 if (d.compliancequest__Status__c != 'Complete') { continue; }
                 if (d.compliancequest__Disposition_Type__c == null) { continue; }
@@ -130,18 +130,18 @@ public with sharing class CqInvestigationWorkspace {
                     SELECT compliancequest__SQX_Response__r.Name, compliancequest__SQX_Response__r.compliancequest__Status__c
                     FROM compliancequest__SQX_Response_Inclusion__c
                     WHERE compliancequest__SQX_Investigation__c = :invId AND compliancequest__Type__c = 'Investigation'
-                    ORDER BY CreatedDate DESC LIMIT 1]) {
+                    WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 1]) {
                 v.responseName = x.compliancequest__SQX_Response__r.Name;
                 String rs = x.compliancequest__SQX_Response__r.compliancequest__Status__c;
                 if (rs == 'In Approval') { v.inApproval = true; }
                 v.submitted = rs == 'In Approval' || rs == 'Completed';
             }
-            v.openActions = [SELECT COUNT() FROM compliancequest__SQX_Action__c WHERE compliancequest__SQX_Nonconformance__c = :ncId AND compliancequest__Status__c = 'Open'];
+            v.openActions = [SELECT COUNT() FROM compliancequest__SQX_Action__c WHERE compliancequest__SQX_Nonconformance__c = :ncId AND compliancequest__Status__c = 'Open' WITH USER_MODE];
         }
 
         for (compliancequest__SQX_Root_Cause__c r : [
                 SELECT Id, toLabel(compliancequest__Category__c), compliancequest__SQX_Root_Cause_Code__r.Name, compliancequest__Description__c, compliancequest__Verified__c
-                FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c = :invId ORDER BY CreatedDate]) {
+                FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE ORDER BY CreatedDate]) {
             Cause c = new Cause();
             c.id = r.Id; c.category = r.compliancequest__Category__c; c.description = r.compliancequest__Description__c;
             c.code = r.compliancequest__SQX_Root_Cause_Code__r == null ? null : r.compliancequest__SQX_Root_Cause_Code__r.Name;
@@ -151,12 +151,12 @@ public with sharing class CqInvestigationWorkspace {
         for (compliancequest__SQX_Action_Plan__c a : [
                 SELECT Id, compliancequest__Title__c, compliancequest__Plan_Type__c, compliancequest__Description__c, compliancequest__Due_Date__c,
                        compliancequest__SQX_User__c, compliancequest__SQX_User__r.Name
-                FROM compliancequest__SQX_Action_Plan__c WHERE compliancequest__SQX_Investigation__c = :invId ORDER BY CreatedDate]) {
+                FROM compliancequest__SQX_Action_Plan__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE ORDER BY CreatedDate]) {
             v.plans.add(plan(a));
         }
         for (compliancequest__SQX_Investigation_Tool__c t : [
                 SELECT Id, Name, RecordType.Name, compliancequest__Status__c
-                FROM compliancequest__SQX_Investigation_Tool__c WHERE compliancequest__SQX_Investigation__c = :invId ORDER BY CreatedDate]) {
+                FROM compliancequest__SQX_Investigation_Tool__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE ORDER BY CreatedDate]) {
             Tool x = new Tool();
             x.id = t.Id; x.name = t.Name; x.type = t.RecordType == null ? null : t.RecordType.Name; x.status = t.compliancequest__Status__c;
             v.tools.add(x);
@@ -205,10 +205,10 @@ public with sharing class CqInvestigationWorkspace {
         Set<Id> kept = new Set<Id>();
         for (compliancequest__SQX_Action_Plan__c a : keep) { if (a.Id != null) { kept.add(a.Id); } }
         List<compliancequest__SQX_Action_Plan__c> gone = [
-            SELECT Id FROM compliancequest__SQX_Action_Plan__c WHERE compliancequest__SQX_Investigation__c = :invId AND Id NOT IN :kept];
+            SELECT Id FROM compliancequest__SQX_Action_Plan__c WHERE compliancequest__SQX_Investigation__c = :invId AND Id NOT IN :kept WITH USER_MODE];
         try {
-            if (!gone.isEmpty()) { delete gone; }
-            upsert keep;
+            if (!gone.isEmpty()) { delete as user gone; }
+            upsert as user keep;
         } catch (DmlException e) {
             throw new AuraHandledException('The actions were not saved: ' + e.getDmlMessage(0));
         }
@@ -216,7 +216,7 @@ public with sharing class CqInvestigationWorkspace {
         for (compliancequest__SQX_Action_Plan__c a : [
                 SELECT Id, compliancequest__Title__c, compliancequest__Plan_Type__c, compliancequest__Description__c, compliancequest__Due_Date__c,
                        compliancequest__SQX_User__c, compliancequest__SQX_User__r.Name
-                FROM compliancequest__SQX_Action_Plan__c WHERE compliancequest__SQX_Investigation__c = :invId ORDER BY CreatedDate]) {
+                FROM compliancequest__SQX_Action_Plan__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE ORDER BY CreatedDate]) {
             out.add(plan(a));
         }
         return out;
@@ -235,7 +235,7 @@ public with sharing class CqInvestigationWorkspace {
         compliancequest__SQX_Investigation__c inv = [
             SELECT Id, compliancequest__Status__c, compliancequest__SQX_Nonconformance__c,
                    compliancequest__SQX_Nonconformance__r.compliancequest__Investigation_Approval__c
-            FROM compliancequest__SQX_Investigation__c WHERE Id = :invId];
+            FROM compliancequest__SQX_Investigation__c WHERE Id = :invId WITH USER_MODE];
         if (inv.compliancequest__SQX_Nonconformance__c == null) { throw new AuraHandledException('This investigation is not on a nonconformance.'); }
 
         Result res = new Result();
@@ -245,27 +245,27 @@ public with sharing class CqInvestigationWorkspace {
             if (actionsPayload != null) { saveActions(invId, actionsPayload); }
             // 1. open a Draft investigation, as CQ's Perform Investigation does
             if (inv.compliancequest__Status__c == 'Draft') {
-                update new compliancequest__SQX_Investigation__c(Id = invId, compliancequest__Activity_Code__c = INITIATE);
+                update as user new compliancequest__SQX_Investigation__c(Id = invId, compliancequest__Activity_Code__c = INITIATE);
             }
             // 2. the conclusion and summary; then any open analysis tool, since CQ refuses to submit with one open
-            update new compliancequest__SQX_Investigation__c(Id = invId, compliancequest__Conclusion__c = conclusion,
+            update as user new compliancequest__SQX_Investigation__c(Id = invId, compliancequest__Conclusion__c = conclusion,
                 compliancequest__Investigation_Summary__c = CqInvestigationSummary.toHtml(summary));
             for (compliancequest__SQX_Investigation_Tool__c t : [
                     SELECT Id, Name FROM compliancequest__SQX_Investigation_Tool__c
-                    WHERE compliancequest__SQX_Investigation__c = :invId AND compliancequest__Status__c != 'Complete']) {
-                update new compliancequest__SQX_Investigation_Tool__c(Id = t.Id, compliancequest__Activity_Code__c = COMPLETE);
+                    WHERE compliancequest__SQX_Investigation__c = :invId AND compliancequest__Status__c != 'Complete' WITH USER_MODE]) {
+                update as user new compliancequest__SQX_Investigation_Tool__c(Id = t.Id, compliancequest__Activity_Code__c = COMPLETE);
                 res.toolsCompleted.add(t.Name);
             }
             // 3. a response that publishes the investigation, submitted
             compliancequest__SQX_Finding_Response__c r = new compliancequest__SQX_Finding_Response__c(
                 compliancequest__SQX_Nonconformance__c = inv.compliancequest__SQX_Nonconformance__c,
                 compliancequest__Response_Type__c = 'Investigation', compliancequest__Response_Summary__c = summary.left(255));
-            insert r;
-            insert new compliancequest__SQX_Response_Inclusion__c(compliancequest__SQX_Response__c = r.Id, compliancequest__Type__c = 'Investigation',
+            insert as user r;
+            insert as user new compliancequest__SQX_Response_Inclusion__c(compliancequest__SQX_Response__c = r.Id, compliancequest__Type__c = 'Investigation',
                 compliancequest__SQX_Investigation__c = invId, compliancequest__Inclusion_Reason__c = 'Publish');
-            update new compliancequest__SQX_Finding_Response__c(Id = r.Id, compliancequest__Activity_Code__c = SUBMIT,
+            update as user new compliancequest__SQX_Finding_Response__c(Id = r.Id, compliancequest__Activity_Code__c = SUBMIT,
                 compliancequest__Activity_Comment__c = res.needsApproval ? 'Submitted for approval from the CQ.AI Investigation workspace' : 'Completed from the CQ.AI Investigation workspace');
-            res.responseName = [SELECT Name FROM compliancequest__SQX_Finding_Response__c WHERE Id = :r.Id].Name;
+            res.responseName = [SELECT Name FROM compliancequest__SQX_Finding_Response__c WHERE Id = :r.Id WITH USER_MODE].Name;
         } catch (DmlException e) {
             Database.rollback(sp);
             throw new AuraHandledException('The investigation was not submitted: ' + e.getDmlMessage(0));
@@ -274,13 +274,13 @@ public with sharing class CqInvestigationWorkspace {
     }
 
     static void refuseIfDone(Id invId) {
-        compliancequest__SQX_Investigation__c inv = [SELECT compliancequest__Status__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId];
+        compliancequest__SQX_Investigation__c inv = [SELECT compliancequest__Status__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId WITH USER_MODE];
         if (inv.compliancequest__Status__c == 'Completed' || inv.compliancequest__Status__c == 'In Approval' || inv.compliancequest__Status__c == 'Void') {
             throw new AuraHandledException('This investigation is ' + inv.compliancequest__Status__c + ', so it can no longer be changed here.');
         }
         Integer waiting = [SELECT COUNT() FROM compliancequest__SQX_Response_Inclusion__c
             WHERE compliancequest__SQX_Investigation__c = :invId AND compliancequest__Type__c = 'Investigation'
-              AND compliancequest__SQX_Response__r.compliancequest__Status__c IN ('In Approval', 'Completed')];
+              AND compliancequest__SQX_Response__r.compliancequest__Status__c IN ('In Approval', 'Completed') WITH USER_MODE];
         if (waiting > 0) { throw new AuraHandledException('This investigation has already been submitted.'); }
     }
 

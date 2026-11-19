@@ -82,13 +82,13 @@ public with sharing class CqInvestigationCause {
         Id invId = CqInvestigationWorkspace.investigationFor(recordId);
         View v = new View();
         v.investigationId = invId;
-        compliancequest__SQX_Investigation__c inv = [SELECT Name, compliancequest__SQX_Nonconformance__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId];
+        compliancequest__SQX_Investigation__c inv = [SELECT Name, compliancequest__SQX_Nonconformance__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId WITH USER_MODE];
         v.investigationName = inv.Name;
         for (Schema.PicklistEntry p : compliancequest__SQX_Root_Cause__c.compliancequest__Category__c.getDescribe().getPicklistValues()) { if (p.isActive()) { v.categories.add(p.getValue()); } }
         for (compliancequest__SQX_Root_Cause_Code__c c : [
                 SELECT Id, Name, compliancequest__SQX_Root_Cause_Sub_Category__c, compliancequest__SQX_Root_Cause_Sub_Category__r.Name,
                        compliancequest__SQX_Root_Cause_Sub_Category__r.compliancequest__SQX_Root_Cause_Category__r.Name
-                FROM compliancequest__SQX_Root_Cause_Code__c ORDER BY Name LIMIT 500]) {
+                FROM compliancequest__SQX_Root_Cause_Code__c WITH USER_MODE ORDER BY Name LIMIT 500]) {
             Code k = new Code(); k.id = c.Id; k.name = c.Name;
             if (c.compliancequest__SQX_Root_Cause_Sub_Category__r != null) {
                 k.sub = c.compliancequest__SQX_Root_Cause_Sub_Category__r.Name;
@@ -104,13 +104,13 @@ public with sharing class CqInvestigationCause {
         if (inv.compliancequest__SQX_Nonconformance__c != null) {
             nc = [SELECT Name, compliancequest__NC_Title__c, compliancequest__Description__c, compliancequest__Occurrence_Date__c, compliancequest__Lot_Number__c,
                          compliancequest__Defective_Quantity__c, compliancequest__SQX_Part__r.compliancequest__Part_Number__c
-                  FROM compliancequest__SQX_Nonconformance__c WHERE Id = :inv.compliancequest__SQX_Nonconformance__c];
+                  FROM compliancequest__SQX_Nonconformance__c WHERE Id = :inv.compliancequest__SQX_Nonconformance__c WITH USER_MODE];
             v.problem = String.isBlank(nc.compliancequest__Description__c) ? nc.compliancequest__NC_Title__c
                 : nc.compliancequest__Description__c.removeStartIgnoreCase('SAMPLE DATA. ').abbreviate(240);
         }
         List<compliancequest__SQX_5W2H__c> fives = [SELECT Id, compliancequest__What__c, compliancequest__Where__c, compliancequest__When__c, compliancequest__Who__c,
                 compliancequest__Which__c, compliancequest__How__c, compliancequest__How_Many__c
-            FROM compliancequest__SQX_5W2H__c WHERE compliancequest__SQX_Investigation__c = :invId ORDER BY CreatedDate DESC LIMIT 1];
+            FROM compliancequest__SQX_5W2H__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 1];
         Boolean anyText = false;
         for (String k : ROWS) {
             Row r = new Row(); r.key = k; r.label = ROW_LABEL.get(k);
@@ -139,13 +139,13 @@ public with sharing class CqInvestigationCause {
         List<Investigation_Hypothesis__c> hs = [
             SELECT Id, Number__c, Title__c, Category__c, Status__c, Source_Name__c, Source_Record_Id__c, How_Do_You_Know__c, Is_Not_Fit__c,
                    Five_Why_Tool__c, Five_Why_Tool__r.Name, Root_Cause__c, Investigation_Change__c
-            FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId ORDER BY Number__c];
+            FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId WITH USER_MODE ORDER BY Number__c];
         Set<Id> toolIds = new Set<Id>(); Set<Id> hypIds = new Set<Id>();
         for (Investigation_Hypothesis__c h : hs) { hypIds.add(h.Id); if (h.Five_Why_Tool__c != null) { toolIds.add(h.Five_Why_Tool__c); } }
         Map<Id, List<compliancequest__SQX_Why__c>> whysByTool = new Map<Id, List<compliancequest__SQX_Why__c>>();
         Set<Id> whyIds = new Set<Id>();
         for (compliancequest__SQX_Why__c w : [SELECT Id, compliancequest__SQX_Investigation_Tool__c, compliancequest__Level__c, compliancequest__Because__c, compliancequest__Is_Root_Cause__c
-                FROM compliancequest__SQX_Why__c WHERE compliancequest__SQX_Investigation_Tool__c IN :toolIds ORDER BY compliancequest__Level__c, CreatedDate]) {
+                FROM compliancequest__SQX_Why__c WHERE compliancequest__SQX_Investigation_Tool__c IN :toolIds WITH USER_MODE ORDER BY compliancequest__Level__c, CreatedDate]) {
             if (!whysByTool.containsKey(w.compliancequest__SQX_Investigation_Tool__c)) { whysByTool.put(w.compliancequest__SQX_Investigation_Tool__c, new List<compliancequest__SQX_Why__c>()); }
             whysByTool.get(w.compliancequest__SQX_Investigation_Tool__c).add(w);
             whyIds.add(w.Id);
@@ -155,7 +155,7 @@ public with sharing class CqInvestigationCause {
         Set<Id> evIds = new Set<Id>();
         for (Investigation_Evidence__c e : [SELECT Id, Hypothesis__c, Why__c, Kind__c, Test_Type__c, Supports__c, Status__c, Detail__c, Result__c, Record_Id__c, Record_Name__c,
                     Owner__c, Owner__r.Name, Due_Date__c, Done_On__c, CreatedBy.Name, CreatedDate
-                FROM Investigation_Evidence__c WHERE Hypothesis__c IN :hypIds OR Why__c IN :whyIds ORDER BY CreatedDate]) {
+                FROM Investigation_Evidence__c WHERE Hypothesis__c IN :hypIds OR Why__c IN :whyIds WITH USER_MODE ORDER BY CreatedDate]) {
             evIds.add(e.Id);
             if (e.Why__c != null) {
                 if (!evByWhy.containsKey(e.Why__c)) { evByWhy.put(e.Why__c, new List<Investigation_Evidence__c>()); }
@@ -167,7 +167,7 @@ public with sharing class CqInvestigationCause {
         }
         Map<Id, Integer> fileCount = new Map<Id, Integer>();
         if (!evIds.isEmpty()) {
-            for (ContentDocumentLink l : [SELECT LinkedEntityId FROM ContentDocumentLink WHERE LinkedEntityId IN :evIds]) {
+            for (ContentDocumentLink l : [SELECT LinkedEntityId FROM ContentDocumentLink WHERE LinkedEntityId IN :evIds WITH USER_MODE]) {
                 fileCount.put(l.LinkedEntityId, (fileCount.containsKey(l.LinkedEntityId) ? fileCount.get(l.LinkedEntityId) : 0) + 1);
             }
         }
@@ -314,12 +314,12 @@ public with sharing class CqInvestigationCause {
             Map<Id, compliancequest__SQX_Nonconformance__c> ncs = new Map<Id, compliancequest__SQX_Nonconformance__c>([
                 SELECT Id, Name, compliancequest__NC_Title__c, compliancequest__Occurrence_Date__c, compliancequest__SQX_Investigation__c,
                        compliancequest__SQX_CAPA__c, compliancequest__SQX_CAPA__r.Name, compliancequest__SQX_CAPA__r.compliancequest__Title__c, compliancequest__SQX_CAPA__r.compliancequest__Status__c
-                FROM compliancequest__SQX_Nonconformance__c WHERE Id IN :ncIds]);
+                FROM compliancequest__SQX_Nonconformance__c WHERE Id IN :ncIds WITH USER_MODE]);
             Set<Id> invs = new Set<Id>();
             for (compliancequest__SQX_Nonconformance__c n : ncs.values()) { if (n.compliancequest__SQX_Investigation__c != null) { invs.add(n.compliancequest__SQX_Investigation__c); } }
             Map<Id, compliancequest__SQX_Root_Cause__c> rcByInv = new Map<Id, compliancequest__SQX_Root_Cause__c>();
             for (compliancequest__SQX_Root_Cause__c rc : [SELECT compliancequest__SQX_Investigation__c, compliancequest__Category__c, compliancequest__Description__c, compliancequest__Root_Cause_Code_Name__c
-                    FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c IN :invs ORDER BY CreatedDate]) {
+                    FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c IN :invs WITH USER_MODE ORDER BY CreatedDate]) {
                 if (!rcByInv.containsKey(rc.compliancequest__SQX_Investigation__c)) { rcByInv.put(rc.compliancequest__SQX_Investigation__c, rc); }
             }
             for (compliancequest__SQX_Nonconformance__c n : ncs.values()) {
@@ -382,7 +382,7 @@ public with sharing class CqInvestigationCause {
         Map<Id, compliancequest__SQX_Root_Cause__c> saved = new Map<Id, compliancequest__SQX_Root_Cause__c>([
             SELECT Id, compliancequest__Description__c, compliancequest__Category__c, compliancequest__SQX_Root_Cause_Code__c, compliancequest__Justification__c,
                    compliancequest__Verified__c, Cause_Role__c, compliancequest__SQX_Why__c
-            FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c = :invId ORDER BY CreatedDate]);
+            FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE ORDER BY CreatedDate]);
         Map<Id, compliancequest__SQX_Root_Cause__c> byWhy = new Map<Id, compliancequest__SQX_Root_Cause__c>();
         for (compliancequest__SQX_Root_Cause__c rc : saved.values()) { if (rc.compliancequest__SQX_Why__c != null) { byWhy.put(rc.compliancequest__SQX_Why__c, rc); } }
         Set<Id> used = new Set<Id>();
@@ -453,7 +453,7 @@ public with sharing class CqInvestigationCause {
         if (status != 'Open' && status != 'Confirmed' && status != 'Ruled Out') { throw new AuraHandledException('Unknown status.'); }
         if (status != 'Open' && String.isBlank(howKnow)) { throw new AuraHandledException('Say how you know.'); }
         try {
-            update new Investigation_Hypothesis__c(Id = hypId, Status__c = status, How_Do_You_Know__c = howKnow == null ? null : howKnow.trim().left(255));
+            update as user new Investigation_Hypothesis__c(Id = hypId, Status__c = status, How_Do_You_Know__c = howKnow == null ? null : howKnow.trim().left(255));
         } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); }
         return build(recordId, false);
     }
@@ -461,10 +461,10 @@ public with sharing class CqInvestigationCause {
     @AuraEnabled
     public static View saveFit(Id recordId, Id hypId, String rowKey, String value) {
         if (!ROWS.contains(rowKey)) { throw new AuraHandledException('Unknown row.'); }
-        Investigation_Hypothesis__c h = [SELECT Is_Not_Fit__c FROM Investigation_Hypothesis__c WHERE Id = :hypId];
+        Investigation_Hypothesis__c h = [SELECT Is_Not_Fit__c FROM Investigation_Hypothesis__c WHERE Id = :hypId WITH USER_MODE];
         Map<String, Object> m = String.isBlank(h.Is_Not_Fit__c) ? new Map<String, Object>() : (Map<String, Object>) JSON.deserializeUntyped(h.Is_Not_Fit__c);
         if (value == 'fits' || value == 'fails') { m.put(rowKey, value); } else { m.remove(rowKey); }
-        update new Investigation_Hypothesis__c(Id = hypId, Is_Not_Fit__c = JSON.serialize(m));
+        update as user new Investigation_Hypothesis__c(Id = hypId, Is_Not_Fit__c = JSON.serialize(m));
         return build(recordId, false);
     }
 
@@ -472,7 +472,7 @@ public with sharing class CqInvestigationCause {
     public static View saveIsNot(Id recordId, String payload) {
         Id invId = CqInvestigationWorkspace.investigationFor(recordId);
         List<Object> rows = (List<Object>) JSON.deserializeUntyped(payload);
-        List<compliancequest__SQX_5W2H__c> fives = [SELECT Id FROM compliancequest__SQX_5W2H__c WHERE compliancequest__SQX_Investigation__c = :invId ORDER BY CreatedDate DESC LIMIT 1];
+        List<compliancequest__SQX_5W2H__c> fives = [SELECT Id FROM compliancequest__SQX_5W2H__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 1];
         compliancequest__SQX_5W2H__c f = fives.isEmpty() ? new compliancequest__SQX_5W2H__c(compliancequest__SQX_Investigation__c = invId) : fives[0];
         for (Object o : rows) {
             Map<String, Object> r = (Map<String, Object>) o;
@@ -480,7 +480,7 @@ public with sharing class CqInvestigationCause {
             if (!ROW_FIELD.containsKey(k)) { continue; }
             f.put(ROW_FIELD.get(k), join((String) r.get('isText'), (String) r.get('isNotText')));
         }
-        try { upsert f; } catch (DmlException e) { throw new AuraHandledException('The Is / Is Not was not saved: ' + e.getDmlMessage(0)); }
+        try { upsert as user f; } catch (DmlException e) { throw new AuraHandledException('The Is / Is Not was not saved: ' + e.getDmlMessage(0)); }
         return build(recordId, false);
     }
 
@@ -513,13 +513,13 @@ public with sharing class CqInvestigationCause {
             throw new AuraHandledException('Unknown kind of evidence.');
         }
         if (e.Hypothesis__c == null && e.Why__c == null && e.Id == null) { throw new AuraHandledException('Choose the hypothesis or why it is for.'); }
-        try { upsert e; } catch (DmlException ex) { throw new AuraHandledException('The evidence was not saved: ' + ex.getDmlMessage(0)); }
+        try { upsert as user e; } catch (DmlException ex) { throw new AuraHandledException('The evidence was not saved: ' + ex.getDmlMessage(0)); }
         return build(recordId, false);
     }
 
     @AuraEnabled
     public static View deleteEvidence(Id recordId, Id evidenceId) {
-        try { delete [SELECT Id FROM Investigation_Evidence__c WHERE Id = :evidenceId]; } catch (DmlException e) { throw new AuraHandledException('It was not removed: ' + e.getDmlMessage(0)); }
+        try { delete as user [SELECT Id FROM Investigation_Evidence__c WHERE Id = :evidenceId WITH USER_MODE]; } catch (DmlException e) { throw new AuraHandledException('It was not removed: ' + e.getDmlMessage(0)); }
         return build(recordId, false);
     }
 
@@ -527,21 +527,21 @@ public with sharing class CqInvestigationCause {
     @AuraEnabled
     public static View saveWhys(Id recordId, Id hypId, String payload) {
         Id invId = CqInvestigationWorkspace.investigationFor(recordId);
-        Investigation_Hypothesis__c h = [SELECT Id, Number__c, Title__c, Five_Why_Tool__c FROM Investigation_Hypothesis__c WHERE Id = :hypId];
+        Investigation_Hypothesis__c h = [SELECT Id, Number__c, Title__c, Five_Why_Tool__c FROM Investigation_Hypothesis__c WHERE Id = :hypId WITH USER_MODE];
         List<Object> rows = (List<Object>) JSON.deserializeUntyped(payload);
         Savepoint sp = Database.setSavepoint();
         try {
             Id toolId = h.Five_Why_Tool__c;
             if (toolId == null) {
-                List<compliancequest__SQX_Investigation_Tool_Name__c> tpl = [SELECT Id FROM compliancequest__SQX_Investigation_Tool_Name__c WHERE Name = '5 Why' LIMIT 1];
+                List<compliancequest__SQX_Investigation_Tool_Name__c> tpl = [SELECT Id FROM compliancequest__SQX_Investigation_Tool_Name__c WHERE Name = '5 Why' WITH USER_MODE LIMIT 1];
                 compliancequest__SQX_Investigation_Tool__c t = new compliancequest__SQX_Investigation_Tool__c(compliancequest__SQX_Investigation__c = invId,
                     compliancequest__Investigation_Tool_Method_Used__c = tpl.isEmpty() ? null : tpl[0].Id,
                     compliancequest__Problem_Statement__c = h.Title__c, compliancequest__Description__c = '5 Why for H' + h.Number__c.intValue() + ' (CQ.AI Investigation)');
-                insert t;
+                insert as user t;
                 toolId = t.Id;
-                update new Investigation_Hypothesis__c(Id = h.Id, Five_Why_Tool__c = toolId);
+                update as user new Investigation_Hypothesis__c(Id = h.Id, Five_Why_Tool__c = toolId);
             }
-            Map<Id, compliancequest__SQX_Why__c> existing = new Map<Id, compliancequest__SQX_Why__c>([SELECT Id FROM compliancequest__SQX_Why__c WHERE compliancequest__SQX_Investigation_Tool__c = :toolId]);
+            Map<Id, compliancequest__SQX_Why__c> existing = new Map<Id, compliancequest__SQX_Why__c>([SELECT Id FROM compliancequest__SQX_Why__c WHERE compliancequest__SQX_Investigation_Tool__c = :toolId WITH USER_MODE]);
             List<compliancequest__SQX_Why__c> keep = new List<compliancequest__SQX_Why__c>();
             Integer i = 0;
             for (Object o : rows) {
@@ -557,15 +557,15 @@ public with sharing class CqInvestigationCause {
             }
             if (!existing.isEmpty()) {
                 // a removed why stops being a root cause: its CQ root cause loses the link
-                List<compliancequest__SQX_Root_Cause__c> rcs = [SELECT Id FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Why__c IN :existing.keySet()];
+                List<compliancequest__SQX_Root_Cause__c> rcs = [SELECT Id FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Why__c IN :existing.keySet() WITH USER_MODE];
                 for (compliancequest__SQX_Root_Cause__c rc : rcs) { rc.compliancequest__SQX_Why__c = null; }
-                if (!rcs.isEmpty()) { update rcs; }
-                delete existing.values();
+                if (!rcs.isEmpty()) { update as user rcs; }
+                delete as user existing.values();
             }
-            upsert keep;
+            upsert as user keep;
             // chain them: each why answers the one before
             for (Integer k = 1; k < keep.size(); k++) { keep[k].compliancequest__SQX_Why__c = keep[k - 1].Id; }
-            if (!keep.isEmpty()) { keep[0].compliancequest__SQX_Why__c = null; update keep; }
+            if (!keep.isEmpty()) { keep[0].compliancequest__SQX_Why__c = null; update as user keep; }
         } catch (DmlException e) {
             Database.rollback(sp);
             throw new AuraHandledException('The 5 Why was not saved: ' + e.getDmlMessage(0));
@@ -590,7 +590,7 @@ public with sharing class CqInvestigationCause {
         if (!primary) { throw new AuraHandledException('Mark at least one root cause Primary.'); }
         Map<Id, compliancequest__SQX_Root_Cause_Code__c> codes = new Map<Id, compliancequest__SQX_Root_Cause_Code__c>([
             SELECT Id, compliancequest__SQX_Root_Cause_Sub_Category__c, compliancequest__SQX_Root_Cause_Sub_Category__r.compliancequest__SQX_Root_Cause_Category__c
-            FROM compliancequest__SQX_Root_Cause_Code__c WHERE Id IN :codeIds]);
+            FROM compliancequest__SQX_Root_Cause_Code__c WHERE Id IN :codeIds WITH USER_MODE]);
         List<compliancequest__SQX_Root_Cause__c> ups = new List<compliancequest__SQX_Root_Cause__c>();
         List<Id> hypOf = new List<Id>();
         for (Object o : rows) {
@@ -613,10 +613,10 @@ public with sharing class CqInvestigationCause {
         }
         Savepoint sp = Database.setSavepoint();
         try {
-            upsert ups;
+            upsert as user ups;
             List<Investigation_Hypothesis__c> hu = new List<Investigation_Hypothesis__c>();
             for (Integer i = 0; i < ups.size(); i++) { if (hypOf[i] != null) { hu.add(new Investigation_Hypothesis__c(Id = hypOf[i], Root_Cause__c = ups[i].Id)); } }
-            if (!hu.isEmpty()) { update hu; }
+            if (!hu.isEmpty()) { update as user hu; }
         } catch (DmlException e) {
             Database.rollback(sp);
             throw new AuraHandledException('The root causes were not saved: ' + e.getDmlMessage(0));
@@ -636,7 +636,7 @@ public with sharing class CqInvestigationCause {
                 'compliancequest__SQX_Controlled_Document__c', 'compliancequest__SQX_Equipment__c', 'compliancequest__SQX_Calibration__c',
                 'compliancequest__SQX_Inspection__c', 'compliancequest__SQX_Supplier_Deviation__c' }) {
             try {
-                for (SObject s : Database.query('SELECT Id, Name FROM ' + obj + ' WHERE Name LIKE :pat ORDER BY Name LIMIT 5')) {
+                for (SObject s : Database.query('SELECT Id, Name FROM ' + obj + ' WHERE Name LIKE :pat ORDER BY Name LIMIT 5', AccessLevel.USER_MODE)) {
                     Found f = new Found(); f.id = s.Id; f.name = (String) s.get('Name'); f.type = s.getSObjectType().getDescribe().getLabel();
                     out.add(f);
                 }
