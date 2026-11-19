@@ -186,3 +186,5 @@
 /* Recommendation: the outcome cards and what sits under them keep to two thirds of the page, so nothing is stretched across it */
 .main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: 66.667%; box-sizing: border-box; }
 @media (max-width: 1100px) { .main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: 100%; } }
+/* card headings: bold, Title Case, body size (the Reported Answers sub-heading on a CQ.AI suggestion card) */
+.card > .lab, .chead .lab, .plabel { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
