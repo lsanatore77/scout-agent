@@ -15,19 +15,21 @@
     <classAccesses><apexClass>PhrTemplateReportAction</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>PhrReportData</apexClass><enabled>true</enabled></classAccesses>
     <classAccesses><apexClass>PhrReportRenderer</apexClass><enabled>true</enabled></classAccesses>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Added_On__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Added__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Colour__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Lead_Key__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Reason__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Id__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>false</editable><field>PHR_Lead__c.Record_Link__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Number__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Status__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Title__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Record_Type__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Related_By__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Relevance__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Added__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Added_On__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>true</editable><field>PHR_Lead__c.Lead_Key__c</field><readable>true</readable></fieldPermissions>
-    <fieldPermissions><editable>false</editable><field>PHR_Lead__c.Record_Link__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>compliancequest__SQX_Complaint__c.Draft_Investigation_Summaries__c</field><readable>true</readable></fieldPermissions>
+    <fieldPermissions><editable>true</editable><field>compliancequest__SQX_Complaint__c.Draft_Investigation_Summary__c</field><readable>true</readable></fieldPermissions>
     <fieldPermissions><editable>true</editable><field>compliancequest__SQX_Product_History_Review__c.Checklist_Draft__c</field><readable>true</readable></fieldPermissions>
     <objectPermissions>
         <allowCreate>false</allowCreate>
