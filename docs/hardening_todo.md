@@ -101,8 +101,9 @@ Search results, dropdown lists, date pickers and popovers must open where there 
 The repo has `catch (SecurityException …)` beside every `catch (DmlException …)` in the user-mode classes (helper: `CqSave`).
 Deployed to cqse-golden--dev and checked against the repo: CqSave, CqSaveTest, CqTriageContainment, CqTriageRepeat, CqTriageRisk, CqTriageLinks,
 CqTriageNext, CqDispositionWorkspace, CqInvestigationHistory, CqInvestigationChanges. Tests on these: 23 passed, 0 failed (job 707W40000VmfRL7).
-Deployed, compile confirmed, body not yet compared: CqInvestigationWorkspace.
-Submitted, compile not yet confirmed: CqInvestigationAgentContext (request 1drW400000AzSrFIAV), AskCqWorkspaceController (request for container 1dcW4000000tAWbIAM).
-NOT yet deployed (repo is ahead of the org): CqQualityAgentContext (01pW4000003UAQ1IAO), CqInvestigationCause (01pW4000003UGaHIAW).
+Deployed, compile confirmed, body not yet compared with the repo: CqInvestigationWorkspace, CqInvestigationAgentContext, AskCqWorkspaceController.
+Submitted, compile not yet confirmed: CqQualityAgentContext (request 1drW400000AzT0vIAF).
+NOT yet deployed (repo is ahead of the org): CqInvestigationCause (01pW4000003UGaHIAW) only.
+Then: compare the five bodies above with the repo, run CqInvestigation*Test, CqQualityAgentContextTest, AskCq*Test, PhrChecklistActionTest.
 Next after these: the user approved converting the Field Action classes to user mode (one screen at a time, tests after each,
 SecurityException handling from the start, flag any step that must stay system mode).
