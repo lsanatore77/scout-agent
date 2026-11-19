@@ -27,7 +27,7 @@
 .grid tr:last-child td { border-bottom: none; }
 .c-score { width: 70px; }
 .c-why { width: 150px; text-align: center; }
-.grid th.c-why { text-align: center; color: var(--cq-accent); }
+.grid th.c-why { text-align: center; }
 .c-add { width: 120px; }
 .num { font-weight: 700; }
 .muted { color: var(--cq-muted); }

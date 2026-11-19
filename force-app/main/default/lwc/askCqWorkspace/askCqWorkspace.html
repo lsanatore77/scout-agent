@@ -48,7 +48,9 @@
 
             <main class="work">
                 <template if:true={isRecords}>
-                    <c-ask-cq-records-demo record-id={recordId}></c-ask-cq-records-demo>
+                    <c-ask-cq-records-demo record-id={recordId}>
+                        <button slot="actions" class="cq-btn-primary" onclick={handleNext}>Next</button>
+                    </c-ask-cq-records-demo>
                 </template>
 
                 <template if:true={isChecklist}>
@@ -115,6 +117,7 @@
                         </template>
                     </div>
                 </template>
+                <template if:false={isRecords}>
                 <footer class="foot">
                     <span class="grow"></span>
                     <span class={footCls}>{footNote}</span>
@@ -125,6 +128,7 @@
                     <template if:true={hasBack}><button class="cq-btn-outline" onclick={handleBack}>Back</button></template>
                     <template if:true={hasNext}><button class={nextCls} onclick={handleNext}>Next</button></template>
                 </footer>
+                </template>
             </main>
         </div>
     </div>

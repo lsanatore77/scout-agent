@@ -106,6 +106,7 @@
                 <span class="vdiv"></span>
             </template>
             <button class="cq-btn-primary" onclick={handleSubmit} disabled={submitDisabled}>{submitLabel}</button>
+            <slot name="actions"></slot>
         </div>
     </lightning-card>
 </template>
