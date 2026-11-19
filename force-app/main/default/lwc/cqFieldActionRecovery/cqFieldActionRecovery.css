@@ -3,9 +3,6 @@
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
 /* the heading sits in a row with its status, so the intro keeps its own gap */
 .cq-step-intro { margin-top: 10px; }
-.sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.rk { display: block; font-size: 13px; font-weight: 400; color: var(--cq-muted); }
-.rk.in { display: inline; }
 .b { font-weight: 600; }
 .nw { white-space: nowrap; }
 
@@ -80,7 +77,6 @@
 .hl { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
 .hl .ell { display: block; }
 /* fields, buttons, pills, chips, messages and the CQ.AI suggestion card come from cqStyles */
-.cq-msg.errbox { margin-top: 12px; }
 .addform .cq-field.wide { flex: 1; min-width: 220px; }
 .cq-field.full { flex: none; width: 172px; }
 .cq-field.ni { width: 76px; }

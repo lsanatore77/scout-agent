@@ -1,9 +1,6 @@
 @import 'c/cqStyles';
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
-.sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.rk { display: block; font-size: 13px; font-weight: 400; color: var(--cq-muted); }
-.sechead .rk { display: inline; }
 
 .tabbox { display: flex; flex-direction: column; margin-top: 16px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 14px; border-bottom: 1px solid var(--cq-line); }
@@ -29,7 +26,6 @@
 .ht tr.grp td { padding: 8px 8px 4px; font-size: 11px; font-weight: 700; color: var(--cq-muted); }
 .hc { width: 40px; }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.nw { white-space: nowrap; }
 .b { font-weight: 600; }
 .what { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .tick { width: 16px; height: 16px; margin: 0; accent-color: var(--cq-link); cursor: pointer; }
@@ -46,4 +42,3 @@
 .cq-optcard.off { opacity: .5; }
 .cq-optcard:disabled { cursor: default; }
 .addrow .addsel { flex: 0 1 480px; }
-.cq-msg.errbox { margin-top: 12px; }

@@ -16,15 +16,12 @@
 .card span { color: var(--cq-muted); font-size: 13px; font-weight: 400; }
 .plainbox { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; }
 .trendbox { align-self: start; }
-.sughead { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--cq-accent); }
-.ruleicon { --slds-c-icon-color-foreground-default: var(--cq-accent); }
 .whyv { line-height: 1.45; color: var(--cq-ink); }
 .count { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .bignum { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .bar { height: 8px; border-radius: 4px; background: var(--cq-neu-bg); overflow: hidden; }
 .bar i { display: block; height: 100%; }
 .top8 { margin-top: 8px; }
-.top16 { margin-top: 16px; }
 .sentrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .smalllink { font-size: 13px; color: var(--cq-link); font-weight: 600; cursor: pointer; }
 .plainbtn { padding: 0; border: none; background: none; font-family: inherit; }
@@ -33,7 +30,6 @@
 .cq-step-intro { margin: 0 0 16px; }
 .cq-note { margin: 0; }
 .plainbox .cq-kv { min-height: 0; margin-bottom: 0; }
-.cq-msg.errbox { margin-top: 12px; }
 .cq-msg.okbox { margin-top: 16px; font-weight: 600; }
 .cq-msg.warn { margin: 4px 0 0; }
 .cq-msg.warn.top8 { margin-top: 8px; }

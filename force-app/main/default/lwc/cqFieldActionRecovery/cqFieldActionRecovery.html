@@ -1,10 +1,10 @@
 <template>
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
-        <div class="sechead">
+        <div class="cq-sechead">
             <h3 class="cq-step-title nom">Recovery and Effectiveness</h3>
             <span class={statePill}>{stateText}</span>
-            <template if:true={verdictLine}><span class="rk in">{verdictLine}</span></template>
+            <template if:true={verdictLine}><span class="cq-sub">{verdictLine}</span></template>
         </div>
         <template if:true={needsStrategy}><p class="cq-note">Confirm the strategy first: recovery is measured against it.</p></template>
 
@@ -105,7 +105,7 @@
                                 <template for:each={suggestRows} for:item="s">
                                     <label key={s.key} class="srow">
                                         <input type="checkbox" data-key={s.key} checked={s.checked} onchange={handleKeep} aria-label={s.label} />
-                                        <span class="cq-grow">{s.subject}</span><span class="rk in nw">{s.due}</span>
+                                        <span class="cq-grow">{s.subject}</span><span class="cq-sub nw">{s.due}</span>
                                     </label>
                                 </template>
                                 <div class="formbtns">
@@ -130,13 +130,13 @@
                                             <template if:true={r.isCust}>
                                                 <td class="crow"><span class="cell2">
                                                     <button class="chev" data-id={r.id} onclick={handleToggle} aria-label={r.toggleLabel}>{r.chev}</button>
-                                                    <span class="fn"><span class="b">{r.title}</span><span class="rk">{r.sub}</span></span></span></td>
+                                                    <span class="fn"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
                                                 <td class="crow"></td><td class="crow"></td>
                                                 <td class="crow num"><template if:true={r.hasPill}><span class={r.pillCls}>{r.pill}</span></template></td>
                                             </template>
                                             <template if:true={r.isLot}>
                                                 <td><span class="cell2"><span class="ind i1"></span>
-                                                    <span class="fn"><span class="lotn">{r.title}</span><span class="rk">{r.sub}</span></span></span></td>
+                                                    <span class="fn"><span class="lotn">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
                                                 <td></td><td></td><td></td>
                                             </template>
                                             <template if:true={r.isTask}>
@@ -177,7 +177,7 @@
                         <div class="list">
                             <template for:each={holdRows} for:item="h">
                                 <div key={h.id} class="hrow">
-                                    <span class="hl"><span class="b">{h.lot}</span><span class="rk in ell">{h.what}</span></span>
+                                    <span class="hl"><span class="b">{h.lot}</span><span class="cq-sub ell">{h.what}</span></span>
                                     <span class="cq-field full"><select data-id={h.id} onchange={handleDisposition} disabled={locked} aria-label={h.label}>
                                         <template for:each={h.opts} for:item="o">
                                             <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
