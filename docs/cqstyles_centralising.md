@@ -23,3 +23,9 @@ Audit page: https://claude.ai/artifact/3FHHFJVoKeUeVJ8pUwQg6A (19 Nov 2026)
 
 ## Passes to come
 2 workspace frame (incl. item 2) · 3 table and pager (item 3) · 4 popup, cards (item 4), notes, links, rows · 5 stray colours
+
+## Change of method (19 Nov)
+Every edit means sending a screen's whole files to the org, so pattern-by-pattern passes would send each screen five times.
+Instead: all the shared patterns are now in cqStyles (frame, table, pager, popup, small pieces, chip mark), and screens are
+converted one at a time, each sent once and checked on screen. Converted so far: cqDispositionWorkspace (75 rules down to 41).
+Order: Investigation, Field Action (with Back/Next moved), Field Action Review, Triage, PHR, then the smaller components.

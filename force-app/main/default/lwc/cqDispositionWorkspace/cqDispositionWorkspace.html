@@ -1,7 +1,7 @@
 <template>
     <template if:true={loadError}><div class="cq-msg crit">{loadError}</div></template>
     <template if:true={ready}>
-        <div class="box">
+        <div class="cq-box">
             <header class="cq-hl">
                 <div class="cq-hl-top">
                     <div class="cq-hl-who">
@@ -30,7 +30,7 @@
                 </div>
             </header>
 
-            <div class="body">
+            <div class="cq-ws-body">
                 <nav class="cq-rail" aria-label="Disposition Steps">
                     <div class="cq-rail-title"><span class="star">&#10022;</span> CQ.AI Disposition Steps</div>
                     <template for:each={steps} for:item="s">
@@ -48,18 +48,18 @@
                     <div class="progress">{progress}</div>
                 </nav>
 
-                <div class="main">
+                <div class="cq-ws-main">
                     <template if:true={showGlance}>
-                        <h3 class="q">Disposition at a Glance</h3>
+                        <h3 class="cq-step-title">Disposition at a Glance</h3>
                         <div class="cols wide">
                             <div class="pcard">
                                 <div class="cq-card-title">The Problem</div>
                                 <p class="prob">{problemText}</p>
-                                <div class="tiles">
-                                    <div class="tile"><div class="tl">Left to Dispose</div><div class="tv">{leftText}</div></div>
-                                    <div class="tile"><div class="tl">Lots</div><div class="tv">{lotCount}</div></div>
-                                    <div class="tile"><div class="tl">Approval</div><div class="tv">{approvalText}</div></div>
-                                    <div class="tile"><div class="tl">Due</div><div class="tv">{dueText}</div></div>
+                                <div class="cq-tiles">
+                                    <div class="cq-tile"><div class="cq-tile-k">Left to Dispose</div><div class="cq-tile-v">{leftText}</div></div>
+                                    <div class="cq-tile"><div class="cq-tile-k">Lots</div><div class="cq-tile-v">{lotCount}</div></div>
+                                    <div class="cq-tile"><div class="cq-tile-k">Approval</div><div class="cq-tile-v">{approvalText}</div></div>
+                                    <div class="cq-tile"><div class="cq-tile-k">Due</div><div class="cq-tile-v">{dueText}</div></div>
                                 </div>
                             </div>
                             <div class="cq-ai-card">
@@ -70,37 +70,37 @@
                         </div>
 
                         <div class="cq-card-title top8">Parts and Lots to Dispose</div>
-                        <div class="tblwrap">
-                            <table class="tbl">
+                        <div class="cq-tblwrap">
+                            <table class="cq-tbl">
                                 <thead><tr><th>Part</th><th>Lot</th><th class="num">Impacted</th><th class="num">Disposed</th><th class="num">Left</th><th>Disposition Records</th></tr></thead>
                                 <tbody>
                                     <template for:each={lotRows} for:item="l">
                                         <tr key={l.impactedId}>
                                             <td>{l.partName}</td>
-                                            <td class="strong">{l.lot}</td>
+                                            <td class="cq-strong">{l.lot}</td>
                                             <td class="num">{l.impactedText}</td>
                                             <td class="num">{l.disposedText}</td>
                                             <td class={l.leftCls}>{l.leftText}</td>
                                             <td>
                                                 <template for:each={l.recs} for:item="r">
-                                                    <div key={r.id}><a class="link" href={r.href} target="_blank">{r.name}</a><span class="muted">&nbsp;{r.meta}</span></div>
+                                                    <div key={r.id}><a class="cq-link" href={r.href} target="_blank">{r.name}</a><span class="cq-muted">&nbsp;{r.meta}</span></div>
                                                 </template>
-                                                <template if:true={l.noRecs}><span class="muted">None Yet</span></template>
+                                                <template if:true={l.noRecs}><span class="cq-muted">None Yet</span></template>
                                             </td>
                                         </tr>
                                     </template>
                                 </tbody>
                             </table>
                         </div>
-                        <template if:true={noLots}><p class="note">This NC has no impacted parts or lots, so there is nothing to dispose.</p></template>
+                        <template if:true={noLots}><p class="cq-note">This NC has no impacted parts or lots, so there is nothing to dispose.</p></template>
 
                         <div class="cols top16">
                             <div class="yours">
                                 <div class="cq-card-title">Decided at Triage</div>
-                                <div class="triaged"><span class="okdot sm">&#10003;</span> {triagedText}</div>
+                                <div class="triaged"><span class="cq-okdot sm">&#10003;</span> {triagedText}</div>
                                 <ul class="flist">
                                     <li>{decidedDisp}</li>
-                                    <template if:true={v.investigationId}><li>Investigation <a class="link" href={invHref} target="_blank">{v.investigationName}</a></li></template>
+                                    <template if:true={v.investigationId}><li>Investigation <a class="cq-link" href={invHref} target="_blank">{v.investigationName}</a></li></template>
                                 </ul>
                             </div>
                             <div class="yours">
@@ -108,18 +108,18 @@
                                 <template if:true={hasHistory}>
                                     <ul class="flist plainlist">
                                         <template for:each={historyRows} for:item="h">
-                                            <li key={h.key}><a class="link" href={h.href} target="_blank">{h.ncName}</a><span class="muted">&nbsp;&middot; {h.meta}</span></li>
+                                            <li key={h.key}><a class="cq-link" href={h.href} target="_blank">{h.ncName}</a><span class="cq-muted">&nbsp;&middot; {h.meta}</span></li>
                                         </template>
                                     </ul>
                                 </template>
-                                <template if:false={hasHistory}><p class="note">No other dispositions have been completed on this part.</p></template>
+                                <template if:false={hasHistory}><p class="cq-note">No other dispositions have been completed on this part.</p></template>
                             </div>
                         </div>
                     </template>
 
                     <template if:true={showDispose}>
-                        <h3 class="q">Dispose by Lot</h3>
-                        <p class="p">Record what was done with each lot. CQ.AI's suggestion starts selected; click another type to change it. Complete Disposition saves the dispositions and completes them in CQ in one step.</p>
+                        <h3 class="cq-step-title">Dispose by Lot</h3>
+                        <p class="cq-step-intro">Record what was done with each lot. CQ.AI's suggestion starts selected; click another type to change it. Complete Disposition saves the dispositions and completes them in CQ in one step.</p>
                         <template if:true={v.needsApproval}>
                             <div class="cq-msg warn">This NC needs disposition approval, which this workspace does not do yet. Use the Disposition tab to send it for approval.</div>
                         </template>
@@ -127,7 +127,7 @@
                             <section key={l.impactedId} class="lot">
                                 <div class="lothead">
                                     <span class="lotname">Lot {l.lot}</span>
-                                    <span class="muted grow">{l.partName}</span>
+                                    <span class="cq-muted cq-grow">{l.partName}</span>
                                     <template if:true={l.doneText}><span class="count green">{l.doneText}</span></template>
                                 </div>
                                 <template if:true={l.open}>
@@ -163,10 +163,10 @@
                                     </template>
                                     <div class="splitline">
                                         <button class="cq-btn-outline" data-lot={l.idx} onclick={handleSplit}>+ Split Quantity</button>
-                                        <span class="note">For example, rework some units and scrap the rest.</span>
+                                        <span class="cq-note">For example, rework some units and scrap the rest.</span>
                                     </div>
                                     <template if:true={l.qtyMsg}><p class="qtymsg" role="alert">{l.qtyMsg}</p></template>
-                                    <template if:true={l.draftName}><p class="note">The draft {l.draftName} from triage is used for the first row, not duplicated.</p></template>
+                                    <template if:true={l.draftName}><p class="cq-note">The draft {l.draftName} from triage is used for the first row, not duplicated.</p></template>
                                 </template>
                             </section>
                         </template>
@@ -176,27 +176,26 @@
                     </template>
 
                     <template if:true={showDone}>
-                        <div class="donehead"><span class="okdot">&#10003;</span><h3 class="q nom">{doneHeading}</h3></div>
+                        <div class="cq-donehead"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">{doneHeading}</h3></div>
                         <template for:each={doneRows} for:item="r">
-                            <div key={r.key} class="row slim"><span class="dk">{r.k}</span><span class="dv">{r.v}</span></div>
+                            <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
                         </template>
                         <template if:true={doneLeftNote}><div class="cq-msg warn">{doneLeftNote}</div></template>
                         <div class="opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div>
                     </template>
 
                     <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
+                    <template if:false={showDone}>
+                        <footer class="cq-ws-foot">
+                            <span class="cq-blocker">{blocker}</span>
+                            <template if:true={showDispose}><button class="cq-btn-primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
+                            <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
+                            <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
+                        </footer>
+                    </template>
                 </div>
             </div>
 
-            <template if:false={showDone}>
-                <footer class="foot">
-                    <span class="grow"></span>
-                    <span class="blocker">{blocker}</span>
-                    <template if:true={showDispose}><button class="cq-btn-primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
-                    <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
-                    <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
-                </footer>
-            </template>
         </div>
     </template>
 </template>

@@ -116,6 +116,8 @@ button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-o
 /* a chip that is the CQ.AI suggestion wears CQ.AI purple, never the neutral blue: outline only at rest, lavender fill when chosen, so a filled chip always means chosen */
 .cq-chip.ai { border-color: var(--cq-accent); background: var(--cq-bg); color: var(--cq-accent); }
 .cq-chip.ai[aria-pressed="true"] { border-color: var(--cq-accent); background: var(--cq-accent-fill); color: var(--cq-accent); }
+/* it always carries the CQ.AI mark, chosen or not (unless the chip already holds a clickable mark of its own) */
+.cq-chip.ai:not(:has(c-cq-ai-why))::before { content: '\2726'; margin-right: 6px; }
 /* a row of chips; under a field label it gets extra air (chips are tall and rounded) */
 .cq-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .cq-field > .cq-chips { margin-top: 0.25rem; }
@@ -231,9 +233,76 @@ button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-o
 .cq-rail .progress { margin-top: auto; padding: 10px 8px 2px; font-size: 11px; color: var(--cq-faint); }
 @media (max-width: 760px) { .cq-rail { width: auto; border-right: none; border-bottom: 1px solid var(--cq-line); } }
 
+/* ============================ WORKSPACE FRAME ==========================
+   The page a workspace sits in: .cq-box > header.cq-hl, then .cq-ws-body > nav.cq-rail + .cq-ws-main.
+   Each step opens with h3.cq-step-title (and an optional p.cq-step-intro) and ends with .cq-ws-foot,
+   which is always the last thing inside .cq-ws-main: blocker text, the step's own button, Back, Next, at the bottom right. */
+.cq-ws-body { display: flex; min-height: 460px; }
+.cq-ws-main { flex: 1; min-width: 0; padding: 20px; display: flex; flex-direction: column; }
+.cq-step-title { margin: 0 0 14px; font-size: 20px; font-weight: 700; }
+.cq-step-title.nom { margin: 0; }
+.cq-step-intro { margin: -6px 0 14px; color: var(--cq-muted); max-width: 72ch; }
+.cq-ws-foot { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: auto; padding-top: 20px; }
+.cq-blocker { color: var(--cq-warn-fg); font-weight: 600; }
+.cq-grow { flex: 1 1 auto; min-width: 0; }
+@media (max-width: 760px) { .cq-ws-body { flex-direction: column; } }
+
+/* ============================ TABLE ====================================
+   .cq-tblwrap > table.cq-tbl. The header is small and quiet (11px bold, muted, on the light surface): the one
+   named exception to the 13px minimum. Cell helpers: num (right, tabular), center (narrow, centred), wide (takes the room). */
+.cq-tblwrap { overflow-x: auto; border: 1px solid var(--cq-line); border-radius: 8px; }
+.cq-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cq-tbl th { padding: 8px 12px; background: var(--cq-surface); text-align: left; font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); white-space: nowrap; }
+.cq-tbl td { padding: 10px 12px; border-top: 1px solid var(--cq-line); vertical-align: top; }
+.cq-tbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cq-tbl th.center, .cq-tbl td.center { width: 1%; text-align: center; }
+.cq-tbl td.wide { width: 100%; min-width: 200px; }
+/* page numbers under a table: .cq-pager > nav.cq-pages > button.pg (on = current, gap = the dots) */
+.cq-pager { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 8px; }
+.cq-pages { display: inline-flex; align-items: center; gap: 2px; }
+.cq-pages .pg { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 22px; padding: 0 3px; box-sizing: border-box; border: none; background: none; color: var(--cq-faint); font: inherit; font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; }
+.cq-pages .pg:hover { color: var(--cq-link); }
+.cq-pages .pg:disabled { color: var(--cq-line-field); cursor: default; }
+.cq-pages .pg.gap:disabled { color: var(--cq-faint); }
+.cq-pages .pg.on, .cq-pages .pg.on:disabled { color: var(--cq-link); font-weight: 700; }
+
+/* ============================ POPUP ====================================
+   .cq-modal-back > section.cq-modal > header.cq-modal-head (h2.cq-modal-title + button.cq-modal-x), .cq-modal-body, footer.cq-modal-foot.
+   Add popov when a search list inside must be able to open past the popup's edge. */
+.cq-modal-back { position: fixed; inset: 0; z-index: 9100; background: rgba(8, 7, 7, .45); display: flex; align-items: flex-start; justify-content: center; padding: 10vh 16px 16px; }
+.cq-modal { width: 100%; max-width: 560px; background: var(--cq-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
+.cq-modal-head { position: relative; padding: 16px 52px; border-bottom: 1px solid var(--cq-hl-line); text-align: center; }
+.cq-modal-title { margin: 0; font-size: 20px; font-weight: 700; }
+.cq-modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
+.cq-modal-x:hover { background: var(--cq-hl-bg); }
+.cq-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 60vh; overflow-y: auto; }
+.cq-modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--cq-hl-line); background: var(--cq-hl-bg); }
+.cq-modal.popov, .cq-modal.popov .cq-modal-body { overflow: visible; max-height: none; }
+.cq-modal.popov .cq-modal-foot { border-radius: 0 0 8px 8px; }
+
+/* ============================ SMALL PIECES =============================
+   Text helpers, key figures, result rows and the done mark that every workspace uses. */
+.cq-muted { color: var(--cq-muted); }
+.cq-strong { font-weight: 700; }
+.cq-note { margin: 8px 0 0; font-size: 13px; color: var(--cq-muted); }
+/* key figures in a row: .cq-tiles > .cq-tile > .cq-tile-k (what it is) + .cq-tile-v (the figure) */
+.cq-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.cq-tile { padding: 6px 10px; border-radius: 6px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
+.cq-tile-k { font-size: var(--cq-fs-micro); color: var(--cq-muted); }
+.cq-tile-v { font-size: 13px; font-weight: 700; }
+/* a label and its value on one boxed line (what a completed step recorded) */
+.cq-kv { display: flex; align-items: center; gap: 12px; box-sizing: border-box; min-height: 44px; max-width: 760px; margin-bottom: 8px; padding: 8px 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.cq-kv-k { flex: 0 0 160px; color: var(--cq-muted); }
+.cq-kv-v { flex: 1 1 auto; min-width: 0; font-weight: 600; }
+@media (max-width: 760px) { .cq-kv-k { flex-basis: 110px; } }
+/* the green tick that heads a finished step; green is positive only */
+.cq-donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cq-okdot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: 13px; font-weight: 700; }
+.cq-okdot.sm { width: 18px; height: 18px; font-size: 10px; }
+
 /* ============================ WORKSPACE HEADER ========================= */
 /* every record workspace opens with this: .cq-box > header.cq-hl > .cq-hl-top (+ optional .cq-hl-fields) */
-.cq-box { border: 1px solid var(--cq-hl-line); border-radius: 0.75rem; background: var(--cq-bg); }
+.cq-box { display: flex; flex-direction: column; border: 1px solid var(--cq-hl-line); border-radius: 0.75rem; background: var(--cq-bg); }
 .cq-hl { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.875rem 1.25rem 0.75rem; background: var(--cq-hl-bg); border-bottom: 1px solid var(--cq-hl-line); border-radius: 0.75rem 0.75rem 0 0; }
 .cq-hl-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .cq-hl-who { display: flex; align-items: center; gap: 0.75rem; }
