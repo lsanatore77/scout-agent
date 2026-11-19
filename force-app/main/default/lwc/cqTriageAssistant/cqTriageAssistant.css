@@ -136,7 +136,7 @@
 .cgrid > .col { align-self: start; }
 .chead { display: flex; align-items: flex-end; min-height: 0; }
 /* in the page, Back and Next sit at the bottom right of the work area like the other workspaces */
-.box.inline .foot { border-top: none; padding: 0 20px 20px 220px; background: none; }
+.box.inline .foot { border-top: none; padding: 0 20px 20px 264px; background: none; }
 /* Next Steps: one card per decision in a single row, all built the same: name and state, the suggestion, the choices */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; align-items: stretch; margin-bottom: 8px; }
 .kard { display: flex; flex-direction: column; gap: 8px; min-width: 0; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }

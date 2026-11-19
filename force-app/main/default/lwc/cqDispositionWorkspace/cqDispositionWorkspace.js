@@ -232,19 +232,19 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
         for (const f of this.forms) {
             const lot = this.v.lots.find((l) => l.impactedId === f.impactedId);
             const name = 'Lot ' + lot.lot + ': ';
-            let total = 0;
             for (const r of f.rows) {
                 if (!r.type) { return name + 'choose a type'; }
                 if (!(this.num(r.qty) > 0)) { return name + 'enter a quantity'; }
                 if (!r.completedOn) { return name + 'enter the completed date'; }
                 if (r.type === USE_AS_IS && !(r.justification || '').trim()) { return name + 'Use As Is needs a justification'; }
-                total += this.num(r.qty);
             }
         }
         return null;
     }
     /** A lot with more entered than it has left. Its own message says so under the rows, so the footer stays quiet. */
-    get anyOver() { return this.lotForms.some((l) => l.open && l.rows.reduce((a, r) => a + this.num(r.qty), 0) > this.num((this.v.lots.find((x) => x.impactedId === l.impactedId) || {}).left)); }
+    get anyOver() {
+        return this.forms.some((f) => f.rows.reduce((a, r) => a + this.num(r.qty), 0) > this.num(this.v.lots.find((l) => l.impactedId === f.impactedId).left));
+    }
     get blocker() { return this.showDispose ? this.stepBlocker() : null; }
     get cantComplete() { return this.saving || !!this.stepBlocker(); }
     get completeLabel() { return this.saving ? 'Completing…' : 'Complete Disposition'; }

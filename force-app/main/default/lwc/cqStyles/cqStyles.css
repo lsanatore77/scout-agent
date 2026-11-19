@@ -113,8 +113,7 @@ button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-o
 }
 .cq-chip[aria-pressed="true"] { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
 .cq-chip:disabled { cursor: default; }
-/* a chip that is the CQ.AI suggestion wears CQ.AI purple, never the neutral blue: tinted at rest, lavender with a purple edge when chosen */
-/* suggested, not chosen: outline only, so a filled chip always means chosen */
+/* a chip that is the CQ.AI suggestion wears CQ.AI purple, never the neutral blue: outline only at rest, lavender fill when chosen, so a filled chip always means chosen */
 .cq-chip.ai { border-color: var(--cq-accent); background: var(--cq-bg); color: var(--cq-accent); }
 .cq-chip.ai[aria-pressed="true"] { border-color: var(--cq-accent); background: var(--cq-accent-fill); color: var(--cq-accent); }
 /* a row of chips; under a field label it gets extra air (chips are tall and rounded) */

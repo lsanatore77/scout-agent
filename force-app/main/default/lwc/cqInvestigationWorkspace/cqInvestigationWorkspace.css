@@ -66,7 +66,7 @@
 .dk { flex: 0 0 220px; color: var(--cq-muted); }
 .dv { flex: 1 1 auto; min-width: 0; font-weight: 600; }
 /* footer: blocker, the step's confirm button, Back, Next, at the bottom right of the work area */
-.foot { display: flex; align-items: center; gap: 12px; padding: 0 20px 20px 220px; }
+.foot { display: flex; align-items: center; gap: 12px; padding: 0 20px 20px 264px; }
 .blocker { color: var(--cq-warn-fg); font-weight: 600; }
 @media (max-width: 760px) { .body { flex-direction: column; } .cols, .cols.wide { grid-template-columns: 1fr; } .foot { padding-left: 20px; flex-wrap: wrap; } .dk { flex-basis: 120px; } }
 /* Investigation workspace additions */
