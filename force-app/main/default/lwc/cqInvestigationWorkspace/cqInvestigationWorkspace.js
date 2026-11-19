@@ -28,7 +28,8 @@ const LOOK_BACK = [14, 30, 60, 90];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const LANE_H = 58;       // height of one row of timeline labels
 const LABEL_W = 24;      // width of a timeline label, as a percent of the track
-const RATING_CLS = { 'Could Explain It': 'chip warn', 'Worth a Look': 'chip ai', 'The Affected Lot': 'chip', Unlikely: 'chip' };
+const RATING_CLS = { 'Could Explain It': 'cq-pill soft warn', 'Worth a Look': 'cq-pill soft ai', 'The Affected Lot': 'cq-pill soft neu', Unlikely: 'cq-pill soft neu' };
+const MATCH_TONE = { red: 'crit', yellow: 'warn' };
 const POLL_TRIES = 8;
 
 /**
@@ -96,7 +97,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     // ---- header
     get statusText() { return this.dash(this.v.status); }
     get riskText() { return this.dash(this.v.risk); }
-    get riskCls() { return 'v lvl ' + (this.v.risk ? this.v.risk.toLowerCase() : ''); }
+    get riskCls() { return 'cq-hl-v lvl ' + (this.v.risk ? this.v.risk.toLowerCase() : ''); }
     get dueText() { return this.dateText(this.v.due); }
     get ownerText() { return this.dash(this.v.owner); }
     get lotText() { return this.dash(this.v.lot); }
@@ -191,19 +192,19 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         const openTools = tools.filter((t) => t.status !== 'Complete').length;
         const rows = [
             { key: 'tri', source: v.ncName + ' Triage', href: this.ncHref, says: [v.risk ? 'Risk ' + v.risk : null, v.path].filter((x) => x).join('; ') || 'Triaged',
-                chip: 'Triaged', chipCls: 'chip ok' }
+                chip: 'Triaged', chipCls: 'cq-pill soft pos' }
         ];
         if (v.dispositionRequired) {
             rows.push({ key: 'disp', source: v.ncName + ' Disposition', href: this.ncHref, says: v.dispositionText || 'No disposition completed yet',
-                chip: v.dispositionComplete ? 'Complete' : 'Open', chipCls: v.dispositionComplete ? 'chip ok' : 'chip warn' });
+                chip: v.dispositionComplete ? 'Complete' : 'Open', chipCls: v.dispositionComplete ? 'cq-pill soft pos' : 'cq-pill soft warn' });
         }
         rows.push({ key: 'rc', source: 'Root Causes', says: causes.length ? causes.map((c) => c.code || c.category).join('; ') : 'None recorded yet',
-            chip: causes.length ? this.plural(causes.length, 'Recorded', 'Recorded') : 'To Find', chipCls: causes.length ? 'chip ok' : 'chip warn' });
+            chip: causes.length ? this.plural(causes.length, 'Recorded', 'Recorded') : 'To Find', chipCls: causes.length ? 'cq-pill soft pos' : 'cq-pill soft warn' });
         rows.push({ key: 'ap', source: 'Actions', says: this.plans.length ? this.planMix : 'None planned yet',
-            chip: this.plans.length ? 'Planned' : 'To Plan', chipCls: this.plans.length ? 'chip ok' : 'chip warn' });
+            chip: this.plans.length ? 'Planned' : 'To Plan', chipCls: this.plans.length ? 'cq-pill soft pos' : 'cq-pill soft warn' });
         if (tools.length) {
             rows.push({ key: 'tl', source: 'Analysis Tools', says: tools.map((t) => (t.type || 'Tool') + ' ' + t.name).join('; '),
-                chip: openTools ? this.plural(openTools, 'Open', 'Open') : 'Complete', chipCls: openTools ? 'chip warn' : 'chip ok' });
+                chip: openTools ? this.plural(openTools, 'Open', 'Open') : 'Complete', chipCls: openTools ? 'cq-pill soft warn' : 'cq-pill soft pos' });
         }
         return rows.map((r) => ({ ...r, hasHref: !!r.href }));
     }
@@ -251,7 +252,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get planFormSaveLabel() { return this.planForm && this.planForm.idx !== null ? 'Save Action' : 'Add Action'; }
     get planFormTypes() {
         const t = this.planForm ? this.planForm.type : null;
-        return (this.v.planTypes || []).map((x) => ({ label: x, pressed: String(t === x), cls: 'opt sm' + (t === x ? ' on' : '') }));
+        return (this.v.planTypes || []).map((x) => ({ label: x, pressed: String(t === x), cls: 'cq-chip' }));
     }
     get planFormBlocker() {
         const f = this.planForm || {};
@@ -333,7 +334,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
 
     // ---- step 6: Conclusion
     get conclusionOpts() {
-        return (this.v.conclusions || []).map((c) => ({ label: c, pressed: String(this.conclusion === c), cls: 'opt' + (this.conclusion === c ? ' on' : '') }));
+        return (this.v.conclusions || []).map((c) => ({ label: c, pressed: String(this.conclusion === c), cls: 'cq-chip' }));
     }
     handleConclusion(event) { this.conclusion = event.currentTarget.dataset.c; this.error = undefined; }
     handleSummary(event) { this.summary = event.target.value; this.sumConfirm = false; this.error = undefined; }
@@ -419,7 +420,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
     get wcReady() { return !!this.wc && !this.wcLoading; }
     get lookBackOpts() {
-        return LOOK_BACK.map((d) => ({ d, label: d + ' Days', pressed: String(d === this.wcDays), cls: 'opt sm' + (d === this.wcDays ? ' on' : '') }));
+        return LOOK_BACK.map((d) => ({ d, label: d + ' Days', pressed: String(d === this.wcDays), cls: 'cq-chip' }));
     }
     handleLookBack(event) {
         const d = Number(event.currentTarget.dataset.d);
@@ -538,7 +539,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             return {
                 key: i.key, name: i.name, href: i.recordId && !i.byHand ? this.href(i.recordId) : null, byHand: i.byHand,
                 hasHref: !!(i.recordId && !i.byHand), category: i.category, whatChanged: i.whatChanged, foundIn: i.foundIn,
-                whenText: i.inEffect ? 'Since ' + this.md(i.day) : this.md(i.day), rel, rating: i.rating, ratingCls: RATING_CLS[i.rating] || 'chip',
+                whenText: i.inEffect ? 'Since ' + this.md(i.day) : this.md(i.day), rel, rating: i.rating, ratingCls: RATING_CLS[i.rating] || 'cq-pill soft neu',
                 added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null,
                 canAdd: !i.hypothesis && i.rating !== 'The Affected Lot' && i.rating !== 'Unlikely'
             };
@@ -594,7 +595,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get hypCatOpts() {
         const c = this.hypForm ? this.hypForm.category : null;
         const cats = this.wc ? this.wc.categories : this.hist ? this.hist.categories : [];
-        return cats.map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
+        return cats.map((x) => ({ label: x, pressed: String(c === x), cls: 'cq-chip' }));
     }
     get hypBlocker() {
         const f = this.hypForm;
@@ -635,7 +636,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handleChangeCat(event) { this.changeForm = { ...this.changeForm, category: event.currentTarget.dataset.c }; }
     get changeCatOpts() {
         const c = this.changeForm ? this.changeForm.category : null;
-        return (this.wc ? this.wc.changeCategories : []).map((x) => ({ label: x, pressed: String(c === x), cls: 'opt sm' + (c === x ? ' on' : '') }));
+        return (this.wc ? this.wc.changeCategories : []).map((x) => ({ label: x, pressed: String(c === x), cls: 'cq-chip' }));
     }
     get changeBlocker() {
         const f = this.changeForm;
@@ -672,7 +673,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
     get hypRows() {
         return (this.wc ? this.wc.hypotheses : []).map((h) => ({ key: h.id, label: 'H' + h.num + (h.category ? ' · ' + h.category : ''), title: h.title,
-            status: h.status, statusCls: h.status === 'Confirmed' ? 'chip ok' : h.status === 'Ruled Out' ? 'chip' : 'chip warn', source: h.source }));
+            status: h.status, statusCls: h.status === 'Confirmed' ? 'cq-pill soft pos' : h.status === 'Ruled Out' ? 'cq-pill soft neu' : 'cq-pill soft warn', source: h.source }));
     }
     get hasHyps() { return this.hypRows.length > 0; }
 
@@ -756,7 +757,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             sub: (i.status || '') + (i.day ? ' · ' + this.mdIso(i.day) : ''), what: i.whatHappened,
             cause, causeNote, causeIsNone: !i.causeHead, invHref: i.investigationId ? this.href(i.investigationId) : null,
             fix, fixHref: i.capaId ? this.href(i.capaId) : null, capaTitle: i.capaTitle, fixNote, effective: this.isEffective(i),
-            matchText: (i.colour || 'Grey') + ' · ' + (i.score || 0), matchCls: 'chip m-' + (i.colour || 'Grey').toLowerCase(), why: i.why,
+            matchText: (i.colour || 'Grey') + ' · ' + (i.score || 0), matchCls: 'cq-pill soft ' + (MATCH_TONE[(i.colour || 'Grey').toLowerCase()] || 'neu'), why: i.why,
             added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null, canAdd: !i.hypothesis
         };
     }
@@ -835,7 +836,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get cantComplete() { return this.saving || this.sumWriting || !!this.conclusionBlocker(); }
     get cantBack() { return this.step === 0; }
     get cantNext() { return this.step >= STEPS.length - 1; }
-    get nextCls() { return 'btn' + (this.cantNext ? '' : ' primary'); }
+    get nextCls() { return this.cantNext ? 'cq-btn-outline' : 'cq-btn-primary'; }
 
     go(i) {
         if (i === 1 && !this.wc && !this.wcLoading) { this.loadChanges(); }
