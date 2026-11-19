@@ -39,7 +39,7 @@ public with sharing class CqInvestigationHistory {
     @AuraEnabled
     public static View getHistory(Id recordId) {
         Id invId = CqInvestigationWorkspace.investigationFor(recordId);
-        compliancequest__SQX_Investigation__c inv = [SELECT compliancequest__SQX_Nonconformance__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId];
+        compliancequest__SQX_Investigation__c inv = [SELECT compliancequest__SQX_Nonconformance__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId WITH USER_MODE];
         if (inv.compliancequest__SQX_Nonconformance__c == null) { View v = new View(); v.categories = categories(); return v; }
         return rank(inv.compliancequest__SQX_Nonconformance__c, invId);
     }
@@ -60,7 +60,7 @@ public with sharing class CqInvestigationHistory {
             SELECT Id, compliancequest__SQX_Part__c, compliancequest__SQX_Part__r.compliancequest__Part_Number__c, compliancequest__Lot_Number__c,
                    compliancequest__NC_Title__c, compliancequest__Description__c, compliancequest__SQX_Defect_Code__c,
                    compliancequest__Occurrence_Date__c, compliancequest__Aware_Date__c, CreatedDate
-            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId];
+            FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId WITH USER_MODE];
         v.partNumber = nc.compliancequest__SQX_Part__r == null ? null : nc.compliancequest__SQX_Part__r.compliancequest__Part_Number__c;
         v.startDate = nc.compliancequest__Occurrence_Date__c != null ? toDate(nc.compliancequest__Occurrence_Date__c)
             : nc.compliancequest__Aware_Date__c != null ? toDate(nc.compliancequest__Aware_Date__c) : nc.CreatedDate.date();
@@ -68,9 +68,9 @@ public with sharing class CqInvestigationHistory {
         // what the user marked Not Relevant on this investigation, or Not the Same Problem in this NC's triage
         Set<String> gone = new Set<String>();
         List<Investigation_Not_Relevant__c> marked = invId == null
-            ? [SELECT Id, Record_Id__c, Record_Name__c, Reason__c, Nonconformance__c FROM Investigation_Not_Relevant__c WHERE Nonconformance__c = :ncId ORDER BY CreatedDate]
+            ? [SELECT Id, Record_Id__c, Record_Name__c, Reason__c, Nonconformance__c FROM Investigation_Not_Relevant__c WHERE Nonconformance__c = :ncId WITH USER_MODE ORDER BY CreatedDate]
             : [SELECT Id, Record_Id__c, Record_Name__c, Reason__c, Nonconformance__c FROM Investigation_Not_Relevant__c
-               WHERE Investigation__c = :invId OR Nonconformance__c = :ncId ORDER BY CreatedDate];
+               WHERE Investigation__c = :invId OR Nonconformance__c = :ncId WITH USER_MODE ORDER BY CreatedDate];
         for (Investigation_Not_Relevant__c d : marked) {
             Dismissed x = new Dismissed();
             x.id = d.Id; x.recordId = d.Record_Id__c; x.name = d.Record_Name__c; x.reason = d.Reason__c; x.atTriage = d.Nonconformance__c != null;
@@ -118,7 +118,7 @@ public with sharing class CqInvestigationHistory {
                     SELECT Id, compliancequest__NC_Title__c, compliancequest__Description__c, compliancequest__Occurrence_Date__c, compliancequest__Lot_Number__c,
                            compliancequest__SQX_Investigation__c, compliancequest__SQX_Investigation__r.Name, compliancequest__SQX_Investigation__r.compliancequest__Status__c,
                            compliancequest__SQX_CAPA__c
-                    FROM compliancequest__SQX_Nonconformance__c WHERE Id IN :ncIds]) {
+                    FROM compliancequest__SQX_Nonconformance__c WHERE Id IN :ncIds WITH USER_MODE]) {
                 Item it = byId.get(n.Id);
                 it.whatHappened = joinText(n.compliancequest__NC_Title__c, n.compliancequest__Description__c);
                 if (n.compliancequest__Occurrence_Date__c != null) { it.day = toDate(n.compliancequest__Occurrence_Date__c); }
@@ -136,7 +136,7 @@ public with sharing class CqInvestigationHistory {
             for (compliancequest__SQX_Root_Cause__c rc : [
                     SELECT compliancequest__SQX_Investigation__c, compliancequest__Category__c,
                            compliancequest__SQX_Root_Cause_Code__r.Name, compliancequest__Description__c
-                    FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c IN :invOfNc.values() ORDER BY CreatedDate]) {
+                    FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c IN :invOfNc.values() WITH USER_MODE ORDER BY CreatedDate]) {
                 if (!causes.containsKey(rc.compliancequest__SQX_Investigation__c)) { causes.put(rc.compliancequest__SQX_Investigation__c, new List<compliancequest__SQX_Root_Cause__c>()); }
                 causes.get(rc.compliancequest__SQX_Investigation__c).add(rc);
             }
@@ -158,12 +158,12 @@ public with sharing class CqInvestigationHistory {
         if (!allCapas.isEmpty()) {
             capas = new Map<Id, compliancequest__SQX_CAPA__c>([
                 SELECT Id, Name, compliancequest__Title__c, compliancequest__Status__c, compliancequest__Closed_Date__c, compliancequest__Issued_Date__c
-                FROM compliancequest__SQX_CAPA__c WHERE Id IN :allCapas]);
+                FROM compliancequest__SQX_CAPA__c WHERE Id IN :allCapas WITH USER_MODE]);
             for (compliancequest__SQX_Effectiveness_Review__c r : [
                     SELECT Id, Name, compliancequest__SQX_CAPA__c, compliancequest__Resolution__c, compliancequest__Review_Completed_On__c
                     FROM compliancequest__SQX_Effectiveness_Review__c
                     WHERE compliancequest__SQX_CAPA__c IN :allCapas AND compliancequest__Status__c = 'Complete'
-                    ORDER BY compliancequest__Review_Completed_On__c DESC NULLS LAST, CreatedDate DESC]) {
+                    WITH USER_MODE ORDER BY compliancequest__Review_Completed_On__c DESC NULLS LAST, CreatedDate DESC]) {
                 if (!efr.containsKey(r.compliancequest__SQX_CAPA__c)) { efr.put(r.compliancequest__SQX_CAPA__c, r); }
             }
         }
@@ -179,7 +179,7 @@ public with sharing class CqInvestigationHistory {
         // inspections: which lot, and the result
         if (!insIds.isEmpty()) {
             for (compliancequest__SQX_Inspection__c s : [
-                    SELECT Id, compliancequest__Lot_Number__c, compliancequest__Inspection_Result__c FROM compliancequest__SQX_Inspection__c WHERE Id IN :insIds]) {
+                    SELECT Id, compliancequest__Lot_Number__c, compliancequest__Inspection_Result__c FROM compliancequest__SQX_Inspection__c WHERE Id IN :insIds WITH USER_MODE]) {
                 Item it = byId.get(s.Id);
                 String res = s.compliancequest__Inspection_Result__c;
                 it.whatHappened = 'Inspection' + (s.compliancequest__Lot_Number__c == null ? '' : ' of lot ' + s.compliancequest__Lot_Number__c)
@@ -190,7 +190,7 @@ public with sharing class CqInvestigationHistory {
         // hypotheses made from these records
         Map<String, Integer> hyp = new Map<String, Integer>();
         for (Investigation_Hypothesis__c h : invId == null ? new List<Investigation_Hypothesis__c>()
-                : [SELECT Number__c, Source_Record_Id__c FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId AND Source_Record_Id__c != null ORDER BY Number__c]) {
+                : [SELECT Number__c, Source_Record_Id__c FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId AND Source_Record_Id__c != null WITH USER_MODE ORDER BY Number__c]) {
             String k = h.Source_Record_Id__c.left(15);
             if (!hyp.containsKey(k) && h.Number__c != null) { hyp.put(k, h.Number__c.intValue()); }
         }
@@ -249,7 +249,7 @@ public with sharing class CqInvestigationHistory {
             Set<Id> next = new Set<Id>();
             for (cqext__CQPLM_Assembly_line_Item__c li : [
                     SELECT cqext__CQPLM_Part__c FROM cqext__CQPLM_Assembly_line_Item__c
-                    WHERE cqext__CQPLM_Assembly__r.cqext__CQPLM_Part_Revision__r.cqext__CQPLM_Part__c IN :level AND cqext__CQPLM_Part__c != null]) {
+                    WHERE cqext__CQPLM_Assembly__r.cqext__CQPLM_Part_Revision__r.cqext__CQPLM_Part__c IN :level AND cqext__CQPLM_Part__c != null WITH USER_MODE]) {
                 if (li.cqext__CQPLM_Part__c != partId && !out.contains(li.cqext__CQPLM_Part__c)) { next.add(li.cqext__CQPLM_Part__c); }
             }
             out.addAll(next);
@@ -264,7 +264,7 @@ public with sharing class CqInvestigationHistory {
         Id invId = CqInvestigationWorkspace.investigationFor(recordId);
         if (targetId == null) { throw new AuraHandledException('No record to mark.'); }
         try {
-            insert new Investigation_Not_Relevant__c(Investigation__c = invId, Record_Id__c = targetId, Record_Name__c = targetName == null ? null : targetName.left(80),
+            insert as user new Investigation_Not_Relevant__c(Investigation__c = invId, Record_Id__c = targetId, Record_Name__c = targetName == null ? null : targetName.left(80),
                 Reason__c = reason == null ? null : reason.left(255));
         } catch (DmlException e) { throw new AuraHandledException('It was not saved: ' + e.getDmlMessage(0)); }
     }
@@ -273,7 +273,7 @@ public with sharing class CqInvestigationHistory {
     @AuraEnabled
     public static void restore(Id dismissedId) {
         try {
-            delete [SELECT Id FROM Investigation_Not_Relevant__c WHERE Id = :dismissedId];
+            delete as user [SELECT Id FROM Investigation_Not_Relevant__c WHERE Id = :dismissedId WITH USER_MODE];
         } catch (DmlException e) { throw new AuraHandledException('It was not restored: ' + e.getDmlMessage(0)); }
     }
 

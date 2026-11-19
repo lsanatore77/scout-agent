@@ -51,14 +51,14 @@ public with sharing class CqInvestigationChanges {
         for (Schema.PicklistEntry p : Investigation_Hypothesis__c.Category__c.getDescribe().getPicklistValues()) { if (p.isActive()) { v.categories.add(p.getValue()); } }
         for (Schema.PicklistEntry p : Investigation_Change__c.Category__c.getDescribe().getPicklistValues()) { if (p.isActive()) { v.changeCategories.add(p.getValue()); } }
 
-        compliancequest__SQX_Investigation__c inv = [SELECT compliancequest__SQX_Nonconformance__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId];
+        compliancequest__SQX_Investigation__c inv = [SELECT compliancequest__SQX_Nonconformance__c FROM compliancequest__SQX_Investigation__c WHERE Id = :invId WITH USER_MODE];
         Id ncId = inv.compliancequest__SQX_Nonconformance__c;
         Id partId; Id equipmentId; Set<String> lots = new Set<String>();
         if (ncId != null) {
             compliancequest__SQX_Nonconformance__c nc = [
                 SELECT compliancequest__Occurrence_Date__c, compliancequest__Aware_Date__c, CreatedDate, compliancequest__SQX_Part__c,
                        compliancequest__SQX_Part__r.compliancequest__Part_Number__c, compliancequest__SQX_Equipment__c, compliancequest__Lot_Number__c
-                FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId];
+                FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId WITH USER_MODE];
             if (nc.compliancequest__Occurrence_Date__c != null) { v.startDate = toDate(nc.compliancequest__Occurrence_Date__c); v.startFrom = 'Occurrence Date'; }
             else if (nc.compliancequest__Aware_Date__c != null) { v.startDate = toDate(nc.compliancequest__Aware_Date__c); v.startFrom = 'Aware Date'; }
             else { v.startDate = nc.CreatedDate.date(); v.startFrom = 'Created Date'; }
@@ -67,7 +67,7 @@ public with sharing class CqInvestigationChanges {
             equipmentId = nc.compliancequest__SQX_Equipment__c;
             if (String.isNotBlank(nc.compliancequest__Lot_Number__c)) { lots.add(nc.compliancequest__Lot_Number__c); }
             for (compliancequest__SQX_NC_Impacted_Product__c ip : [SELECT compliancequest__Lot_Number__c FROM compliancequest__SQX_NC_Impacted_Product__c
-                    WHERE compliancequest__SQX_Nonconformance__c = :ncId AND compliancequest__Lot_Number__c != null]) {
+                    WHERE compliancequest__SQX_Nonconformance__c = :ncId AND compliancequest__Lot_Number__c != null WITH USER_MODE]) {
                 lots.add(ip.compliancequest__Lot_Number__c);
             }
         } else {
@@ -80,7 +80,7 @@ public with sharing class CqInvestigationChanges {
             // change orders on the part
             for (compliancequest__SQX_Change_Order__c c : [
                     SELECT Id, Name, compliancequest__Title__c, compliancequest__Effective_Date__c, compliancequest__Target_Completion_Date__c, compliancequest__Submitted_Date__c
-                    FROM compliancequest__SQX_Change_Order__c WHERE compliancequest__SQX_Product__c = :partId]) {
+                    FROM compliancequest__SQX_Change_Order__c WHERE compliancequest__SQX_Product__c = :partId WITH USER_MODE]) {
                 Date d = firstDate(new List<Object>{ c.compliancequest__Effective_Date__c, c.compliancequest__Target_Completion_Date__c, c.compliancequest__Submitted_Date__c });
                 Item it = dated(v, 'change', c.Id, c.Name, c.compliancequest__Title__c, 'Change order on ' + partName, d);
                 if (it != null) { it.category = 'Method'; v.items.add(it); }
@@ -88,7 +88,7 @@ public with sharing class CqInvestigationChanges {
             // controlled documents on the part
             for (compliancequest__SQX_Controlled_Document__c c : [
                     SELECT Id, Name, compliancequest__Title__c, compliancequest__Description__c, compliancequest__Effective_Date__c, compliancequest__Date_Issued__c
-                    FROM compliancequest__SQX_Controlled_Document__c WHERE compliancequest__SQX_Part__c = :partId]) {
+                    FROM compliancequest__SQX_Controlled_Document__c WHERE compliancequest__SQX_Part__c = :partId WITH USER_MODE]) {
                 Date d = firstDate(new List<Object>{ c.compliancequest__Effective_Date__c, c.compliancequest__Date_Issued__c });
                 String what = c.compliancequest__Title__c;
                 String desc2 = c.compliancequest__Description__c == null ? null : c.compliancequest__Description__c.removeStartIgnoreCase('SAMPLE DATA. ');
@@ -99,7 +99,7 @@ public with sharing class CqInvestigationChanges {
             // the latest part revision, always shown
             List<cqext__CQPLM_Part_Revision__c> revs = [
                 SELECT Id, Name, cqext__Effective_Date__c FROM cqext__CQPLM_Part_Revision__c
-                WHERE cqext__CQPLM_Part__c = :partId ORDER BY cqext__Effective_Date__c DESC NULLS LAST LIMIT 1];
+                WHERE cqext__CQPLM_Part__c = :partId WITH USER_MODE ORDER BY cqext__Effective_Date__c DESC NULLS LAST LIMIT 1];
             if (!revs.isEmpty()) {
                 cqext__CQPLM_Part_Revision__c r = revs[0];
                 Date d = toDate(r.cqext__Effective_Date__c);
@@ -119,7 +119,7 @@ public with sharing class CqInvestigationChanges {
                 for (cqext__CQPLM_Assembly_line_Item__c li : [
                         SELECT cqext__CQPLM_Part__c, cqext__CQPLM_Part__r.Name, cqext__CQPLM_Part__r.compliancequest__Part_Number__c
                         FROM cqext__CQPLM_Assembly_line_Item__c
-                        WHERE cqext__CQPLM_Assembly__r.cqext__CQPLM_Part_Revision__r.cqext__CQPLM_Part__c IN :level AND cqext__CQPLM_Part__c != null]) {
+                        WHERE cqext__CQPLM_Assembly__r.cqext__CQPLM_Part_Revision__r.cqext__CQPLM_Part__c IN :level AND cqext__CQPLM_Part__c != null WITH USER_MODE]) {
                     if (parts.containsKey(li.cqext__CQPLM_Part__c)) { continue; }
                     parts.put(li.cqext__CQPLM_Part__c, li.cqext__CQPLM_Part__r.Name + ' (' + li.cqext__CQPLM_Part__r.compliancequest__Part_Number__c + ')');
                     next.add(li.cqext__CQPLM_Part__c);
@@ -129,7 +129,7 @@ public with sharing class CqInvestigationChanges {
             Set<Id> partIds = parts.keySet();
             for (compliancequest__SQX_Supplier_Deviation__c s : [
                     SELECT Id, Name, compliancequest__SQX_Part__c, compliancequest__Effective_Date__c, compliancequest__Expiration_Date__c
-                    FROM compliancequest__SQX_Supplier_Deviation__c WHERE compliancequest__SQX_Part__c IN :partIds]) {
+                    FROM compliancequest__SQX_Supplier_Deviation__c WHERE compliancequest__SQX_Part__c IN :partIds WITH USER_MODE]) {
                 Date from1 = toDate(s.compliancequest__Effective_Date__c);
                 Date to1 = toDate(s.compliancequest__Expiration_Date__c);
                 if (from1 == null || from1 > v.startDate) { continue; }
@@ -144,7 +144,7 @@ public with sharing class CqInvestigationChanges {
         // the affected lots
         if (!lots.isEmpty()) {
             for (compliancequest__SQX_Lot_Info__c l : [
-                    SELECT Id, Name, compliancequest__Manufacturing_Date__c FROM compliancequest__SQX_Lot_Info__c WHERE Name IN :lots]) {
+                    SELECT Id, Name, compliancequest__Manufacturing_Date__c FROM compliancequest__SQX_Lot_Info__c WHERE Name IN :lots WITH USER_MODE]) {
                 Date d = toDate(l.compliancequest__Manufacturing_Date__c);
                 Item it = base('lot', l.Id, 'Lot ' + l.Name, 'The affected lot' + (d == null ? '' : ', built ' + monthDay(d)), 'Lot on ' + partName, d);
                 it.rating = AFFECTED;
@@ -154,11 +154,11 @@ public with sharing class CqInvestigationChanges {
         }
         // the NC's equipment and its last calibration
         if (equipmentId != null) {
-            compliancequest__SQX_Equipment__c e = [SELECT Id, Name, compliancequest__Equipment_Description__c FROM compliancequest__SQX_Equipment__c WHERE Id = :equipmentId];
+            compliancequest__SQX_Equipment__c e = [SELECT Id, Name, compliancequest__Equipment_Description__c FROM compliancequest__SQX_Equipment__c WHERE Id = :equipmentId WITH USER_MODE];
             List<compliancequest__SQX_Calibration__c> cals = [
                 SELECT Id, Name, compliancequest__Calibration_Date__c, compliancequest__Next_Calibration_Date__c
                 FROM compliancequest__SQX_Calibration__c WHERE compliancequest__SQX_Equipment__c = :equipmentId
-                ORDER BY compliancequest__Calibration_Date__c DESC NULLS LAST LIMIT 1];
+                WITH USER_MODE ORDER BY compliancequest__Calibration_Date__c DESC NULLS LAST LIMIT 1];
             if (cals.isEmpty()) {
                 Item it = base('calibration', e.Id, e.Name + ' Calibration', 'No calibration on record for ' + e.Name, 'Equipment on the NC', null);
                 it.rating = WORTH; it.category = 'Machine';
@@ -179,7 +179,7 @@ public with sharing class CqInvestigationChanges {
         // changes added by hand
         for (Investigation_Change__c c : [
                 SELECT Id, Name, What_Changed__c, Change_Date__c, Category__c, Where_Found__c, Reference__c
-                FROM Investigation_Change__c WHERE Investigation__c = :invId ORDER BY Change_Date__c]) {
+                FROM Investigation_Change__c WHERE Investigation__c = :invId WITH USER_MODE ORDER BY Change_Date__c]) {
             Item it = base('manual', c.Id, c.Name, c.What_Changed__c, String.isBlank(c.Where_Found__c) ? 'Added by hand' : c.Where_Found__c, c.Change_Date__c);
             it.byHand = true;
             it.category = c.Category__c == 'Other' ? null : c.Category__c;
@@ -191,7 +191,7 @@ public with sharing class CqInvestigationChanges {
         Map<String, Integer> fromSource = new Map<String, Integer>();
         for (Investigation_Hypothesis__c h : [
                 SELECT Id, Number__c, Title__c, Category__c, Status__c, Source_Name__c, Source_Record_Id__c, Investigation_Change__c
-                FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId ORDER BY Number__c]) {
+                FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId WITH USER_MODE ORDER BY Number__c]) {
             Hyp x = new Hyp();
             x.id = h.Id; x.num = h.Number__c == null ? null : h.Number__c.intValue(); x.title = h.Title__c;
             x.category = h.Category__c; x.status = h.Status__c; x.source = h.Source_Name__c;
@@ -253,7 +253,7 @@ public with sharing class CqInvestigationChanges {
         if (String.isBlank(cat)) { throw new AuraHandledException('Choose a category.'); }
         Investigation_Change__c c = new Investigation_Change__c(Investigation__c = invId, What_Changed__c = what.trim().left(255),
             Change_Date__c = Date.valueOf(day), Category__c = cat, Where_Found__c = str(m.get('whereFound')), Reference__c = str(m.get('reference')));
-        try { insert c; } catch (DmlException e) { throw new AuraHandledException('The change was not saved: ' + e.getDmlMessage(0)); }
+        try { insert as user c; } catch (DmlException e) { throw new AuraHandledException('The change was not saved: ' + e.getDmlMessage(0)); }
         return c.Id;
     }
 
@@ -273,10 +273,10 @@ public with sharing class CqInvestigationChanges {
             Id sid = (Id) sourceId;
             if (sid.getSObjectType() == Investigation_Change__c.SObjectType) { h.Investigation_Change__c = sid; } else { h.Source_Record_Id__c = sid; }
         }
-        AggregateResult[] top = [SELECT MAX(Number__c) n FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId];
+        AggregateResult[] top = [SELECT MAX(Number__c) n FROM Investigation_Hypothesis__c WHERE Investigation__c = :invId WITH USER_MODE];
         Decimal n = (Decimal) top[0].get('n');
         h.Number__c = (n == null ? 0 : n) + 1;
-        try { insert h; } catch (DmlException e) { throw new AuraHandledException('The hypothesis was not saved: ' + e.getDmlMessage(0)); }
+        try { insert as user h; } catch (DmlException e) { throw new AuraHandledException('The hypothesis was not saved: ' + e.getDmlMessage(0)); }
         return h.Number__c.intValue();
     }
 
