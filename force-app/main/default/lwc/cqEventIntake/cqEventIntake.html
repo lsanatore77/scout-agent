@@ -1,5 +1,5 @@
 <template>
-    <template if:true={loadError}><div class="errbox">{loadError}</div></template>
+    <template if:true={loadError}><div class="cq-msg crit errbox">{loadError}</div></template>
     <template if:true={ready}>
         <div class="box">
             <header class="cq-hl">
@@ -57,7 +57,7 @@
                                     <template if:true={q.help}><span class="cq-hint">{q.help}</span></template>
                                 </div>
                             </template>
-                            <template if:true={urgent}><div class="warnbox"><strong>{urgentText}</strong></div></template>
+                            <template if:true={urgent}><div class="cq-msg warn"><strong>{urgentText}</strong></div></template>
                         </div>
                     </div>
                     <div class="plainbox top16">
@@ -72,8 +72,8 @@
                             <div class="q nom">{sentTitle}</div>
                             <div class="note sm0">Thanks. You're done. An event reviewer decides what it becomes.</div>
                         </div>
-                        <button class="btn" data-id={sent.id} onclick={handleOpenEvent}>Open {sent.name}</button>
-                        <button class="btn primary" onclick={handleAnother}>Report Another</button>
+                        <button class="cq-btn-outline" data-id={sent.id} onclick={handleOpenEvent}>Open {sent.name}</button>
+                        <button class="cq-btn-primary" onclick={handleAnother}>Report Another</button>
                     </div>
                 </template>
 
@@ -105,36 +105,36 @@
                             </label>
                         </div>
                         <div class="plainbox trendbox">
-                            <div class="lab">{trendHead}</div>
+                            <div class="cq-card-title">{trendHead}</div>
                             <template if:true={showCount}>
                                 <div class="count"><span class="bignum">{totalText}</span> <span class="muted">{ofText}</span></div>
                                 <div class="bar"><i style={barStyle}></i></div>
                             </template>
                             <div class="whyv">{trendNote}</div>
                             <template if:true={cat}>
-                                <div class="lab top8">Category Rule</div>
+                                <div class="cq-card-title top8">Category Rule</div>
                                 <div class="drow"><span class="dk">Disposition</span><span class="dv">{ruleDisposition}</span></div>
                                 <div class="drow"><span class="dk">Opens an event at</span><span class="dv">{ruleOpens}</span></div>
                                 <div class="drow"><span class="dk">Approved by</span><span class="dv">{ruleApproved}</span></div>
                             </template>
                         </div>
                     </div>
-                    <template if:true={logged}><div class="okbox">{loggedText}</div></template>
-                    <template if:true={showTriggered}><div class="warnbox top8"><strong>Limit reached:</strong>{triggeredText} <button class="smalllink plainbtn" data-id={logged.eventId} onclick={handleOpenEvent}>Open {logged.eventName}</button></div></template>
+                    <template if:true={logged}><div class="cq-msg pos okbox">{loggedText}</div></template>
+                    <template if:true={showTriggered}><div class="cq-msg warn top8"><strong>Limit reached:</strong>{triggeredText} <button class="smalllink plainbtn" data-id={logged.eventId} onclick={handleOpenEvent}>Open {logged.eventName}</button></div></template>
                 </template>
 
-                <template if:true={error}><div class="errbox">{error}</div></template>
+                <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
             </div>
             <template if:true={showForm}>
                 <footer class="foot">
                     <span class="blocker">{reportBlocker}</span>
-                    <button class="btn primary" onclick={handleSend} disabled={cantSend}>{sendLabel}</button>
+                    <button class="cq-btn-primary" onclick={handleSend} disabled={cantSend}>{sendLabel}</button>
                 </footer>
             </template>
             <template if:true={isQuick}>
                 <footer class="foot">
                     <span class="blocker">{quickBlocker}</span>
-                    <button class="btn primary" onclick={handleLog} disabled={cantLog}>{logLabel}</button>
+                    <button class="cq-btn-primary" onclick={handleLog} disabled={cantLog}>{logLabel}</button>
                 </footer>
             </template>
         </div>

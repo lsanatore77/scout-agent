@@ -2,7 +2,6 @@
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
 .box { display: flex; flex-direction: column; border-radius: 12px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
-/* record header: the same layout as the other CQ.AI workspaces */
 .main { padding: 20px; }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--cq-hl-line); margin: -6px 0 18px; }
 .tab { padding: 8px 14px; border: none; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--cq-muted); border-bottom: 3px solid transparent; cursor: pointer; }
@@ -17,13 +16,12 @@
 .card { min-height: 64px; padding: 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); text-align: left; font: inherit; display: flex; flex-direction: column; gap: 3px; cursor: pointer; }
 .card.on { border: 2px solid var(--cq-link); background: var(--cq-link-soft); }
 .card b { font-size: 14px; color: var(--cq-ink); }
-.card span { color: var(--cq-muted); font-size: 12px; font-weight: 400; }
+.card span { color: var(--cq-muted); font-size: 13px; font-weight: 400; }
 .plainbox { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; }
 .trendbox { align-self: start; }
 .sughead { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--cq-accent); }
 .ruleicon { --slds-c-icon-color-foreground-default: var(--cq-accent); }
 .whyv { line-height: 1.45; color: var(--cq-ink); }
-.lab { font-size: 12px; font-weight: 700; color: var(--cq-muted); text-transform: uppercase; letter-spacing: .03em; }
 .count { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .bignum { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .muted { color: var(--cq-muted); }
@@ -32,23 +30,21 @@
 .drow { display: flex; gap: 12px; padding: 8px 12px; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .dk { flex: 0 0 130px; color: var(--cq-muted); }
 .dv { font-weight: 600; min-width: 0; }
-.note { margin: 0; font-size: 12px; font-weight: 400; color: var(--cq-muted); }
+.note { margin: 0; font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .note.sm0 { margin: 0; }
 .top8 { margin-top: 8px; }
 .top16 { margin-top: 16px; }
-.warnbox { margin: 4px 0 0; padding: 10px 14px; border-radius: var(--cq-r-card); background: var(--cq-warn-bg); border: 1px solid var(--cq-warn-line); color: var(--cq-warn-fg); line-height: 1.45; }
-.okbox { margin-top: 16px; padding: 10px 14px; border-radius: var(--cq-r-card); background: var(--cq-pos-bg); border: 1px solid var(--cq-pos-line); color: var(--cq-pos-fg); font-weight: 600; }
-.errbox { margin-top: 12px; padding: 10px 14px; border-radius: var(--cq-r-card); background: var(--cq-crit-bg); border: 1px solid var(--cq-crit-line); color: var(--cq-crit-fg); }
 .sentrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.okdot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: 12px; font-weight: 700; flex: none; }
+.okdot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: 13px; font-weight: 700; flex: none; }
 .q { font-size: 20px; font-weight: 700; }
 .q.nom { margin: 0; }
 .grow { flex: 1 1 auto; min-width: 0; }
-.btn { min-height: 40px; padding: 0 16px 3px; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.btn.primary { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
-.btn:disabled { opacity: .45; cursor: not-allowed; }
 .smalllink { font-size: 13px; color: var(--cq-link); font-weight: 600; cursor: pointer; }
 .plainbtn { padding: 0; border: none; background: none; font-family: inherit; }
 .foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 20px 20px; }
 .blocker { color: var(--cq-warn-fg); font-weight: 600; }
 @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cq-msg.errbox { margin-top: 12px; }
+.cq-msg.okbox { margin-top: 16px; font-weight: 600; }
+.cq-msg.warn { margin: 4px 0 0; }
+.cq-msg.warn.top8 { margin-top: 8px; }
