@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Checklist_Draft__c</fullName>
+    <label>Checklist Draft</label>
+    <description>Work in progress on the checklist in the PHR workspace, so a reviewer can save, leave and pick up where they left off. Cleared when the checklist is submitted.</description>
+    <length>20000</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

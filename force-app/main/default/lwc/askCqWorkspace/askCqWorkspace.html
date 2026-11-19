@@ -55,7 +55,7 @@
                     <div class="sect">
                         <div class="sect-head">
                             <span class="sect-title">Checklist</span>
-                            <span class="sect-sub">CQ.AI suggested answers are pre-selected in purple · click to change · nothing is saved until Save Checklist</span>
+                            <span class="sect-sub">CQ.AI suggested answers are pre-selected in purple · Save keeps a draft · Submit Checklist puts the answers on the record</span>
                         </div>
                         <template if:false={hasChecklist}>
                             <p class="muted">No checklist questions on this review yet.</p>
@@ -117,8 +117,11 @@
                 </template>
                 <footer class="foot">
                     <span class="grow"></span>
-                    <span class="blocker">{blocker}</span>
-                    <template if:true={isChecklist}><button class="cq-btn-primary" onclick={handleSaveChecklist} disabled={cantSave}>Save Checklist</button></template>
+                    <span class={footCls}>{footNote}</span>
+                    <template if:true={isChecklist}>
+                        <button class="cq-btn-outline" onclick={handleSaveDraft} disabled={cantSaveDraft}>Save</button>
+                        <button class="cq-btn-primary" onclick={handleSubmitChecklist} disabled={cantSubmit}>Submit Checklist</button>
+                    </template>
                     <template if:true={hasBack}><button class="cq-btn-outline" onclick={handleBack}>Back</button></template>
                     <template if:true={hasNext}><button class={nextCls} onclick={handleNext}>Next</button></template>
                 </footer>

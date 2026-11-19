@@ -142,6 +142,7 @@ public with sharing class AskCqWorkspaceController {
         @AuraEnabled public Boolean suggested = false;                     // answered by the checklist agent and accepted
         @AuraEnabled public String suggestedAnswer;                        // what the checklist logic would answer, whether or not the question is answered
         @AuraEnabled public String suggestedBasis;
+        @AuraEnabled public String draftAnswer;                            // saved as work in progress, not yet submitted
     }
 
     /** Where each review step stands, read from the PHR itself. */
@@ -211,6 +212,7 @@ public with sharing class AskCqWorkspaceController {
         ];
         Map<String, List<String>> allowed = allowedValues(answers);
         Map<String, PhrChecklistItem> suggestions = suggestionsFor(phrId, answers);
+        Map<String, Object> draft = readDraft(phrId);
         List<Question> out = new List<Question>();
         for (compliancequest__SQX_Product_History_Answer__c a : answers) {
             Question q = new Question();
@@ -230,6 +232,8 @@ public with sharing class AskCqWorkspaceController {
                 q.suggestedAnswer = sug.suggestedAnswer;
                 q.suggestedBasis = sug.basis;
             }
+            Object d = draft.get(a.Id);
+            if (d != null && q.options.contains(String.valueOf(d))) { q.draftAnswer = String.valueOf(d); }
             out.add(q);
         }
         return out;
@@ -264,26 +268,48 @@ public with sharing class AskCqWorkspaceController {
         );
     }
 
+    /** The checklist draft on the PHR: answer Id -> the answer chosen but not yet submitted. Empty when there is none. */
+    private static Map<String, Object> readDraft(Id phrId) {
+        try {
+            String raw = [SELECT Checklist_Draft__c FROM compliancequest__SQX_Product_History_Review__c WHERE Id = :phrId WITH USER_MODE].Checklist_Draft__c;
+            if (String.isNotBlank(raw)) { return (Map<String, Object>) JSON.deserializeUntyped(raw); }
+        } catch (Exception e) {
+            // no draft, or one that cannot be read: the checklist opens from what is saved
+        }
+        return new Map<String, Object>();
+    }
+
+    /** Save: keeps the answers chosen so far as work in progress on the PHR. Nothing goes onto the checklist itself. */
+    @AuraEnabled
+    public static void saveDraft(Id phrId, String payload) {
+        Boolean none = String.isBlank(payload) || payload.trim() == '{}';
+        try {
+            update as user new compliancequest__SQX_Product_History_Review__c(Id = phrId, Checklist_Draft__c = none ? null : payload.left(20000));
+        } catch (DmlException e) { throw new AuraHandledException('The draft was not saved: ' + e.getDmlMessage(0)); }
+    }
+
     public class AnswerRow { public Id id; public String answer; public Boolean suggested; public String basis; }
 
     /**
-     * Save Checklist: every answer on the screen in one save. An answer that is CQ.AI's suggestion is saved with its
-     * evidence and the "suggested" stamp, whether the user clicked it or left it as suggested; any other answer is
-     * the user's own, so the stamp comes off and their notes stay.
+     * Submit Checklist: every answer on the screen goes onto the checklist in one save, and the draft is cleared.
+     * Every question must have an answer. An answer that is CQ.AI's suggestion is saved with its evidence and the
+     * "suggested" stamp, whether the user clicked it or left it as suggested; any other answer is the user's own,
+     * so the stamp comes off and their notes stay. Answers can be changed and submitted again.
      */
     @AuraEnabled
     public static void saveChecklist(Id phrId, String payload) {
-        List<AnswerRow> rows = (List<AnswerRow>) JSON.deserialize(payload, List<AnswerRow>.class);
-        if (rows == null || rows.isEmpty()) { return; }
-        Set<Id> ids = new Set<Id>();
-        for (AnswerRow r : rows) { if (r.id != null) { ids.add(r.id); } }
-        Map<Id, compliancequest__SQX_Product_History_Answer__c> have = new Map<Id, compliancequest__SQX_Product_History_Answer__c>([
-            SELECT Id, compliancequest__Notes__c FROM compliancequest__SQX_Product_History_Answer__c
-            WHERE Id IN :ids AND compliancequest__SQX_Product_History_Review__c = :phrId WITH USER_MODE]);
+        List<AnswerRow> rows = String.isBlank(payload) ? new List<AnswerRow>() : (List<AnswerRow>) JSON.deserialize(payload, List<AnswerRow>.class);
+        Map<Id, AnswerRow> byId = new Map<Id, AnswerRow>();
+        for (AnswerRow r : rows) { if (r.id != null && String.isNotBlank(r.answer)) { byId.put(r.id, r); } }
         List<compliancequest__SQX_Product_History_Answer__c> ups = new List<compliancequest__SQX_Product_History_Answer__c>();
-        for (AnswerRow r : rows) {
-            compliancequest__SQX_Product_History_Answer__c a = have.get(r.id);
-            if (a == null || String.isBlank(r.answer)) { continue; }
+        for (compliancequest__SQX_Product_History_Answer__c a : [
+                SELECT Id, compliancequest__Answer__c, compliancequest__Notes__c FROM compliancequest__SQX_Product_History_Answer__c
+                WHERE compliancequest__SQX_Product_History_Review__c = :phrId WITH USER_MODE]) {
+            AnswerRow r = byId.get(a.Id);
+            if (r == null) {
+                if (String.isBlank(a.compliancequest__Answer__c)) { throw new AuraHandledException('Answer every question before you submit.'); }
+                continue;
+            }
             a.compliancequest__Answer__c = r.answer;
             a.compliancequest__Answer_Value__c = r.answer;
             String notes = a.compliancequest__Notes__c;
@@ -294,8 +320,14 @@ public with sharing class AskCqWorkspaceController {
             }
             ups.add(a);
         }
-        if (ups.isEmpty()) { return; }
-        try { update as user ups; } catch (DmlException e) { throw new AuraHandledException('The checklist was not saved: ' + e.getDmlMessage(0)); }
+        Savepoint sp = Database.setSavepoint();
+        try {
+            if (!ups.isEmpty()) { update as user ups; }
+            update as user new compliancequest__SQX_Product_History_Review__c(Id = phrId, Checklist_Draft__c = null);
+        } catch (DmlException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException('The checklist was not submitted: ' + e.getDmlMessage(0));
+        }
     }
 
     /** Saves an answer picked by the user. A changed answer is the user's, so the "suggested" stamp comes off. */

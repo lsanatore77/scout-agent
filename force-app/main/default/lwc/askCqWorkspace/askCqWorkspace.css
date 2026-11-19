@@ -26,6 +26,7 @@
 .foot { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: auto; padding: 16px 20px; }
 .grow { flex: 1 1 auto; }
 .blocker { color: var(--cq-warn-fg); font-weight: 600; font-size: 13px; }
+.footnote { color: var(--cq-muted); font-size: 13px; }
 .sect { padding: 12px 20px 8px; }
 .sect-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; flex-wrap: wrap; }
 .sect-title { font-size: 15px; font-weight: 700; }

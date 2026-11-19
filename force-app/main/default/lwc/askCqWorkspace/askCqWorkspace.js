@@ -3,6 +3,7 @@ import { NavigationMixin } from 'lightning/navigation';
 import getStatus from '@salesforce/apex/AskCqWorkspaceController.getStatus';
 import getChecklist from '@salesforce/apex/AskCqWorkspaceController.getChecklist';
 import saveChecklist from '@salesforce/apex/AskCqWorkspaceController.saveChecklist';
+import saveDraft from '@salesforce/apex/AskCqWorkspaceController.saveDraft';
 
 const OPTION_ORDER = ['Yes', 'No', 'N/A'];
 const STEP_ORDER = ['records', 'checklist', 'summary', 'reports'];
@@ -17,9 +18,10 @@ function orderOptions(options) {
  * PHR workspace: highlights header, review steps down the left (a green check when a step is done),
  * the step's work area beside it, and one Ask CQ popover (Scout through the Agent API) shared by
  * every step. Checklist suggestions are pre-selected in purple from the same logic the Checklist
- * agent uses. Clicking only stages an answer; Save Checklist writes them all, and a suggestion left as it is
- * is saved as accepted. The suggested answer keeps its purple mark when the user picks another, so what
- * CQ.AI suggested stays on screen. Back and Next sit under every step.
+ * agent uses. Clicking only stages an answer. Save keeps the answers as a draft on the PHR, so the user can
+ * leave and come back; Submit Checklist puts them on the checklist itself (every question answered), and a
+ * suggestion left as it is is submitted as accepted. The suggested answer keeps its purple mark when the
+ * user picks another, so what CQ.AI suggested stays on screen. Back and Next sit under every step.
  */
 export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
     @api recordId;
@@ -40,15 +42,19 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         }
     }
 
-    raw = [];        // the questions as saved, with what CQ.AI suggests for each
-    draft = {};      // answers clicked but not saved yet: question id -> answer
+    raw = [];            // the questions as submitted, with what CQ.AI suggests for each
+    draft = {};          // answers chosen on screen: question id -> answer
+    serverDraft = {};    // the draft as last saved on the PHR
     saving = false;
     blocker = '';
-    leaveArmed = false;   // the user has been warned once about unsaved answers
+    leaveArmed = false;  // the user has been warned once about unsaved answers
 
     async loadChecklist() {
         this.raw = await getChecklist({ phrId: this.recordId });
-        this.draft = {};
+        const d = {};
+        this.raw.forEach((q) => { if (q.draftAnswer) { d[q.id] = q.draftAnswer; } });
+        this.serverDraft = d;
+        this.draft = { ...d };
         this.blocker = '';
         this.leaveArmed = false;
     }
@@ -81,8 +87,8 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         });
     }
     get suggestedPending() { return this.raw.filter((q) => !q.answered && q.suggestedAnswer).length; }
-    /** Everything Save Checklist would write: answers that differ from what is saved, untouched suggestions included. */
-    get toSave() {
+    /** Everything Submit Checklist would write: answers that differ from what is on the checklist, untouched suggestions included. */
+    get toSubmit() {
         return this.raw.filter((q) => {
             const s = this.shown(q);
             // also an answer that matches the suggestion but was never marked as one, so the record says where it came from
@@ -91,8 +97,18 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
             .map((q) => { const s = this.shown(q); const ai = s === this.aiAnswer(q);
                 return { id: q.id, answer: s, suggested: ai, basis: ai ? this.aiBasis(q) : null }; });
     }
-    /** Answers the user clicked and has not saved. */
-    get touched() { return this.raw.some((q) => Object.prototype.hasOwnProperty.call(this.draft, q.id) && this.draft[q.id] !== this.baseline(q)); }
+    /** A draft with only the answers that differ from what the checklist would show anyway. */
+    clean(map) {
+        const out = {};
+        this.raw.forEach((q) => {
+            if (Object.prototype.hasOwnProperty.call(map, q.id) && map[q.id] && map[q.id] !== this.baseline(q)) { out[q.id] = map[q.id]; }
+        });
+        return out;
+    }
+    /** Answers chosen on screen that Save has not kept yet. */
+    get dirty() { return JSON.stringify(this.clean(this.draft)) !== JSON.stringify(this.clean(this.serverDraft)); }
+    get hasSavedDraft() { return Object.keys(this.clean(this.serverDraft)).length > 0; }
+    get allAnswered() { return this.raw.length > 0 && this.raw.every((q) => !!this.shown(q)); }
 
     // ----- steps -----
 
@@ -170,8 +186,8 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
     /** Moves to a step. Clicked answers are never dropped silently: the first try to leave warns, the second leaves. */
     async go(key) {
         if (!key || key === this.current) { return; }
-        if (this.current === 'checklist' && this.touched && !this.leaveArmed) {
-            this.blocker = 'You have unsaved answers. Save Checklist, or press again to leave without saving.';
+        if (this.current === 'checklist' && this.dirty && !this.leaveArmed) {
+            this.blocker = 'You have unsaved answers. Save, or press again to leave without them.';
             this.leaveArmed = true;
             return;
         }
@@ -187,10 +203,20 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
     get hasNext() { return this.stepIndex < STEP_ORDER.length - 1; }
     handleBack() { return this.go(STEP_ORDER[this.stepIndex - 1]); }
     handleNext() { return this.go(STEP_ORDER[this.stepIndex + 1]); }
-    get canSave() { return this.isChecklist && this.toSave.length > 0; }
-    get cantSave() { return this.saving || !this.canSave; }
-    /** One blue button in the footer: Save Checklist while there is something to save, otherwise Next. */
-    get nextCls() { return this.canSave ? 'cq-btn-outline' : 'cq-btn-primary'; }
+    get cantSaveDraft() { return this.saving || !this.dirty; }
+    get canSubmit() { return this.isChecklist && this.allAnswered && this.toSubmit.length > 0; }
+    get cantSubmit() { return this.saving || !this.canSubmit; }
+    /** One blue button in the footer: Submit Checklist while there is something to submit, otherwise Next. */
+    get nextCls() { return this.canSubmit ? 'cq-btn-outline' : 'cq-btn-primary'; }
+    /** Why Submit is off, or where the draft stands, beside the buttons. */
+    get footNote() {
+        if (this.blocker) { return this.blocker; }
+        if (!this.isChecklist || !this.raw.length) { return ''; }
+        if (!this.allAnswered) { return 'Answer every question to submit.'; }
+        if (this.dirty) { return ''; }
+        return this.hasSavedDraft ? 'Draft saved, not yet submitted.' : '';
+    }
+    get footCls() { return this.blocker || (this.isChecklist && !this.allAnswered) ? 'blocker' : 'footnote'; }
 
     // ----- Ask CQ -----
 
@@ -207,7 +233,7 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
 
     // ----- checklist answers -----
 
-    /** A click only stages the answer; nothing is written until Save Checklist. */
+    /** A click only stages the answer; nothing is written until Save or Submit Checklist. */
     handleAnswer(event) {
         const id = event.currentTarget.dataset.id;
         const value = event.currentTarget.dataset.value;
@@ -218,18 +244,38 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         this.leaveArmed = false;
     }
 
-    async handleSaveChecklist() {
-        const rows = this.toSave;
-        if (!rows.length || this.saving) { return; }
+    /** Save: keeps the answers chosen so far as a draft on the PHR. Nothing is required, and nothing goes on the checklist. */
+    async handleSaveDraft() {
+        if (this.saving || !this.dirty) { return; }
+        this.saving = true;
+        try {
+            const d = this.clean(this.draft);
+            await saveDraft({ phrId: this.recordId, payload: JSON.stringify(d) });
+            this.serverDraft = { ...d };
+            this.blocker = '';
+            this.leaveArmed = false;
+            this.error = undefined;
+            this.saveNote = 'Draft saved. Submit Checklist to put the answers on the record.';
+        } catch (e) {
+            this.error = (e.body && e.body.message) || 'Could not save the draft.';
+        } finally {
+            this.saving = false;
+        }
+    }
+
+    /** Submit Checklist: the answers go onto the checklist and the draft is cleared. */
+    async handleSubmitChecklist() {
+        const rows = this.toSubmit;
+        if (!this.canSubmit || this.saving) { return; }
         this.saving = true;
         try {
             await saveChecklist({ phrId: this.recordId, payload: JSON.stringify(rows) });
             this.status = await getStatus({ phrId: this.recordId });
             await this.loadChecklist();
             this.error = undefined;
-            this.saveNote = 'Checklist saved.';
+            this.saveNote = 'Checklist submitted.';
         } catch (e) {
-            this.error = (e.body && e.body.message) || 'Could not save the checklist.';
+            this.error = (e.body && e.body.message) || 'Could not submit the checklist.';
         } finally {
             this.saving = false;
         }
