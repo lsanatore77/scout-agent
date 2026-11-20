@@ -2,7 +2,7 @@
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <c-cq-ws-shell record-id={recordId} icon="custom:custom83" object-label="Field Action Review" record-name={v.name}
-            fields={headerFields} show-edit agent-name="CQAI_Field_Action" ask-step={askStep} ask-suggestions={askSuggestions}
+            fields={headerFields} show-edit audit-trail agent-name="CQAI_Field_Action" ask-step={askStep} ask-suggestions={askSuggestions}
             steps={railSteps} can-restart={canRestart} can-reopen={canReopen} resumed={showResumed} error={error}
             show-foot={live} blocker={blocker} back-disabled={cantBack} next-disabled={cantNext} next-label={nextLabel}
             onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onrestart={handleRestart}
@@ -57,6 +57,12 @@
                                     </div>
                                     <span class="cq-sub">{bandHint}</span>
                                 </div>
+                                <template if:true={levelDiffers}>
+                                    <label class="cq-field why"><span class="cq-label">{levelWhyLabel}<span class="cq-req">*</span></span>
+                                        <textarea rows="2" data-f="whyLevel" value={whyLevel} oninput={handleInput} placeholder={whyHint}></textarea>
+                                        <span class="whynote">Saved in the audit trail with CQ.AI's suggestion and the facts behind it.</span>
+                                    </label>
+                                </template>
                                 <label class="cq-field"><span class="cq-label">Health Hazard Summary<span class="cq-req">*</span></span>
                                     <textarea rows="3" data-f="hazard" value={hazard} oninput={handleInput} placeholder="What could happen to a patient or user, how likely, and how serious."></textarea>
                                 </label>
@@ -211,6 +217,12 @@
                     <h3 class="cq-step-title">Recommendation</h3>
                     <div class="recwrap">
                         <c-cq-ws-choice label="Outcome" variant="cards" options={outcomeOptions} value={outcome} disabled={waiting} onchoose={handleOutcome}></c-cq-ws-choice>
+                        <template if:true={outcomeDiffers}>
+                            <label class="cq-field why"><span class="cq-label">{outcomeWhyLabel}<span class="cq-req">*</span></span>
+                                <textarea rows="2" data-f="whyOutcome" value={whyOutcome} oninput={handleInput} placeholder={whyHint}></textarea>
+                                <span class="whynote">Saved in the audit trail with CQ.AI's suggestion and the facts behind it.</span>
+                            </label>
+                        </template>
                         <template if:true={needed}>
                             <div class="ocgrid">
                                 <c-cq-ws-choice class="fasec" label="Field Action" variant="rows" options={faOptions} value={faChoice} disabled={waiting} onchoose={handleFa}>
@@ -240,6 +252,11 @@
                                                         <button key={o.id} class={o.cls} data-id={o.id} onclick={handleScope} aria-pressed={o.pressed}><template if:true={o.cq}><c-cq-ai-why variant="star" subject={o.id} tail=" scope?"></c-cq-ai-why>&nbsp;</template>{o.id}</button>
                                                     </template>
                                                 </div>
+                                                <template if:true={scopeDiffers}>
+                                                    <label class="cq-field why"><span class="cq-label">{scopeWhyLabel}<span class="cq-req">*</span></span>
+                                                        <textarea rows="2" data-f="whyScope" value={whyScope} oninput={handleInput} placeholder={whyHint}></textarea>
+                                                    </label>
+                                                </template>
                                                 <p class="scopenote">{scopeData.why} Full covers every lot of the part, including lots found later; Partial starts with this review's lot, and the rest are chosen and approved in the Field Action.</p>
                                                 <template if:true={isFull}><p class="scopenote">{fullLine}</p></template>
                                                 <template if:true={isPartial}><p class="scopenote">{startLine}</p></template>
@@ -248,6 +265,12 @@
                                     </template>
                                 </c-cq-ws-choice>
                             </div>
+                            <template if:true={faDiffers}>
+                                <label class="cq-field why"><span class="cq-label">{faWhyLabel}<span class="cq-req">*</span></span>
+                                    <textarea rows="2" data-f="whyFa" value={whyFa} oninput={handleInput} placeholder={whyHint}></textarea>
+                                    <span class="whynote">Saved in the audit trail with CQ.AI's suggestion and the facts behind it.</span>
+                                </label>
+                            </template>
                         </template>
                         <label class="cq-field"><span class="cq-label">Rationale<span class="cq-req">*</span></span>
                             <textarea rows="4" data-f="rationale" value={rationale} oninput={handleInput} placeholder="Why this outcome, in a sentence or two."></textarea>

@@ -8,6 +8,7 @@ import submitToCommittee from '@salesforce/apex/CqFieldActionLots.submitToCommit
 import actOnStep from '@salesforce/apex/CqFarCommittee.act';
 import getSign from '@salesforce/apex/CqFarCommittee.getSign';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
+import noteSuggestions from '@salesforce/apex/CqFarSuggestions.note';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 import { readDraft, writeDraft, upTo } from 'c/cqWsDraft';
 
@@ -64,7 +65,7 @@ const SCOPES = ['Full', 'Partial'];
 const DRAFT = {
     version: 3,
     keep: ['hazard', 'level', 'checks', 'outcome', 'rationale', 'faChoice', 'faTitle', 'actionType', 'recallClass', 'scope',
-        'team', 'emergency', 'emergencyReason', 'emergencyUser'],
+        'team', 'emergency', 'emergencyReason', 'emergencyUser', 'whyLevel', 'whyOutcome', 'whyFa', 'whyScope'],
     maps: { 1: [0, ASSESS, ASSESS, ASSESS, REC, COMMITTEE], 2: [0, ASSESS, ASSESS, REC, COMMITTEE] }
 };
 
@@ -99,6 +100,10 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     actionType = '';
     recallClass = '';
     scope = '';          // Full or Partial, for a new field action; the lots of a Partial scope are chosen in the Field Action
+    whyLevel = '';       // reasons for choosing differently from CQ.AI (risk level, outcome, field action, scope): required, saved in the audit trail
+    whyOutcome = '';
+    whyFa = '';
+    whyScope = '';
     team = {};           // committee seat (job function id) -> the person chosen for it
     emergency = false;
     emergencyReason = '';
@@ -117,6 +122,8 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             this.sc = sc;
             this.apply(v, true);
             this.loadPhoto();
+            // CQ.AI's suggestions go in the audit trail the first time they are shown (and again only if they change)
+            if (this.live) { noteSuggestions({ recordId: this.recordId }).catch(() => {}); }
         } catch (e) {
             this.error = this.msg(e, 'Could not read this review.');
         }
@@ -129,8 +136,10 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         this.loadSign();
         if (!first) { return; }
         const d = this.done ? null : readDraft(v.draft, DRAFT);
+        this.whyLevel = ''; this.whyOutcome = ''; this.whyFa = ''; this.whyScope = '';
         if (d) {
             Object.assign(this, d.values);
+            ['whyLevel', 'whyOutcome', 'whyFa', 'whyScope'].forEach((k) => { if (typeof this[k] !== 'string') { this[k] = ''; } });
             this.step = d.step; this.maxStep = d.maxStep; this.seen = d.seen;
             this.resumed = this.maxStep > 0 && !this.waiting;
             if (this.waiting) { this.step = COMMITTEE; this.maxStep = COMMITTEE; this.seen = upTo(COMMITTEE); }
@@ -419,6 +428,41 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         return LEVELS.map((l) => ({ id: l, cq: l === this.v.band, pressed: this.level === l ? 'true' : 'false', cls: l === this.v.band ? 'cq-chip ai' : 'cq-chip' }));
     }
     handleLevel(event) { if (this.waiting) { return; } this.level = event.currentTarget.dataset.id; }
+
+    // ---- choosing differently from CQ.AI: its suggestions rest on facts, so a different choice needs a reason (saved in the audit trail)
+    get whyHint() { return 'What do you know that the facts in CQ do not show?'; }
+    get levelDiffers() { return !!this.level && !!this.v.band && this.level !== this.v.band; }
+    get levelWhyLabel() { return 'Why ' + this.level + ' instead of ' + this.v.band + ', as CQ.AI suggests?'; }
+    get outcomeDiffers() { return !!this.outcome && !!this.v.suggestedOutcome && this.outcome !== this.v.suggestedOutcome; }
+    get outcomeWhyLabel() { return 'Why ' + this.outcome + ' instead of ' + this.v.suggestedOutcome + ', as CQ.AI suggests?'; }
+    /** The field action CQ.AI suggests: one that already covers the lot, or a new one when the part has none open. */
+    get faSuggested() {
+        if (this.v.suggestedOutcome !== 'Field Action Needed') { return ''; }
+        const list = this.v.fieldActions || [];
+        const s = list.find((f) => f.suggested);
+        return s ? s.id : list.length ? '' : 'new';
+    }
+    faName(id) {
+        if (id === 'new') { return 'a new field action'; }
+        const f = (this.v.fieldActions || []).find((x) => x.id === id);
+        return f ? f.name : 'another field action';
+    }
+    get faDiffers() { return this.needed && !!this.faChoice && !!this.faSuggested && this.faChoice !== this.faSuggested; }
+    get faWhyLabel() { return 'Why ' + this.faName(this.faChoice) + ' instead of ' + this.faName(this.faSuggested) + ', as CQ.AI suggests?'; }
+    get scopeDiffers() {
+        const sug = this.scopeData.suggested;
+        return this.isNew && this.v.suggestedOutcome === 'Field Action Needed' && !!this.scope && !!sug && this.scope !== sug;
+    }
+    get scopeWhyLabel() { return 'Why ' + this.scope + ' instead of ' + this.scopeData.suggested + ', as CQ.AI suggests?'; }
+    /** What goes with the recommendation for the audit trail: the field action chosen and the reasons for each different choice. */
+    get decisions() {
+        const reasons = {};
+        if (this.levelDiffers) { reasons['Risk Level'] = this.whyLevel.trim(); }
+        if (this.outcomeDiffers) { reasons.Outcome = this.whyOutcome.trim(); }
+        if (this.faDiffers) { reasons['Field Action'] = this.whyFa.trim(); }
+        if (this.scopeDiffers) { reasons.Scope = this.whyScope.trim(); }
+        return JSON.stringify({ faChoice: this.needed ? this.faChoice : '', reasons });
+    }
     get assessDone() { return !!this.hazard.trim() && !!this.level && this.checksDone; }
 
     get questions() {
@@ -649,13 +693,17 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             if (!this.checksDone) { return 'Answer every question'; }
             if (!this.level) { return 'Choose a risk level'; }
             if (!this.hazard.trim()) { return 'Write the health hazard summary'; }
+            if (this.levelDiffers && !this.whyLevel.trim()) { return 'Give the reason for a different risk level than CQ.AI suggests'; }
         }
         if (i === REC) {
             if (!this.outcome) { return 'Click an outcome to choose it'; }
+            if (this.outcomeDiffers && !this.whyOutcome.trim()) { return 'Give the reason for a different outcome than CQ.AI suggests'; }
             if (!this.rationale.trim()) { return 'Rationale needed'; }
             if (this.needed && !this.faChoice) { return 'Join a field action or start a new one'; }
             if (this.isNew && (!this.faTitle.trim() || !this.actionType)) { return 'Title and action type needed'; }
+            if (this.faDiffers && !this.whyFa.trim()) { return 'Give the reason for a different field action than CQ.AI suggests'; }
             if (this.isNew && !this.scope) { return 'Choose Full or Partial'; }
+            if (this.scopeDiffers && !this.whyScope.trim()) { return 'Give the reason for a different scope than CQ.AI suggests'; }
         }
         if (i === COMMITTEE) {
             if (this.emergency) {
@@ -706,6 +754,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     handleRestart() {
         this.step = 0; this.maxStep = 0; this.seen = { 0: true }; this.resumed = false; this.error = undefined;
         this.outcome = ''; this.rationale = ''; this.actionType = ''; this.recallClass = '';
+        this.whyLevel = ''; this.whyOutcome = ''; this.whyFa = ''; this.whyScope = '';
         const v = { ...this.v, draft: null };
         this.apply(v, true);
         saveDraft({ recordId: this.recordId, draft: null }).catch(() => {});
@@ -754,7 +803,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
                 recordId: this.recordId, hazard: this.hazard.trim(), summary: this.buildSummary(), score: this.v.score, riskLevel: this.level,
                 outcome: this.outcome, rationale: this.rationale.trim(), draft: writeDraft(this, DRAFT), team: JSON.stringify(this.members),
                 emergency: this.emergency, emergencyReason: this.emergencyReason.trim(),
-                scope: this.isNew ? this.scope : '', lots: []
+                scope: this.isNew ? this.scope : '', lots: [], decisions: this.decisions
             });
             this.apply(v, false);
             try { this.sc = await getScope({ recordId: this.recordId }); } catch (e) { /* the scope shown stays as recommended */ }

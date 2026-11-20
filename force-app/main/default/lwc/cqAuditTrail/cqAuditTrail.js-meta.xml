@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>false</isExposed>
+    <description>Audit Trail link and pop-up: every change, CQ.AI Suggestion (with its facts), decision and signature on a record.</description>
+</LightningComponentBundle>

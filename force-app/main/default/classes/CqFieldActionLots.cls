@@ -32,6 +32,9 @@ public with sharing class CqFieldActionLots {
         return s;
     }
 
+    /** CQ.AI's suggested scope for a review already read (no second read of the review). */
+    public static Scope scopeFor(CqFieldActionReview.View v) { return build(v); }
+
     /**
      * The lots of the part and CQ.AI's suggestion. Partial unless a Spread signal shows the same failure on more than one lot.
      * A lot is suggested when it is the review's own lot, has a signal of its own at Assess or above,
@@ -115,10 +118,13 @@ public with sharing class CqFieldActionLots {
     @AuraEnabled
     public static CqFieldActionReview.View submitToCommittee(Id recordId, String hazard, String summary, Integer score, String riskLevel,
                                                              String outcome, String rationale, String draft, String team,
-                                                             Boolean emergency, String emergencyReason, String scope, List<String> lots) {
+                                                             Boolean emergency, String emergencyReason, String scope, List<String> lots,
+                                                             String decisions) {
         // scope applies to a new field action; a review that joins one brings its own lot
         if (outcome != 'Field Action Needed' || String.isBlank(scope)) { scope = null; }
         if (scope != null && scope != 'Full' && scope != 'Partial') { throw new AuraHandledException('Choose Full or Partial.'); }
+        // the choices against CQ.AI's suggestions go in the audit trail; a different choice without a reason stops here
+        CqFarSuggestions.decide(recordId, riskLevel, outcome, scope, decisions);
         CqFarCommittee.submitToCommittee(recordId, hazard, summary, score, riskLevel, outcome, rationale, draft, team, emergency, emergencyReason);
 
         update new Field_Action_Review__c(Id = recordId, Scope__c = scope);

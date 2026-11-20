@@ -129,3 +129,7 @@
 .sigpw:autofill { animation-name: cqAutofillStart; animation-duration: 1ms; }
 @keyframes cqAutofillStart { from { opacity: 1; } to { opacity: 1; } }
 .pwwarn { display: block; margin-top: 6px; font-size: 13px; color: var(--cq-crit-fg); }
+/* the reason for choosing differently from CQ.AI: required, saved in the audit trail */
+.cq-field.why { margin-top: 10px; }
+.why .cq-label { font-size: 13px; font-weight: 600; color: var(--cq-ink); }
+.whynote { display: block; margin-top: 4px; font-size: 13px; color: var(--cq-muted); }

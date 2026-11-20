@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Suggestion__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>For an Accepted or Changed decision: the CQ.AI Suggestion entry it answers.</description>
+    <label>CQ.AI Suggestion</label>
+    <referenceTo>Field_Action_Review_Audit__c</referenceTo>
+    <relationshipLabel>Decisions</relationshipLabel>
+    <relationshipName>Decisions</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

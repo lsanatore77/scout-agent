@@ -42,8 +42,9 @@ public without sharing class CqFarAudit {
         set;
     }
 
-    private static String who() { return UserInfo.getName() + ' (' + UserInfo.getUserName() + ')'; }
-    private static String request() {
+    /** The person, as the trail records them: name and username. */
+    public static String who() { return UserInfo.getName() + ' (' + UserInfo.getUserName() + ')'; }
+    public static String request() {
         try { return Request.getCurrent().getRequestId(); } catch (Exception e) { return null; }
     }
     private static String text(Object v) {
@@ -91,6 +92,12 @@ public without sharing class CqFarAudit {
             New_Value__c = (s.Purpose_Of_Signature__c == null ? s.Activity_Code__c : s.Purpose_Of_Signature__c)
                 + (String.isBlank(s.Verified_By__c) ? '' : ' · verified by ' + s.Verified_By__c),
             Changed_By__c = who().left(255), Request_Id__c = request());
+    }
+
+    /** Writes entries made elsewhere (CQ.AI Suggestions and the decisions on them, see CqFarSuggestions), in system mode. */
+    public static void write(List<Field_Action_Review_Audit__c> rows) {
+        if (!enabled || rows == null || rows.isEmpty()) { return; }
+        insert rows;
     }
 
     /** Before delete of reviews: a review with signatures stays. Deleting it would delete its signatures with it. */

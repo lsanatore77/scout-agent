@@ -14,6 +14,7 @@ export default class CqWsShell extends LightningElement {
     /** [{ key, label, value, id? }]: a field with an id shows as a link to that record */
     @api fields = [];
     @api showEdit = false;
+    @api auditTrail = false;     // shows the Audit Trail link (c-cq-audit-trail) in the header
     @api agentName;
     @api askStep;
     @api askSuggestions;

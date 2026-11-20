@@ -1,0 +1,92 @@
+<template>
+    <button class="opener" onclick={handleOpen} aria-haspopup="dialog">Audit Trail</button>
+    <template if:true={open}>
+        <div class="cq-modal-back" onclick={handleBack} onkeydown={handleKey}>
+            <section class="cq-modal wide" role="dialog" aria-modal="true" aria-labelledby="at-head">
+                <header class="head">
+                    <div class="headtxt">
+                        <h2 id="at-head" class="ttl">Audit Trail</h2>
+                        <span class="sub">{subtitle}</span>
+                    </div>
+                    <button class="cq-modal-x" aria-label="Close" onclick={handleClose}>&times;</button>
+                </header>
+                <div class="chips" role="group" aria-label="Show">
+                    <template for:each={filters} for:item="f">
+                        <button key={f.id} class={f.cls} data-id={f.id} onclick={handleFilter} aria-pressed={f.pressed}>{f.label}</button>
+                    </template>
+                </div>
+                <div class="body">
+                    <template if:true={loading}><div class="spin"><lightning-spinner alternative-text="Loading" size="small"></lightning-spinner></div></template>
+                    <template if:true={error}><div class="cq-msg crit">{error}</div></template>
+
+                    <template if:false={isSign}>
+                        <ol class="list">
+                            <template for:each={rows} for:item="e">
+                                <li key={e.id} class="row">
+                                    <span class="when">{e.when}</span>
+                                    <span class="whocol"><span class={e.tagCls}>{e.who}</span></span>
+                                    <div class="what">
+                                        <div class="titleline">
+                                            <span class="title">{e.title}</span>
+                                            <template if:true={e.hasResult}><span class={e.resultCls}>{e.resultText}</span></template>
+                                        </div>
+                                        <template if:true={e.detail}><span class="detail">{e.detail}</span></template>
+
+                                        <template if:true={e.isChange}>
+                                            <span class="detail">CQ.AI suggested <b>{e.cqValue}</b> &rarr; set to <b>{e.personValue}</b>.</span>
+                                            <span class="reason">Reason: {e.reason}</span>
+                                            <template if:true={e.linkLine}><span class="linkline">{e.linkLine}</span></template>
+                                        </template>
+
+                                        <template if:true={e.isSuggestion}>
+                                            <template if:true={e.firstFact}>
+                                                <ul class="facts">
+                                                    <li><span class="factlab">Facts:</span> {e.firstFact}</li>
+                                                    <template for:each={e.moreFacts} for:item="f"><li key={f.key}>{f.text}</li></template>
+                                                </ul>
+                                                <template if:true={e.hasMore}>
+                                                    <button class="lnk" data-id={e.id} onclick={handleFacts} aria-expanded={e.expandedAttr}>{e.moreLabel}</button>
+                                                </template>
+                                            </template>
+                                            <template if:true={e.hasSources}>
+                                                <span class="srcs"><span class="srclab">Source data:</span>
+                                                    <template for:each={e.srcs} for:item="s">
+                                                        <template if:true={s.link}><button key={s.key} class="lnk" data-id={s.id} onclick={handleSource}>{s.label}</button></template>
+                                                        <template if:false={s.link}><span key={s.key} class="srctxt">{s.label}</span></template>
+                                                    </template>
+                                                </span>
+                                            </template>
+                                        </template>
+                                    </div>
+                                </li>
+                            </template>
+                        </ol>
+                        <template if:true={noRows}><p class="empty">{emptyLine}</p></template>
+                    </template>
+
+                    <template if:true={isSign}>
+                        <div class="sighead"><span class="sigttl">Signatures</span><span class="sub">{signLine}</span></div>
+                        <template if:true={noSigns}><p class="empty">No signatures yet.</p></template>
+                        <template if:false={noSigns}>
+                            <div class="tblwrap">
+                                <table class="tbl">
+                                    <thead><tr><th>Signed</th><th>Who</th><th>Seat</th><th>Meaning</th><th>Comment</th><th>Verified</th></tr></thead>
+                                    <tbody>
+                                        <template for:each={signRows} for:item="s">
+                                            <tr key={s.key}>
+                                                <td>{s.when}</td><td>{s.who}</td><td>{s.seatText}</td>
+                                                <td class={s.meaningCls}>{s.meaning}</td><td class="cmt">{s.commentText}</td>
+                                                <td><template if:true={s.verifiedText}>&#10003; {s.verifiedText}</template></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+                        <p class="note">Each signature is also in the full timeline (All), next to the changes made before it. Signatures cannot be changed or deleted.</p>
+                    </template>
+                </div>
+            </section>
+        </div>
+    </template>
+</template>
