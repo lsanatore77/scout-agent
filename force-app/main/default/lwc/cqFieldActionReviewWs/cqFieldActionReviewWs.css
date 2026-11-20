@@ -114,7 +114,12 @@
 .seat .cq-field { margin-top: 10px; }
 .sbtns { display: flex; gap: 8px; margin-top: 10px; }
 .sbtns button { flex: 1; }
-.actline { min-height: 32px; margin-top: 8px; }
+.signbox { position: relative; }
+/* while signing: covers the comment, password and buttons; the spinner and the status line in the middle */
+.signcover { position: absolute; inset: -6px; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    border-radius: 4px; background: color-mix(in srgb, var(--cq-bg) 88%, transparent); cursor: progress; }
+.spinhold { position: relative; display: block; width: 48px; height: 48px; }
+.covertext { max-width: 90%; font-size: 13px; font-weight: 600; text-align: center; color: var(--cq-ink); }
 .sadmin { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
 .snote { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--cq-line); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
 /* electronic signature on your seat: the password must be typed; the browser's autofill is noticed and cleared */
