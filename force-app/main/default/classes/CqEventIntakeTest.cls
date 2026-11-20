@@ -108,4 +108,48 @@ private class CqEventIntakeTest {
         System.assertEquals(null, CqEventIntake.yesNo('Maybe', false));
         System.assertEquals(0, CqEventIntake.split(null).size());
     }
+
+    @IsTest
+    static void customerReportBecomesACase() {
+        insert new Event_Question__c(Order__c = 7, Question__c = 'Which customer?', Answer_Type__c = 'Text', Role__c = 'Customer', Active__c = true);
+        insert new Account(Name = 'Intake Test Customer');
+        List<Map<String, Object>> rows = new List<Map<String, Object>>();
+        for (Event_Question__c q : [SELECT Id, Order__c FROM Event_Question__c WHERE Active__c = true]) {
+            Integer o = q.Order__c.intValue();
+            String a = o == 1 ? 'At a Customer' : o == 2 ? 'Yes' : o == 3 ? 'Yes' : o == 4 ? 'Not Sure' : o == 7 ? 'Intake Test Customer' : 'Customer returned it';
+            rows.add(new Map<String, Object>{ 'questionId' => q.Id, 'answer' => a });
+        }
+        String payload = JSON.serialize(new Map<String, Object>{ 'title' => 'Cuff leaks at the customer', 'problem' => 'Cuff loses pressure after 2 minutes',
+            'partId' => partId(), 'lot' => 'L7', 'units' => '3', 'answers' => rows });
+        Test.startTest();
+        CqEventIntake.Sent s = CqEventIntake.submitReport(payload);
+        Test.stopTest();
+
+        System.assertEquals('Case', s.kind);
+        System.assert(s.urgent, 'an injury is urgent');
+        System.assertEquals(0, [SELECT COUNT() FROM Quality_Event__c WHERE Title__c = 'Cuff leaks at the customer'], 'a Case, not a Quality Event');
+        Case c = [SELECT CaseNumber, Subject, Description, Origin, Type, Priority, Product__c, Lot_Number__c, Aware_Date__c, Reported_By__c, AccountId,
+                         Product_Caused_Harm__c, Impact_on_Safety_or_Environment__c FROM Case WHERE Id = :s.id];
+        System.assertEquals(c.CaseNumber, s.name);
+        System.assertEquals('Cuff leaks at the customer', c.Subject);
+        System.assertEquals('Mobile Intake', c.Origin);
+        System.assertEquals('Problem', c.Type);
+        System.assertEquals('High', c.Priority);
+        System.assertEquals(partId(), c.Product__c);
+        System.assertEquals('L7', c.Lot_Number__c);
+        System.assertNotEquals(null, c.Aware_Date__c);
+        System.assertEquals(UserInfo.getUserId(), c.Reported_By__c);
+        System.assertEquals([SELECT Id FROM Account WHERE Name = 'Intake Test Customer'].Id, c.AccountId);
+        System.assertEquals('Yes', c.Product_Caused_Harm__c);
+        System.assertEquals(null, c.Impact_on_Safety_or_Environment__c, 'Not Sure is left for triage');
+        System.assert(c.Description.contains('Cuff loses pressure after 2 minutes'));
+        System.assert(c.Description.contains('Which customer? Intake Test Customer'));
+        System.assert(c.Description.contains('Units affected: 3'));
+    }
+
+    @IsTest
+    static void unknownCustomerStaysInTheDescription() {
+        System.assertEquals(null, CqEventIntake.account('No Such Customer Anywhere'));
+        System.assertEquals(null, CqEventIntake.account(null));
+    }
 }

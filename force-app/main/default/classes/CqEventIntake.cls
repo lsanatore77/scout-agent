@@ -2,7 +2,10 @@
  * CqEventIntake: the Report a Problem screen (c-cq-event-intake), with its two tabs.
  *
  * Full Report: submitReport() makes a Quality Event (Waiting for Review) with the problem statement, title, part, lot and
- * units, plus one Event Answer per question. The questions come from Event Question (set per company). Questions with a
+ * units, plus one Event Answer per question. A problem found At a Customer goes to customer service instead: a Case
+ * (Origin Mobile Intake) with the story and every answer in its Description, the part as its Product, the lot, the
+ * customer's Account when the name matches one, and the injury and safety answers in the Case triage fields; the
+ * org's Case assignment rules route it. The questions come from Event Question (set per company). Questions with a
  * Role also fill the event's own fields (Where Found, Product Affected, Injury, Safety Risk), and any answer listed in a
  * question's Urgent When marks the event Urgent.
  *
@@ -33,7 +36,9 @@ public with sharing class CqEventIntake {
     }
     public class Sent {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public Boolean urgent = false;
+        @AuraEnabled public String kind = 'Event';     // 'Case' when it went to customer service
     }
+    public static final String AT_CUSTOMER = 'At a Customer';
     public class Trend {
         @AuraEnabled public Decimal total = 0; @AuraEnabled public Integer limitCount; @AuraEnabled public Integer days;
         @AuraEnabled public String scope; @AuraEnabled public String partNumber;
@@ -101,6 +106,7 @@ public with sharing class CqEventIntake {
             else if (q.Role__c == 'Safety Risk') { ev.Safety_Risk__c = yesNo(ans, true); }
         }
         ev.Urgent__c = urgent;
+        if (ev.Where_Found__c == AT_CUSTOMER) { return toCase(ev, qs, given, urgent); }
         insert ev;
 
         List<Event_Answer__c> rows = new List<Event_Answer__c>();
@@ -113,6 +119,47 @@ public with sharing class CqEventIntake {
         Sent s = new Sent();
         s.id = ev.Id; s.name = [SELECT Name FROM Quality_Event__c WHERE Id = :ev.Id].Name; s.urgent = urgent;
         return s;
+    }
+
+    /**
+     * A customer problem becomes a Case for customer service, not a Quality Event. The Case carries what the intake
+     * collected; the answers are written into its Description, as Event Answers belong to a Quality Event.
+     */
+    @TestVisible
+    static Sent toCase(Quality_Event__c ev, List<Event_Question__c> qs, Map<Id, String> given, Boolean urgent) {
+        Case c = new Case(Subject = ev.Title__c, Origin = 'Mobile Intake', Type = 'Problem', Priority = urgent ? 'High' : 'Medium',
+            Aware_Date__c = ev.Aware_Date__c, Reported_By__c = ev.Reported_By__c, Lot_Number__c = ev.Lot_Number__c, Product__c = ev.Part__c);
+        List<String> lines = new List<String>();
+        String customer;
+        for (Event_Question__c q : qs) {
+            String ans = given.get(q.Id);
+            if (ans == null) { continue; }
+            lines.add('- ' + q.Question__c + ' ' + ans);
+            if (q.Role__c == 'Injury') { c.Product_Caused_Harm__c = yesNo(ans, false); }
+            else if (q.Role__c == 'Safety Risk') { c.Impact_on_Safety_or_Environment__c = yesNo(ans, false); }   // Not Sure stays blank for triage
+            else if (q.Role__c == 'Customer') { customer = ans; }
+        }
+        c.AccountId = account(customer);
+        c.Description = (ev.Problem_Statement__c
+            + '\n\nReported in the mobile intake by ' + UserInfo.getName() + ' on ' + ev.Aware_Date__c.format()
+            + (String.isBlank(ev.Lot_Number__c) ? '' : '\nLot: ' + ev.Lot_Number__c)
+            + (ev.Units_Affected__c == null ? '' : '\nUnits affected: ' + ev.Units_Affected__c)
+            + (lines.isEmpty() ? '' : '\n\nAnswers:\n' + String.join(lines, '\n'))).left(32000);
+        Database.DMLOptions o = new Database.DMLOptions();
+        o.assignmentRuleHeader.useDefaultRule = true;     // the org's Case assignment rules route it
+        Database.insert(c, o, AccessLevel.USER_MODE);
+        Sent s = new Sent();
+        s.id = c.Id; s.kind = 'Case'; s.urgent = urgent;
+        s.name = [SELECT CaseNumber FROM Case WHERE Id = :c.Id WITH USER_MODE].CaseNumber;
+        return s;
+    }
+
+    /** The customer's Account when exactly one Account has that name; otherwise the name stays in the Description. */
+    @TestVisible
+    static Id account(String name) {
+        if (String.isBlank(name)) { return null; }
+        List<Account> a = [SELECT Id FROM Account WHERE Name = :name.trim() WITH USER_MODE LIMIT 2];
+        return a.size() == 1 ? a[0].Id : null;
     }
 
     // ---------------------------------------------------------------- Quick Log

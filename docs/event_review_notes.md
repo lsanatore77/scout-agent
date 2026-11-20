@@ -339,3 +339,13 @@ to runtime.
 - **This is the define-once path**: change a token in `cqStyles` and every importing
   component updates. Convert future components by importing `cqStyles` (keep only
   component-specific rules locally).
+
+## Customer Reports Go to a Case (2026-11-20)
+
+- Mobile intake unchanged. On send, a report whose "Where did this happen?" answer is **At a Customer** becomes a **Case** instead of a Quality Event (no Quality Event, no Event Answers).
+- Case: Subject = title; Description = story + reporter + date + lot + units + every Q&A; Origin = **Mobile Intake** (new CaseOrigin value); Type = Problem; Priority High when urgent (injury, safety Yes/Not Sure), else Medium; Product__c = resolved CQ Part; Lot_Number__c, Aware_Date__c, Reported_By__c (new Case fields); AccountId when "Which customer?" (role Customer) matches exactly one Account name.
+- Triage pre-fill (colleague's CQ Triage Agent package fields): Injury -> Product_Caused_Harm__c (Yes/No); Safety Risk -> Impact_on_Safety_or_Environment__c (Yes/No; Not Sure left blank for triage). Malfunction / Damaged / Not as Expected left for triage.
+- Routed by the org's default Case assignment rules (none active in dev, so the reporter owns it there).
+- Event Answers are master-detail to Quality Event, so Case answers live in the Description. Linking answer records to Cases would need that relationship changed (not done).
+- The CQ Triage Agent package (v1.0) installed here has its flows, Apex action, Case and Lot Info fields and permission set, but not the agent itself; its agent script / metadata is needed from the colleague.
+- Access: CQ.AI Quality permission set has Case create/read, Account read, and edit on the Case fields set here. Intake users need a licence that includes Case.

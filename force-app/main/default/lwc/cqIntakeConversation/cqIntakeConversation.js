@@ -184,8 +184,12 @@ export default class CqIntakeConversation extends LightningElement {
                 this.done = true;
                 this.sentName = sent.name;
                 this.sentUrgent = sent.urgent === true;
-                const note = 'Sent. This is ' + sent.name + ', now waiting for a reviewer' +
-                    (sent.urgent ? ' — flagged urgent, so it goes to the top of the queue.' : '.');
+                // a problem found at a customer goes to customer service as a Case; anything else to a reviewer
+                const note = sent.kind === 'Case'
+                    ? 'Sent to customer service as Case ' + sent.name +
+                        (sent.urgent ? ' — flagged high priority, so it is handled first.' : '.')
+                    : 'Sent. This is ' + sent.name + ', now waiting for a reviewer' +
+                        (sent.urgent ? ' — flagged urgent, so it goes to the top of the queue.' : '.');
                 this.pushAi(note);
                 this.speak(note);
                 this.busy = false;
