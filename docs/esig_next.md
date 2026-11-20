@@ -34,12 +34,17 @@ State on 2026-11-19:
 4. Committee card: show the assignee's current name (`cqext__CQAPR_Assignee_User__r.Name`), not the saved `cqext__Assignee_Name__c`.
 5. Test: Lou is the only Field Action Emergency Approver, so an emergency approval on a test review lets Lou sign with his own password.
 
-## Parked Idea: Accessibility Setting (not to build yet, 2026-11-20)
+## Agreed Direction: Accessible Signing (2026-11-20, nothing built yet)
 
-- Conflict: refusing autofill/paste (our defence) fails WCAG 2.2 SC 3.3.8 Accessible Authentication (Minimum), see W3C failure F109; the masked text box may also be read aloud by screen readers.
-- Lou's idea: a setting in the system that decides which signing option the page presents:
-  - strict: typed-only password, autofill/paste refused (today);
-  - accessible: real password box, password managers and paste allowed, deliberate act shown another way (e.g. "I am signing this myself", meaning, comment).
-- Open questions: org-wide setting vs per user (e.g. an assistive-technology preference); who may change it; recorded on the signature row which mode was used.
-- Long term: Entra SSO signing (passkeys, phone approval) meets SC 3.3.8 and the deliberate-act aim together.
+- WCAG 2.2 SC 3.3.8: a typed-only password (autofill/paste refused, W3C failure F109) is fine only if there is another way to sign without a memory test, reachable from the signing page by the person themselves.
+- On the seat, two ways to sign:
+  - Sign with Password: typed only, autofill/paste refused (today).
+  - Sign with Company Sign-In: Entra (passkey, phone approval, password managers allowed on Entra's page). Needs the Entra SSO project.
+- The alternative is visible on the seat ("Other ways to sign" or a second button), keyboard and screen reader friendly, no admin and no reason needed.
+- A personal signing preference opens the seat on the person's chosen method. An admin may preset it for people who asked for an accommodation, with their agreement. Never the only route: not everyone discloses, needs change, new hires and customer users are unknown.
+- Each signature records the method (Verified By: Password (CQ) / Company Sign-In (Entra)).
+- Password box goes back to a real password box (screen readers announce it as a password); Edge's saved list returns but picking from it is still refused.
+- Conditions: the tenant's Entra keeps password managers/passkeys on; the freshness check lets people retry without losing their work.
+- Until Entra is connected: internal demo only, not described to customers as accessible.
 - Separate: general accessibility review of the workspace (colour-only meaning, keyboard access to the signal table rows, focus, 11px header contrast, announcing banner messages).
+- Next: mockup of the two-method seat on the Signing board before building.
