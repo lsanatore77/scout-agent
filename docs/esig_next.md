@@ -64,3 +64,11 @@ State on 2026-11-19:
 - Field Action Review (New) on the shared workspace pieces is ahead of Old: e-signature, committee layout and the signing cover are only in New. Record page in dev: Old (everyone) and New (Lou only) tabs.
 - Waiting on Lou: where signatures show (board "Where Signatures Show": A on the seat, B a table on the decided review, C a related list) and how the audit trail is viewed.
 - Then: compare Old and New, make New the record page for everyone, retire cqFieldActionWorkspace; next workspace to convert onto the shared pieces (suggested: Field Action).
+
+## Parked (2026-11-20, evening)
+
+- **Signing speed.** The last seat's Sign and Approve took about 12 seconds in Lou's recording. Part is CQ (password
+  check, approval engine); part is ours: closing the approval decides the review and the request reads the whole
+  review view (signals, records, trend, committee) about four times. Measure first, then read it once and reuse it.
+- **Audit trail note for older reviews** (offered): when a review has no CQ.AI Suggestions, say it was decided before
+  suggestion tracking began (Nov 20, 2026).
