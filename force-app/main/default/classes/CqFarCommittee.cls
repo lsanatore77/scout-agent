@@ -28,6 +28,7 @@ public with sharing class CqFarCommittee {
         @AuraEnabled public Id id; @AuraEnabled public String seat; @AuraEnabled public String person; @AuraEnabled public String status;
         @AuraEnabled public Datetime doneOn; @AuraEnabled public String doneBy; @AuraEnabled public String comment;
         @AuraEnabled public Boolean canAct = false;
+        @AuraEnabled public Boolean mine = false;    // the step is assigned to the running user, or they are its delegate
     }
     public class Info {
         @AuraEnabled public List<Seat> seats = new List<Seat>();
@@ -91,8 +92,8 @@ public with sharing class CqFarCommittee {
                 s.id = t.Id; s.seat = t.cqext__CQAPR_Job_Function__r == null ? 'Member' : seatName(t.cqext__CQAPR_Job_Function__r.Name);
                 s.person = t.cqext__Assignee_Name__c; s.status = t.cqext__Status__c; s.doneOn = t.cqext__Achieved_On__c;
                 s.doneBy = t.cqext__CQAPR_Achieved_By__r?.Name; s.comment = t.cqext__Remark__c;
-                s.canAct = open == true && t.cqext__Status__c == 'Open'
-                    && (t.cqext__CQAPR_Assignee_User__c == UserInfo.getUserId() || t.cqext__CQAPR_Delegate_User__c == UserInfo.getUserId() || admin);
+                s.mine = t.cqext__CQAPR_Assignee_User__c == UserInfo.getUserId() || t.cqext__CQAPR_Delegate_User__c == UserInfo.getUserId();
+                s.canAct = open == true && t.cqext__Status__c == 'Open' && (s.mine || admin);
                 x.steps.add(s);
                 if (t.cqext__Status__c == 'Rejected') { back.add(s.person + ' (' + s.seat + '): ' + (String.isBlank(s.comment) ? 'no comment' : s.comment)); }
             }

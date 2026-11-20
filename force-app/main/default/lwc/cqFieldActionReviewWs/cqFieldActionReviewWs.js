@@ -471,7 +471,11 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     handleScope(event) { if (this.waiting) { return; } this.scope = event.currentTarget.dataset.id; }
     handleOutcome(event) { if (this.waiting) { return; } this.outcome = event.detail; }
     handleFa(event) { if (this.waiting) { return; } this.faChoice = event.detail; }
-    handleInput(event) { if (this.waiting) { return; } this[event.target.dataset.f] = event.target.value; }
+    handleInput(event) {
+        const f = event.target.dataset.f;
+        if (this.waiting && f !== 'comment') { return; }      // with the committee only a member's comment can be typed
+        this[f] = event.target.value;
+    }
 
     // ---- step 6: committee approval, on CQ Approvals
     get committee() { return (this.v && this.v.committee) || {}; }
@@ -496,16 +500,34 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         if (this.emergency) { const s = this.emergencySeat; return s ? [{ functionId: s.functionId, userId: this.emergencyUser }] : []; }
         return this.seats.map((s) => ({ functionId: s.functionId, userId: this.team[s.functionId] }));
     }
+    /** One row per committee seat: your own open seat is highlighted with its buttons; other open seats say who they wait for. */
     get csteps() {
-        return (this.committee.steps || []).map((s) => ({
-            ...s, label: STEP_LABEL[s.status] || s.status, cls: 'cq-pill soft ' + (SEAT_TONE[(s.status || '').toLowerCase()] || 'neu'),
-            line: [s.person, s.doneOn ? new Date(s.doneOn).toLocaleString() : '', s.doneBy && s.doneBy !== s.person ? 'recorded by ' + s.doneBy : ''].filter(Boolean).join(' · '),
-            quote: s.comment ? '“' + s.comment + '”' : ''
-        }));
+        return (this.committee.steps || []).map((s) => {
+            const open = s.status === 'Open';
+            const yours = open && s.mine && s.canAct;
+            const when = s.doneOn ? new Date(s.doneOn).toLocaleString() : '';
+            const line = open ? (s.mine ? 'Waiting for you' : 'Waiting for ' + s.person)
+                : [STEP_LABEL[s.status] && s.status !== 'Void' && s.status !== 'Skipped' ? STEP_LABEL[s.status] + (when ? ' ' + when : '') : '',
+                    s.doneBy && s.doneBy !== s.person ? 'recorded by ' + s.doneBy : ''].filter(Boolean).join(' · ');
+            return {
+                ...s, yours, adminAct: s.canAct && !yours,
+                who: s.person + (s.mine ? ' (you)' : ''),
+                label: open ? (yours ? 'Your Approval' : 'Waiting') : (STEP_LABEL[s.status] || s.status),
+                cls: 'cq-pill soft ' + (yours ? 'you' : SEAT_TONE[(s.status || '').toLowerCase()] || 'neu'),
+                rowCls: 'seat' + (yours ? ' yours' : ''),
+                line, quote: s.comment ? '“' + s.comment + '”' : ''
+            };
+        });
     }
+    get hasYours() { return this.csteps.some((s) => s.yours); }
+    get adminComment() { return this.canActAny && !this.hasYours; }
+    /** The outcome matches what CQ.AI suggested. */
+    get matchesSuggestion() { return !!this.v.suggestedOutcome && this.outcomeNow === this.v.suggestedOutcome; }
     get approvedCount() { return this.csteps.filter((s) => s.status === 'Approved').length; }
     get canActAny() { return this.csteps.some((s) => s.canAct); }
     get committeeTitle() { return 'Committee' + (this.committee.approvalName ? ' · ' + this.committee.approvalName : ''); }
+    get approvedLine() { return this.approvedCount + ' of ' + this.csteps.length + ' approved'; }
+    get approvalNote() { return 'Approvals run on CQ Approvals' + (this.committee.approvalName ? ' (' + this.committee.approvalName + ')' : '') + '. The Field Action starts when every member has approved.'; }
     get sentBack() { return this.live ? this.committee.sentBack : ''; }
     /** What the committee is approving: the coordinator's recommendation and what it rests on. */
     get recRows() {
@@ -518,9 +540,9 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             ['Risk', (this.level || v.riskLevel || v.band) + ' · score ' + v.score + ' of 100'],
             ['Health Hazard Summary', this.hazard || v.hazard],
             ['Checklist', QUESTIONS.filter((q) => this.checks[q.id]).map((q) => q.text + ' ' + this.checks[q.id]).join('\n')],
-            ['Recommended By', [c.recommendedBy, c.recommendedOn ? new Date(c.recommendedOn).toLocaleString() : ''].filter(Boolean).join(' · ')],
+            ['Submitted', [c.recommendedBy, c.recommendedOn ? new Date(c.recommendedOn).toLocaleString() : ''].filter(Boolean).join(' · ')],
             ['Emergency', c.emergency ? c.emergencyReason : '']
-        ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val }));
+        ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val, isOutcome: k === 'Outcome' }));
     }
     get outcomeNow() { return this.outcome || this.v.outcome; }
     async handleAct(event) {
@@ -636,7 +658,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             ['Outcome', v.outcome], ['Field Action', v.faName || 'None'], ['Scope', this.scopeLine], ['Risk', (v.riskLevel || '') + ' · score ' + v.score + ' of 100'],
             ['Rationale', v.rationale], ['Committee', this.committee.approvalName ? this.committee.approvalName + ' · ' + this.approvedCount + ' of ' + this.csteps.length + ' approved' : ''],
             ['Approved By', v.decidedBy]
-        ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val }));
+        ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val, isOutcome: k === 'Outcome' }));
     }
     handleFinish() { this.showSummary = false; }
 

@@ -297,32 +297,51 @@
                         </div>
                     </template>
                     <template if:true={waiting}>
-                        <div class="cq-cols top">
-                            <div class="card">
+                        <div class="cgrid">
+                            <section class="card rec" aria-label="Recommendation">
                                 <div class="lab">Recommendation</div>
                                 <template for:each={recRows} for:item="r">
-                                    <div key={r.key} class="rr"><div class="cq-sub">{r.k}</div><div class="rv2">{r.v}</div></div>
+                                    <div key={r.key} class="rrow">
+                                        <span class="rk">{r.k}</span>
+                                        <template if:true={r.isOutcome}>
+                                            <span class="rv"><span class="rbig">{r.v}</span><template if:true={matchesSuggestion}><span class="cqmatch"><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor"></path></svg>Matches CQ.AI Suggests</span></template></span>
+                                        </template>
+                                        <template if:false={r.isOutcome}><span class="rv">{r.v}</span></template>
+                                    </div>
                                 </template>
-                            </div>
-                            <div class="card">
-                                <div class="lab">{committeeTitle}</div>
+                            </section>
+                            <section class="card seats" aria-label="Committee">
+                                <div class="shead"><span class="lab">Committee</span><span class="cq-sub">{approvedLine}</span></div>
                                 <template for:each={csteps} for:item="s">
-                                    <div key={s.id} class="crow">
-                                        <span class="cq-stack"><span class="fname">{s.seat}</span><span class="cq-sub">{s.line}</span><template if:true={s.quote}><span class="cq-sub">{s.quote}</span></template></span>
-                                        <span class={s.cls}>{s.label}</span>
-                                        <template if:true={s.canAct}>
-                                            <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
-                                            <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
+                                    <div key={s.id} class={s.rowCls}>
+                                        <div class="stop">
+                                            <span class="cq-stack"><span class="fname">{s.seat}</span><span class="who">{s.who}</span><span class="cq-sub">{s.line}</span><template if:true={s.quote}><span class="cq-sub">{s.quote}</span></template></span>
+                                            <span class={s.cls}>{s.label}</span>
+                                        </div>
+                                        <template if:true={s.yours}>
+                                            <label class="cq-field"><span class="cq-label">Comment</span>
+                                                <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder="Required when you send it back."></textarea>
+                                            </label>
+                                            <div class="sbtns">
+                                                <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
+                                                <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
+                                            </div>
+                                        </template>
+                                        <template if:true={s.adminAct}>
+                                            <div class="sadmin"><span class="cq-sub">As admin:</span>
+                                                <button class="cq-link" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
+                                                <button class="cq-link" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
+                                            </div>
                                         </template>
                                     </div>
                                 </template>
-                                <template if:true={canActAny}>
-                                    <label class="cq-field"><span class="cq-label">Comment</span>
+                                <template if:true={adminComment}>
+                                    <div class="seat"><label class="cq-field"><span class="cq-label">Comment</span>
                                         <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder="Required when you send it back."></textarea>
-                                    </label>
+                                    </label></div>
                                 </template>
-                                <p class="cq-note">Approvals run on CQ Approvals. The Field Action starts when every member has approved.</p>
-                            </div>
+                                <p class="snote">{approvalNote}</p>
+                            </section>
                         </div>
                     </template>
                 </template>
