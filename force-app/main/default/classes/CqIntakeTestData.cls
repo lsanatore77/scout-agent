@@ -1,24 +1,36 @@
 /**
- * Test data for the mobile intake tests. A CQ part needs Title and Part Definition when the CQ add-on that adds them
- * (cqext) is installed; they are set here only when the org has them, so the tests run with core CQ alone too.
+ * Test data for the mobile intake tests.
+ *
+ * runner(): the user the intake tests run as. The intake code reads and writes as the user, so the tests need a user
+ * with the package's permission sets: in a scratch org or the package build org the running admin has no access to the
+ * new fields. When the permission sets are in the org, a test user is made with them (System Administrator profile, for
+ * CQ's own objects); in an org without them (dev, where admins already have access) it is the running user.
+ *
+ * part(): a CQ part needs Title and Part Definition when the CQ add-on that adds them (cqext) is installed; they are set
+ * only when the org has them, so the tests run with core CQ alone too.
  */
 @IsTest
 public class CqIntakeTestData {
-    /**
-     * Gives the running user the package's permission sets (when they are in the org), so the intake code, which
-     * reads and writes as the user, can see its own fields. Needed wherever the running admin has no field access to
-     * the new fields: a scratch org and the package build org. In an org without these permission sets it does nothing.
-     */
-    public static void grantAccess() {
-        Id me = UserInfo.getUserId();
-        Set<Id> have = new Set<Id>();
-        for (PermissionSetAssignment a : [SELECT PermissionSetId FROM PermissionSetAssignment WHERE AssigneeId = :me]) { have.add(a.PermissionSetId); }
-        List<PermissionSetAssignment> add = new List<PermissionSetAssignment>();
-        for (PermissionSet p : [SELECT Id FROM PermissionSet WHERE Name IN ('CQ_Mobile_Intake_User', 'CQ_Mobile_Intake_Admin')]) {
-            if (!have.contains(p.Id)) { add.add(new PermissionSetAssignment(AssigneeId = me, PermissionSetId = p.Id)); }
+    static final String RUNNER_PREFIX = 'intake.runner.';
+
+    public static User runner() {
+        List<User> existing = [SELECT Id FROM User WHERE Username LIKE :(RUNNER_PREFIX + '%') AND IsActive = true LIMIT 1];
+        if (!existing.isEmpty()) { return existing[0]; }
+        List<PermissionSet> sets = [SELECT Id FROM PermissionSet WHERE Name IN ('CQ_Mobile_Intake_User', 'CQ_Mobile_Intake_Admin')];
+        User me = new User(Id = UserInfo.getUserId());
+        if (sets.isEmpty()) { return me; }
+        Profile admin = [SELECT Id FROM Profile WHERE PermissionsModifyAllData = true AND UserType = 'Standard' ORDER BY CreatedDate LIMIT 1];
+        User u = new User(LastName = 'Intake Runner', Alias = 'intrun', Email = 'intake.runner@example.com',
+            Username = RUNNER_PREFIX + UserInfo.getOrganizationId() + '.' + Crypto.getRandomInteger() + '@example.com',
+            ProfileId = admin.Id, EmailEncodingKey = 'UTF-8', LanguageLocaleKey = 'en_US', LocaleSidKey = 'en_US',
+            TimeZoneSidKey = 'America/Chicago');
+        System.runAs(me) {   // keeps the user and permission set setup apart from the test's records
+            insert u;
+            List<PermissionSetAssignment> a = new List<PermissionSetAssignment>();
+            for (PermissionSet p : sets) { a.add(new PermissionSetAssignment(AssigneeId = u.Id, PermissionSetId = p.Id)); }
+            insert a;
         }
-        if (add.isEmpty()) { return; }
-        System.runAs(new User(Id = me)) { insert add; }   // runAs keeps this setup change apart from the test's data
+        return u;
     }
 
     public static compliancequest__SQX_Part__c part(compliancequest__SQX_Part__c p) {
