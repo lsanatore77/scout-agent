@@ -103,6 +103,8 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     emergencyReason = '';
     emergencyUser = '';
     comment = '';        // a committee member's comment when approving or sending back
+    pwWarn = '';         // why the signature password was cleared (it was filled in, not typed)
+    _pw = '';            // the signature password: never rendered, never stored, cleared after every attempt
     evTab = 'signals';   // the evidence tab open beside the checklist
 
     async connectedCallback() {
@@ -510,7 +512,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
                 : [STEP_LABEL[s.status] && s.status !== 'Void' && s.status !== 'Skipped' ? STEP_LABEL[s.status] + (when ? ' ' + when : '') : '',
                     s.doneBy && s.doneBy !== s.person ? 'recorded by ' + s.doneBy : ''].filter(Boolean).join(' · ');
             return {
-                ...s, yours, adminAct: s.canAct && !yours,
+                ...s, yours, adminAct: s.canAct && !yours && !this.needSign,     // a signature is the assigned person's own: no acting for others
                 who: s.person + (s.mine ? ' (you)' : ''),
                 label: open ? (yours ? 'Your Approval' : 'Waiting') : (STEP_LABEL[s.status] || s.status),
                 cls: 'cq-pill soft ' + (yours ? 'you' : SEAT_TONE[(s.status || '').toLowerCase()] || 'neu'),
@@ -520,6 +522,40 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         });
     }
     get hasYours() { return this.csteps.some((s) => s.yours); }
+    // ---- electronic signature: what CQ's policy asks for each action on this review
+    signOf(action) { return ((this.committee.sign || {})[action]) || {}; }
+    get needSign() { return !!(this.signOf('approve').required || this.signOf('reject').required); }
+    get signUnknown() { return !!(this.signOf('approve').unknown || this.signOf('reject').unknown); }
+    get approveLabel() { return this.signOf('approve').required ? 'Sign and Approve' : 'Approve'; }
+    get rejectLabel() { return this.signOf('reject').required ? 'Sign and Send Back' : 'Send Back'; }
+    get commentRequired() { return !!this.signOf('approve').comment; }
+    get commentHint() { return this.commentRequired ? 'Required with your signature.' : 'Required when you send it back.'; }
+    get signMeaning() {
+        const p = this.signOf('approve').purpose;
+        return 'By signing, you ' + (p ? 'confirm: ' + p : 'approve this field action recommendation') + '. Type your password; it is not saved.';
+    }
+    /** Only typed characters count: autofill, paste and drop are refused, so the signer types the password themselves. */
+    handlePwInput(event) {
+        const t = event.inputType || '';
+        if (t.startsWith('insertText') || t.startsWith('delete') || t === 'insertCompositionText') {
+            this._pw = event.target.value; this.pwWarn = '';
+            return;
+        }
+        this.refusePw(event.target);
+    }
+    handlePwBlock(event) { event.preventDefault(); this.refusePw(event.target); }
+    /** The browser filled the field itself (its autofill animation starts): clear it. */
+    handlePwAutofill(event) { if ((event.animationName || '').toLowerCase().includes('autofill')) { this.refusePw(event.target); } }
+    refusePw(el) {
+        if (el) { el.value = ''; }
+        this._pw = '';
+        this.pwWarn = 'Please type your password. Filled-in or pasted passwords are not accepted for a signature.';
+    }
+    clearPw() {
+        this._pw = '';
+        const el = this.template.querySelector('input.sigpw');
+        if (el) { el.value = ''; }
+    }
     get adminComment() { return this.canActAny && !this.hasYours; }
     /** The outcome matches what CQ.AI suggested. */
     get matchesSuggestion() { return !!this.v.suggestedOutcome && this.outcomeNow === this.v.suggestedOutcome; }
@@ -549,9 +585,14 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         const d = event.currentTarget.dataset;
         if (this.saving) { return; }
         if (d.a === 'reject' && !this.comment.trim()) { this.error = 'Add a comment saying why you are sending it back.'; return; }
+        const g = this.signOf(d.a);
+        if (g.required && g.comment && !this.comment.trim()) { this.error = 'A comment is required with your signature.'; return; }
+        if (g.required && !this._pw) { this.error = 'Type your password to sign.'; return; }
+        const password = g.required ? this._pw : null;
+        this.clearPw();                 // never kept, whatever happens next
         this.saving = true; this.error = undefined;
         try {
-            const v = await actOnStep({ recordId: this.recordId, stepId: d.id, action: d.a, comment: this.comment.trim() });
+            const v = await actOnStep({ recordId: this.recordId, stepId: d.id, action: d.a, comment: this.comment.trim(), password });
             this.comment = '';
             this.apply(v, false);
             if (this.done) { this.showSummary = true; }

@@ -319,12 +319,21 @@
                                             <span class={s.cls}>{s.label}</span>
                                         </div>
                                         <template if:true={s.yours}>
-                                            <label class="cq-field"><span class="cq-label">Comment</span>
-                                                <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder="Required when you send it back."></textarea>
+                                            <label class="cq-field"><span class="cq-label">Comment<template if:true={commentRequired}><span class="cq-req">*</span></template></span>
+                                                <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder={commentHint}></textarea>
                                             </label>
+                                            <template if:true={needSign}>
+                                                <p class="signmean">{signMeaning}</p>
+                                                <label class="cq-field"><span class="cq-label">Password<span class="cq-req">*</span></span>
+                                                    <input type="password" class="sigpw" name="cq-esig-confirm" autocomplete="new-password" spellcheck="false"
+                                                        data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"
+                                                        oninput={handlePwInput} onpaste={handlePwBlock} ondrop={handlePwBlock} onanimationstart={handlePwAutofill} />
+                                                </label>
+                                                <template if:true={pwWarn}><span class="pwwarn">{pwWarn}</span></template>
+                                            </template>
                                             <div class="sbtns">
-                                                <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
-                                                <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
+                                                <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>{approveLabel}</button>
+                                                <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>{rejectLabel}</button>
                                             </div>
                                         </template>
                                         <template if:true={s.adminAct}>
@@ -340,6 +349,7 @@
                                         <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder="Required when you send it back."></textarea>
                                     </label></div>
                                 </template>
+                                <template if:true={signUnknown}><p class="snote">Could not check whether this needs an electronic signature. Approving is held until it can be checked; refresh to try again.</p></template>
                                 <p class="snote">{approvalNote}</p>
                             </section>
                         </div>

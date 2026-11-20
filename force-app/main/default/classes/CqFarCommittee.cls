@@ -37,6 +37,16 @@ public with sharing class CqFarCommittee {
         @AuraEnabled public Boolean emergency = false; @AuraEnabled public String emergencyReason;
         @AuraEnabled public String recommendedBy; @AuraEnabled public Datetime recommendedOn;
         @AuraEnabled public String sentBack;    // the committee's comments when the last approval was sent back
+        @AuraEnabled public Map<String, Sign> sign;    // 'approve' / 'reject' -> what CQ's electronic signature policy asks for
+    }
+    /** What CQ's electronic signature policy asks for one committee action on a review. */
+    public class Sign {
+        @AuraEnabled public Boolean required = false;
+        @AuraEnabled public Boolean comment = false;      // a comment is required with the signature
+        @AuraEnabled public String purpose;               // the meaning of the signature, from CQ
+        @AuraEnabled public Boolean sso = false;
+        @AuraEnabled public Boolean mfa = false;
+        @AuraEnabled public Boolean unknown = false;      // CQ could not be asked: the action is refused rather than taken unsigned
     }
     public class Member { @AuraEnabled public Id functionId; @AuraEnabled public Id userId; }
 
@@ -82,7 +92,7 @@ public with sharing class CqFarCommittee {
         List<String> back = new List<String>();
         for (cqext__CQAPR_Approval__c a : [
                 SELECT Id, Name, cqext__Approval_Status__c,
-                       (SELECT Id, cqext__Status__c, cqext__CQAPR_Job_Function__r.Name, cqext__CQAPR_Assignee_User__c, cqext__Assignee_Name__c,
+                       (SELECT Id, cqext__Status__c, cqext__CQAPR_Job_Function__r.Name, cqext__CQAPR_Assignee_User__c, cqext__CQAPR_Assignee_User__r.Name, cqext__Assignee_Name__c,
                                cqext__CQAPR_Delegate_User__c, cqext__Achieved_On__c, cqext__CQAPR_Achieved_By__r.Name, cqext__Remark__c
                         FROM cqext__CQAPR_Approval_Steps__r ORDER BY cqext__CQAPR_Job_Function__r.Name, Name)
                 FROM cqext__CQAPR_Approval__c WHERE Id = :approvalId]) {
@@ -90,7 +100,9 @@ public with sharing class CqFarCommittee {
             for (cqext__CQAPR_Approval_Step__c t : a.cqext__CQAPR_Approval_Steps__r) {
                 Step s = new Step();
                 s.id = t.Id; s.seat = t.cqext__CQAPR_Job_Function__r == null ? 'Member' : seatName(t.cqext__CQAPR_Job_Function__r.Name);
-                s.person = t.cqext__Assignee_Name__c; s.status = t.cqext__Status__c; s.doneOn = t.cqext__Achieved_On__c;
+                // the person's name today: CQ saves the name on the step when it is created, and people get renamed
+                s.person = t.cqext__CQAPR_Assignee_User__r?.Name != null ? t.cqext__CQAPR_Assignee_User__r.Name : t.cqext__Assignee_Name__c;
+                s.status = t.cqext__Status__c; s.doneOn = t.cqext__Achieved_On__c;
                 s.doneBy = t.cqext__CQAPR_Achieved_By__r?.Name; s.comment = t.cqext__Remark__c;
                 s.mine = t.cqext__CQAPR_Assignee_User__c == UserInfo.getUserId() || t.cqext__CQAPR_Delegate_User__c == UserInfo.getUserId();
                 s.canAct = open == true && t.cqext__Status__c == 'Open' && (s.mine || admin);
@@ -109,6 +121,7 @@ public with sharing class CqFarCommittee {
         x.seats = seats();
         if (r.Committee_Approval__c == null) { return x; }
         List<String> back = loadApproval(x, r.Committee_Approval__c, r.Status__c == 'With Committee');
+        if (r.Status__c == 'With Committee') { x.sign = new Map<String, Sign>{ 'approve' => signFor(r.Id, 'approve'), 'reject' => signFor(r.Id, 'reject') }; }
         if (r.Status__c == 'In Review' && x.approvalStatus == 'Rejected' && !back.isEmpty()) { x.sentBack = String.join(back, '\n'); }
         return x;
     }
@@ -186,11 +199,34 @@ public with sharing class CqFarCommittee {
         return CqFieldActionReview.getView(recordId);
     }
 
+    /** CQ's electronic signature, reached by name through CqEsigGateway (see there for why). Tests put in a stand-in. */
+    @TestVisible
+    private static CqEsigGateway esig {
+        get { if (esig == null) { esig = (CqEsigGateway) Type.forName('CqEsigBridge').newInstance(); } return esig; }
+        set;
+    }
+
+    /**
+     * What CQ's electronic signature policy asks for an action on a record. CQ is asked in the user's session (its check
+     * fails without one). If it cannot be asked, the setting comes back unknown and the action is refused, never taken unsigned.
+     */
+    public static Sign signFor(Id recordId, String action) {
+        try {
+            Sign g = esig.signFor(recordId, action);
+            return g == null ? new Sign() : g;
+        } catch (Exception e) {
+            Sign g = new Sign(); g.unknown = true;
+            return g;
+        }
+    }
+
     /**
      * A member approves or sends back a step of the CQ Approval on recordId. The last approval closes the approval;
-     * a send back closes it as rejected.
+     * a send back closes it as rejected. When CQ's electronic signature policy requires it, only the assigned person
+     * (or their delegate) can act, with their password, and CQ records the signature before anything changes.
      */
-    public static void decide(Id recordId, Id stepId, String action, String comment) {
+    public static void decide(Id recordId, Id stepId, String action, String comment) { decide(recordId, stepId, action, comment, null); }
+    public static void decide(Id recordId, Id stepId, String action, String comment, String password) {
         if (action != 'approve' && action != 'reject') { throw new AuraHandledException('Choose Approve or Send Back.'); }
         if (action == 'reject' && String.isBlank(comment)) { throw new AuraHandledException('Say why you are sending it back.'); }
         cqext__CQAPR_Approval_Step__c t = [
@@ -202,9 +238,18 @@ public with sharing class CqFarCommittee {
             throw new AuraHandledException('That approval step belongs to another record.');
         }
         if (t.cqext__Status__c != 'Open') { throw new AuraHandledException('That step is no longer open.'); }
-        if (t.cqext__CQAPR_Assignee_User__c != UserInfo.getUserId() && t.cqext__CQAPR_Delegate_User__c != UserInfo.getUserId() && !isAdmin()) {
-            throw new AuraHandledException('This step is assigned to someone else.');
+        Boolean mine = t.cqext__CQAPR_Assignee_User__c == UserInfo.getUserId() || t.cqext__CQAPR_Delegate_User__c == UserInfo.getUserId();
+        if (!mine && !isAdmin()) { throw new AuraHandledException('This step is assigned to someone else.'); }
+
+        Sign g = signFor(recordId, action);
+        if (g.unknown) { throw new AuraHandledException('Could not check whether this needs an electronic signature, so nothing was changed. Try again.'); }
+        if (g.required) {
+            if (!mine) { throw new AuraHandledException('This needs the electronic signature of the person it is assigned to.'); }
+            if (String.isBlank(password)) { throw new AuraHandledException('Type your password to sign.'); }
+            if (g.comment && String.isBlank(comment)) { throw new AuraHandledException('A comment is required with your signature.'); }
+            esig.sign(recordId, action, comment, password);
         }
+
         update new cqext__CQAPR_Approval_Step__c(Id = stepId, cqext__Activity_Code__c = action, cqext__Remark__c = String.isBlank(comment) ? null : comment.left(1024));
         if (action == 'reject') {
             update new cqext__CQAPR_Approval__c(Id = t.cqext__CQAPR_Approval__c, cqext__Activity_Code__c = 'reject', cqext__Activity_Comment__c = comment.left(1024));
@@ -213,10 +258,10 @@ public with sharing class CqFarCommittee {
         }
     }
 
-    /** A committee member acts on the review's approval. */
+    /** A committee member acts on the review's approval; password only when CQ's signature policy asks for one. */
     @AuraEnabled
-    public static CqFieldActionReview.View act(Id recordId, Id stepId, String action, String comment) {
-        decide(recordId, stepId, action, comment);
+    public static CqFieldActionReview.View act(Id recordId, Id stepId, String action, String comment, String password) {
+        decide(recordId, stepId, action, comment, password);
         return CqFieldActionReview.getView(recordId);
     }
 
