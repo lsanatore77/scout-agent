@@ -13,23 +13,23 @@ import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId'
 const STRENGTH_TONE = { watch: 'warn', assess: 'warn', escalate: 'crit' };
 const SEAT_TONE = { approved: 'pos', rejected: 'crit' };
 
-// Order on screen: glance, signals, the reviewer's own assessment (risk and checklist), recommendation, committee approval.
-const STEPS = ['Review at a Glance', 'Signals and Evidence', 'Reviewer Assessment', 'Recommendation', 'Committee Approval'];
+// Order on screen: glance, the reviewer's own assessment (checklist and risk, with the signals and evidence beside it),
+// recommendation, committee approval.
+const STEPS = ['Review at a Glance', 'Reviewer Assessment', 'Recommendation', 'Committee Approval'];
 const ASK = [
     'Summarize this review,Why does CQ.AI suggest this outcome?,What is left on this review?',
-    'Which signals matter most?,LOT_QUESTION,How far above normal is the strongest signal?',
-    'How was the risk score worked out?,What is still not known?,What is left on this review?',
+    'How was the risk score worked out?,Which signals matter most?,LOT_QUESTION',
     'Why does CQ.AI suggest this outcome?,Which field actions are on this part?,What is left on this review?',
     'Who still needs to approve?,Summarize this review,What is left on this review?'
 ];
-const SIGNALS = 1;
-const ASSESS = 2;
-const REC = 3;
-const COMMITTEE = 4;
-// drafts saved before Risk joined the checklist (version 1) used six steps: glance, risk, signals, checklist, recommendation, committee
-const OLD_STEP = [0, ASSESS, SIGNALS, ASSESS, REC, COMMITTEE];
-const OLD_MAX = [0, ASSESS, ASSESS, ASSESS, REC, COMMITTEE];
-const READ_ONLY = [0, SIGNALS, ASSESS, REC, COMMITTEE];   // steps that open while the review is with the committee (Assessment and Recommendation view only)
+const ASSESS = 1;
+const REC = 2;
+const COMMITTEE = 3;
+const DRAFT_V = 3;
+// older drafts kept steps by number: version 1 had six (glance, risk, signals, checklist, recommendation, committee),
+// version 2 five (glance, signals, assessment, recommendation, committee)
+const TO_V3 = { 1: [0, ASSESS, ASSESS, ASSESS, REC, COMMITTEE], 2: [0, ASSESS, ASSESS, REC, COMMITTEE] };
+const READ_ONLY = [0, ASSESS, REC, COMMITTEE];   // steps that open while the review is with the committee (Assessment and Recommendation view only)
 const STEP_LABEL = { Open: 'Pending', Approved: 'Approved', Rejected: 'Sent Back', Void: 'Not Required', Skipped: 'Not Required' };
 const PAGE = 5;      // records shown under a signal before "Show more"
 
@@ -43,7 +43,7 @@ function titleCase(text) {
     if (!text) { return text; }
     return String(text).replace(/[A-Za-z][A-Za-z']*/g, (w, i, all) => {
         const before = all.slice(0, i);
-        const start = /^\s*$/.test(before) || /[.\u00b7:(]\s*$/.test(before);   // first word, or first after . · : (
+        const start = /^\s*$/.test(before) || /[.·:(]\s*$/.test(before);   // first word, or first after . · : (
         if (!start && SMALL_WORDS.has(w.toLowerCase())) { return w.toLowerCase(); }
         return w.charAt(0).toUpperCase() + w.slice(1);
     });
@@ -97,6 +97,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     emergencyReason = '';
     emergencyUser = '';
     comment = '';        // a committee member's comment when approving or sending back
+    evTab = 'signals';   // the evidence tab open beside the checklist
 
     async connectedCallback() {
         try {
@@ -116,9 +117,13 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         if (!first) { return; }
         let d;
         try { d = v.draft ? JSON.parse(v.draft) : null; } catch (e) { d = null; }
-        if (!this.done && d && (d.v === 1 || d.v === 2)) {
+        if (!this.done && d && d.v >= 1 && d.v <= DRAFT_V) {
             KEEP.forEach((k) => { if (d[k] !== undefined) { this[k] = d[k]; } });
-            if (d.v === 1) { this.step = OLD_STEP[this.step] || 0; this.maxStep = OLD_MAX[this.maxStep] || 0; }
+            const map = TO_V3[d.v];
+            if (map) {
+                this.step = map[this.step] || 0; this.maxStep = map[this.maxStep] || 0;
+                if (d.seen) { const seen = {}; Object.keys(d.seen).forEach((k) => { if (d.seen[k]) { seen[map[Number(k)] || 0] = true; } }); this.seen = seen; }
+            }
             // a draft saved before steps could be opened in any order: every step up to the furthest one was seen
             if (!d.seen) { this.seen = this.upTo(this.maxStep); }
             this.seen = { ...this.seen, [this.step]: true };
@@ -185,8 +190,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         return (ASK[this.step] || ASK[0]).replace('LOT_QUESTION', lotQ);
     }
     get is0() { return this.ready && ((this.open && this.step === 0) || (this.done && !this.showSummary)); }
-    get is1() { return this.open && this.step === SIGNALS; }   // the Signals and Evidence block in the template
-    get is3() { return this.open && this.step === ASSESS; }    // the Reviewer Assessment block: risk and checklist (view only with the committee)
+    get is3() { return this.open && this.step === ASSESS; }    // the Reviewer Assessment block: checklist and risk, evidence beside it (view only with the committee)
     get is4() { return this.open && this.step === REC; }
     /** With the committee, Reviewer Assessment and Recommendation open view only: the main panel gets the viewonly class. */
     renderedCallback() {
@@ -206,7 +210,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     // ---- step rail
     upTo(n) { const m = {}; for (let i = 0; i <= n; i++) { m[i] = true; } return m; }
     get valid() {
-        return [this.maxStep > 0, !!this.seen[SIGNALS], !!this.seen[ASSESS] && this.assessDone,
+        return [this.maxStep > 0, !!this.seen[ASSESS] && this.assessDone,
             !!this.seen[REC] && !!this.outcome && !!this.rationale.trim(), this.done];
     }
     get steps() {
@@ -215,9 +219,8 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const answered = QUESTIONS.filter((q) => this.checks[q.id]).length;
         const subs = [
             this.maxStep > 0 || this.done ? 'Reviewed' : 'Start here',
-            n + ' signal' + (n === 1 ? '' : 's'),
             this.done || this.waiting ? (this.level || v.riskLevel || v.band) + ' · score ' + v.score
-                : (this.level || 'CQ.AI suggests ' + v.band) + ' · ' + answered + ' of ' + QUESTIONS.length + ' answered',
+                : answered + ' of ' + QUESTIONS.length + ' answered · ' + n + ' signal' + (n === 1 ? '' : 's'),
             this.done ? v.outcome : this.outcome || v.outcome || 'Not decided',
             this.done ? 'Approved' : this.waiting ? this.approvedCount + ' of ' + this.csteps.length + ' approved' : this.emergency ? 'Emergency' : 'Not submitted'
         ];
@@ -290,7 +293,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         const rows = [];
         list.forEach((s) => {
             const open = !!this.openSig[s.id];
-            rows.push({ key: 's' + s.id, isSig: true, id: s.id, rule: s.rule, pillCls: s.pillCls, strength: s.strength, sub: (s.meta || '').replace(/-/g, '\u2011'),   // lots and dates never break at the hyphen
+            rows.push({ key: 's' + s.id, isSig: true, id: s.id, rule: s.rule, pillCls: s.pillCls, strength: s.strength, sub: (s.meta || '').replace(/-/g, '‑'),   // lots and dates never break at the hyphen
                 label: s.label, why: this.notRepeated(s.label, s.why), n: s.total,
                 expanded: open ? 'true' : 'false', chevCls: 'chev' + (open ? ' open' : ''),
                 rowCls: 'srow' + (this.hotSig === s.id ? ' hot' : '') + (open ? ' isopen' : '') });
@@ -371,7 +374,20 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get recs() { return (this.v.records || []).map((r) => this.rec(r)); }
     get hasRecs() { return this.recs.length > 0; }
 
-    // ---- reviewer assessment (third step): CQ.AI's score beside the reviewer's risk level, hazard summary and checklist
+    // ---- reviewer assessment (second step): the checklist, risk level and hazard summary, with the evidence in tabs beside them
+    get evTabs() {
+        const t = [['signals', 'Signals (' + this.signals.length + ')']];
+        if (this.hasBars) { t.push(['normal', 'Against Normal']); }
+        if (this.hasTrend) { t.push(['month', 'By Month']); }
+        t.push(['score', 'Risk Score']);
+        return t.map(([id, label]) => ({ id, label, sel: this.evTab === id ? 'true' : 'false', cls: 'evtab' + (this.evTab === id ? ' on' : '') }));
+    }
+    get tabSignals() { return this.evTab === 'signals'; }
+    get tabNormal() { return this.evTab === 'normal'; }
+    get tabMonth() { return this.evTab === 'month'; }
+    get tabScore() { return this.evTab === 'score'; }
+    handleTab(event) { this.evTab = event.currentTarget.dataset.id; }
+    get bandHint() { return 'CQ.AI suggests ' + this.v.band + ' (score ' + this.v.score + ')'; }
     get factors() { return (this.v.factors || []).map((f, i) => ({ ...f, key: 'f' + i, of: f.pts + ' / ' + f.max })); }
     get bandCls() { return 'lvl ' + (this.v.band || '').toLowerCase(); }
     get levels() {
@@ -557,7 +573,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
     get nextLabel() { return this.saving ? 'Saving…' : this.step === COMMITTEE ? 'Submit to Committee' : 'Next'; }
     persist() {
         if (this.done) { return; }
-        const s = { v: 2 };
+        const s = { v: DRAFT_V };
         KEEP.forEach((k) => { s[k] = this[k]; });
         saveDraft({ recordId: this.recordId, draft: JSON.stringify(s) }).catch(() => {});
     }
@@ -621,7 +637,7 @@ export default class CqFieldActionWorkspace extends NavigationMixin(LightningEle
         this.saving = true;
         this.error = undefined;
         try {
-            const d = { v: 2 };
+            const d = { v: DRAFT_V };
             KEEP.forEach((k) => { d[k] = this[k]; });
             const v = await submitToCommittee({
                 recordId: this.recordId, hazard: this.hazard.trim(), summary: this.buildSummary(), score: this.v.score, riskLevel: this.level,

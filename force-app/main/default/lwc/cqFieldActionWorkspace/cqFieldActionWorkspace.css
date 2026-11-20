@@ -105,7 +105,18 @@
 .lg { display: inline-flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
 @media (max-width: 1100px) { .sigcols { grid-template-columns: 1fr; } }
-.assess { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 20px; align-items: stretch; }
+.assess { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+/* the evidence beside the checklist, in tabs; it stays in view while the checklist scrolls */
+.evid { padding: 0; position: sticky; top: 12px; min-width: 0; }
+.evbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px; border-bottom: 1px solid var(--cq-line); }
+.evtab { margin-bottom: -1px; padding: 10px 12px; border: 0; border-bottom: 2px solid transparent; background: none; font: inherit; font-size: 13px; color: var(--cq-muted); cursor: pointer; }
+.evtab:hover { color: var(--cq-ink); }
+.evtab.on { color: var(--cq-ink); border-bottom-color: var(--cq-link); }
+.evtab:focus-visible { outline: 2px solid var(--cq-link); outline-offset: -2px; }
+.evpane { padding: 14px; min-width: 0; }
+.evpane > .cq-tblwrap:first-child { margin-top: 0; }
+.riskbox { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--cq-accent-line); background: var(--cq-accent-soft); }
+.riskbox .cq-note { margin: 0; }
 .assess .cq { padding: 10px 0; }
 .assess .cq:last-child { border-bottom: none; }
 .riskcard { display: flex; flex-direction: column; gap: 10px; }
@@ -128,7 +139,7 @@
 .stbl .evrow td { padding: 8px 12px; border-top: 1px solid var(--cq-line); }
 /* With the committee, Reviewer Assessment and Recommendation open view only (class set in renderedCallback) */
 .main.viewonly .cq-step-title::after { content: '\00A0\00B7\00A0View Only'; font-size: 14px; font-weight: 600; color: var(--cq-muted); }
-.main.viewonly button:not(.cq-link), .main.viewonly select, .main.viewonly input, .main.viewonly textarea { pointer-events: none; }
+.main.viewonly button:not(.cq-link):not(.evtab):not(.chevbtn), .main.viewonly select, .main.viewonly input, .main.viewonly textarea { pointer-events: none; }
 .main.viewonly textarea, .main.viewonly input, .main.viewonly select { background: var(--cq-surface); }
 /* shared fields and messages keep this screen's vertical rhythm */
 .cq-field { margin-top: 14px; }
