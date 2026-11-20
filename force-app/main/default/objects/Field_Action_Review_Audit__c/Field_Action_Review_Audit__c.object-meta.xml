@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Field Action Review Audit Entry object is the audit trail for Field Action Reviews: one locked row per create, field change, delete or signature, with the field, old and new values, who and when. Rows survive the review. Commonly used for audits, investigations and data-integrity checks.</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Field Action Review Audit Entry</label>
+    <nameField>
+        <displayFormat>FAU-{000000}</displayFormat>
+        <label>Audit Entry Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Field Action Review Audit Entries</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>
