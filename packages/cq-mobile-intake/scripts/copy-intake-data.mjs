@@ -18,7 +18,7 @@ const from = arg('--from'), to = arg('--to');
 if (!from || !to) { console.error('Usage: node scripts/copy-intake-data.mjs --from <source org alias> --to <target org alias>'); process.exit(1); }
 
 function login(alias) {
-  const out = execFileSync('sf', ['org', 'display', '--target-org', alias, '--json'], { encoding: 'utf8', shell: process.platform === 'win32' });
+  const out = execFileSync('sf', ['org', 'display', '--target-org', alias, '--verbose', '--json'], { encoding: 'utf8', shell: process.platform === 'win32' });
   const r = JSON.parse(out).result;
   return { url: r.instanceUrl, token: r.accessToken, alias };
 }

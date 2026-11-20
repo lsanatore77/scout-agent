@@ -16,9 +16,10 @@ $ErrorActionPreference = 'Stop'
 $Api = 'v66.0'
 
 function Connect-Org([string]$alias) {
-    $json = sf org display --target-org $alias --json | Out-String
+    $json = sf org display --target-org $alias --verbose --json 2>$null | Out-String
     if ($LASTEXITCODE -ne 0) { throw "Could not read the login for '$alias'. Is it in 'sf org list'?" }
     $r = ($json | ConvertFrom-Json).result
+    if (-not $r.accessToken) { throw "The CLI did not return a session for '$alias'. Log in again: sf org login web --alias $alias" }
     return @{ Url = $r.instanceUrl; Token = $r.accessToken; Alias = $alias }
 }
 function Invoke-Sf($org, [string]$method, [string]$path, $body) {
