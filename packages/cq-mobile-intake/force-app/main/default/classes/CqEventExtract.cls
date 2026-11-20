@@ -1,12 +1,12 @@
 /**
  * Turns a free-text / spoken event description into suggested intake answers by calling
- * CQ's managed "Entity Extraction" prompt template (ConnectApi, native Apex — no callout).
+ * CQ's "Entity Extraction" prompt template (Invocable.Action, native Apex: no callout).
  * Returns per-field suggestions (Part resolved to a record), plus the required questions
  * the description did not answer. The LWC shows these for the reporter to confirm/change.
  */
 public with sharing class CqEventExtract {
 
-    // Canned model output for tests (ConnectApi.EinsteinLLM is not callable in test context).
+    // Canned model output for tests (prompt templates cannot run in tests).
     @TestVisible static String mockJson;
     @TestVisible static final String FAIL = 'FAIL';   // tests: makes the CQ.AI read fail
 
@@ -164,25 +164,30 @@ public with sharing class CqEventExtract {
         return out;
     }
 
+    // CQ's prompt template (from the CQ.AI extension). Called by name through Invocable.Action, so this class compiles
+    // and installs in an org without generative AI; there the call fails and basicRead() takes over.
+    static final List<String> PROMPT_NAMES = new List<String>{ 'cqext__CQSS_Entity_Extraction_Prompt', 'CQSS_Entity_Extraction_Prompt' };
+
     static String generate(String description, String entities) {
         if (Test.isRunningTest()) {
             if (mockJson == FAIL) { throw new CalloutException('Template Not found for CQSS_Entity_Extraction_Prompt'); }
             return mockJson;
         }
-        ConnectApi.EinsteinPromptTemplateGenerationsInput inp = new ConnectApi.EinsteinPromptTemplateGenerationsInput();
-        inp.isPreview = false;
-        ConnectApi.EinsteinLlmAdditionalConfigInput cfg = new ConnectApi.EinsteinLlmAdditionalConfigInput();
-        cfg.applicationName = 'PromptTemplateGenerationsInvocable';
-        inp.additionalConfig = cfg;
-        inp.inputParams = new Map<String, ConnectApi.WrappedValue>{
-            'Input:Description' => wrap(description),
-            'Input:Entities' => wrap(entities),
-            'Input:Date_Entities' => wrap(String.valueOf(Date.today())),
-            'Input:Reason_Required' => wrap('false')
-        };
-        ConnectApi.EinsteinPromptTemplateGenerationsRepresentation r =
-            ConnectApi.EinsteinLLM.generateMessagesForPromptTemplate('CQSS_Entity_Extraction_Prompt', inp);
-        return (r != null && r.generations != null && !r.generations.isEmpty()) ? r.generations[0].text : null;
+        String lastError;
+        for (String name : PROMPT_NAMES) {
+            Invocable.Action a = Invocable.Action.createCustomAction('generatePromptResponse', name);
+            a.setInvocationParameter('Input:Description', description);
+            a.setInvocationParameter('Input:Entities', entities);
+            a.setInvocationParameter('Input:Date_Entities', String.valueOf(Date.today()));
+            a.setInvocationParameter('Input:Reason_Required', 'false');
+            Invocable.Action.Result r = a.invoke()[0];
+            if (r.isSuccess()) {
+                Object out = r.getOutputParameters().get('promptResponse');
+                return out == null ? null : String.valueOf(out);
+            }
+            lastError = String.valueOf(r.getErrors());
+        }
+        throw new CalloutException('CQ.AI prompt unavailable: ' + lastError);
     }
 
     /**
@@ -222,11 +227,5 @@ public with sharing class CqEventExtract {
         Matcher m = Pattern.compile('(?i)\\b(\\d+)\\s*(units?|items?|pieces?|pcs|parts?|devices?)\\b').matcher(text);
         if (m.find()) { out.put('UNITS AFFECTED', m.group(1)); }
         return out;
-    }
-
-    static ConnectApi.WrappedValue wrap(String v) {
-        ConnectApi.WrappedValue w = new ConnectApi.WrappedValue();
-        w.value = v;
-        return w;
     }
 }
