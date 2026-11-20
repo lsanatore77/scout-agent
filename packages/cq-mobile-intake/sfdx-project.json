@@ -8,16 +8,14 @@
       "versionNumber": "1.0.0.NEXT",
       "versionDescription": "Mobile intake (talk it through with CQ.AI, read-aloud questions) that sends a Quality Event, or a Case when the problem was found at a customer.",
       "dependencies": [
-        { "package": "ComplianceQuest@16.0.0" },
-        { "package": "ComplianceQuest User Interface@16.0.0" },
-        { "package": "CQ.AI Extension@16.0.0" }
+        {
+          "package": "ComplianceQuest@16.0.0"
+        }
       ]
     }
   ],
   "packageAliases": {
-    "ComplianceQuest@16.0.0": "04tRn000000qxC5IAI",
-    "ComplianceQuest User Interface@16.0.0": "04tRn000000qznNIAQ",
-    "CQ.AI Extension@16.0.0": "04tRn000000r0MsIAI"
+    "ComplianceQuest@16.0.0": "04tRn000000qxC5IAI"
   },
   "name": "cq-mobile-intake",
   "namespace": "",

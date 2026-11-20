@@ -72,4 +72,28 @@ private class CqEventExtractTest {
             }
         }
     }
+
+    @IsTest
+    static void withoutCqAiSimpleRulesKeepItGoing() {
+        System.runAs(CqIntakeTestData.runner()) {
+            CqEventExtract.mockJson = CqEventExtract.FAIL;   // as in an org without CQ's prompt template
+            CqEventExtract.Result res = CqEventExtract.fromDescription('there was a problem with lot-2011 5 items were affected');
+            Map<String, CqEventExtract.Suggestion> byKey = new Map<String, CqEventExtract.Suggestion>();
+            for (CqEventExtract.Suggestion s : res.suggestions) { byKey.put(s.key, s); }
+            System.assertEquals('there was a problem with lot-2011 5 items were affected', res.title, 'the story\'s first words');
+            System.assertEquals('LOT-2011', byKey.get('lot').value);
+            System.assertEquals('5', byKey.get('units').value);
+            System.assertEquals(3, res.stillNeeded.size(), 'every required question is still asked');
+        }
+    }
+
+    @IsTest
+    static void basicReadFindsLotAfterTheWord() {
+        Map<String, String> v = CqEventExtract.basicRead('Batch number L26-0908, three of them. Twelve more words here to make the title get cut short ok');
+        System.assertEquals('L26-0908', v.get('LOT'));
+        System.assert(v.get('TITLE').endsWith('...'), 'a long story gives a shortened title');
+        System.assert(!v.containsKey('UNITS AFFECTED'), 'no number with a unit word');
+        System.assertEquals('7', CqEventExtract.basicRead('lot 4471 had 7 units leak').get('UNITS AFFECTED'));
+        System.assertEquals('4471', CqEventExtract.basicRead('lot 4471 had 7 units leak').get('LOT'));
+    }
 }

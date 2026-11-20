@@ -8,6 +8,7 @@ public with sharing class CqEventExtract {
 
     // Canned model output for tests (ConnectApi.EinsteinLLM is not callable in test context).
     @TestVisible static String mockJson;
+    @TestVisible static final String FAIL = 'FAIL';   // tests: makes the CQ.AI read fail
 
     public class Suggestion {
         @AuraEnabled public String key;        // 'title','part','lot','units','defect', or the question Role
@@ -52,8 +53,12 @@ public with sharing class CqEventExtract {
             entityDefs.add(choices.isEmpty() ? key : key + ' (answer: ' + allowedPhrase(choices) + ')');
         }
 
-        String raw = generate(description, String.join(entityDefs, ', '));
+        // CQ.AI reads the story. If it cannot (no generative AI in the org, CQ's prompt template missing, a timeout),
+        // simple rules pick out the title, lot and units, and the questions ask for the rest: never a dead end.
+        String raw;
+        try { raw = generate(description, String.join(entityDefs, ', ')); } catch (Exception e) { raw = null; }
         Map<String, String> vals = parse(raw);
+        if (vals.isEmpty()) { vals = basicRead(description); }
 
         Result res = new Result();
         res.rawJson = raw;
@@ -160,7 +165,10 @@ public with sharing class CqEventExtract {
     }
 
     static String generate(String description, String entities) {
-        if (Test.isRunningTest()) { return mockJson; }
+        if (Test.isRunningTest()) {
+            if (mockJson == FAIL) { throw new CalloutException('Template Not found for CQSS_Entity_Extraction_Prompt'); }
+            return mockJson;
+        }
         ConnectApi.EinsteinPromptTemplateGenerationsInput inp = new ConnectApi.EinsteinPromptTemplateGenerationsInput();
         inp.isPreview = false;
         ConnectApi.EinsteinLlmAdditionalConfigInput cfg = new ConnectApi.EinsteinLlmAdditionalConfigInput();
@@ -175,6 +183,45 @@ public with sharing class CqEventExtract {
         ConnectApi.EinsteinPromptTemplateGenerationsRepresentation r =
             ConnectApi.EinsteinLLM.generateMessagesForPromptTemplate('CQSS_Entity_Extraction_Prompt', inp);
         return (r != null && r.generations != null && !r.generations.isEmpty()) ? r.generations[0].text : null;
+    }
+
+    /**
+     * Without CQ.AI: the title is the story's first words; the lot is the token after "lot" or "batch" (or one like
+     * LOT-2011); the units are a number followed by units, items, pieces, parts or devices.
+     */
+    @TestVisible
+    static Map<String, String> basicRead(String description) {
+        Map<String, String> out = new Map<String, String>();
+        String text = description.normalizeSpace();
+        List<String> words = text.split(' ');
+        List<String> head = new List<String>();
+        for (Integer i = 0; i < words.size() && i < 10; i++) { head.add(words[i]); }
+        String title = String.join(head, ' ').removeEnd('.').removeEnd(',');
+        out.put('TITLE', (words.size() > 10 ? title + '...' : title).left(255));
+
+        for (Integer i = 0; i < words.size(); i++) {
+            String w = words[i].replaceAll('[,.;:)(]+$', '');
+            String lw = w.toLowerCase();
+            if ((lw.startsWith('lot') || lw.startsWith('batch')) && w.length() > 3 && w.replaceAll('[^0-9]', '').length() > 0
+                    && !lw.startsWith('lots')) {
+                out.put('LOT', w.toUpperCase());
+                break;
+            }
+            if (lw == 'lot' || lw == 'batch' || lw == 'lot:' || lw == 'batch:') {
+                for (Integer j = i + 1; j < words.size() && j <= i + 3; j++) {
+                    String n = words[j].replaceAll('[,.;:)(]+$', '');
+                    String ln = n.toLowerCase();
+                    if (ln == 'number' || ln == 'no' || ln == 'no.' || ln == '#' || ln == 'is') { continue; }
+                    if (n.replaceAll('[^0-9]', '').length() > 0) { out.put('LOT', n.removeStart('#').toUpperCase()); }
+                    break;
+                }
+                if (out.containsKey('LOT')) { break; }
+            }
+        }
+
+        Matcher m = Pattern.compile('(?i)\\b(\\d+)\\s*(units?|items?|pieces?|pcs|parts?|devices?)\\b').matcher(text);
+        if (m.find()) { out.put('UNITS AFFECTED', m.group(1)); }
+        return out;
     }
 
     static ConnectApi.WrappedValue wrap(String v) {
