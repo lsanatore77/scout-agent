@@ -15,38 +15,54 @@ param(
 $ErrorActionPreference = 'Stop'
 $Api = 'v66.0'
 
-function Connect-Org([string]$alias) {
-    # The CLI writes notices (such as 'update available') to its error stream; Windows PowerShell would stop on them.
+# Every call goes through the Salesforce CLI ('sf api request rest'), which uses and refreshes your CLI login itself:
+# no session token passes through this script.
+[Console]::OutputEncoding = [Text.Encoding]::UTF8
+
+function Connect-Org([string]$alias) { return @{ Alias = $alias } }
+
+function Invoke-SfCli([string[]]$cliArgs) {
+    # The CLI writes notices (update available, beta) to its error stream; Windows PowerShell would stop on them.
     $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
-    $json = (& sf org display --target-org $alias --verbose --json 2>$null) | Out-String
+    $out = (& sf @cliArgs 2>$null) | Out-String
     $code = $LASTEXITCODE
     $ErrorActionPreference = $prev
-    if ($code -ne 0) { throw "Could not read the login for '$alias'. Is it in 'sf org list'?" }
-    $r = ($json | ConvertFrom-Json).result
-    if (-not $r.accessToken) { throw "The CLI did not return a session for '$alias'. Log in again: sf org login web --alias $alias" }
-    return @{ Url = $r.instanceUrl; Token = $r.accessToken; Alias = $alias }
+    return @{ Out = $out; Code = $code }
 }
+
+function Stop-WithError($org, [string]$method, [string]$path, [string]$detail) {
+    $short = if ($path.Length -gt 160) { $path.Substring(0, 160) + '...' } else { $path }
+    Write-Host ''
+    Write-Host "FAILED in '$($org.Alias)': $method $([uri]::UnescapeDataString($short))" -ForegroundColor Red
+    Write-Host "Salesforce said: $detail" -ForegroundColor Red
+    exit 1
+}
+
 function Invoke-Sf($org, [string]$method, [string]$path, $body) {
-    $h = @{ Authorization = "Bearer $($org.Token)" }
-    try {
-        if ($null -ne $body) {
-            $json = $body | ConvertTo-Json -Depth 20 -Compress
-            return Invoke-RestMethod -Method $method -Uri ($org.Url + $path) -Headers $h -ContentType 'application/json; charset=utf-8' `
-                -Body ([Text.Encoding]::UTF8.GetBytes($json))
-        }
-        return Invoke-RestMethod -Method $method -Uri ($org.Url + $path) -Headers $h
-    } catch {
-        $detail = $_.ErrorDetails.Message
-        if (-not $detail -and $_.Exception.Response) {
-            try { $detail = (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd() } catch { }
-        }
-        $short = if ($path.Length -gt 160) { $path.Substring(0, 160) + '...' } else { $path }
-        Write-Host ''
-        Write-Host "FAILED in '$($org.Alias)': $method $([uri]::UnescapeDataString($short))" -ForegroundColor Red
-        Write-Host "Salesforce said: $detail" -ForegroundColor Red
-        exit 1
+    $cliArgs = @('api', 'request', 'rest', $path, '--target-org', $org.Alias, '--method', $method)
+    $tmp = $null
+    if ($null -ne $body) {
+        $tmp = [IO.Path]::GetTempFileName()
+        [IO.File]::WriteAllText($tmp, ($body | ConvertTo-Json -Depth 20 -Compress), (New-Object Text.UTF8Encoding $false))
+        $cliArgs += @('--body', $tmp, '--header', 'Content-Type: application/json')
     }
+    try { $r = Invoke-SfCli $cliArgs } finally { if ($tmp) { Remove-Item $tmp -ErrorAction SilentlyContinue } }
+    $text = $r.Out.Trim()
+    $parsed = $null
+    if ($text) { try { $parsed = $text | ConvertFrom-Json } catch { } }
+    $first = @($parsed)[0]
+    if ($r.Code -ne 0 -or $null -eq $parsed -or ($null -ne $first -and $first.PSObject.Properties['errorCode'])) {
+        $detail = if ($text) { $text } else { "no response (is '$($org.Alias)' in 'sf org list'?)" }
+        Stop-WithError $org $method $path $detail
+    }
+    return $parsed
 }
+
+function Save-SfFile($org, [string]$path, [string]$file) {
+    $r = Invoke-SfCli @('api', 'request', 'rest', $path, '--target-org', $org.Alias, '--stream-to-file', $file)
+    if ($r.Code -ne 0 -or -not (Test-Path $file) -or (Get-Item $file).Length -eq 0) { Stop-WithError $org 'GET' $path $r.Out }
+}
+
 function Get-Records($org, [string]$soql) {
     $r = Invoke-Sf $org 'GET' "/services/data/$Api/query?q=$([uri]::EscapeDataString($soql))" $null
     $rows = @($r.records)
@@ -77,7 +93,7 @@ $CFields = 'Name','Description__c','Disposition__c','Limit__c','Days__c','Scope_
 
 $src = Connect-Org $From
 $dst = Connect-Org $To
-Write-Host "Copying intake setup from $($src.Url) to $($dst.Url)"
+Write-Host "Copying intake setup from '$From' to '$To'"
 
 # Questions
 $sq = Get-Records $src "SELECT Id, $($QFields -join ', ') FROM Event_Question__c ORDER BY Order__c"
@@ -102,8 +118,7 @@ foreach ($q in $sq) {
     if ($v.Count -eq 0) { continue }
     $tmp = [IO.Path]::GetTempFileName()
     try {
-        Invoke-WebRequest -Uri "$($src.Url)/services/data/$Api/sobjects/ContentVersion/$($v[0].Id)/VersionData" `
-            -Headers @{ Authorization = "Bearer $($src.Token)" } -OutFile $tmp -UseBasicParsing
+        Save-SfFile $src "/services/data/$Api/sobjects/ContentVersion/$($v[0].Id)/VersionData" $tmp
         $data = [Convert]::ToBase64String([IO.File]::ReadAllBytes($tmp))
     } finally { Remove-Item $tmp -ErrorAction SilentlyContinue }
     $path = if ($v[0].PathOnClient) { $v[0].PathOnClient } else { "$($v[0].Title).wav" }
