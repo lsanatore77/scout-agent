@@ -16,8 +16,12 @@ $ErrorActionPreference = 'Stop'
 $Api = 'v66.0'
 
 function Connect-Org([string]$alias) {
-    $json = sf org display --target-org $alias --verbose --json 2>$null | Out-String
-    if ($LASTEXITCODE -ne 0) { throw "Could not read the login for '$alias'. Is it in 'sf org list'?" }
+    # The CLI writes notices (such as 'update available') to its error stream; Windows PowerShell would stop on them.
+    $prev = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+    $json = (& sf org display --target-org $alias --verbose --json 2>$null) | Out-String
+    $code = $LASTEXITCODE
+    $ErrorActionPreference = $prev
+    if ($code -ne 0) { throw "Could not read the login for '$alias'. Is it in 'sf org list'?" }
     $r = ($json | ConvertFrom-Json).result
     if (-not $r.accessToken) { throw "The CLI did not return a session for '$alias'. Log in again: sf org login web --alias $alias" }
     return @{ Url = $r.instanceUrl; Token = $r.accessToken; Alias = $alias }
