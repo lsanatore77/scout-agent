@@ -23,12 +23,24 @@ function Connect-Org([string]$alias) {
 }
 function Invoke-Sf($org, [string]$method, [string]$path, $body) {
     $h = @{ Authorization = "Bearer $($org.Token)" }
-    if ($null -ne $body) {
-        $json = $body | ConvertTo-Json -Depth 20 -Compress
-        return Invoke-RestMethod -Method $method -Uri ($org.Url + $path) -Headers $h -ContentType 'application/json; charset=utf-8' `
-            -Body ([Text.Encoding]::UTF8.GetBytes($json))
+    try {
+        if ($null -ne $body) {
+            $json = $body | ConvertTo-Json -Depth 20 -Compress
+            return Invoke-RestMethod -Method $method -Uri ($org.Url + $path) -Headers $h -ContentType 'application/json; charset=utf-8' `
+                -Body ([Text.Encoding]::UTF8.GetBytes($json))
+        }
+        return Invoke-RestMethod -Method $method -Uri ($org.Url + $path) -Headers $h
+    } catch {
+        $detail = $_.ErrorDetails.Message
+        if (-not $detail -and $_.Exception.Response) {
+            try { $detail = (New-Object IO.StreamReader($_.Exception.Response.GetResponseStream())).ReadToEnd() } catch { }
+        }
+        $short = if ($path.Length -gt 160) { $path.Substring(0, 160) + '...' } else { $path }
+        Write-Host ''
+        Write-Host "FAILED in '$($org.Alias)': $method $([uri]::UnescapeDataString($short))" -ForegroundColor Red
+        Write-Host "Salesforce said: $detail" -ForegroundColor Red
+        exit 1
     }
-    return Invoke-RestMethod -Method $method -Uri ($org.Url + $path) -Headers $h
 }
 function Get-Records($org, [string]$soql) {
     $r = Invoke-Sf $org 'GET' "/services/data/$Api/query?q=$([uri]::EscapeDataString($soql))" $null
