@@ -5,7 +5,8 @@
  * units, plus one Event Answer per question. A problem found At a Customer goes to customer service instead: a Case
  * (Origin Mobile Intake) with the story and every answer in its Description, the part as its Product, the lot, the
  * customer's Account when the name matches one, and the injury and safety answers in the Case triage fields; the
- * org's Case assignment rules route it. The questions come from Event Question (set per company). Questions with a
+ * org's Case assignment rules route it. Each question can name a Case field (Event Question > Case Field) that gets its
+ * answer as well. The questions come from Event Question (set per company). Questions with a
  * Role also fill the event's own fields (Where Found, Product Affected, Injury, Safety Risk), and any answer listed in a
  * question's Urgent When marks the event Urgent.
  *
@@ -84,7 +85,7 @@ public with sharing class CqEventIntake {
             Map<String, Object> a = (Map<String, Object>) o;
             if (a.get('questionId') != null && String.isNotBlank(str(a.get('answer')))) { given.put((Id) str(a.get('questionId')), str(a.get('answer')).trim()); }
         }
-        List<Event_Question__c> qs = [SELECT Id, Order__c, Question__c, Role__c, Urgent_When__c, Required__c FROM Event_Question__c
+        List<Event_Question__c> qs = [SELECT Id, Order__c, Question__c, Role__c, Urgent_When__c, Required__c, Case_Field__c FROM Event_Question__c
             WHERE Active__c = true ORDER BY Order__c NULLS LAST, Name];
         for (Event_Question__c q : qs) {
             if (q.Required__c && !given.containsKey(q.Id)) { throw new AuraHandledException('Answer: ' + q.Question__c); }
@@ -135,6 +136,7 @@ public with sharing class CqEventIntake {
             String ans = given.get(q.Id);
             if (ans == null) { continue; }
             lines.add('- ' + q.Question__c + ' ' + ans);
+            put(c, q.Case_Field__c, ans);
             if (q.Role__c == 'Injury') { c.Product_Caused_Harm__c = yesNo(ans, false); }
             else if (q.Role__c == 'Safety Risk') { c.Impact_on_Safety_or_Environment__c = yesNo(ans, false); }   // Not Sure stays blank for triage
             else if (q.Role__c == 'Customer') { customer = ans; }
@@ -152,6 +154,31 @@ public with sharing class CqEventIntake {
         s.id = c.Id; s.kind = 'Case'; s.urgent = urgent;
         s.name = [SELECT CaseNumber FROM Case WHERE Id = :c.Id WITH USER_MODE].CaseNumber;
         return s;
+    }
+
+    /**
+     * Saves an answer to the Case field its question names (Event Question > Case Field). Text is cut to the field's
+     * length; a picklist takes the answer only when it is one of the field's values (matched ignoring case); a checkbox
+     * takes Yes or No. Anything else, an unknown field or one the user cannot edit, is skipped: the answer is still in
+     * the Description.
+     */
+    @TestVisible
+    static void put(Case c, String fieldName, String ans) {
+        if (String.isBlank(fieldName) || String.isBlank(ans)) { return; }
+        Schema.SObjectField f = Schema.SObjectType.Case.fields.getMap().get(fieldName.trim());
+        if (f == null) { return; }
+        Schema.DescribeFieldResult d = f.getDescribe();
+        if (!d.isCreateable()) { return; }
+        Schema.DisplayType t = d.getType();
+        if (t == Schema.DisplayType.STRING || t == Schema.DisplayType.TEXTAREA) {
+            c.put(f, ans.left(d.getLength()));
+        } else if (t == Schema.DisplayType.PICKLIST) {
+            for (Schema.PicklistEntry e : d.getPicklistValues()) {
+                if (e.isActive() && e.getValue().equalsIgnoreCase(ans)) { c.put(f, e.getValue()); return; }
+            }
+        } else if (t == Schema.DisplayType.BOOLEAN) {
+            if (ans.equalsIgnoreCase('Yes')) { c.put(f, true); } else if (ans.equalsIgnoreCase('No')) { c.put(f, false); }
+        }
     }
 
     /** The customer's Account when exactly one Account has that name; otherwise the name stays in the Description. */

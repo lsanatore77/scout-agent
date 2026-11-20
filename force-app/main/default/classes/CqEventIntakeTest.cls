@@ -111,7 +111,13 @@ private class CqEventIntakeTest {
 
     @IsTest
     static void customerReportBecomesACase() {
-        insert new Event_Question__c(Order__c = 7, Question__c = 'Which customer?', Answer_Type__c = 'Text', Role__c = 'Customer', Active__c = true);
+        insert new Event_Question__c(Order__c = 7, Question__c = 'Which customer?', Answer_Type__c = 'Text', Role__c = 'Customer', Active__c = true,
+            Case_Field__c = 'Customer_Reported__c');
+        List<Event_Question__c> mapped = [SELECT Id, Order__c FROM Event_Question__c WHERE Order__c IN (1, 4, 5)];
+        for (Event_Question__c q : mapped) {
+            q.Case_Field__c = q.Order__c == 1 ? 'Where_Found__c' : q.Order__c == 4 ? 'Safety_Risk_Reported__c' : 'Found_By__c';
+        }
+        update mapped;
         insert new Account(Name = 'Intake Test Customer');
         List<Map<String, Object>> rows = new List<Map<String, Object>>();
         for (Event_Question__c q : [SELECT Id, Order__c FROM Event_Question__c WHERE Active__c = true]) {
@@ -129,7 +135,12 @@ private class CqEventIntakeTest {
         System.assert(s.urgent, 'an injury is urgent');
         System.assertEquals(0, [SELECT COUNT() FROM Quality_Event__c WHERE Title__c = 'Cuff leaks at the customer'], 'a Case, not a Quality Event');
         Case c = [SELECT CaseNumber, Subject, Description, Origin, Type, Priority, Product__c, Lot_Number__c, Aware_Date__c, Reported_By__c, AccountId,
-                         Product_Caused_Harm__c, Impact_on_Safety_or_Environment__c FROM Case WHERE Id = :s.id];
+                         Product_Caused_Harm__c, Impact_on_Safety_or_Environment__c, Where_Found__c, Safety_Risk_Reported__c, Found_By__c, Customer_Reported__c
+                  FROM Case WHERE Id = :s.id];
+        System.assertEquals('At a Customer', c.Where_Found__c, 'each question fills its Case field');
+        System.assertEquals('Not Sure', c.Safety_Risk_Reported__c, 'the exact answer, where the triage field is left blank');
+        System.assertEquals('Customer returned it', c.Found_By__c);
+        System.assertEquals('Intake Test Customer', c.Customer_Reported__c);
         System.assertEquals(c.CaseNumber, s.name);
         System.assertEquals('Cuff leaks at the customer', c.Subject);
         System.assertEquals('Mobile Intake', c.Origin);
@@ -145,6 +156,19 @@ private class CqEventIntakeTest {
         System.assert(c.Description.contains('Cuff loses pressure after 2 minutes'));
         System.assert(c.Description.contains('Which customer? Intake Test Customer'));
         System.assert(c.Description.contains('Units affected: 3'));
+    }
+
+    @IsTest
+    static void caseFieldMappingSkipsWhatDoesNotFit() {
+        Case c = new Case();
+        CqEventIntake.put(c, 'No_Such_Field__c', 'x');
+        CqEventIntake.put(c, 'Where_Found__c', 'On the moon');
+        System.assertEquals(null, c.Where_Found__c, 'not one of the picklist values');
+        CqEventIntake.put(c, 'Where_Found__c', 'at a supplier');
+        System.assertEquals('At a Supplier', c.Where_Found__c, 'matched ignoring case');
+        CqEventIntake.put(c, 'Found_By__c', 'x'.repeat(300));
+        System.assertEquals(255, c.Found_By__c.length(), 'cut to the field length');
+        CqEventIntake.put(c, null, 'x');
     }
 
     @IsTest
