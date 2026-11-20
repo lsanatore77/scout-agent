@@ -53,7 +53,7 @@ Step 'Assign permission sets' {
 
 # 4. setup data
 Step "Copy questions, clips and quick-log categories from '$From'" {
-    node scripts\copy-intake-data.mjs --from $From --to $Alias
+    .\scripts\copy-intake-data.ps1 -From $From -To $Alias
 }
 
 # 5. open it

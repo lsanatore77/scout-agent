@@ -50,7 +50,7 @@ sf project deploy start --source-dir force-app --target-org intake-test --test-l
 
 # 3. access, setup data (questions, clips, categories) copied from dev
 sf org assign permset --name CQ_Mobile_Intake_User --name CQ_Mobile_Intake_Admin --target-org intake-test
-node scripts\copy-intake-data.mjs --from <your dev alias> --to intake-test
+.\scripts\copy-intake-data.ps1 -From <your dev alias> -To intake-test
 
 # 4. try it
 sf org open --target-org intake-test --path /lightning/n/Report_an_Event
@@ -78,7 +78,7 @@ The version create prints an install link (`04t...`). Test it in a fresh scratch
 ## After installing in a demo org
 
 1. Assign CQ Mobile Intake User (reporters) and CQ Mobile Intake Admin (whoever sets up questions).
-2. Copy the setup data: `node scripts/copy-intake-data.mjs --from <dev> --to <demo>`.
+2. Copy the setup data: `.\scripts\copy-intake-data.ps1 -From <dev> -To <demo>` (or the Node version, `scripts/copy-intake-data.mjs`, where Node is installed).
 3. Add Mobile Intake to Case Origin; set the Case assignment rule.
 4. Add the Report an Event tab to the app (and the mobile navigation) people use.
 5. If the CQ Triage Agent package is there too, its own permission set gives access to its fields.
