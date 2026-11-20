@@ -1,18 +1,17 @@
 # CQ Mobile Intake: set up a test org in one command.
 #
-#   .\setup-intake-test.ps1 -From <dev alias>
-#   .\setup-intake-test.ps1 -From <dev alias> -Alias intake-test -DevHub golden
+#   .\setup-intake-test.ps1
+#   .\setup-intake-test.ps1 -Alias intake-test -DevHub golden
 #
 # Run from the packages\cq-mobile-intake folder. Steps (each stops the script if it fails):
 #   1. scratch org from the CQ16BaseSnap snapshot (skipped if an org with that alias already exists)
 #   2. deploy the intake and run its tests
 #   3. assign the CQ Mobile Intake User and Admin permission sets
-#   4. copy questions, read-aloud clips and quick-log categories from the -From org
+#   4. add the default questions, their read-aloud clips and quick-log categories (scripts\seed-questions.apex)
 #   5. open Report an Event
 # Safe to run again: steps 2 to 4 update what is there instead of duplicating it.
 
 param(
-    [Parameter(Mandatory = $true)][string]$From,
     [string]$Alias = 'intake-test',
     [string]$DevHub = 'golden',
     [int]$Days = 7
@@ -51,9 +50,9 @@ Step 'Assign permission sets' {
     sf org assign permset --name CQ_Mobile_Intake_User --name CQ_Mobile_Intake_Admin --target-org $Alias
 }
 
-# 4. setup data
-Step "Copy questions, clips and quick-log categories from '$From'" {
-    .\scripts\copy-intake-data.ps1 -From $From -To $Alias
+# 4. setup data: the default questions, their clips (from the package) and quick-log categories
+Step 'Add the default questions' {
+    sf apex run --file scripts\seed-questions.apex --target-org $Alias
 }
 
 # 5. open it

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+    <cacheControl>Private</cacheControl>
+    <contentType>audio/wav</contentType>
+    <description>Mobile intake read-aloud clip: 04_lot_or_batch_number. Attached to its default question by scripts/seed-questions.apex.</description>
+</StaticResource>

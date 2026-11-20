@@ -23,6 +23,7 @@ main project, then rebuild:
 | Objects | Quality Event, Event Question (with Case Field), Event Answer, Quick Log Category, Quality Event tab |
 | Fields on others | Case: Lot Number, Aware Date, Reported By, Where Found, Customer (As Reported), Supplier (As Reported), Product Affected, Injury Reported, Safety Risk Reported, Found By (Test or Inspection), Who Was Hurt. Nonconformance: Quick Log, Quick Log Category, Trend Event |
 | Permission sets | CQ Mobile Intake User (report), CQ Mobile Intake Admin (questions, clips, categories) |
+| Default data | 9 read-aloud clips (static resources `CQ_Intake_Clip_01`..`09`); `scripts/seed-questions.apex` creates the 9 default questions from them, plus 4 quick-log categories |
 
 Not in it (on purpose): the desktop Report a Problem form, the Quality Event review panel (it needs Ask CQ), agents.
 
@@ -35,7 +36,7 @@ Not in it (on purpose): the desktop Report a Problem form, the Quality Event rev
 
 ## Test in a scratch org (you run these; log in yourself)
 
-**One command** (PowerShell, from this folder): `.\setup-intake-test.ps1 -From <your dev alias>` runs steps 1 to 4 below
+**One command** (PowerShell, from this folder): `.\setup-intake-test.ps1` runs steps 1 to 4 below
 (it reuses the scratch org if `intake-test` already exists, and stops at the first step that fails).
 
 Or step by step, from this folder (`packages/cq-mobile-intake`), with the Dev Hub logged in as `golden`. The scratch org comes from the
@@ -48,9 +49,9 @@ sf org create scratch --definition-file config\cq16-snapshot-def.json --alias in
 # 2. deploy the intake and run its tests
 sf project deploy start --source-dir force-app --target-org intake-test --test-level RunLocalTests --wait 30
 
-# 3. access, setup data (questions, clips, categories) copied from dev
+# 3. access, then the default questions (with their read-aloud clips) and quick-log categories
 sf org assign permset --name CQ_Mobile_Intake_User --name CQ_Mobile_Intake_Admin --target-org intake-test
-.\scripts\copy-intake-data.ps1 -From <your dev alias> -To intake-test
+sf apex run --file scripts\seed-questions.apex --target-org intake-test
 
 # 4. try it
 sf org open --target-org intake-test --path /lightning/n/Report_an_Event
@@ -78,7 +79,7 @@ The version create prints an install link (`04t...`). Test it in a fresh scratch
 ## After installing in a demo org
 
 1. Assign CQ Mobile Intake User (reporters) and CQ Mobile Intake Admin (whoever sets up questions).
-2. Copy the setup data: `.\scripts\copy-intake-data.ps1 -From <dev> -To <demo>` (or the Node version, `scripts/copy-intake-data.mjs`, where Node is installed).
+2. Add the default questions: `sf apex run --file scripts\seed-questions.apex --target-org <demo>` (safe to run again).
 3. Add Mobile Intake to Case Origin; set the Case assignment rule.
 4. Add the Report an Event tab to the app (and the mobile navigation) people use.
 5. If the CQ Triage Agent package is there too, its own permission set gives access to its fields.
