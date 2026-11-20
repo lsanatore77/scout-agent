@@ -34,6 +34,15 @@ State on 2026-11-19:
 4. Committee card: show the assignee's current name (`cqext__CQAPR_Assignee_User__r.Name`), not the saved `cqext__Assignee_Name__c`.
 5. Test: Lou is the only Field Action Emergency Approver, so an emergency approval on a test review lets Lou sign with his own password.
 
+## Signatures and Audit Trail (built 2026-11-20)
+
+- Two tables, our own (CQ's own modules keep one Record Activity per module holding both; CQ wrote nothing for our record type; whether CQ should record ours is parked).
+- Signatures: Field_Action_Review_Record_Activity__c (FRA-...). One row per signed committee action. Locked: no edit or delete for anyone (CqFarSignatureLock). New: Verified By (Password (CQ); later Company Sign-In (Entra)) and Signed Content Fingerprint (SHA-256 of outcome, rationale, risk, hazard, summary, emergency at signing).
+- Audit trail: Field_Action_Review_Audit__c (FAU-...). One row per create, field change (field, old, new), delete, and signature (points to the FRA row). Who as name + username text; Request Id groups one save. Lookup clears on delete; Record Id/Name keep the link. Locked (CqFarAuditLock). Written in system mode by CqFarAudit; people have read only.
+- Not logged: system fields, formulas, Review_Draft__c (workspace autosave).
+- A review with signatures cannot be deleted (it would take its signatures with it, master-detail).
+- Not shown on screen yet: see the Where Signatures Show board; an audit trail view still to be designed.
+
 ## Agreed Direction: Accessible Signing (2026-11-20, nothing built yet)
 
 - WCAG 2.2 SC 3.3.8: a typed-only password (autofill/paste refused, W3C failure F109) is fine only if there is another way to sign without a memory test, reachable from the signing page by the person themselves.
