@@ -14,6 +14,7 @@ State on 2026-11-19:
 3. **Deter password autofill** on that field:
    - `autocomplete="new-password"`, unique name/id, no username field beside it, not inside a login-style form;
    - detect autofill (`:autofill` / `:-webkit-autofill` via an animation or input check) and clear it with "Please type your password to sign";
-   - never pre-fill or keep the value: clear after every attempt, never store or log it.
+   - never pre-fill or keep the value: clear after every attempt, never store or log it;
+   - **refuse a password that was not typed**: accept Sign only when the value came from key presses; if it was autofilled or pasted, clear it and ask the signer to type it. The aim is only to stop casual autofill, not a determined bad actor.
 4. Committee card: show the assignee's current name (`cqext__CQAPR_Assignee_User__r.Name`), not the saved `cqext__Assignee_Name__c`.
 5. Test: Lou is the only Field Action Emergency Approver, so an emergency approval on a test review lets Lou sign with his own password.
