@@ -58,8 +58,9 @@
 .lab.dark { color: var(--cq-muted); }
 @media (max-width: 1100px) { .assess { grid-template-columns: 1fr; } }
 /* Signals and Evidence as a nested table, in the Root Causes table style */
-.cq-tblwrap { margin-top: 8px; }
-c-cq-ws-tabs > .cq-tblwrap:first-child { margin-top: 0; }
+/* the signals table sits flush under the tab bar; the weaker signals' table keeps its gap under its summary */
+.cq-tblwrap { margin-top: 0; }
+.cq-know .cq-tblwrap { margin-top: 8px; }
 .cq-tbl .chcol { width: 1%; padding-right: 0; }
 .cq-tbl td.sigcell { min-width: 200px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
