@@ -4,9 +4,9 @@ private class CqEventPartsTest {
     static void suggestsAndSearches() {
         compliancequest__SQX_Part_Family__c fam = new compliancequest__SQX_Part_Family__c(Name = 'Picker Family');
         insert fam;
-        compliancequest__SQX_Part__c part = new compliancequest__SQX_Part__c(Name = 'Picker Part', cqext__Title__c = 'Picker Part', compliancequest__Part_Number__c = 'PICK-PART-1',
+        compliancequest__SQX_Part__c part = CqIntakeTestData.part(new compliancequest__SQX_Part__c(Name = 'Picker Part', compliancequest__Part_Number__c = 'PICK-PART-1',
             compliancequest__Part_Family__c = fam.Id, compliancequest__Part_Type__c = 'Finished Product',
-            compliancequest__Active__c = true, cqext__Part_Definition__c = 'Individual');
+            compliancequest__Active__c = true));
         insert part;
         insert new Quality_Event__c(Title__c = 'T', Problem_Statement__c = 'P', Event_Type__c = 'Report', Status__c = 'Waiting for Review', Part__c = part.Id);
         List<CqEventParts.Part> s = CqEventParts.suggested();

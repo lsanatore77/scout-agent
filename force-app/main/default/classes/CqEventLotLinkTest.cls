@@ -5,10 +5,9 @@ private class CqEventLotLinkTest {
     static void setup() {
         compliancequest__SQX_Part_Family__c fam = new compliancequest__SQX_Part_Family__c(Name = 'LotLink Family');
         insert fam;
-        insert new compliancequest__SQX_Part__c(Name = 'LotLink Part', cqext__Title__c = 'LotLink Part',
+        insert CqIntakeTestData.part(new compliancequest__SQX_Part__c(Name = 'LotLink Part',
             compliancequest__Part_Number__c = 'LL-PART-1', compliancequest__Part_Family__c = fam.Id,
-            compliancequest__Part_Type__c = 'Finished Product', compliancequest__Active__c = true,
-            cqext__Part_Definition__c = 'Individual');
+            compliancequest__Part_Type__c = 'Finished Product', compliancequest__Active__c = true));
         insert new compliancequest__SQX_Lot_Info__c(Name = 'L26-0908', compliancequest__Part_Number__c = 'LL-PART-1');
     }
 

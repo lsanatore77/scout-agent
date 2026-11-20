@@ -5,10 +5,9 @@ private class CqIntakeChatTest {
     static void setup() {
         compliancequest__SQX_Part_Family__c fam = new compliancequest__SQX_Part_Family__c(Name = 'Chat Family');
         insert fam;
-        insert new compliancequest__SQX_Part__c(Name = 'CardioFlow', cqext__Title__c = 'CardioFlow',
+        insert CqIntakeTestData.part(new compliancequest__SQX_Part__c(Name = 'CardioFlow',
             compliancequest__Part_Number__c = 'PTCA-1000', compliancequest__Part_Family__c = fam.Id,
-            compliancequest__Part_Type__c = 'Finished Product', compliancequest__Active__c = true,
-            cqext__Part_Definition__c = 'Individual');
+            compliancequest__Part_Type__c = 'Finished Product', compliancequest__Active__c = true));
 
         // One required question with a role, so "still needed" has something to ask for.
         insert new Event_Question__c(Active__c = true, Required__c = true, Order__c = 1,

@@ -5,10 +5,9 @@ private class CqEventExtractTest {
     static void setup() {
         compliancequest__SQX_Part_Family__c fam = new compliancequest__SQX_Part_Family__c(Name = 'Extract Family');
         insert fam;
-        insert new compliancequest__SQX_Part__c(Name = 'Intake Part', cqext__Title__c = 'Intake Part',
+        insert CqIntakeTestData.part(new compliancequest__SQX_Part__c(Name = 'Intake Part',
             compliancequest__Part_Number__c = 'INT-PART-1', compliancequest__Part_Family__c = fam.Id,
-            compliancequest__Part_Type__c = 'Finished Product', compliancequest__Active__c = true,
-            cqext__Part_Definition__c = 'Individual');
+            compliancequest__Part_Type__c = 'Finished Product', compliancequest__Active__c = true));
         insert new List<Event_Question__c>{
             new Event_Question__c(Order__c = 1, Question__c = 'Where did this happen?', Answer_Type__c = 'Choice',
                 Choices__c = 'In Our Plant;At a Supplier;At a Customer', Role__c = 'Where Found', Required__c = true, Active__c = true),

@@ -1,0 +1,462 @@
+/* =============================================================================
+   cqStyles — the CQ design-token + component layer.
+   Import into any CQ component's CSS with:  @import 'c/cqStyles';
+   It sets the tokens on :host (so they inherit into this component and any
+   nested CQ components) and provides the locked component classes.
+
+   Two registers share one spine:
+     NEUTRAL  — records, forms, tables (Salesforce-adjacent; blue accent)
+     CQ.AI    — assistant / chat surfaces (purple accent)
+   Font is inherited from the platform (Salesforce Sans), which is consistent
+   across desktop and the mobile app — no external font loaded.
+   ============================================================================= */
+:host {
+  /* ---- type sizes (root 16px) ---- */
+  --cq-fs-label: 0.8125rem;   /* 13 - field labels + table headers, 600 */
+  --cq-fs-body:  0.9375rem;   /* 15 - values, body */
+  --cq-fs-meta:  0.8125rem;   /* 13 - secondary meta */
+  --cq-fs-micro: 0.6875rem;   /* 11 - pill text, eyebrows */
+  --cq-fs-btn:   0.875rem;    /* 14 - buttons */
+
+  /* ---- neutral / records register ---- */
+  --cq-ink:        #1b1f27;
+  --cq-muted:      #5b6470;
+  --cq-faint:      #8a93a0;
+  --cq-bg:         #ffffff;
+  --cq-surface:    #f6f7f9;   /* header, read-only fill, section tint */
+  --cq-line:       #e5e8ec;   /* row rules, hairlines */
+  --cq-line-field: #c4cad2;   /* input borders */
+  --cq-link:       #0b5cad;   /* record links + focus + selected control */
+  --cq-link-soft:  #e8f0fd;   /* soft highlight for a selected neutral control */
+
+  /* ---- CQ.AI register (assistant / chat) ---- */
+  --cq-accent:      #4a2fc0;
+  --cq-accent-soft: #f3eefe;
+  --cq-accent-line: #e3d9fb;
+  --cq-accent-fill: #c4b5f7;   /* fill of a chosen CQ.AI control: a clear lavender with purple text, so it never reads as the neutral blue */
+
+  /* ---- semantic pills: solid fills (white text) + soft tints ---- */
+  --cq-crit-solid:#b3261e; --cq-crit-bg:#fdecec; --cq-crit-fg:#b3261e;
+  --cq-warn-solid:#96580a; --cq-warn-bg:#fff3e0; --cq-warn-fg:#8a4b00;
+  --cq-pos-solid: #15803d; --cq-pos-bg: #e8f6ee; --cq-pos-fg: #1a7f45;  /* green = positive only */
+  --cq-neu-solid: #5b6470; --cq-neu-bg: #eef0f3; --cq-neu-fg: #5b6470;
+  --cq-info-solid:#c2410c; --cq-info-bg:#fdede1; --cq-info-fg:#c2410c;  /* in-review (orange) */
+  --cq-crit-line:#f3c7c2; --cq-warn-line:#f2d3a8; --cq-pos-line:#b7e1c1;  /* soft-box borders */
+  --cq-danger: #b3261e;
+
+  /* ---- workspace header chrome (Salesforce-adjacent greys) ---- */
+  --cq-hl-bg:   #f3f3f3;
+  --cq-hl-line: #e5e5e5;
+
+  /* ---- radius ---- */
+  --cq-r-field: 0.375rem;  /* 6  */
+  --cq-r-card:  0.625rem;  /* 10 */
+  --cq-r-pill:  999px;
+
+  /* ---- spacing scale ---- */
+  --cq-s1: 0.25rem; --cq-s2: 0.375rem; --cq-s3: 0.5rem;
+  --cq-s4: 0.75rem; --cq-s5: 1rem;     --cq-s6: 1.5rem;
+
+  /* ---- density: comfortable (default / mobile) ---- */
+  --cq-field-h:     2.75rem;
+  --cq-field-pad-y: 0.625rem;
+  --cq-field-pad-x: 0.75rem;
+  --cq-row-gap:     1rem;
+  --cq-label-gap:   0.375rem;
+  --cq-grid-cols:   1;
+}
+
+/* compact = desktop. Bound to width; override with data-density if needed. */
+@media (min-width: 56.25rem) {
+  :host {
+    --cq-field-h: 2.1rem; --cq-field-pad-y: 0.3125rem; --cq-field-pad-x: 0.5rem;
+    --cq-row-gap: 0.625rem; --cq-label-gap: 0.25rem; --cq-grid-cols: 2;
+  }
+}
+:host([data-density="comfortable"]) { --cq-field-h: 2.75rem; --cq-field-pad-y: 0.625rem; --cq-field-pad-x: 0.75rem; --cq-row-gap: 1rem; --cq-label-gap: 0.375rem; --cq-grid-cols: 1; }
+:host([data-density="compact"])     { --cq-field-h: 2.1rem;  --cq-field-pad-y: 0.3125rem; --cq-field-pad-x: 0.5rem; --cq-row-gap: 0.625rem; --cq-label-gap: 0.25rem; --cq-grid-cols: 2; }
+
+/* =============================== PILLS =================================== */
+/* STANDARD: solid fill, white text, centered (line-height 1 + top-biased pad) */
+.cq-pill {
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem;
+  padding: 0.34rem 0.62rem 0.28rem; border-radius: var(--cq-r-pill);
+  font-size: var(--cq-fs-micro); font-weight: 700; line-height: 1; color: #fff;
+  white-space: nowrap;
+}
+.cq-pill.crit { background: var(--cq-crit-solid); }
+.cq-pill.warn { background: var(--cq-warn-solid); }
+.cq-pill.pos  { background: var(--cq-pos-solid); }
+.cq-pill.neu  { background: var(--cq-neu-solid); }
+.cq-pill.info { background: var(--cq-info-solid); }
+/* OPTIONAL quiet variant: soft tint, for busy tables */
+.cq-pill.soft.crit { background: var(--cq-crit-bg); color: var(--cq-crit-fg); }
+.cq-pill.soft.warn { background: var(--cq-warn-bg); color: var(--cq-warn-fg); }
+.cq-pill.soft.pos  { background: var(--cq-pos-bg);  color: var(--cq-pos-fg); }
+.cq-pill.soft.neu  { background: var(--cq-neu-bg);  color: var(--cq-neu-fg); }
+.cq-pill.soft.info { background: var(--cq-info-bg); color: var(--cq-info-fg); }
+/* CQ.AI pill: marks an item CQ.AI suggests (a table row, an option). Soft purple, purple edge and text, always with the \2726 mark and the words
+   "CQ.AI Suggests". Clickable (it opens Ask CQ.AI with the reason), so it is a button. In a table it sits in a column headed "Recommendation".
+   c-cq-ai-why variant="pill" draws exactly this. */
+.cq-pill.ai { padding: 2px 8px; border: 1px solid var(--cq-accent-line); background: var(--cq-accent-soft); color: var(--cq-accent); font-weight: 600; line-height: inherit; }
+button.cq-pill.ai { font-family: inherit; cursor: pointer; }
+button.cq-pill.ai:hover { text-decoration: underline; }
+button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-offset: 2px; }
+
+/* =============================== CHIPS ================================== */
+/* 3px of bottom padding on chips and buttons lifts the text to optical center in Salesforce Sans, which sits low */
+.cq-chip {
+  min-height: var(--cq-field-h); display: inline-flex; align-items: center; justify-content: center;
+  padding: 0 0.95rem 0.1875rem; border-radius: var(--cq-r-pill); border: 1px solid var(--cq-line-field);
+  background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: var(--cq-fs-body);
+  font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.cq-chip[aria-pressed="true"] { border-color: var(--cq-link); background: var(--cq-link); color: #fff; }
+.cq-chip:disabled { cursor: default; }
+/* a chip that is the CQ.AI suggestion wears CQ.AI purple, never the neutral blue: outline only at rest, lavender fill when chosen, so a filled chip always means chosen */
+.cq-chip.ai { border-color: var(--cq-accent); background: var(--cq-bg); color: var(--cq-accent); }
+.cq-chip.ai[aria-pressed="true"] { border-color: var(--cq-accent); background: var(--cq-accent-fill); color: var(--cq-accent); }
+/* it always carries the CQ.AI mark, chosen or not (unless the chip already holds a clickable mark of its own) */
+.cq-chip.ai:not(:has(c-cq-ai-why))::before { content: '\2726'; margin-right: 6px; }
+/* a row of chips; under a field label it gets extra air (chips are tall and rounded) */
+.cq-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.cq-field > .cq-chips { margin-top: 0.25rem; }
+
+/* ============================ BUTTONS / ACTIONS ======================== */
+.cq-btn-outline, .cq-btn-primary, .cq-btn-ai {
+  min-height: var(--cq-field-h); border-radius: var(--cq-r-field);
+  font: inherit; font-size: var(--cq-fs-btn); cursor: pointer; white-space: nowrap;
+}
+.cq-btn-outline { padding: 0 0.9rem 0.1875rem; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-ink); font-weight: 600; }
+.cq-btn-outline:hover { background: var(--cq-surface); }
+.cq-btn-primary { padding: 0 1rem 0.1875rem; border: 0; background: var(--cq-link); color: #fff; font-weight: 700; }
+.cq-btn-ai      { padding: 0 1rem 0.1875rem; border: 0; background: var(--cq-accent); color: #fff; font-weight: 700; }
+.cq-btn-outline:disabled, .cq-btn-primary:disabled, .cq-btn-ai:disabled { opacity: 0.45; cursor: not-allowed; }
+.cq-link { color: var(--cq-link); font-weight: 600; font-size: var(--cq-fs-meta); background: none; border: 0; cursor: pointer; text-decoration: none; white-space: nowrap; }
+.cq-link:hover { text-decoration: underline; }
+/* the same link as a button (it opens something in the page) */
+button.cq-link { padding: 0; font-family: inherit; }
+
+/* ============================ FORM FIELDS ============================== */
+/* one field = label + control (+ hint or error). Density comes from the tokens. */
+.cq-field { display: flex; flex-direction: column; gap: var(--cq-label-gap); min-width: 0; }
+.cq-label, .cq-field > label { font-size: var(--cq-fs-label); font-weight: 600; color: var(--cq-ink); }
+.cq-req { color: var(--cq-danger); margin-left: 0.15rem; }
+.cq-field input, .cq-field select, .cq-field textarea {
+  box-sizing: border-box; width: 100%; min-height: var(--cq-field-h);
+  padding: var(--cq-field-pad-y) var(--cq-field-pad-x);
+  border: 1px solid var(--cq-line-field); border-radius: var(--cq-r-field);
+  background: var(--cq-bg); color: var(--cq-ink);
+  font: inherit; font-size: var(--cq-fs-body); font-weight: 400; line-height: 1.3; outline: none;
+}
+.cq-field textarea { min-height: calc(var(--cq-field-h) * 2.2); resize: vertical; line-height: 1.45; }
+.cq-field input:focus, .cq-field select:focus, .cq-field textarea:focus { border-color: var(--cq-link); box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.18); }
+.cq-field input::placeholder, .cq-field textarea::placeholder { color: var(--cq-faint); }
+.cq-hint { font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-faint); }
+.cq-err  { font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-danger); }
+.cq-field.is-error input, .cq-field.is-error select, .cq-field.is-error textarea { border-color: var(--cq-danger); box-shadow: 0 0 0 3px rgba(179, 38, 30, 0.16); }
+.cq-field input:disabled, .cq-field select:disabled, .cq-field textarea:disabled { background: var(--cq-surface); color: var(--cq-faint); cursor: not-allowed; }
+/* a group of controls under one label: the same gap across and down */
+.cq-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--cq-s3); }
+.cq-group > .cq-span { grid-column: 1 / -1; }
+/* last control hugs its content (a short number, a stepper); the one before it takes the rest */
+.cq-group.fit-last { grid-template-columns: minmax(0, 1fr) auto; }
+.cq-field input.cq-num { width: 9rem; }
+/* number stepper: one field-height box, minus | value | plus. Use where a count is tapped, not typed. */
+.cq-stepper { box-sizing: border-box; display: inline-flex; align-items: stretch; width: calc(var(--cq-field-h) * 2 + 3.5rem); min-height: var(--cq-field-h); border: 1px solid var(--cq-line-field); border-radius: var(--cq-r-field); background: var(--cq-bg); overflow: hidden; }
+.cq-stepper button { flex: 0 0 var(--cq-field-h); padding: 0 0 0.125rem; border: 0; background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 1.125rem; font-weight: 600; line-height: 1; cursor: pointer; }
+.cq-stepper button:first-child { border-right: 1px solid var(--cq-line); }
+.cq-stepper button:last-child { border-left: 1px solid var(--cq-line); }
+.cq-stepper button:hover { background: var(--cq-surface); }
+.cq-stepper button:disabled { background: var(--cq-bg); color: var(--cq-faint); cursor: not-allowed; }
+.cq-stepper-val { flex: 1 1 auto; display: flex; align-items: center; justify-content: center; font-size: var(--cq-fs-body); font-weight: 600; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
+/* read-only value */
+.cq-readval { min-height: var(--cq-field-h); display: flex; align-items: center; padding: var(--cq-field-pad-y) 0; font-size: var(--cq-fs-body); color: var(--cq-ink); }
+.cq-readval.empty { color: var(--cq-faint); font-style: italic; }
+
+/* ============================ MESSAGE BOXES ============================ */
+/* soft status box: a warning, a confirmation, or an error. Green is positive only. */
+.cq-msg { padding: 0.625rem 0.875rem; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-neu-bg); color: var(--cq-ink); line-height: 1.45; }
+.cq-msg.warn { background: var(--cq-warn-bg); border-color: var(--cq-warn-line); color: var(--cq-warn-fg); }
+.cq-msg.pos  { background: var(--cq-pos-bg);  border-color: var(--cq-pos-line);  color: var(--cq-pos-fg); }
+.cq-msg.crit { background: var(--cq-crit-bg); border-color: var(--cq-crit-line); color: var(--cq-crit-fg); }
+
+/* ============================ CQ.AI SUGGESTION CARD ==================== */
+/* what CQ.AI suggests and why: purple card > eyebrow > verdict > text > answer rows (the rows it flagged in purple) */
+.cq-ai-card { border: 1px solid var(--cq-accent-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-accent-soft); }
+.cq-ai-eyebrow { display: flex; align-items: center; gap: 0.3rem; font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cq-accent); }
+.cq-ai-verdict { font-size: 1.0625rem; font-weight: 700; color: var(--cq-ink); margin: 0.15rem 0 0.4rem; line-height: 1.25; }
+.cq-ai-text { margin: 0; font-size: var(--cq-fs-body); line-height: 1.5; color: var(--cq-ink); white-space: pre-line; }
+.cq-ai-rule { height: 1px; background: var(--cq-accent-line); margin: 0.85rem 0; }
+.cq-ai-sub { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); margin-bottom: 0.4rem; }
+.cq-ai-sub .cq-hint { margin-left: 0.25rem; }
+/* label / value rows; a flagged row (class hot, or data-hot set to anything but 0 or false) gets the purple bar */
+.cq-qa { display: flex; flex-direction: column; }
+.cq-qa-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.4rem 0; border-top: 1px solid var(--cq-accent-line); font-size: var(--cq-fs-body); }
+.cq-qa-row:first-child { border-top: 0; }
+.cq-qa-k { display: flex; flex-direction: column; min-width: 0; color: var(--cq-muted); line-height: 1.35; }
+.cq-qa-d { font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-muted); }
+.cq-qa-v { font-weight: 600; text-align: right; white-space: nowrap; color: var(--cq-ink); }
+.cq-qa-row.hot, .cq-qa-row[data-hot]:not([data-hot="0"]):not([data-hot="false"]) { border-left: 3px solid var(--cq-accent); padding-left: 0.5rem; }
+.cq-qa-row.hot .cq-qa-k, .cq-qa-row[data-hot]:not([data-hot="0"]):not([data-hot="false"]) .cq-qa-k { color: var(--cq-ink); font-weight: 600; }
+.cq-qa-row.hot .cq-qa-v, .cq-qa-row[data-hot]:not([data-hot="0"]):not([data-hot="false"]) .cq-qa-v { color: var(--cq-accent); font-weight: 700; }
+
+/* ============================ OPTION CARDS ============================= */
+/* a choice between a few outcomes, each with a title and a line of explanation: .cq-optcards > button.cq-optcard */
+.cq-optcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; }
+.cq-optcard { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 0.375rem 0.625rem; min-height: 4.5rem; box-sizing: border-box; padding: 0.875rem; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); color: var(--cq-ink); font: inherit; text-align: left; cursor: pointer; }
+.cq-optcard-title { order: 1; font-size: 1rem; font-weight: 700; }
+/* anything else in the card (the CQ.AI Suggests tag) follows the title on its line; the description takes the next line */
+.cq-optcard > :not(.cq-optcard-title):not(.cq-optcard-desc) { order: 2; }
+.cq-optcard-desc { order: 3; flex: 0 0 100%; font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-muted); }
+.cq-optcard[aria-pressed="true"] { border: 2px solid var(--cq-link); background: var(--cq-link-soft); padding: calc(0.875rem - 1px); }
+/* the card CQ.AI suggests is purple, never the neutral blue: tinted at rest, purple edge when chosen */
+.cq-optcard.ai { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
+.cq-optcard.ai[aria-pressed="true"] { border: 2px solid var(--cq-accent); background: var(--cq-accent-soft); }
+@media (max-width: 47.5rem) { .cq-optcards { grid-template-columns: 1fr; } }
+
+/* ============================ STEP RAIL ================================
+   The list of steps down the left of every workspace. Put cq-rail on the <nav> and cq-rail-title on its heading;
+   the step button (step, plus active / done from the component), its mark, txt, lbl, ssub and the progress line
+   are styled from here. Title wording: "<star> CQ.AI <Name> Steps". */
+.cq-rail { width: 244px; flex: none; border-right: 1px solid var(--cq-line); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
+.cq-rail-title { font-size: 15px; font-weight: 700; padding: 2px 8px 10px; white-space: nowrap; }
+.cq-rail-title .star { color: var(--cq-accent); margin-right: 5px; }
+.cq-rail .step { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; border-radius: 6px; padding: 8px; font: inherit; cursor: pointer; }
+.cq-rail .step:hover, .cq-rail .step.active { background: var(--cq-surface); }
+.cq-rail .step:disabled { cursor: default; }
+.cq-rail .step:disabled:hover { background: transparent; }
+.cq-rail .step.active:disabled:hover { background: var(--cq-surface); }
+.cq-rail .mark { flex: none; width: 14px; height: 14px; border-radius: 7px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-muted); font-size: 8px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 3px; }
+.cq-rail .step.done .mark { background: var(--cq-pos-solid); border-color: var(--cq-pos-fg); color: #fff; font-size: 7px; }
+.cq-rail .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cq-rail .lbl { font-size: 13px; font-weight: 700; color: var(--cq-ink); }
+.cq-rail .ssub { font-size: 11px; color: var(--cq-muted); }
+.cq-rail .progress { margin-top: auto; padding: 10px 8px 2px; font-size: 11px; color: var(--cq-faint); }
+@media (max-width: 760px) { .cq-rail { width: auto; border-right: none; border-bottom: 1px solid var(--cq-line); } }
+
+/* ============================ WORKSPACE FRAME ==========================
+   The page a workspace sits in: .cq-box > header.cq-hl, then .cq-ws-body > nav.cq-rail + .cq-ws-main.
+   Each step opens with h3.cq-step-title (and an optional p.cq-step-intro) and ends with .cq-ws-foot,
+   which is always the last thing inside .cq-ws-main: blocker text, the step's own button, Back, Next, at the bottom right. */
+.cq-ws-body { display: flex; min-height: 460px; }
+.cq-ws-main { flex: 1; min-width: 0; padding: 20px; display: flex; flex-direction: column; }
+.cq-step-title { margin: 0 0 14px; font-size: 20px; font-weight: 700; }
+.cq-step-title.nom { margin: 0; }
+.cq-step-intro { margin: -6px 0 14px; color: var(--cq-muted); max-width: 72ch; }
+.cq-ws-foot { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: auto; padding-top: 20px; }
+.cq-blocker { color: var(--cq-warn-fg); font-weight: 600; }
+.cq-grow { flex: 1 1 auto; min-width: 0; }
+@media (max-width: 760px) { .cq-ws-body { flex-direction: column; } }
+
+/* ============================ TABLE ====================================
+   .cq-tblwrap > table.cq-tbl. The header is small and quiet (11px bold, muted, on the light surface): the one
+   named exception to the 13px minimum. Cell helpers: num (right, tabular), center (narrow, centred), wide (takes the room). */
+.cq-tblwrap { overflow-x: auto; border: 1px solid var(--cq-line); border-radius: 8px; }
+.cq-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cq-tbl th { padding: 8px 12px; background: var(--cq-surface); text-align: left; font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); white-space: nowrap; }
+.cq-tbl td { padding: 10px 12px; border-top: 1px solid var(--cq-line); vertical-align: top; }
+.cq-tbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cq-tbl th.center, .cq-tbl td.center { width: 1%; text-align: center; }
+.cq-tbl td.wide { width: 100%; min-width: 200px; }
+/* page numbers under a table: .cq-pager > nav.cq-pages > button.pg (on = current, gap = the dots) */
+.cq-pager { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 8px; }
+.cq-pages { display: inline-flex; align-items: center; gap: 2px; }
+.cq-pages .pg { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 22px; padding: 0 3px; box-sizing: border-box; border: none; background: none; color: var(--cq-faint); font: inherit; font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; }
+.cq-pages .pg:hover { color: var(--cq-link); }
+.cq-pages .pg:disabled { color: var(--cq-line-field); cursor: default; }
+.cq-pages .pg.gap:disabled { color: var(--cq-faint); }
+.cq-pages .pg.on, .cq-pages .pg.on:disabled { color: var(--cq-link); font-weight: 700; }
+
+/* ============================ POPUP ====================================
+   .cq-modal-back > section.cq-modal > header.cq-modal-head (h2.cq-modal-title + button.cq-modal-x), .cq-modal-body, footer.cq-modal-foot.
+   Add popov when a search list inside must be able to open past the popup's edge. */
+.cq-modal-back { position: fixed; inset: 0; z-index: 9100; background: rgba(8, 7, 7, .45); display: flex; align-items: flex-start; justify-content: center; padding: 10vh 16px 16px; }
+.cq-modal { width: 100%; max-width: 560px; background: var(--cq-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
+.cq-modal-head { position: relative; padding: 16px 52px; border-bottom: 1px solid var(--cq-hl-line); text-align: center; }
+.cq-modal-title { margin: 0; font-size: 20px; font-weight: 700; }
+.cq-modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
+.cq-modal-x:hover { background: var(--cq-hl-bg); }
+.cq-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 60vh; overflow-y: auto; }
+.cq-modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--cq-hl-line); background: var(--cq-hl-bg); }
+.cq-modal.popov, .cq-modal.popov .cq-modal-body { overflow: visible; max-height: none; }
+.cq-modal.popov .cq-modal-foot { border-radius: 0 0 8px 8px; }
+
+/* ============================ SMALL PIECES =============================
+   Text helpers, key figures, result rows and the done mark that every workspace uses. */
+.cq-muted { color: var(--cq-muted); }
+.cq-strong { font-weight: 700; }
+.cq-note { margin: 8px 0 0; font-size: 13px; color: var(--cq-muted); }
+/* key figures in a row: .cq-tiles > .cq-tile > .cq-tile-k (what it is) + .cq-tile-v (the figure) */
+.cq-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.cq-tile { padding: 6px 10px; border-radius: 6px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
+.cq-tile-k { font-size: var(--cq-fs-micro); color: var(--cq-muted); }
+.cq-tile-v { font-size: 13px; font-weight: 700; }
+/* a label and its value on one boxed line (what a completed step recorded) */
+.cq-kv { display: flex; align-items: center; gap: 12px; box-sizing: border-box; min-height: 44px; max-width: 760px; margin-bottom: 8px; padding: 8px 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.cq-kv-k { flex: 0 0 160px; color: var(--cq-muted); }
+.cq-kv-v { flex: 1 1 auto; min-width: 0; font-weight: 600; }
+@media (max-width: 760px) { .cq-kv-k { flex-basis: 110px; } }
+/* the green tick that heads a finished step; green is positive only */
+.cq-donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.cq-okdot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: 13px; font-weight: 700; }
+.cq-okdot.sm { width: 18px; height: 18px; font-size: 10px; }
+
+/* ============================ WORKSPACE HEADER ========================= */
+/* every record workspace opens with this: .cq-box > header.cq-hl > .cq-hl-top (+ optional .cq-hl-fields) */
+.cq-box { display: flex; flex-direction: column; border: 1px solid var(--cq-hl-line); border-radius: 0.75rem; background: var(--cq-bg); }
+.cq-hl { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.875rem 1.25rem 0.75rem; background: var(--cq-hl-bg); border-bottom: 1px solid var(--cq-hl-line); border-radius: 0.75rem 0.75rem 0 0; }
+.cq-hl-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.cq-hl-who { display: flex; align-items: center; gap: 0.75rem; }
+.cq-hl-icon { display: inline-flex; }
+.cq-hl-name { display: flex; flex-direction: column; gap: 1px; }
+.cq-hl-obj { font-size: 0.75rem; color: var(--cq-muted); }
+.cq-hl-title { font-size: 1.375rem; font-weight: 700; line-height: 1.2; color: var(--cq-ink); }
+.cq-hl-actions { display: flex; align-items: center; gap: 0.5rem; }
+.cq-hl .cq-btn-outline { min-height: 2.5rem; }
+/* optional sub-field band under the title (Event Review keeps its fields in the body instead) */
+.cq-hl-fields { display: flex; gap: 0.5rem 2rem; flex-wrap: wrap; }
+.cq-hl-f { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+.cq-hl-k { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); }
+.cq-hl-v { font-size: var(--cq-fs-meta); color: var(--cq-ink); }
+.cq-hl-v.link { font-weight: 600; color: var(--cq-link); }
+button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inherit; cursor: pointer; }
+
+/* ============================ FIELD WIDTHS ============================= */
+/* width follows content — cap the control, not the cell */
+.cq-field.w-num input, .cq-field.w-num select { max-width: 6rem; }
+.cq-field.w-date input { max-width: 11rem; }
+.cq-field.w-code input { max-width: 18rem; }
+
+/* ---------- CARD HEADING ----------
+   The heading inside a card or above a block of content: bold, Title Case, body size, dark ink.
+   Same look as .cq-ai-sub ("Reported Answers"); never small, grey or uppercase. */
+.cq-card-title { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
+
+/* ---------- TONED ROWS ----------
+   A list of rows that each carry a status (signals, findings). A 3px bar down the left edge shows
+   the status; the bar is unbroken from row to row. Set data-tone to crit, warn, or a signal
+   strength (Escalate, Assess, Watch). No tone = neutral grey. Green is never used here. */
+.cq-tonerow { padding: 9px 0 9px 14px; border-left: 3px solid var(--cq-line-field); }
+.cq-card-title + .cq-tonerow { margin-top: 8px; }
+.cq-tonerow[data-tone="crit"], .cq-tonerow[data-tone="Escalate"] { border-left-color: var(--cq-crit-solid); }
+.cq-tonerow[data-tone="warn"], .cq-tonerow[data-tone="Assess"], .cq-tonerow[data-tone="Watch"] { border-left-color: var(--cq-warn-solid); }
+
+/* ============================ MORE SHARED PIECES =======================
+   Layout rows and small helpers that several workspaces use. */
+/* a row of choices or buttons under a block; tight = inside a card heading */
+.cq-opts { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.cq-opts.tight { margin-top: 0; gap: 8px; }
+/* fields side by side, aligned on their controls */
+.cq-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+/* a button with a line of explanation beside it */
+.cq-splitline { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cq-splitline .cq-note { margin: 0; }
+/* a step heading in a row with its status pill */
+.cq-sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* a plain grey box that explains what a button will do, or that there is nothing here yet */
+.cq-infobox { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-line); background: var(--cq-surface); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
+.cq-infobox strong { color: var(--cq-ink); }
+/* the small grey detail line under a name; block = on its own line */
+.cq-sub { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
+.cq-sub.block { display: block; }
+/* "What Stands Out": the purple heading (with its icon) and the text CQ.AI worded from the records */
+.cq-ai-head { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--cq-accent); }
+.cq-ai-icon { --slds-c-icon-color-foreground-default: var(--cq-accent); }
+.cq-ai-says { font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
+.cq-nowrap { white-space: nowrap; }
+.cq-mt16 { margin-top: 16px; }
+/* an error or confirmation at the foot of a step */
+.cq-msg.errbox, .cq-msg.okbox { margin-top: 12px; }
+.cq-msg.okbox { font-weight: 600; }
+.cq-note.sm0 { margin: 0; }
+.cq-pill.soft.ai { background: var(--cq-accent-soft); color: var(--cq-accent); }
+.cq-field.owner { flex: 0 1 260px; min-width: 200px; }
+.cq-field.growf { flex: 1 1 220px; }
+
+/* ============================ SEARCH PICKER ============================
+   A search box that opens a list under it (part, lot). .cq-pick > .cq-pick-box (input.cq-pick-in + .cq-pick-icon), or once chosen
+   .cq-pick-picked (.cq-pick-label + button.cq-pick-x); then the list (list, plus up when it opens above, from the component) >
+   .cq-pick-head, .cq-pick-row (.cq-pick-n + .cq-pick-sub), .cq-pick-empty. It matches the shared field: height, border, radius, focus. */
+.cq-pick, .cq-pick-box { position: relative; }
+.cq-pick-in { box-sizing: border-box; width: 100%; min-height: var(--cq-field-h); padding: var(--cq-field-pad-y) 2.1rem var(--cq-field-pad-y) var(--cq-field-pad-x); border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: var(--cq-fs-body); font-weight: 400; line-height: 1.3; color: var(--cq-ink); }
+.cq-pick-in:focus { outline: none; border-color: var(--cq-link); box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.18); }
+.cq-pick-in::placeholder { color: var(--cq-faint); }
+.cq-pick-icon { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); --slds-c-icon-color-foreground-default: var(--cq-muted); }
+.cq-pick-picked { box-sizing: border-box; display: flex; align-items: center; gap: 0.5rem; min-height: var(--cq-field-h); padding: 0 0.25rem 0 var(--cq-field-pad-x); border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-link-soft); }
+.cq-pick-label { flex: 1 1 auto; min-width: 0; font-size: var(--cq-fs-body); font-weight: 600; color: var(--cq-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cq-pick-x { width: 1.6rem; height: 1.6rem; border: none; border-radius: var(--cq-r-field); background: none; font-size: 1.1rem; line-height: 1; color: var(--cq-muted); cursor: pointer; }
+.cq-pick-x:hover { background: var(--cq-bg); color: var(--cq-link); }
+.cq-pick .list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); max-height: 320px; overflow-y: auto; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line); background: var(--cq-bg); box-shadow: 0 6px 18px rgba(26, 29, 33, .12); }
+.cq-pick .list.up { top: auto; bottom: calc(100% + 4px); }
+.cq-pick-head { padding: 0.5rem 0.75rem 0.25rem; font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); text-transform: uppercase; letter-spacing: .03em; }
+.cq-pick-row { display: flex; flex-direction: column; gap: 1px; padding: 0.45rem 0.75rem; cursor: pointer; }
+.cq-pick-row:hover { background: var(--cq-link-soft); }
+.cq-pick-n { font-size: var(--cq-fs-body); font-weight: 600; color: var(--cq-ink); }
+.cq-pick-sub { font-size: var(--cq-fs-meta); color: var(--cq-muted); }
+.cq-pick-empty { padding: 0.5rem 0.75rem 0.75rem; font-size: var(--cq-fs-meta); color: var(--cq-muted); }
+
+/* ============================ CHAT PANEL CARDS =========================
+   The small cards CQ.AI shows in the chat panel (checklist, missing data, worth reviewing, the record lists):
+   .cq-panel holds the intro, an error or empty line, and one or more .cq-panel-card. Lists page with
+   .cq-panel-pager > .cq-panel-pages > Previous, the page buttons (page, plus current, from the component), Next. */
+.cq-panel { display: flex; flex-direction: column; gap: 0.75rem; max-width: 100%; }
+.cq-panel-intro { font-size: 0.8125rem; line-height: 1.4; }
+.cq-panel-error { color: var(--cq-crit-fg); font-size: 0.8125rem; }
+.cq-panel-empty { color: var(--cq-muted); font-size: 0.8125rem; }
+.cq-panel-card { background: var(--cq-bg); border: 1px solid var(--cq-line); border-radius: 0.5rem; overflow: hidden; }
+.cq-panel-pager { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.375rem; }
+.cq-panel-pages { display: flex; gap: 0.625rem; align-items: center; flex-wrap: wrap; }
+.cq-panel-pages .page { background: none; border: 0; padding: 0; color: var(--cq-link); cursor: pointer; font-size: 0.8125rem; }
+.cq-panel-pages .page:hover { text-decoration: underline; }
+.cq-panel-pages .page.current { color: var(--cq-ink); font-weight: 700; cursor: default; text-decoration: none; }
+
+/* ============================ PAGE LAYOUT PIECES =======================
+   Columns, cards and rows that several workspaces lay their steps out with. */
+/* two columns side by side. top = each column keeps its own height; wide = 1.4 to 1; wide32 = 3 to 2 */
+.cq-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.cq-cols.top { align-items: start; }
+.cq-cols.wide { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+.cq-cols.wide32 { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+@media (max-width: 760px) { .cq-cols, .cq-cols.wide, .cq-cols.wide32 { grid-template-columns: 1fr; } }
+/* a column of blocks; lead = the main column, with more air between them */
+.cq-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cq-col.lead { gap: 14px; }
+/* a name with its detail lines under it, taking the room in a row */
+.cq-stack { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; }
+/* a ruled row in a card: what it is on the left, its value or pill on the right */
+.cq-krow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); }
+.cq-krow:last-child { border-bottom: none; padding-bottom: 0; }
+.cq-para { margin-top: 6px; font-size: 14px; line-height: 1.45; white-space: pre-line; }
+.cq-big { font-size: 20px; font-weight: 700; }
+.cq-mt14 { margin-top: 14px; }
+/* The Problem: the grey card that opens a glance, and its text */
+.cq-pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.cq-prob { margin: 0; font-size: 14px; line-height: 1.45; }
+/* a numbered card inside a step: .cq-stepcard > .cq-stepcard-head (.cq-stepcard-n + .cq-stepcard-title, then .cq-grow + .cq-stepcard-tot) */
+.cq-stepcard { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.cq-stepcard-head { display: flex; align-items: baseline; gap: 8px; }
+.cq-stepcard-n { font-size: 13px; font-weight: 700; color: var(--cq-muted); }
+.cq-stepcard-title { font-size: 15px; font-weight: 700; }
+.cq-stepcard-tot { font-size: 13px; font-weight: 600; }
+/* a stock location link and the dot between two of them */
+.cq-ploc { color: var(--cq-link); font-weight: 600; text-decoration: none; }
+.cq-ploc:hover { text-decoration: underline; }
+.cq-dotsep { color: var(--cq-faint); }
+/* a decision card in Next Steps: its name, its state line, the suggestion, the choices */
+.cq-dcard-name { font-size: 14px; font-weight: 700; }
+.cq-dcard-state { margin-top: 2px; min-height: 19px; color: var(--cq-muted); }
+.cq-dcard-sug { flex: 1 1 auto; min-width: 0; line-height: 1.45; }
+.cq-dcard-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+/* "what we know" fold-out and the Start Over link */
+.cq-know summary { color: var(--cq-link); font-size: 13px; font-weight: 600; cursor: pointer; }
+.cq-restart { margin: 4px 8px 0; padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+/* the small "From" / "For" card at the top of a popup, and the loading line */
+.cq-fromcard { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-hl-line); background: var(--cq-surface); display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
+.cq-spin { position: relative; display: inline-block; width: 24px; height: 24px; }
+.cq-spinwrap { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+/* "Happened Before": the amber warning box, its heading, the red link, and a button that is a link */
+.cq-recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-warn-line); background: var(--cq-warn-bg); display: flex; flex-direction: column; gap: 8px; }
+.cq-recur-head { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--cq-warn-fg); }
+.cq-redlink { color: var(--cq-crit-fg); font-weight: 600; text-decoration: underline; }
+.cq-linkbtn { display: inline-flex; align-items: center; text-decoration: none; color: var(--cq-ink); }
