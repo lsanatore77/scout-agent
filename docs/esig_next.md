@@ -57,3 +57,10 @@ State on 2026-11-19:
 - Until Entra is connected: internal demo only, not described to customers as accessible.
 - Separate: general accessibility review of the workspace (colour-only meaning, keyboard access to the signal table rows, focus, 11px header contrast, announcing banner messages).
 - Next: mockup of the two-method seat on the Signing board before building.
+
+## Where Things Stand (2026-11-20, afternoon)
+
+- Signing on the seat shows a solid cover with a spinner and "Checking your signature with CQ and approving..." over the comment, password and buttons until CQ answers (cqFieldActionReviewWs, deployed to dev).
+- Field Action Review (New) on the shared workspace pieces is ahead of Old: e-signature, committee layout and the signing cover are only in New. Record page in dev: Old (everyone) and New (Lou only) tabs.
+- Waiting on Lou: where signatures show (board "Where Signatures Show": A on the seat, B a table on the decided review, C a related list) and how the audit trail is viewed.
+- Then: compare Old and New, make New the record page for everyone, retire cqFieldActionWorkspace; next workspace to convert onto the shared pieces (suggested: Field Action).
