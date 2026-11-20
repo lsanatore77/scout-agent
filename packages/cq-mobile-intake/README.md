@@ -35,7 +35,10 @@ Not in it (on purpose): the desktop Report a Problem form, the Quality Event rev
 
 ## Test in a scratch org (you run these; log in yourself)
 
-From this folder (`packages/cq-mobile-intake`), with the Dev Hub logged in as `golden`. The scratch org comes from the
+**One command** (PowerShell, from this folder): `.\setup-intake-test.ps1 -From <your dev alias>` runs steps 1 to 4 below
+(it reuses the scratch org if `intake-test` already exists, and stops at the first step that fails).
+
+Or step by step, from this folder (`packages/cq-mobile-intake`), with the Dev Hub logged in as `golden`. The scratch org comes from the
 **CQ16BaseSnap** snapshot (the same one atlas-seed uses), so CQ 16 is already installed: no package installs.
 
 ```
