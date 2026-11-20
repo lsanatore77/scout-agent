@@ -106,6 +106,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     comment = '';        // a committee member's comment when approving or sending back
     pwWarn = '';         // why the signature password was cleared (it was filled in, not typed)
     seatError = '';      // why signing or acting on your seat did not go through, shown under its buttons
+    acting = '';         // 'approve' or 'reject' while that seat action is being processed (spinner and status line)
     _pw = '';            // the signature password: never rendered, never stored, cleared after every attempt
     signs = {};          // 'approve' / 'reject' -> what CQ's e-signature policy asks for (its own request: see loadSign)
     evTab = 'signals';   // the evidence tab open beside the checklist
@@ -536,8 +537,23 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     signOf(action) { return (this.signs || {})[action] || {}; }
     get needSign() { return !!(this.signOf('approve').required || this.signOf('reject').required); }
     get signUnknown() { return !!(this.signOf('approve').unknown || this.signOf('reject').unknown); }
-    get approveLabel() { return this.signOf('approve').required ? 'Sign and Approve' : 'Approve'; }
-    get rejectLabel() { return this.signOf('reject').required ? 'Sign and Send Back' : 'Send Back'; }
+    get approveLabel() {
+        const sign = this.signOf('approve').required;
+        if (this.acting === 'approve') { return sign ? 'Signing…' : 'Approving…'; }
+        return sign ? 'Sign and Approve' : 'Approve';
+    }
+    get rejectLabel() {
+        const sign = this.signOf('reject').required;
+        if (this.acting === 'reject') { return sign ? 'Signing…' : 'Sending Back…'; }
+        return sign ? 'Sign and Send Back' : 'Send Back';
+    }
+    /** The line beside the spinner while your seat action is processed (also announced to screen readers). */
+    get actingLine() {
+        if (!this.acting) { return ''; }
+        const sign = this.signOf(this.acting).required;
+        if (this.acting === 'approve') { return sign ? 'Checking your signature with CQ and approving…' : 'Approving…'; }
+        return sign ? 'Checking your signature with CQ and sending it back…' : 'Sending it back…';
+    }
     get commentRequired() { return !!this.signOf('approve').comment; }
     get commentHint() { return this.commentRequired ? 'Required with your signature.' : 'Required when you send it back.'; }
     get signMeaning() {
@@ -614,7 +630,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         if (g.required && !this._pw) { this.fail('Type your password to sign.'); return; }
         const password = g.required ? this._pw : null;
         this.clearPw();                 // never kept, whatever happens next
-        this.saving = true; this.error = undefined;
+        this.saving = true; this.error = undefined; this.acting = d.a;
         try {
             const v = await actOnStep({ recordId: this.recordId, stepId: d.id, action: d.a, comment: this.comment.trim(), password });
             this.comment = '';
@@ -623,7 +639,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             else if (!this.waiting) { this.step = REC; }      // sent back: the coordinator picks it up at the recommendation
             notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
         } catch (e) { this.fail(this.msg(e, 'Could not record that.')); }
-        this.saving = false;
+        this.saving = false; this.acting = '';
     }
 
     // ---- navigation: any step opens from the list, Back and Next always move; Submit to Committee waits for every step

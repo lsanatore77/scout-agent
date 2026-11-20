@@ -320,12 +320,12 @@
                                         </div>
                                         <template if:true={s.yours}>
                                             <label class="cq-field"><span class="cq-label">Comment<template if:true={commentRequired}><span class="cq-req">*</span></template></span>
-                                                <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder={commentHint}></textarea>
+                                                <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder={commentHint} disabled={saving}></textarea>
                                             </label>
                                             <template if:true={needSign}>
                                                 <p class="signmean">{signMeaning}</p>
                                                 <label class="cq-field"><span class="cq-label">Password<span class="cq-req">*</span></span>
-                                                    <input type={pwType} class="sigpw" name="cq-esig-confirm" autocomplete={pwAuto} style={pwStyle} spellcheck="false" autocapitalize="off" autocorrect="off"
+                                                    <input type={pwType} class="sigpw" name="cq-esig-confirm" autocomplete={pwAuto} style={pwStyle} spellcheck="false" autocapitalize="off" autocorrect="off" disabled={saving}
                                                         data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"
                                                         oninput={handlePwInput} onpaste={handlePwBlock} ondrop={handlePwBlock} onanimationstart={handlePwAutofill} />
                                                 </label>
@@ -334,6 +334,9 @@
                                             <div class="sbtns">
                                                 <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>{approveLabel}</button>
                                                 <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>{rejectLabel}</button>
+                                            </div>
+                                            <div role="status" aria-live="polite">
+                                                <template if:true={actingLine}><div class="cq-spinwrap actline"><lightning-spinner alternative-text="Working" size="small" class="cq-spin"></lightning-spinner><span class="cq-muted">{actingLine}</span></div></template>
                                             </div>
                                             <template if:true={seatError}><span class="pwwarn" role="alert">{seatError}</span></template>
                                         </template>
