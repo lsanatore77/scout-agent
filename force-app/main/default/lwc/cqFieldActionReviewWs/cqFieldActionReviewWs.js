@@ -105,6 +105,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     emergencyUser = '';
     comment = '';        // a committee member's comment when approving or sending back
     pwWarn = '';         // why the signature password was cleared (it was filled in, not typed)
+    seatError = '';      // why signing or acting on your seat did not go through, shown under its buttons
     _pw = '';            // the signature password: never rendered, never stored, cleared after every attempt
     signs = {};          // 'approve' / 'reject' -> what CQ's e-signature policy asks for (its own request: see loadSign)
     evTab = 'signals';   // the evidence tab open beside the checklist
@@ -560,6 +561,17 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         this._pw = '';
         this.pwWarn = 'Please type your password. Filled-in or pasted passwords are not accepted for a signature.';
     }
+    /**
+     * The signature box is a text box drawn with dots, so the browser does not treat it as a password box and offer
+     * saved passwords. Where the browser cannot draw the dots it stays a password box, so the password is never shown.
+     */
+    get pwMasked() {
+        try { return typeof CSS !== 'undefined' && !!CSS.supports && CSS.supports('-webkit-text-security', 'disc'); }
+        catch (e) { return false; }
+    }
+    get pwType() { return this.pwMasked ? 'text' : 'password'; }
+    get pwAuto() { return this.pwMasked ? 'off' : 'new-password'; }
+    get pwStyle() { return this.pwMasked ? '-webkit-text-security: disc;' : ''; }
     clearPw() {
         this._pw = '';
         const el = this.template.querySelector('input.sigpw');
@@ -590,13 +602,16 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val, isOutcome: k === 'Outcome' }));
     }
     get outcomeNow() { return this.outcome || this.v.outcome; }
+    /** A message about acting on a seat: under your seat's buttons, or in the page banner when acting as admin. */
+    fail(m) { if (this.hasYours) { this.seatError = m; } else { this.error = m; } }
     async handleAct(event) {
         const d = event.currentTarget.dataset;
         if (this.saving) { return; }
-        if (d.a === 'reject' && !this.comment.trim()) { this.error = 'Add a comment saying why you are sending it back.'; return; }
+        this.seatError = '';
+        if (d.a === 'reject' && !this.comment.trim()) { this.fail('Add a comment saying why you are sending it back.'); return; }
         const g = this.signOf(d.a);
-        if (g.required && g.comment && !this.comment.trim()) { this.error = 'A comment is required with your signature.'; return; }
-        if (g.required && !this._pw) { this.error = 'Type your password to sign.'; return; }
+        if (g.required && g.comment && !this.comment.trim()) { this.fail('A comment is required with your signature.'); return; }
+        if (g.required && !this._pw) { this.fail('Type your password to sign.'); return; }
         const password = g.required ? this._pw : null;
         this.clearPw();                 // never kept, whatever happens next
         this.saving = true; this.error = undefined;
@@ -607,7 +622,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             if (this.done) { this.showSummary = true; }
             else if (!this.waiting) { this.step = REC; }      // sent back: the coordinator picks it up at the recommendation
             notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
-        } catch (e) { this.error = this.msg(e, 'Could not record that.'); }
+        } catch (e) { this.fail(this.msg(e, 'Could not record that.')); }
         this.saving = false;
     }
 

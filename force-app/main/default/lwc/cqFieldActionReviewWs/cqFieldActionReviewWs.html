@@ -325,7 +325,7 @@
                                             <template if:true={needSign}>
                                                 <p class="signmean">{signMeaning}</p>
                                                 <label class="cq-field"><span class="cq-label">Password<span class="cq-req">*</span></span>
-                                                    <input type="password" class="sigpw" name="cq-esig-confirm" autocomplete="new-password" spellcheck="false"
+                                                    <input type={pwType} class="sigpw" name="cq-esig-confirm" autocomplete={pwAuto} style={pwStyle} spellcheck="false" autocapitalize="off" autocorrect="off"
                                                         data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"
                                                         oninput={handlePwInput} onpaste={handlePwBlock} ondrop={handlePwBlock} onanimationstart={handlePwAutofill} />
                                                 </label>
@@ -335,6 +335,7 @@
                                                 <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>{approveLabel}</button>
                                                 <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>{rejectLabel}</button>
                                             </div>
+                                            <template if:true={seatError}><span class="pwwarn" role="alert">{seatError}</span></template>
                                         </template>
                                         <template if:true={s.adminAct}>
                                             <div class="sadmin"><span class="cq-sub">As admin:</span>
@@ -350,7 +351,6 @@
                                     </label></div>
                                 </template>
                                 <template if:true={signUnknown}><p class="snote">Could not check whether this needs an electronic signature. Approving is held until it can be checked; refresh to try again.</p></template>
-                                <template if:true={signs.approve}><p class="snote">CQ e-signature (temporary check): {signs.approve.detail}</p></template><template if:true={signs.reject}><p class="snote">CQ e-signature (temporary check): {signs.reject.detail}</p></template>
                                 <p class="snote">{approvalNote}</p>
                             </section>
                         </div>

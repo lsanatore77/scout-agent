@@ -39,6 +39,12 @@ public with sharing class CqEsigBridge implements CqEsigGateway {
         } catch (Exception e) {
             purpose = null;
         }
+        record(recordId, action, comment, purpose, token);
+    }
+
+    /** The signature row on the review, written once CQ has confirmed the password. CreatedBy and CreatedDate are the signer and time. */
+    @TestVisible
+    private static void record(Id recordId, String action, String comment, String purpose, String token) {
         String said = comment == null ? '' : comment;
         Field_Action_Review_Record_Activity__c row = new Field_Action_Review_Record_Activity__c(
             Field_Action_Review__c = recordId,

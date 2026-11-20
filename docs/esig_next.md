@@ -14,6 +14,13 @@ State on 2026-11-19:
 - Right password: `validateEsig` returns a validation token but writes **no** Record Activity row for an add-on record type, and `performActionOnObject` writes none either.
 - So `CqEsigBridge.sign` writes the row itself once CQ has returned a token and `isTokenValid` confirms it: action, purpose, comment, signer, and a SHA-256 fingerprint of the token in Transaction_Id__c (the token itself is not kept). CreatedDate/CreatedBy are the signature time and signer.
 
+## Done on 2026-11-20
+
+- Live test on FAR-0001 / APR-00000068 passed: missing comment refused; a saved password chosen from Edge's list cleared; wrong password refused; real password signed (FRA-000001) and approved; FAR-0001 Decided.
+- Password box is a text box drawn with dots (`-webkit-text-security: disc`) so the browser does not offer saved passwords; it stays a real password box where a browser cannot draw the dots. Note: a screen reader may read the typed characters of a text box; revisit if accessibility review asks.
+- Messages about your seat show under its buttons.
+- Next: where signatures show (proposal on the design canvas, board "Where Signatures Show").
+
 ## To Build
 
 1. **Server-side guard** in `CqFarCommittee.decide()`: ask CQ whether the action needs a signature (`compliancequest.SQX_Esig_Policy_Provider.retriveEsigSetting(reviewId, action)`); if required and no valid signature, refuse. Covers the seat buttons and the "As admin" links. (`retriveEsigSetting` needs a UI session: it fails from anonymous Apex.)
