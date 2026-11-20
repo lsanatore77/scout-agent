@@ -20,6 +20,10 @@
         <apexClass>CqEventLotLink</apexClass>
         <enabled>true</enabled>
     </classAccesses>
+    <classAccesses>
+        <apexClass>CqIntakeSetup</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>Set up the mobile intake: questions (and which Case field each answer goes to), read-aloud clips and quick-log categories.</description>
     <fieldPermissions>
         <editable>true</editable>

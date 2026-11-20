@@ -4,8 +4,8 @@
       "path": "force-app",
       "default": true,
       "package": "CQ Mobile Intake",
-      "versionName": "Mobile Intake 1.0",
-      "versionNumber": "1.0.0.NEXT",
+      "versionName": "Mobile Intake 1.1",
+      "versionNumber": "1.1.0.NEXT",
       "versionDescription": "Mobile intake (talk it through with CQ.AI, read-aloud questions) that sends a Quality Event, or a Case when the problem was found at a customer.",
       "dependencies": [
         {

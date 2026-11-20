@@ -23,7 +23,7 @@ main project, then rebuild:
 | Objects | Quality Event, Event Question (with Case Field), Event Answer, Quick Log Category, Quality Event tab |
 | Fields on others | Case: Lot Number, Aware Date, Reported By, Where Found, Customer (As Reported), Supplier (As Reported), Product Affected, Injury Reported, Safety Risk Reported, Found By (Test or Inspection), Who Was Hurt. Nonconformance: Quick Log, Quick Log Category, Trend Event |
 | Permission sets | CQ Mobile Intake User (report), CQ Mobile Intake Admin (questions, clips, categories) |
-| Default data | 9 read-aloud clips (static resources `CQ_Intake_Clip_01`..`09`); `scripts/seed-questions.apex` creates the 9 default questions from them, plus 4 quick-log categories |
+| Default data | 9 read-aloud clips (static resources `CQ_Intake_Clip_01`..`09`). `CqIntakeSetup.loadDefaults()` creates the 9 default questions with their clips, plus 4 quick-log categories: one line, `scripts/seed-questions.apex` |
 
 Not in it (on purpose): the desktop Report a Problem form, the Quality Event review panel (it needs Ask CQ), agents.
 
@@ -79,7 +79,7 @@ The version create prints an install link (`04t...`). Test it in a fresh scratch
 ## After installing in a demo org
 
 1. Assign CQ Mobile Intake User (reporters) and CQ Mobile Intake Admin (whoever sets up questions).
-2. Add the default questions: `sf apex run --file scripts\seed-questions.apex --target-org <demo>` (safe to run again).
+2. Add the default questions: in Developer Console > Debug > Open Execute Anonymous Window, run `CqIntakeSetup.loadDefaults();` (or `sf apex run --file scripts\seed-questions.apex --target-org <demo>`). Safe to run again.
 3. Add Mobile Intake to Case Origin; set the Case assignment rule.
 4. Add the Report an Event tab to the app (and the mobile navigation) people use.
 5. If the CQ Triage Agent package is there too, its own permission set gives access to its fields.
