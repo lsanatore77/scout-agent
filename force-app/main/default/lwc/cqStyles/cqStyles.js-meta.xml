@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>false</isExposed>
+    <description>Shared CQ styles (CSS module). Import in a component's CSS with @import 'c/cqStyles';</description>
+</LightningComponentBundle>
