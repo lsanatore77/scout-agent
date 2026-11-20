@@ -56,7 +56,7 @@
                                 <template if:true={hasFa}><button class="cq-link" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
                             </div>
                         </template>
-                        <div class="cq-cols top wide32">
+                        <div class="cq-cols top">
                             <div class="cq-col lead">
                                 <div class="problem">
                                     <div class={photoCls}>
@@ -78,19 +78,18 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="card sug">
-                                    <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={v.suggestedOutcome}></c-cq-ai-why></div>
-                                    <div class="cq-ai-verdict">{v.suggestedOutcome}</div>
-                                    <div class="cq-ai-text">{v.suggestedWhy}</div>
-                                    <template if:true={showReason}>
-                                        <div class="ftable">
-                                            <div class="lab cq-mt14">{reasonLabel}</div>
-                                            <div class="cq-para">{v.reason}</div>
-                                        </div>
-                                    </template>
-                                </div>
                             </div>
-                            <div class="card">
+                            <div class="card sug">
+                                <div class="cq-ai-eyebrow glance"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={v.suggestedOutcome}></c-cq-ai-why></div>
+                                <div class="sugbar">
+                                    <div class="cq-ai-verdict" data-outcome={v.suggestedOutcome}>{v.suggestedOutcome}</div>
+                                    <div class="sugwhy">{v.suggestedWhy}</div>
+                                </div>
+                                <template if:true={showReason}>
+                                    <div class="lab cq-mt14">{reasonLabel}</div>
+                                    <div class="cq-para">{v.reason}</div>
+                                </template>
+                                <div class="sugdiv"></div>
                                 <div class="lab">What We Know</div>
                                 <div class="ktable">
                                     <template for:each={v.know} for:item="k">
