@@ -46,6 +46,7 @@ public with sharing class CqFarCommittee {
         @AuraEnabled public Boolean sso = false;
         @AuraEnabled public Boolean mfa = false;
         @AuraEnabled public Boolean unknown = false;      // CQ could not be asked: the action is refused rather than taken unsigned
+        @AuraEnabled public String detail;                // TEMPORARY: CQ's raw answer, shown while the integration is being proven
     }
     public class Member { @AuraEnabled public Id functionId; @AuraEnabled public Id userId; }
 

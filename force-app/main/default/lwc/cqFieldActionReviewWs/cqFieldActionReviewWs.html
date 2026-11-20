@@ -350,6 +350,7 @@
                                     </label></div>
                                 </template>
                                 <template if:true={signUnknown}><p class="snote">Could not check whether this needs an electronic signature. Approving is held until it can be checked; refresh to try again.</p></template>
+                                <template if:true={signs.approve}><p class="snote">CQ e-signature (temporary check): {signs.approve.detail}</p></template><template if:true={signs.reject}><p class="snote">CQ e-signature (temporary check): {signs.reject.detail}</p></template>
                                 <p class="snote">{approvalNote}</p>
                             </section>
                         </div>

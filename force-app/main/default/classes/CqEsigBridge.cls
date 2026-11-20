@@ -11,6 +11,10 @@ public with sharing class CqEsigBridge implements CqEsigGateway {
             g.required = c.enabled == true && c.required == true;
             g.comment = g.required && c.comment == true;
             g.purpose = c.purposeOfSignature; g.sso = c.sso_enabled == true; g.mfa = c.mfa_enabled == true;
+            g.detail = 'action=' + action + ' enabled=' + c.enabled + ' required=' + c.required + ' comment=' + c.comment
+                + ' purpose=' + c.purposeOfSignature + ' sso=' + c.sso_enabled + ' mfa=' + c.mfa_enabled + ' cqAction=' + c.action;
+        } else {
+            g.detail = 'action=' + action + ' CQ returned no setting';
         }
         return g;
     }
