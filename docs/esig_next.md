@@ -32,3 +32,13 @@ State on 2026-11-19:
    - **refuse a password that was not typed**: accept Sign only when the value came from key presses; if it was autofilled or pasted, clear it and ask the signer to type it. The aim is only to stop casual autofill, not a determined bad actor.
 4. Committee card: show the assignee's current name (`cqext__CQAPR_Assignee_User__r.Name`), not the saved `cqext__Assignee_Name__c`.
 5. Test: Lou is the only Field Action Emergency Approver, so an emergency approval on a test review lets Lou sign with his own password.
+
+## Parked Idea: Accessibility Setting (not to build yet, 2026-11-20)
+
+- Conflict: refusing autofill/paste (our defence) fails WCAG 2.2 SC 3.3.8 Accessible Authentication (Minimum), see W3C failure F109; the masked text box may also be read aloud by screen readers.
+- Lou's idea: a setting in the system that decides which signing option the page presents:
+  - strict: typed-only password, autofill/paste refused (today);
+  - accessible: real password box, password managers and paste allowed, deliberate act shown another way (e.g. "I am signing this myself", meaning, comment).
+- Open questions: org-wide setting vs per user (e.g. an assistive-technology preference); who may change it; recorded on the signature row which mode was used.
+- Long term: Entra SSO signing (passkeys, phone approval) meets SC 3.3.8 and the deliberate-act aim together.
+- Separate: general accessibility review of the workspace (colour-only meaning, keyboard access to the signal table rows, focus, 11px header contrast, announcing banner messages).
