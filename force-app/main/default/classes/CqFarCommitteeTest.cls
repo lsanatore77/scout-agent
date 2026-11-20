@@ -16,15 +16,15 @@ private class CqFarCommitteeTest {
         }
     }
 
-    /** A review with an open CQ Approval step assigned to the running user. */
+    /** A review with an open CQ Approval step assigned to the running user, submitted through CQ's engine as the app does. */
     private static cqext__CQAPR_Approval_Step__c openStep(Field_Action_Review__c review) {
         cqext__CQAPR_Approval__c a = new cqext__CQAPR_Approval__c(cqext__Approval_Record__c = 'CQ Record', cqext__Approval_Type__c = 'CQ Approval',
-            cqext__Main_Record_Id__c = review.Id, cqext__Child_Record_Id__c = review.Id, cqext__Status__c = 'Open');
-        insert a;
-        cqext__CQAPR_Approval_Step__c s = new cqext__CQAPR_Approval_Step__c(cqext__CQAPR_Approval__c = a.Id, cqext__Step__c = 1,
-            cqext__CQAPR_Assignee_User__c = UserInfo.getUserId(), cqext__Assignee_Id__c = UserInfo.getUserId(), cqext__Status__c = 'Open');
-        insert s;
-        return [SELECT Id, cqext__Status__c FROM cqext__CQAPR_Approval_Step__c WHERE Id = :s.Id];
+            cqext__Main_Record_Id__c = review.Id, cqext__Child_Record_Id__c = review.Id);
+        List<cqext__CQAPR_Approval_Step__c> steps = new List<cqext__CQAPR_Approval_Step__c>{ new cqext__CQAPR_Approval_Step__c(cqext__Step__c = 1,
+            cqext__CQAPR_Assignee_User__c = UserInfo.getUserId(), cqext__Assignee_Id__c = UserInfo.getUserId()) };
+        new CqApprovalBridge().submit(review, a, steps);
+        return [SELECT Id, cqext__Status__c, cqext__CQAPR_Approval__c FROM cqext__CQAPR_Approval_Step__c
+                WHERE cqext__CQAPR_Approval__r.cqext__Main_Record_Id__c = :review.Id ORDER BY CreatedDate DESC LIMIT 1];
     }
 
     private static String error(Id reviewId, Id stepId, String action, String comment, String password) {
