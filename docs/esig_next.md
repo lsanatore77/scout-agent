@@ -7,6 +7,13 @@ State on 2026-11-19:
 - Policy saved: Field Action Review · Committee Approve · signature required · comment required.
 - **Finding:** CQ's Approve/Reject for these approvals opens our record page, and CQ does not enforce the policy server-side. Our workspace Approve approved FAR-0001 with no signature row. Our page must collect the signature.
 
+## Found in the Live Test (2026-11-20)
+
+- `retriveEsigSetting(reviewId, 'approve'|'reject')` returns enabled, required and comment as set in eSig Settings; purpose = the action label.
+- Wrong password: `validateEsig` throws (Salesforce shows only "Script-thrown exception"). We show "Signature not accepted. Check your password and try again."
+- Right password: `validateEsig` returns a validation token but writes **no** Record Activity row for an add-on record type, and `performActionOnObject` writes none either.
+- So `CqEsigBridge.sign` writes the row itself once CQ has returned a token and `isTokenValid` confirms it: action, purpose, comment, signer, and a SHA-256 fingerprint of the token in Transaction_Id__c (the token itself is not kept). CreatedDate/CreatedBy are the signature time and signer.
+
 ## To Build
 
 1. **Server-side guard** in `CqFarCommittee.decide()`: ask CQ whether the action needs a signature (`compliancequest.SQX_Esig_Policy_Provider.retriveEsigSetting(reviewId, action)`); if required and no valid signature, refuse. Covers the seat buttons and the "As admin" links. (`retriveEsigSetting` needs a UI session: it fails from anonymous Apex.)
