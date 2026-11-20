@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Activity_Code__c</fullName>
+    <label>Activity Code</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>approve</fullName><default>false</default><label>Committee Approve</label></value>
+            <value><fullName>reject</fullName><default>false</default><label>Committee Send Back</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
