@@ -83,3 +83,29 @@ The version create prints an install link (`04t...`). Test it in a fresh scratch
 3. Add Mobile Intake to Case Origin; set the Case assignment rule.
 4. Add the Report an Event tab to the app (and the mobile navigation) people use.
 5. If the CQ Triage Agent package is there too, its own permission set gives access to its fields.
+
+## Coming Back Later (checklist)
+
+Everything needed is in this repo, on the **workspace-framework** branch (not `main`). Download it (Code > Download ZIP)
+and work in `packages\cq-mobile-intake`. Then:
+
+1. **Log in again** if the CLI says a session expired: `sf org login web --alias golden --set-default-dev-hub`
+   (and `sf org login web --alias <name>` for any org you install into).
+2. **Scratch orgs expire** (7 days here). Make a new one with step 1 above, or run `.\setup-intake-test.ps1`.
+   It needs the **CQ16BaseSnap** snapshot on the golden Dev Hub: `sf org list snapshot --target-dev-hub golden`
+   shows it. If it is gone, use `config\project-scratch-def.json` and install ComplianceQuest 16 first.
+3. **Changed the intake?** Change it in the main project (`force-app`), then rebuild this folder:
+   `python3 scripts/build_mobile_intake_package.py` from the repo root (I can do this step), and build a new version.
+4. **Package versions stay** on the golden Dev Hub: `sf package version list --packages "CQ Mobile Intake" --target-dev-hub golden`.
+   A version is **beta** until promoted: beta installs only into scratch orgs and sandboxes. For a demo org that is a
+   production or trial org, promote it once: `sf package version promote --package "<04t... id>" --target-dev-hub golden`.
+5. **Each org after install:** assign CQ Mobile Intake User and Admin, run `CqIntakeSetup.loadDefaults();`
+   (version 1.1 and later; for 1.0 use the full `seed-questions.apex` from the 1.0 commit), add Mobile Intake to Case
+   Origin, add the Report an Event tab to the app.
+
+Known differences to remember:
+- `cqse-golden--dev` has the intake built by hand (not installed from the package). Do not install the package there.
+- The dev copies of the intake test classes are older than the repo's (the repo's run as a test user with the package
+  permission sets). Deploying the repo's `force-app` to dev brings them level.
+- Without CQ.AI (generative AI and CQ's CQSS Entity Extraction prompt), the intake reads only the title, lot and units
+  by simple rules and asks the rest.
