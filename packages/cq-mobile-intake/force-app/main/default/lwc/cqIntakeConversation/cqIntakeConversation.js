@@ -169,7 +169,8 @@ export default class CqIntakeConversation extends LightningElement {
                 this.ready = t.ready === true;
                 this.draftJson = t.draftJson || null;
                 this.pushAi(t.reply);
-                if (t.askQuestionId) { this.sayQuestion(t.askQuestionId, t.reply); } else { this.speak(t.reply); }
+                // Only questions are read aloud; status lines such as "That's everything I need" stay silent.
+                if (t.askQuestionId) { this.sayQuestion(t.askQuestionId, t.reply); }
                 this.busy = false;
                 this.preloadClips(t.clipQuestionIds);
             })
