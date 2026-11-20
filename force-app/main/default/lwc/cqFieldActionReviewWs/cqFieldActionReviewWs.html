@@ -1,0 +1,343 @@
+<template>
+    <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
+    <template if:true={ready}>
+        <c-cq-ws-shell record-id={recordId} icon="custom:custom83" object-label="Field Action Review" record-name={v.name}
+            fields={headerFields} show-edit agent-name="CQAI_Field_Action" ask-step={askStep} ask-suggestions={askSuggestions}
+            steps={railSteps} can-restart={canRestart} can-reopen={canReopen} resumed={showResumed} error={error}
+            show-foot={live} blocker={blocker} back-disabled={cantBack} next-disabled={cantNext} next-label={nextLabel}
+            onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onrestart={handleRestart}
+            onreopen={handleReopen} onopen={handleOpen}>
+            <div class="view">
+                <template if:true={sentBack}>
+                    <div class="cq-msg crit back"><span class="fname">The committee sent this back.</span><span class="backtext">{sentBack}</span></div>
+                </template>
+
+                <template if:true={is0}>
+                    <template if:true={done}>
+                        <div class="decided"><span class="cq-okdot sm">&#10003;</span><span>{decidedLine}</span>
+                            <template if:true={hasFa}><button class="cq-link" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
+                        </div>
+                    </template>
+                    <div class="cq-cols top">
+                        <div class="cq-col lead">
+                            <c-cq-ws-problem description={problem} photo-url={photoUrl} tiles={tiles}></c-cq-ws-problem>
+                            <template if:true={hasSource}>
+                                <c-cq-ws-source record-id={v.sourceId} name={v.sourceName} lines={sourceLines} quote={v.reason}
+                                    quote-by={quoteBy} quote-on={v.requestedOn} onopen={handleOpen}></c-cq-ws-source>
+                            </template>
+                        </div>
+                        <c-cq-ws-suggestion verdict={v.suggestedOutcome} why={v.suggestedWhy} tone={verdictTone} know={v.know}></c-cq-ws-suggestion>
+                    </div>
+                </template>
+
+                <template if:true={is3}>
+                    <h3 class="cq-step-title">Reviewer Assessment</h3>
+                    <div class="assess">
+                        <div class="cq-col lead">
+                            <div class="card">
+                                <div class="lab">Checklist</div>
+                                <template for:each={questions} for:item="q">
+                                    <div key={q.id} class="cq">
+                                        <div class="cqt"><span class="question">{q.text}</span></div>
+                                        <div class="cq-chips ynwrap">
+                                            <template for:each={q.opts} for:item="o">
+                                                <button key={o.key} class={o.cls} data-q={o.q} data-a={o.a} onclick={handleCheck} aria-pressed={o.pressed}>{o.a}</button>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="card riskcard">
+                                <div class="lvlrow">
+                                    <span class="lab dark">Risk Level *</span>
+                                    <div class="cq-chips" role="group" aria-label="Risk Level">
+                                        <template for:each={levels} for:item="l">
+                                            <button key={l.id} class={l.cls} data-id={l.id} onclick={handleLevel} aria-pressed={l.pressed}><template if:true={l.cq}><c-cq-ai-why variant="star" lead="Why does CQ.AI suggest risk level " subject={l.id}></c-cq-ai-why>&nbsp;</template>{l.id}</button>
+                                        </template>
+                                    </div>
+                                    <span class="cq-sub">{bandHint}</span>
+                                </div>
+                                <label class="cq-field"><span class="cq-label">Health Hazard Summary<span class="cq-req">*</span></span>
+                                    <textarea rows="3" data-f="hazard" value={hazard} oninput={handleInput} placeholder="What could happen to a patient or user, how likely, and how serious."></textarea>
+                                </label>
+                            </div>
+                        </div>
+                        <c-cq-ws-tabs tabs={evTabs} active={evTab} onchange={handleTab}>
+                            <template if:true={tabSignals}>
+                                <template if:true={hasSignals}>
+                                    <div class="cq-tblwrap">
+                                        <table class="cq-tbl stbl">
+                                            <thead><tr><th class="chcol"><span class="sr">Open</span></th><th>Signal</th><th>What We See</th><th class="num">Records</th></tr></thead>
+                                            <tbody>
+                                                <template for:each={signalRows} for:item="r">
+                                                    <template if:true={r.isSig}>
+                                                        <tr key={r.key} class={r.rowCls} data-id={r.id} onclick={handleSigToggle} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
+                                                            <td class="chcol"><button class="chevbtn" aria-expanded={r.expanded} aria-label={r.rule}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></td>
+                                                            <td class="sigcell"><div class="sghead"><span class="cq-strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="cq-sub">{r.sub}</div></td>
+                                                            <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="cq-sub">{r.why}</div></template></td>
+                                                            <td class="num">{r.n}</td>
+                                                        </tr>
+                                                    </template>
+                                                    <template if:true={r.isRec}>
+                                                        <tr key={r.key} class="evrow">
+                                                            <td></td>
+                                                            <td colspan="2"><div><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="cq-sub">{r.meta}</div></td>
+                                                            <td class="num"><template if:true={r.sameLot}><span class="cq-pill soft neu">This Lot</span></template></td>
+                                                        </tr>
+                                                    </template>
+                                                    <template if:true={r.isRest}>
+                                                        <tr key={r.key} class="evrow">
+                                                            <td></td>
+                                                            <td colspan="3"><button class="cq-link" data-id={r.id} onclick={handleShowAll}>{r.restLabel}</button></td>
+                                                        </tr>
+                                                    </template>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+                                <template if:false={hasSignals}>
+                                    <p class="cq-note">No signals at Assess or above on this part or lot.</p>
+                                    <template if:true={hasRecs}>
+                                        <div class="lab cq-mt14">Relevant Records on This Part</div>
+                                        <template for:each={recs} for:item="r">
+                                            <div key={r.id} class="evt">
+                                                <span class="rt"><span><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</span><span class="cq-sub">{r.meta}</span></span>
+                                            </div>
+                                        </template>
+                                    </template>
+                                </template>
+                                <template if:true={hasMore}>
+                                    <details class="cq-know">
+                                        <summary>{moreLabel}</summary>
+                                        <div class="cq-tblwrap">
+                                            <table class="cq-tbl stbl">
+                                                <thead><tr><th class="chcol"><span class="sr">Open</span></th><th>Signal</th><th>What We See</th><th class="num">Records</th></tr></thead>
+                                                <tbody>
+                                                    <template for:each={moreSignalRows} for:item="r">
+                                                        <template if:true={r.isSig}>
+                                                            <tr key={r.key} class={r.rowCls} data-id={r.id} onclick={handleSigToggle} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
+                                                                <td class="chcol"><button class="chevbtn" aria-expanded={r.expanded} aria-label={r.rule}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></td>
+                                                                <td class="sigcell"><div class="sghead"><span class="cq-strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="cq-sub">{r.sub}</div></td>
+                                                                <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="cq-sub">{r.why}</div></template></td>
+                                                                <td class="num">{r.n}</td>
+                                                            </tr>
+                                                        </template>
+                                                        <template if:true={r.isRec}>
+                                                            <tr key={r.key} class="evrow">
+                                                                <td></td>
+                                                                <td colspan="2"><div><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button>{r.line}</div><div class="cq-sub">{r.meta}</div></td>
+                                                                <td class="num"><template if:true={r.sameLot}><span class="cq-pill soft neu">This Lot</span></template></td>
+                                                            </tr>
+                                                        </template>
+                                                        <template if:true={r.isRest}>
+                                                            <tr key={r.key} class="evrow">
+                                                                <td></td>
+                                                                <td colspan="3"><button class="cq-link" data-id={r.id} onclick={handleShowAll}>{r.restLabel}</button></td>
+                                                            </tr>
+                                                        </template>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </details>
+                                </template>
+                                <p class="cq-note">Shipments, customers and markets are not shown: there is no distribution data connected.</p>
+                            </template>
+                            <template if:true={tabNormal}>
+                                <div class="chart">
+                                    <div class="chead"><span class="cq-sub">How many times its normal level each signal is now</span></div>
+                                    <template for:each={normalBars} for:item="b">
+                                        <div key={b.id} class={b.rowCls} data-id={b.id} onmouseenter={handleSigOver} onmouseleave={handleSigOut}>
+                                            <span class="nl"><span class="nt">{b.rule}</span><span class="cq-sub">{b.where}</span></span>
+                                            <span class="ntrack"><template if:true={b.has}><span class="nbar" style={b.barStyle}></span></template></span>
+                                            <span class="nx" style={b.timesStyle}>{b.times}</span>
+                                        </div>
+                                    </template>
+                                    <span class="cq-sub">The grey line is normal, from the last 12 months. Bars use a log scale so 2&times; and 67&times; both fit.</span>
+                                </div>
+                            </template>
+                            <template if:true={tabMonth}>
+                                <div class="chart">
+                                    <div class="chead"><span class="cq-sub">Records on this part by month</span><span class="cq-sub">{trendChart.range}</span></div>
+                                    <svg class="trend" viewBox="0 0 600 210" role="img" aria-label={trendChart.label}>
+                                        <template for:each={trendChart.ticks} for:item="t">
+                                            <g key={t.key}>
+                                                <line x1="36" x2="592" y1={t.y} y2={t.y} stroke="#eef0f3" stroke-width="1"></line>
+                                                <text x="28" y={t.ty} text-anchor="end" font-size="11" fill="#5b6470">{t.v}</text>
+                                            </g>
+                                        </template>
+                                        <template for:each={trendChart.labels} for:item="m">
+                                            <text key={m.key} x={m.x} y="204" text-anchor="middle" font-size="11" fill="#5b6470">{m.label}</text>
+                                        </template>
+                                        <template for:each={trendChart.lines} for:item="l">
+                                            <g key={l.key}>
+                                                <polyline points={l.points} fill="none" stroke={l.color} stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                                                <template for:each={l.dots} for:item="d">
+                                                    <circle key={d.key} cx={d.x} cy={d.y} r="3.5" fill={l.color}><title>{d.title}</title></circle>
+                                                </template>
+                                                <text x={l.endX} y={l.endY} font-size="11" font-weight="700" fill={l.color}>{l.endLabel}</text>
+                                            </g>
+                                        </template>
+                                    </svg>
+                                    <div class="legend">
+                                        <template for:each={trendChart.lines} for:item="l">
+                                            <span key={l.key} class="lg"><span class="sw" style={l.swatch}></span>{l.name}</span>
+                                        </template>
+                                        <span class="cq-sub">Nonconformances on lots of this part only.</span>
+                                    </div>
+                                </div>
+                            </template>
+                            <template if:true={tabScore}>
+                                <div class="riskbox">
+                                    <div class="cq-ai-eyebrow glance"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="How was the risk score worked out?"></c-cq-ai-why></div>
+                                    <div class="sughead"><span class="score">{v.score}</span><span class="cq-sub">out of 100</span><span class={bandCls}>{v.band}</span></div>
+                                    <div>
+                                        <div class="cq-ai-sub">Score Factors <span class="cq-hint">&mdash; purple = what raised the score</span></div>
+                                        <div class="cq-qa">
+                                            <template for:each={factors} for:item="f">
+                                                <div key={f.key} class="cq-qa-row" data-hot={f.pts}><span class="cq-qa-k"><span>{f.name}</span><span class="cq-qa-d">{f.detail}</span></span><span class="cq-qa-v">{f.of}</span></div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                    <p class="cq-note">Bands: 0&ndash;39 Low &middot; 40&ndash;69 Medium &middot; 70&ndash;100 High. The score supports the decision; it does not make it.</p>
+                                </div>
+                            </template>
+                        </c-cq-ws-tabs>
+                    </div>
+                </template>
+
+                <template if:true={is4}>
+                    <h3 class="cq-step-title">Recommendation</h3>
+                    <div class="recwrap">
+                        <c-cq-ws-choice label="Outcome" variant="cards" options={outcomeOptions} value={outcome} disabled={waiting} onchoose={handleOutcome}></c-cq-ws-choice>
+                        <template if:true={needed}>
+                            <div class="ocgrid">
+                                <c-cq-ws-choice class="fasec" label="Field Action" variant="rows" options={faOptions} value={faChoice} disabled={waiting} onchoose={handleFa}>
+                                    <template if:true={isNew}>
+                                        <div class="newfa" slot="after">
+                                            <label class="cq-field"><span class="cq-label">Title<span class="cq-req">*</span></span>
+                                                <input type="text" data-f="faTitle" value={faTitle} oninput={handleInput} />
+                                            </label>
+                                            <div class="pair">
+                                                <label class="cq-field"><span class="cq-label">Action Type<span class="cq-req">*</span></span>
+                                                    <select data-f="actionType" onchange={handleInput}>
+                                                        <option value="">Choose</option>
+                                                        <template for:each={typeOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
+                                                    </select>
+                                                </label>
+                                                <label class="cq-field"><span class="cq-label">Recall Class</span>
+                                                    <select data-f="recallClass" onchange={handleInput}>
+                                                        <option value="">Not Yet Determined</option>
+                                                        <template for:each={classOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
+                                                    </select>
+                                                </label>
+                                            </div>
+                                            <div class="recsec">
+                                                <span class="cq-label">Scope<span class="cq-req">*</span></span>
+                                                <div class="cq-chips">
+                                                    <template for:each={scopeOpts} for:item="o">
+                                                        <button key={o.id} class={o.cls} data-id={o.id} onclick={handleScope} aria-pressed={o.pressed}><template if:true={o.cq}><c-cq-ai-why variant="star" subject={o.id} tail=" scope?"></c-cq-ai-why>&nbsp;</template>{o.id}</button>
+                                                    </template>
+                                                </div>
+                                                <p class="scopenote">{scopeData.why} Full covers every lot of the part, including lots found later; Partial starts with this review's lot, and the rest are chosen and approved in the Field Action.</p>
+                                                <template if:true={isFull}><p class="scopenote">{fullLine}</p></template>
+                                                <template if:true={isPartial}><p class="scopenote">{startLine}</p></template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </c-cq-ws-choice>
+                            </div>
+                        </template>
+                        <label class="cq-field"><span class="cq-label">Rationale<span class="cq-req">*</span></span>
+                            <textarea rows="4" data-f="rationale" value={rationale} oninput={handleInput} placeholder="Why this outcome, in a sentence or two."></textarea>
+                        </label>
+                    </div>
+                </template>
+
+                <template if:true={is5}>
+                    <h3 class="cq-step-title">Committee Approval</h3>
+                    <template if:true={live}>
+                        <p class="cq-step-intro">Build the committee by functional role, then submit your recommendation for approval.</p>
+                        <div class="cq-cols top">
+                            <div class="card">
+                                <div class="lab">Committee</div>
+                                <template if:true={normal}>
+                                    <template for:each={seats} for:item="s">
+                                        <label key={s.functionId} class="cq-field"><span class="cq-label">{s.name}</span>
+                                            <select data-id={s.functionId} onchange={handleSeat}>
+                                                <option value="">Choose</option>
+                                                <template for:each={s.opts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
+                                            </select>
+                                            <template if:true={s.none}><span class="cq-sub">No one holds this function yet.</span></template>
+                                        </label>
+                                    </template>
+                                </template>
+                                <template if:true={emergency}>
+                                    <label class="cq-field"><span class="cq-label">Emergency Approver</span>
+                                        <select data-f="emergencyUser" onchange={handleInput}>
+                                            <option value="">Choose</option>
+                                            <template for:each={emergencyOpts} for:item="p"><option key={p.value} value={p.value} selected={p.selected}>{p.label}</option></template>
+                                        </select>
+                                    </label>
+                                    <label class="cq-field"><span class="cq-label">Reason for Emergency<span class="cq-req">*</span></span>
+                                        <textarea rows="4" data-f="emergencyReason" value={emergencyReason} oninput={handleInput} placeholder="Why this cannot wait for the full committee."></textarea>
+                                    </label>
+                                </template>
+                            </div>
+                            <div class="cq-col">
+                                <label class="chk"><input type="checkbox" checked={emergency} onchange={handleEmergency} />Escalate to Emergency Approval</label>
+                                <p class="cq-note">For emergencies only. One emergency approver signs off, so the decision does not wait for every function.</p>
+                                <div class="card sug">
+                                    <div class="lab">Your Recommendation</div>
+                                    <div class="sughead"><span class="cq-big">{outcomeNow}</span></div>
+                                    <div class="cq-para">{rationale}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <template if:true={waiting}>
+                        <div class="cq-cols top">
+                            <div class="card">
+                                <div class="lab">Recommendation</div>
+                                <template for:each={recRows} for:item="r">
+                                    <div key={r.key} class="rr"><div class="cq-sub">{r.k}</div><div class="rv2">{r.v}</div></div>
+                                </template>
+                            </div>
+                            <div class="card">
+                                <div class="lab">{committeeTitle}</div>
+                                <template for:each={csteps} for:item="s">
+                                    <div key={s.id} class="crow">
+                                        <span class="cq-stack"><span class="fname">{s.seat}</span><span class="cq-sub">{s.line}</span><template if:true={s.quote}><span class="cq-sub">{s.quote}</span></template></span>
+                                        <span class={s.cls}>{s.label}</span>
+                                        <template if:true={s.canAct}>
+                                            <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
+                                            <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
+                                        </template>
+                                    </div>
+                                </template>
+                                <template if:true={canActAny}>
+                                    <label class="cq-field"><span class="cq-label">Comment</span>
+                                        <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder="Required when you send it back."></textarea>
+                                    </label>
+                                </template>
+                                <p class="cq-note">Approvals run on CQ Approvals. The Field Action starts when every member has approved.</p>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+
+                <template if:true={showSummary}>
+                    <div class="cq-donehead"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">Decision Submitted</h3></div>
+                    <template for:each={summaryRows} for:item="r">
+                        <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
+                    </template>
+                    <div class="cq-opts">
+                        <button class="cq-btn-primary" onclick={handleFinish}>Done</button>
+                        <template if:true={hasFa}><button class="cq-btn-outline" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>
+                    </div>
+                </template>
+            </div>
+        </c-cq-ws-shell>
+    </template>
+</template>

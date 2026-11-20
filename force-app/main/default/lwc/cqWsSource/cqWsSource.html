@@ -1,0 +1,14 @@
+<template>
+    <div class="srccard">
+        <div class="srcl">
+            <button class="cq-link" data-id={recordId} onclick={handleOpen}>{name}</button>
+            <template for:each={lineRows} for:item="l"><span key={l.key} class="srcsub">{l.text}</span></template>
+        </div>
+        <template if:true={quote}>
+            <div class="srcr">
+                <span>&ldquo;{quote}&rdquo;</span>
+                <template if:true={quoteBy}><span class="srcsub">{quoteBy} &middot; <lightning-formatted-date-time value={quoteOn} year="numeric" month="short" day="numeric"></lightning-formatted-date-time></span></template>
+            </div>
+        </template>
+    </div>
+</template>

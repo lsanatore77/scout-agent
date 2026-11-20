@@ -1,0 +1,17 @@
+<template>
+    <div class="recsec">
+        <template if:true={label}><div class="seclab">{label}</div></template>
+        <div class={listCls} role="radiogroup" aria-label={label}>
+            <template for:each={rows} for:item="o">
+                <button key={o.id} class={o.cls} role="radio" aria-checked={o.pressed} data-id={o.id} onclick={handleChoose} disabled={disabled}>
+                    <span class="rd"></span>
+                    <span class="occ">
+                        <span class="octop"><span class="oct">{o.title}</span><template if:true={o.cq}><span class="ailab"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={o.title}></c-cq-ai-why></span></template></span>
+                        <template if:true={o.desc}><span class="ocd">{o.desc}</span></template>
+                    </span>
+                </button>
+            </template>
+            <template if:true={isRows}><slot name="after"></slot></template>
+        </div>
+    </div>
+</template>

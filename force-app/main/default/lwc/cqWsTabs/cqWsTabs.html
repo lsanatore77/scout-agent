@@ -1,0 +1,10 @@
+<template>
+    <div class="evid">
+        <div class="evbar" role="tablist" aria-label={label}>
+            <template for:each={tabRows} for:item="t">
+                <button key={t.id} role="tab" class={t.cls} aria-selected={t.sel} data-id={t.id} onclick={handleTab}>{t.label}</button>
+            </template>
+        </div>
+        <div class="evpane" role="tabpanel"><slot></slot></div>
+    </div>
+</template>

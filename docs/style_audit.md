@@ -8,6 +8,7 @@ Typed values that bypass cqStyles tokens, per component. Read only; nothing was 
 | cqTriageAssistant | 118 | 21 | 13 | 10 | 16 | 58 |
 | cqIntakeConversation | 100 | 16 | 15 | 20 | 17 | 32 |
 | cqInvestigationCause | 100 | 14 | 15 | 2 | 11 | 58 |
+| cqFieldActionReviewWs | 79 | 17 | 7 | 3 | 10 | 42 |
 | cqInvestigationWorkspace | 66 | 10 | 8 | 9 | 6 | 33 |
 | cqTriageGlance | 66 | 10 | 9 | 6 | 8 | 33 |
 | cqFieldActionRecovery | 51 | 9 | 5 | 1 | 5 | 31 |
@@ -25,10 +26,16 @@ Typed values that bypass cqStyles tokens, per component. Read only; nothing was 
 | cqEventIntakeChat | 22 | 2 | 1 | 0 | 4 | 15 |
 | cqFieldActionClosure | 21 | 5 | 2 | 1 | 5 | 8 |
 | phrLeadSelect | 19 | 2 | 2 | 2 | 3 | 10 |
+| cqWsChoice | 18 | 7 | 2 | 1 | 0 | 8 |
+| cqWsSuggestion | 17 | 7 | 1 | 0 | 2 | 7 |
 | cqEventReviewPanel | 14 | 0 | 0 | 0 | 2 | 12 |
+| cqWsProblem | 14 | 3 | 3 | 1 | 1 | 6 |
 | phrLeadLists | 14 | 2 | 2 | 3 | 2 | 5 |
+| cqWsTabs | 7 | 2 | 1 | 0 | 0 | 4 |
 | phrMissingData | 7 | 3 | 0 | 0 | 1 | 3 |
 | cqFieldActionReview | 6 | 1 | 1 | 0 | 0 | 4 |
+| cqWsShell | 6 | 2 | 3 | 0 | 0 | 1 |
+| cqWsSource | 6 | 2 | 1 | 0 | 0 | 3 |
 | cqAiWhy | 4 | 1 | 1 | 0 | 1 | 1 |
 | cqTriageWorkspace | 1 | 1 | 0 | 0 | 0 | 0 |
 | cqStyles | 221 | 37 | 15 | 7 | 49 | 113 |
@@ -475,6 +482,90 @@ Typed values that bypass cqStyles tokens, per component. Read only; nothing was 
 | cqFieldActionReview.css | 6 | spacing | padding | `12px 14px` |
 | cqFieldActionReview.css | 7 | spacing | margin-top | `8px` |
 | cqFieldActionReview.css | 9 | spacing | gap | `12px` |
+
+## cqFieldActionReviewWs
+
+| File | Line | Kind | Property | Value |
+| --- | ---: | --- | --- | --- |
+| cqFieldActionReviewWs.css | 3 | font-size | font-size | `13px` |
+| cqFieldActionReviewWs.css | 5 | radius | border-radius | `4px` |
+| cqFieldActionReviewWs.css | 6 | font-size | font-size | `13px` |
+| cqFieldActionReviewWs.css | 6 | weight | font-weight | `600` |
+| cqFieldActionReviewWs.css | 7 | radius | border-radius | `4px` |
+| cqFieldActionReviewWs.css | 7 | spacing | gap | `8px` |
+| cqFieldActionReviewWs.css | 7 | spacing | margin-bottom | `12px` |
+| cqFieldActionReviewWs.css | 7 | spacing | padding | `8px 12px` |
+| cqFieldActionReviewWs.css | 7 | weight | font-weight | `600` |
+| cqFieldActionReviewWs.css | 8 | radius | border-radius | `4px` |
+| cqFieldActionReviewWs.css | 8 | spacing | padding | `14px` |
+| cqFieldActionReviewWs.css | 9 | spacing | padding | `16px` |
+| cqFieldActionReviewWs.css | 10 | spacing | gap | `10px` |
+| cqFieldActionReviewWs.css | 10 | spacing | margin-top | `2px` |
+| cqFieldActionReviewWs.css | 11 | font-size | font-size | `68px` |
+| cqFieldActionReviewWs.css | 11 | weight | font-weight | `700` |
+| cqFieldActionReviewWs.css | 12 | font-size | font-size | `16px` |
+| cqFieldActionReviewWs.css | 12 | weight | font-weight | `700` |
+| cqFieldActionReviewWs.css | 16 | spacing | margin-top | `10px` |
+| cqFieldActionReviewWs.css | 17 | font-size | font-size | `13px` |
+| cqFieldActionReviewWs.css | 17 | weight | font-weight | `700` |
+| cqFieldActionReviewWs.css | 18 | spacing | margin-top | `12px` |
+| cqFieldActionReviewWs.css | 19 | spacing | gap | `12px` |
+| cqFieldActionReviewWs.css | 19 | spacing | padding | `8px 14px 8px 36px` |
+| cqFieldActionReviewWs.css | 22 | font-size | font-size | `18px` |
+| cqFieldActionReviewWs.css | 23 | font-size | font-size | `14px` |
+| cqFieldActionReviewWs.css | 23 | spacing | gap | `8px` |
+| cqFieldActionReviewWs.css | 23 | weight | font-weight | `600` |
+| cqFieldActionReviewWs.css | 24 | spacing | padding | `8px 0` |
+| cqFieldActionReviewWs.css | 26 | font-size | font-size | `14px` |
+| cqFieldActionReviewWs.css | 27 | spacing | gap | `10px` |
+| cqFieldActionReviewWs.css | 27 | spacing | padding | `10px 0` |
+| cqFieldActionReviewWs.css | 28 | spacing | gap | `4px` |
+| cqFieldActionReviewWs.css | 28 | spacing | margin | `0 0 14px` |
+| cqFieldActionReviewWs.css | 30 | spacing | gap | `16px` |
+| cqFieldActionReviewWs.css | 30 | spacing | padding | `16px 0` |
+| cqFieldActionReviewWs.css | 32 | font-size | font-size | `14px` |
+| cqFieldActionReviewWs.css | 34 | spacing | gap | `12px` |
+| cqFieldActionReviewWs.css | 36 | spacing | gap | `8px` |
+| cqFieldActionReviewWs.css | 37 | spacing | gap | `12px` |
+| cqFieldActionReviewWs.css | 38 | radius | border-radius | `4px` |
+| cqFieldActionReviewWs.css | 38 | spacing | column-gap | `10px` |
+| cqFieldActionReviewWs.css | 38 | spacing | padding | `0 6px` |
+| cqFieldActionReviewWs.css | 41 | font-size | font-size | `13px` |
+| cqFieldActionReviewWs.css | 41 | weight | font-weight | `700` |
+| cqFieldActionReviewWs.css | 43 | radius | border-radius | `0 6px 6px 0` |
+| cqFieldActionReviewWs.css | 44 | font-size | font-size | `13px` |
+| cqFieldActionReviewWs.css | 44 | weight | font-weight | `700` |
+| cqFieldActionReviewWs.css | 46 | font-size | font-size | `11px` |
+| cqFieldActionReviewWs.css | 46 | spacing | gap | `16px` |
+| cqFieldActionReviewWs.css | 47 | spacing | gap | `6px` |
+| cqFieldActionReviewWs.css | 48 | radius | border-radius | `2px` |
+| cqFieldActionReviewWs.css | 49 | spacing | gap | `20px` |
+| cqFieldActionReviewWs.css | 50 | radius | border-radius | `4px` |
+| cqFieldActionReviewWs.css | 50 | spacing | gap | `10px` |
+| cqFieldActionReviewWs.css | 50 | spacing | padding | `12px 14px` |
+| cqFieldActionReviewWs.css | 52 | spacing | padding | `10px 0` |
+| cqFieldActionReviewWs.css | 54 | spacing | gap | `10px` |
+| cqFieldActionReviewWs.css | 57 | spacing | gap | `12px` |
+| cqFieldActionReviewWs.css | 61 | spacing | margin-top | `8px` |
+| cqFieldActionReviewWs.css | 66 | spacing | gap | `8px` |
+| cqFieldActionReviewWs.css | 66 | spacing | margin-bottom | `4px` |
+| cqFieldActionReviewWs.css | 71 | spacing | padding | `8px 12px` |
+| cqFieldActionReviewWs.css | 73 | font-size | font-size | `14px` |
+| cqFieldActionReviewWs.css | 73 | weight | font-weight | `600` |
+| cqFieldActionReviewWs.css | 77 | spacing | margin-top | `14px` |
+| cqFieldActionReviewWs.css | 80 | font-size | font-size | `13px` |
+| cqFieldActionReviewWs.css | 82 | spacing | gap | `22px` |
+| cqFieldActionReviewWs.css | 84 | font-size | font-size | `13px` |
+| cqFieldActionReviewWs.css | 85 | spacing | gap | `10px` |
+| cqFieldActionReviewWs.css | 87 | spacing | gap | `12px` |
+| cqFieldActionReviewWs.css | 87 | spacing | padding | `12px 14px 14px 42px` |
+| cqFieldActionReviewWs.css | 88 | spacing | gap | `8px` |
+| cqFieldActionReviewWs.css | 90 | font-size | font-size | `12px` |
+| cqFieldActionReviewWs.css | 91 | font-size | font-size | `11px` |
+| cqFieldActionReviewWs.css | 93 | weight | font-weight | `700` |
+| cqFieldActionReviewWs.html | 166 | colour | stroke | `#eef0f3` |
+| cqFieldActionReviewWs.html | 167 | colour | fill | `#5b6470` |
+| cqFieldActionReviewWs.html | 171 | colour | fill | `#5b6470` |
 
 ## cqFieldActionStrategy
 
@@ -1384,6 +1475,104 @@ Typed values that bypass cqStyles tokens, per component. Read only; nothing was 
 | File | Line | Kind | Property | Value |
 | --- | ---: | --- | --- | --- |
 | cqTriageWorkspace.css | 3 | font-size | font-size | `13px` |
+
+## cqWsChoice
+
+| File | Line | Kind | Property | Value |
+| --- | ---: | --- | --- | --- |
+| cqWsChoice.css | 3 | font-size | font-size | `13px` |
+| cqWsChoice.css | 4 | spacing | gap | `8px` |
+| cqWsChoice.css | 5 | font-size | font-size | `13px` |
+| cqWsChoice.css | 6 | spacing | gap | `10px` |
+| cqWsChoice.css | 7 | spacing | gap | `12px` |
+| cqWsChoice.css | 8 | radius | border-radius | `4px` |
+| cqWsChoice.css | 8 | spacing | padding | `14px 16px` |
+| cqWsChoice.css | 10 | radius | border-radius | `4px` |
+| cqWsChoice.css | 11 | spacing | padding | `11px 14px` |
+| cqWsChoice.css | 14 | colour | border | `#9aa3ad` |
+| cqWsChoice.css | 14 | spacing | margin-top | `1px` |
+| cqWsChoice.css | 16 | spacing | gap | `3px` |
+| cqWsChoice.css | 17 | spacing | gap | `10px` |
+| cqWsChoice.css | 18 | font-size | font-size | `15px` |
+| cqWsChoice.css | 19 | font-size | font-size | `13px` |
+| cqWsChoice.css | 20 | font-size | font-size | `12px` |
+| cqWsChoice.css | 21 | font-size | font-size | `11px` |
+| cqWsChoice.css | 22 | font-size | font-size | `12px` |
+
+## cqWsProblem
+
+| File | Line | Kind | Property | Value |
+| --- | ---: | --- | --- | --- |
+| cqWsProblem.css | 3 | font-size | font-size | `13px` |
+| cqWsProblem.css | 4 | radius | border-radius | `4px` |
+| cqWsProblem.css | 4 | spacing | gap | `28px` |
+| cqWsProblem.css | 4 | spacing | padding | `14px` |
+| cqWsProblem.css | 5 | radius | border-radius | `4px` |
+| cqWsProblem.css | 5 | spacing | gap | `6px` |
+| cqWsProblem.css | 5 | spacing | padding | `8px` |
+| cqWsProblem.css | 6 | colour | background | `#2b3138` |
+| cqWsProblem.css | 8 | font-size | font-size | `11px` |
+| cqWsProblem.css | 9 | spacing | gap | `10px` |
+| cqWsProblem.css | 10 | spacing | padding-top | `4px` |
+| cqWsProblem.css | 11 | weight | font-weight | `700` |
+| cqWsProblem.css | 12 | font-size | font-size | `13px` |
+| cqWsProblem.css | 13 | radius | border-radius | `4px` |
+
+## cqWsShell
+
+| File | Line | Kind | Property | Value |
+| --- | ---: | --- | --- | --- |
+| cqWsShell.css | 4 | font-size | font-size | `13px` |
+| cqWsShell.css | 5 | radius | border-radius | `4px` |
+| cqWsShell.css | 6 | radius | border-radius | `4px 4px 0 0` |
+| cqWsShell.css | 8 | radius | border-radius | `4px` |
+| cqWsShell.css | 9 | font-size | font-size | `13px` |
+| cqWsShell.css | 9 | spacing | margin | `-6px 0 12px` |
+
+## cqWsSource
+
+| File | Line | Kind | Property | Value |
+| --- | ---: | --- | --- | --- |
+| cqWsSource.css | 4 | font-size | font-size | `12px` |
+| cqWsSource.css | 4 | radius | border-radius | `4px` |
+| cqWsSource.css | 4 | spacing | gap | `12px 20px` |
+| cqWsSource.css | 4 | spacing | padding | `12px 14px` |
+| cqWsSource.css | 7 | spacing | padding-left | `16px` |
+| cqWsSource.css | 8 | font-size | font-size | `12px` |
+
+## cqWsSuggestion
+
+| File | Line | Kind | Property | Value |
+| --- | ---: | --- | --- | --- |
+| cqWsSuggestion.css | 4 | font-size | font-size | `13px` |
+| cqWsSuggestion.css | 5 | radius | border-radius | `4px` |
+| cqWsSuggestion.css | 5 | spacing | padding | `16px` |
+| cqWsSuggestion.css | 6 | font-size | font-size | `15px` |
+| cqWsSuggestion.css | 7 | spacing | margin-top | `8px` |
+| cqWsSuggestion.css | 7 | spacing | padding | `2px 0 2px 12px` |
+| cqWsSuggestion.css | 8 | font-size | font-size | `22px` |
+| cqWsSuggestion.css | 8 | spacing | margin | `0 0 4px` |
+| cqWsSuggestion.css | 10 | font-size | font-size | `11px` |
+| cqWsSuggestion.css | 11 | spacing | margin | `12px 0 10px` |
+| cqWsSuggestion.css | 12 | weight | font-weight | `700` |
+| cqWsSuggestion.css | 13 | spacing | margin-top | `4px` |
+| cqWsSuggestion.css | 14 | spacing | padding | `4px 0` |
+| cqWsSuggestion.css | 17 | font-size | font-size | `13px` |
+| cqWsSuggestion.css | 18 | font-size | font-size | `11px` |
+| cqWsSuggestion.css | 19 | font-size | font-size | `14px` |
+| cqWsSuggestion.css | 19 | weight | font-weight | `700` |
+
+## cqWsTabs
+
+| File | Line | Kind | Property | Value |
+| --- | ---: | --- | --- | --- |
+| cqWsTabs.css | 3 | font-size | font-size | `13px` |
+| cqWsTabs.css | 4 | radius | border-radius | `4px` |
+| cqWsTabs.css | 5 | spacing | gap | `4px` |
+| cqWsTabs.css | 5 | spacing | padding | `0 8px` |
+| cqWsTabs.css | 6 | font-size | font-size | `13px` |
+| cqWsTabs.css | 6 | spacing | padding | `10px 12px` |
+| cqWsTabs.css | 10 | spacing | padding | `14px` |
 
 ## phrChecklist
 

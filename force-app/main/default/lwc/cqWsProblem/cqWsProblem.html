@@ -1,0 +1,22 @@
+<template>
+    <div class="problem">
+        <div class={photoCls}>
+            <template if:true={photoUrl}><img src={photoUrl} alt="Photo of the problem" /></template>
+            <template if:false={photoUrl}>
+                <lightning-icon icon-name="utility:photo" size="small" alternative-text="Photo"></lightning-icon>
+                <span class="nophoto">{noPhotoText}</span>
+            </template>
+        </div>
+        <div class="ptext">
+            <div class="plabel">{title}</div>
+            <div class="quote">{description}</div>
+            <template if:true={hasTiles}>
+                <div class="cq-tiles">
+                    <template for:each={tileRows} for:item="t">
+                        <div key={t.key} class="cq-tile"><div class="cq-tile-k">{t.label}</div><div class="cq-tile-v">{t.value}</div></div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>

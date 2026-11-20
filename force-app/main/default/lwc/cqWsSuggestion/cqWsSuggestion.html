@@ -1,0 +1,22 @@
+<template>
+    <div class="card sug">
+        <div class="cq-ai-eyebrow glance"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={verdict} question={question}></c-cq-ai-why></div>
+        <div class="sugbar">
+            <div class={verdictCls}>{verdict}</div>
+            <div class="sugwhy">{why}</div>
+        </div>
+        <template if:true={hasKnow}>
+            <div class="sugdiv"></div>
+            <div class="lab">{knowTitle}</div>
+            <div class="ktable">
+                <template for:each={knowRows} for:item="k">
+                    <div key={k.q} class="cq-krow">
+                        <span class="cq-stack"><span class="kq">{k.q}</span><span class="cq-sub">{k.src}</span></span>
+                        <template if:true={k.unknown}><span class="ka unk">Not known</span></template>
+                        <template if:false={k.unknown}><span class="ka">{k.a}</span></template>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,9 @@
+@import 'c/cqStyles';
+
+/* The workspace frame, in the CQ.AI standard: 4px corners, regular-weight header labels, a quiet rail. */
+:host { display: block; color: var(--cq-ink); font-size: 13px; --cq-r-card: 4px; --cq-r-field: 4px; }
+.cq-box { border-radius: 4px; }
+.cq-hl { border-radius: 4px 4px 0 0; }
+.cq-hl-k { font-weight: 400; }
+.cq-rail .step { border-radius: 4px; }
+.resumed { margin: -6px 0 12px; font-size: 13px; color: var(--cq-muted); }

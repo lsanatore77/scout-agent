@@ -1,0 +1,19 @@
+@import 'c/cqStyles';
+
+/* CQ.AI suggestion standard: 15px Title Case label, 22px verdict, 11px reason behind a purple bar, What We Know inside the card */
+:host { display: block; color: var(--cq-ink); font-size: 13px; }
+.card.sug { padding: 16px; border-radius: 4px; border: 1px solid var(--cq-accent-line); background: var(--cq-accent-soft); }
+.cq-ai-eyebrow.glance { font-size: 15px; text-transform: none; letter-spacing: 0; }
+.sugbar { margin-top: 8px; padding: 2px 0 2px 12px; border-left: 3px solid var(--cq-accent); }
+.sugbar .cq-ai-verdict { margin: 0 0 4px; font-size: 22px; line-height: 1.2; }
+.sugbar .cq-ai-verdict.crit { color: var(--cq-crit-fg); }
+.sugwhy { font-size: 11px; line-height: 1.45; color: var(--cq-muted); white-space: pre-line; }
+.sugdiv { height: 1px; margin: 12px 0 10px; background: var(--cq-accent-line); }
+.lab { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
+.ktable { margin-top: 4px; }
+.cq-krow { padding: 4px 0; border-bottom-color: var(--cq-accent-line); }
+.cq-krow:last-child { border-bottom: none; padding-bottom: 0; }
+.cq-stack { line-height: 1.25; }
+.kq { font-size: 13px; }
+.cq-krow .cq-sub { font-size: 11px; }
+.ka { flex: none; max-width: 50%; font-size: 14px; font-weight: 700; line-height: 1.25; text-align: right; }

@@ -1,0 +1,57 @@
+<template>
+    <div class="cq-box">
+        <header class="cq-hl">
+            <div class="cq-hl-top">
+                <div class="cq-hl-who">
+                    <span class="cq-hl-icon"><lightning-icon icon-name={icon} size="medium" alternative-text={objectLabel}></lightning-icon></span>
+                    <div class="cq-hl-name">
+                        <span class="cq-hl-obj">{objectLabel}</span>
+                        <span class="cq-hl-title">{recordName}</span>
+                    </div>
+                </div>
+                <div class="cq-hl-actions">
+                    <template if:true={agentName}><c-ask-cq-popover record-id={recordId} agent-name={agentName} step={askStep} suggestions={askSuggestions}></c-ask-cq-popover></template>
+                    <template if:true={showEdit}><button class="cq-btn-outline" onclick={handleEdit}>Edit</button></template>
+                </div>
+            </div>
+            <template if:true={hasFields}>
+                <div class="cq-hl-fields">
+                    <template for:each={fieldRows} for:item="f">
+                        <div key={f.key} class="cq-hl-f"><span class="cq-hl-k">{f.label}</span>
+                            <template if:true={f.isLink}><button class="cq-hl-v link" data-id={f.id} onclick={handleOpen}>{f.value}</button></template>
+                            <template if:false={f.isLink}><span class="cq-hl-v">{f.value}</span></template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </header>
+        <div class="cq-ws-body">
+            <nav class="cq-rail" aria-label={railTitle}>
+                <div class="cq-rail-title">{railTitle}</div>
+                <template for:each={stepRows} for:item="s">
+                    <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked} aria-current={s.current}>
+                        <span class="mark">
+                            <template if:true={s.done}>&#10003;</template>
+                            <template if:false={s.done}>{s.n}</template>
+                        </span>
+                        <span class="txt"><span class="lbl">{s.label}</span><span class="ssub">{s.sub}</span></span>
+                    </button>
+                </template>
+                <template if:true={canRestart}><button class="cq-restart" onclick={handleRestart}>Start Over</button></template>
+                <template if:true={canReopen}><button class="cq-restart" onclick={handleReopen}>{reopenLabel}</button></template>
+            </nav>
+            <div class="cq-ws-main">
+                <template if:true={resumed}><div class="resumed">Picked up where you left off.</div></template>
+                <slot></slot>
+                <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
+                <template if:true={showFoot}>
+                    <div class="cq-ws-foot">
+                        <span class="cq-blocker">{blocker}</span>
+                        <button class="cq-btn-outline" onclick={handleBack} disabled={backDisabled}>Back</button>
+                        <button class="cq-btn-primary" onclick={handleNext} disabled={nextDisabled}>{nextLabel}</button>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</template>
