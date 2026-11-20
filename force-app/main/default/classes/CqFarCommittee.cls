@@ -37,7 +37,6 @@ public with sharing class CqFarCommittee {
         @AuraEnabled public Boolean emergency = false; @AuraEnabled public String emergencyReason;
         @AuraEnabled public String recommendedBy; @AuraEnabled public Datetime recommendedOn;
         @AuraEnabled public String sentBack;    // the committee's comments when the last approval was sent back
-        @AuraEnabled public Map<String, Sign> sign;    // 'approve' / 'reject' -> what CQ's electronic signature policy asks for
     }
     /** What CQ's electronic signature policy asks for one committee action on a review. */
     public class Sign {
@@ -121,7 +120,6 @@ public with sharing class CqFarCommittee {
         x.seats = seats();
         if (r.Committee_Approval__c == null) { return x; }
         List<String> back = loadApproval(x, r.Committee_Approval__c, r.Status__c == 'With Committee');
-        if (r.Status__c == 'With Committee') { x.sign = new Map<String, Sign>{ 'approve' => signFor(r.Id, 'approve'), 'reject' => signFor(r.Id, 'reject') }; }
         if (r.Status__c == 'In Review' && x.approvalStatus == 'Rejected' && !back.isEmpty()) { x.sentBack = String.join(back, '\n'); }
         return x;
     }
@@ -218,6 +216,15 @@ public with sharing class CqFarCommittee {
             Sign g = new Sign(); g.unknown = true;
             return g;
         }
+    }
+
+    /**
+     * What CQ's policy asks for the committee's two actions on a review: 'approve' and 'reject'. The screen asks for this
+     * in its own request, after loading: asking CQ inside the submission ran past the time limit with CQ's approval engine.
+     */
+    @AuraEnabled
+    public static Map<String, Sign> getSign(Id recordId) {
+        return new Map<String, Sign>{ 'approve' => signFor(recordId, 'approve'), 'reject' => signFor(recordId, 'reject') };
     }
 
     /**

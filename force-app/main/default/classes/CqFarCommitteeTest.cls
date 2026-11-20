@@ -98,7 +98,7 @@ private class CqFarCommitteeTest {
         CqFarCommittee.esig = f;
         CqFarCommittee.Info x = CqFarCommittee.info([SELECT Id, Status__c, Emergency__c, Emergency_Reason__c, Recommended_By__r.Name, Recommended_On__c,
             Committee_Approval__c FROM Field_Action_Review__c WHERE Id = :review.Id]);
-        System.assert(x.sign.get('approve').required);
+        System.assert(CqFarCommittee.getSign(review.Id).get('approve').required);
         System.assertEquals(1, x.steps.size());
         System.assert(x.steps[0].mine);
     }

@@ -6,6 +6,7 @@ import saveDraft from '@salesforce/apex/CqFieldActionReview.saveDraft';
 import getScope from '@salesforce/apex/CqFieldActionLots.getScope';
 import submitToCommittee from '@salesforce/apex/CqFieldActionLots.submitToCommittee';
 import actOnStep from '@salesforce/apex/CqFarCommittee.act';
+import getSign from '@salesforce/apex/CqFarCommittee.getSign';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 import { readDraft, writeDraft, upTo } from 'c/cqWsDraft';
@@ -105,6 +106,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     comment = '';        // a committee member's comment when approving or sending back
     pwWarn = '';         // why the signature password was cleared (it was filled in, not typed)
     _pw = '';            // the signature password: never rendered, never stored, cleared after every attempt
+    signs = {};          // 'approve' / 'reject' -> what CQ's e-signature policy asks for (its own request: see loadSign)
     evTab = 'signals';   // the evidence tab open beside the checklist
 
     async connectedCallback() {
@@ -122,6 +124,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         this.v = v;
         this.done = v.status === 'Decided' || v.status === 'Closed';
         this.waiting = v.status === 'With Committee';
+        this.loadSign();
         if (!first) { return; }
         const d = this.done ? null : readDraft(v.draft, DRAFT);
         if (d) {
@@ -158,6 +161,12 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         this.team = team;
     }
 
+    /** With the committee, ask CQ (in its own request) whether approving or sending back needs a signature. */
+    async loadSign() {
+        if (!this.waiting) { this.signs = {}; return; }
+        try { this.signs = (await getSign({ recordId: this.recordId })) || {}; }
+        catch (e) { this.signs = { approve: { unknown: true }, reject: { unknown: true } }; }
+    }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     get ready() { return !!this.v; }
     // ---- header (same layout as the PHR workspace header)
@@ -523,7 +532,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     }
     get hasYours() { return this.csteps.some((s) => s.yours); }
     // ---- electronic signature: what CQ's policy asks for each action on this review
-    signOf(action) { return ((this.committee.sign || {})[action]) || {}; }
+    signOf(action) { return (this.signs || {})[action] || {}; }
     get needSign() { return !!(this.signOf('approve').required || this.signOf('reject').required); }
     get signUnknown() { return !!(this.signOf('approve').unknown || this.signOf('reject').unknown); }
     get approveLabel() { return this.signOf('approve').required ? 'Sign and Approve' : 'Approve'; }
