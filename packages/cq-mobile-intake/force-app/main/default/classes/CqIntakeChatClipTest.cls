@@ -1,6 +1,9 @@
 @IsTest
 private class CqIntakeChatClipTest {
 
+    @TestSetup
+    static void setup() { CqIntakeTestData.grantAccess(); }
+
     static Event_Question__c question() {
         Event_Question__c q = new Event_Question__c(Active__c = true, Required__c = true, Order__c = 1,
             Question__c = 'Where did this happen?', Answer_Type__c = 'Text', Role__c = 'Where Found',

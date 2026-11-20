@@ -1,5 +1,8 @@
 @IsTest
 private class CqEventPartsTest {
+
+    @TestSetup
+    static void setup() { CqIntakeTestData.grantAccess(); }
     @IsTest
     static void suggestsAndSearches() {
         compliancequest__SQX_Part_Family__c fam = new compliancequest__SQX_Part_Family__c(Name = 'Picker Family');

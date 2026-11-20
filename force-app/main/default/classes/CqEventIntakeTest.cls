@@ -3,6 +3,7 @@ private class CqEventIntakeTest {
 
     @TestSetup
     static void setup() {
+        CqIntakeTestData.grantAccess();
         compliancequest__SQX_Part_Family__c fam = new compliancequest__SQX_Part_Family__c(Name = 'Intake Family');
         insert fam;
         insert CqIntakeTestData.part(new compliancequest__SQX_Part__c(Name = 'Intake Part', compliancequest__Part_Number__c = 'INT-PART-1',

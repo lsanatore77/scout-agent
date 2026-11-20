@@ -3,6 +3,7 @@ private class CqEventLotLinkTest {
 
     @TestSetup
     static void setup() {
+        CqIntakeTestData.grantAccess();
         compliancequest__SQX_Part_Family__c fam = new compliancequest__SQX_Part_Family__c(Name = 'LotLink Family');
         insert fam;
         insert CqIntakeTestData.part(new compliancequest__SQX_Part__c(Name = 'LotLink Part',
