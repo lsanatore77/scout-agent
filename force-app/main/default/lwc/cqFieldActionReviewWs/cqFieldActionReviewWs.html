@@ -344,25 +344,25 @@
                                         <template if:true={s.yours}>
                                             <div class="signbox">
                                                 <label class="cq-field"><span class="cq-label">Comment<template if:true={commentRequired}><span class="cq-req">*</span></template></span>
-                                                    <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder={commentHint} disabled={saving}></textarea>
+                                                    <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder={commentHint} disabled={seatBusy}></textarea>
                                                 </label>
                                                 <template if:true={needSign}>
                                                     <p class="signmean">{signMeaning}</p>
                                                     <label class="cq-field"><span class="cq-label">Password<span class="cq-req">*</span></span>
-                                                        <input type={pwType} class="sigpw" name="cq-esig-confirm" autocomplete={pwAuto} style={pwStyle} spellcheck="false" autocapitalize="off" autocorrect="off" disabled={saving}
+                                                        <input type={pwType} class="sigpw" name="cq-esig-confirm" autocomplete={pwAuto} style={pwStyle} spellcheck="false" autocapitalize="off" autocorrect="off" disabled={seatBusy}
                                                             data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"
                                                             oninput={handlePwInput} onpaste={handlePwBlock} ondrop={handlePwBlock} onanimationstart={handlePwAutofill} />
                                                     </label>
                                                     <template if:true={pwWarn}><span class="pwwarn">{pwWarn}</span></template>
                                                 </template>
                                                 <div class="sbtns">
-                                                    <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>{approveLabel}</button>
-                                                    <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>{rejectLabel}</button>
+                                                    <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={seatBusy}>{approveLabel}</button>
+                                                    <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={seatBusy}>{rejectLabel}</button>
                                                 </div>
                                                 <template if:true={seatError}><span class="pwwarn" role="alert">{seatError}</span></template>
-                                                <!-- while signing: a cover over the comment, password and buttons, with the spinner and what is happening -->
+                                                <!-- a cover over the comment, password and buttons: while the signature is got ready, and while signing; the spinner and what is happening -->
                                                 <div role="status" aria-live="polite">
-                                                    <template if:true={acting}><div class="signcover"><span class="spinhold"><lightning-spinner alternative-text="Working" size="medium"></lightning-spinner></span><span class="covertext">{actingLine}</span></div></template>
+                                                    <template if:true={covering}><div class="signcover"><span class="spinhold"><lightning-spinner alternative-text="Working" size="medium"></lightning-spinner></span><span class="covertext">{coverLine}</span></div></template>
                                                 </div>
                                             </div>
                                         </template>

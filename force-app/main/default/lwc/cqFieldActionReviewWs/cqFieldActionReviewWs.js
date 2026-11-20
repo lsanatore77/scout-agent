@@ -114,6 +114,8 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     acting = '';         // 'approve' or 'reject' while that seat action is being processed (spinner and status line)
     _pw = '';            // the signature password: never rendered, never stored, cleared after every attempt
     signs = {};          // 'approve' / 'reject' -> what CQ's e-signature policy asks for (its own request: see loadSign)
+    signsLoading = false; // that request is out: the seat waits ("Getting your signature ready") so Approve never goes without the password box
+    actingSign = false;  // whether the action being processed is a signature (fixed at the click, so the status line does not change mid-way)
     evTab = 'signals';   // the evidence tab open beside the checklist
 
     async connectedCallback() {
@@ -174,9 +176,11 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
 
     /** With the committee, ask CQ (in its own request) whether approving or sending back needs a signature. */
     async loadSign() {
-        if (!this.waiting) { this.signs = {}; return; }
+        if (!this.waiting) { this.signs = {}; this.signsLoading = false; return; }
+        this.signsLoading = true;
         try { this.signs = (await getSign({ recordId: this.recordId })) || {}; }
         catch (e) { this.signs = { approve: { unknown: true }, reject: { unknown: true } }; }
+        this.signsLoading = false;
     }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     get ready() { return !!this.v; }
@@ -230,7 +234,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     // ---- step rail
     get valid() {
         return [this.maxStep > 0, !!this.seen[ASSESS] && this.assessDone,
-            !!this.seen[REC] && !!this.outcome && !!this.rationale.trim(), this.done];
+            !!this.seen[REC] && !this.stepBlocker(REC), this.done];
     }
     get steps() {
         const v = this.v || {};
@@ -463,7 +467,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         if (this.scopeDiffers) { reasons.Scope = this.whyScope.trim(); }
         return JSON.stringify({ faChoice: this.needed ? this.faChoice : '', reasons });
     }
-    get assessDone() { return !!this.hazard.trim() && !!this.level && this.checksDone; }
+    get assessDone() { return !!this.hazard.trim() && !!this.level && this.checksDone && !(this.levelDiffers && !this.whyLevel.trim()); }
 
     get questions() {
         return QUESTIONS.map((q) => ({
@@ -594,10 +598,14 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     /** The line beside the spinner while your seat action is processed (also announced to screen readers). */
     get actingLine() {
         if (!this.acting) { return ''; }
-        const sign = this.signOf(this.acting).required;
+        const sign = this.actingSign;
         if (this.acting === 'approve') { return sign ? 'Checking your signature with CQ and approving…' : 'Approving…'; }
         return sign ? 'Checking your signature with CQ and sending it back…' : 'Sending it back…';
     }
+    /** The cover over your seat: while CQ is asked whether a signature is needed, and while your action is processed. */
+    get covering() { return !!this.acting || this.signsLoading; }
+    get coverLine() { return this.acting ? this.actingLine : 'Getting your signature ready\u2026'; }
+    get seatBusy() { return this.saving || this.signsLoading; }
     get commentRequired() { return !!this.signOf('approve').comment; }
     get commentHint() { return this.commentRequired ? 'Required with your signature.' : 'Required when you send it back.'; }
     get signMeaning() {
@@ -666,7 +674,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     fail(m) { if (this.hasYours) { this.seatError = m; } else { this.error = m; } }
     async handleAct(event) {
         const d = event.currentTarget.dataset;
-        if (this.saving) { return; }
+        if (this.saving || this.signsLoading) { return; }
         this.seatError = '';
         if (d.a === 'reject' && !this.comment.trim()) { this.fail('Add a comment saying why you are sending it back.'); return; }
         const g = this.signOf(d.a);
@@ -674,7 +682,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         if (g.required && !this._pw) { this.fail('Type your password to sign.'); return; }
         const password = g.required ? this._pw : null;
         this.clearPw();                 // never kept, whatever happens next
-        this.saving = true; this.error = undefined; this.acting = d.a;
+        this.saving = true; this.error = undefined; this.actingSign = !!g.required; this.acting = d.a;
         try {
             const v = await actOnStep({ recordId: this.recordId, stepId: d.id, action: d.a, comment: this.comment.trim(), password });
             this.comment = '';
