@@ -73,6 +73,10 @@ sf package create --name "CQ Mobile Intake" --package-type Unlocked --path force
 sf package version create --package "CQ Mobile Intake" --code-coverage --installation-key-bypass --wait 60 --target-dev-hub golden
 ```
 
+The build org comes from the **CQ16BaseSnap** snapshot (`definitionFile` in `sfdx-project.json`): a blank build
+org cannot install ComplianceQuest, so building without it fails inside CQ's own classes. For a release a customer
+installs, Salesforce recommends building without a snapshot; that needs a build org shape CQ installs into.
+
 The version create prints an install link (`04t...`). Test it in a fresh scratch org: step 1, then
 `sf package install --package <04t...> --target-org <new alias> --wait 30 --no-prompt`, then step 3.
 
