@@ -67,9 +67,7 @@
                                         </template>
                                     </div>
                                     <div class="ptext">
-                                        <div class="plabel">The Problem
-                                            <template if:true={hasSource}><span class="from">from <button class="cq-link" data-id={v.sourceId} onclick={handleOpen}>{sourceLabel}</button></span></template>
-                                        </div>
+                                        <div class="plabel">The Problem</div>
                                         <div class="quote">{problem}</div>
                                         <div class="cq-tiles">
                                             <template for:each={tiles} for:item="t">
@@ -78,6 +76,21 @@
                                         </div>
                                     </div>
                                 </div>
+                                <template if:true={hasSource}>
+                                    <div class="srccard">
+                                        <div class="srcl">
+                                            <button class="cq-link" data-id={v.sourceId} onclick={handleOpen}>{v.sourceName}</button>
+                                            <template if:true={v.sourceTitle}><span class="srcsub">{v.sourceTitle}</span></template>
+                                            <template if:true={v.causeLine}><span class="srcsub">{v.causeLine}</span></template>
+                                        </div>
+                                        <template if:true={v.reason}>
+                                            <div class="srcr">
+                                                <span>&ldquo;{v.reason}&rdquo;</span>
+                                                <span class="srcsub">Sent for review by {v.requestedBy} &middot; <lightning-formatted-date-time value={v.requestedOn} year="numeric" month="short" day="numeric"></lightning-formatted-date-time></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
                             <div class="card sug">
                                 <div class="cq-ai-eyebrow glance"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={v.suggestedOutcome}></c-cq-ai-why></div>
@@ -85,10 +98,6 @@
                                     <div class="cq-ai-verdict" data-outcome={v.suggestedOutcome}>{v.suggestedOutcome}</div>
                                     <div class="sugwhy">{v.suggestedWhy}</div>
                                 </div>
-                                <template if:true={showReason}>
-                                    <div class="lab cq-mt14">{reasonLabel}</div>
-                                    <div class="cq-para">{v.reason}</div>
-                                </template>
                                 <div class="sugdiv"></div>
                                 <div class="lab">What We Know</div>
                                 <div class="ktable">

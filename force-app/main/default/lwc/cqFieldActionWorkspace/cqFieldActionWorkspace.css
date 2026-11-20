@@ -34,6 +34,15 @@
 .card.sug .kq { font-size: 13px; }
 .card.sug .cq-krow .cq-sub { font-size: 11px; }
 .card.sug .ka { font-weight: 700; line-height: 1.25; }
+/* the source record as one quiet row under The Problem, with why it was sent for review beside it */
+.srccard { display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); font-size: 12px; line-height: 1.45; }
+.srcl, .srcr { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+.srcl { flex: 1 1 260px; }
+.srcr { flex: 1 1 220px; padding-left: 16px; border-left: 1px solid var(--cq-line); }
+.srccard .cq-link { font-size: 12px; font-weight: 400; }
+.srcsub { color: var(--cq-muted); }
+/* header field labels in regular weight (trial) */
+.cq-hl-k { font-weight: 400; }
 .rec { color: var(--cq-accent); font-weight: 600; }
 .sughead { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
 .score { font-size: 68px; font-weight: 700; line-height: 1; }

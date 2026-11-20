@@ -48,6 +48,7 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public String reviewer; @AuraEnabled public Date due;
         @AuraEnabled public String sourceKind; @AuraEnabled public Id sourceId; @AuraEnabled public String sourceName; @AuraEnabled public String sourceTitle;
         @AuraEnabled public String problem;
+        @AuraEnabled public String causeLine;      // the source's root cause, or where the investigation stands when there is none yet
         @AuraEnabled public Id partId; @AuraEnabled public String partName; @AuraEnabled public String lot;
         @AuraEnabled public Decimal qtyAffected; @AuraEnabled public Decimal qtyShipped;
         @AuraEnabled public String riskLevel; @AuraEnabled public String hazard;
@@ -86,6 +87,32 @@ public with sharing class CqFieldActionReview {
                 FROM Field_Action_Review__c WHERE Id = :recordId];
     }
 
+    /** The root cause on the newest investigation of the NC or complaint; without one, where that investigation stands. */
+    @TestVisible
+    private static String causeLine(Id sourceId) {
+        if (sourceId == null) { return null; }
+        List<compliancequest__SQX_Investigation__c> invs;
+        try {
+            invs = [SELECT Name, compliancequest__Status__c,
+                           (SELECT compliancequest__Description__c, compliancequest__SQX_Root_Cause_Code__r.Name
+                            FROM compliancequest__SQX_Root_Causes__r ORDER BY CreatedDate LIMIT 3)
+                    FROM compliancequest__SQX_Investigation__c
+                    WHERE compliancequest__SQX_Nonconformance__c = :sourceId OR compliancequest__SQX_Complaint__c = :sourceId
+                    WITH USER_MODE ORDER BY CreatedDate DESC LIMIT 1];
+        } catch (Exception e) { return null; }    // no access to investigations: the line is left off
+        if (invs.isEmpty()) { return 'Root cause not known yet · no investigation started'; }
+        compliancequest__SQX_Investigation__c inv = invs[0];
+        List<String> causes = new List<String>();
+        for (compliancequest__SQX_Root_Cause__c rc : inv.compliancequest__SQX_Root_Causes__r) {
+            String c = rc.compliancequest__SQX_Root_Cause_Code__r?.Name;
+            String d = rc.compliancequest__Description__c;
+            String line = String.isNotBlank(d) ? (c != null ? c + ': ' + d : d) : c;
+            if (String.isNotBlank(line)) { causes.add(line); }
+        }
+        if (!causes.isEmpty()) { return 'Root cause: ' + String.join(causes, '; '); }
+        return 'Root cause not known yet · investigation ' + inv.Name + (inv.compliancequest__Status__c != null ? ' in ' + inv.compliancequest__Status__c : '');
+    }
+
     @AuraEnabled
     public static View getView(Id recordId) {
         Field_Action_Review__c r = load(recordId);
@@ -120,6 +147,7 @@ public with sharing class CqFieldActionReview {
             }
         }
         v.partId = partId; v.partName = partName; v.lot = lot;
+        v.causeLine = causeLine(v.sourceId);
 
         // Signals and evidence: other records on the same part
         Integer lotNcs = 0; Integer lotComplaints = 0; Integer recentNcs = 0;
