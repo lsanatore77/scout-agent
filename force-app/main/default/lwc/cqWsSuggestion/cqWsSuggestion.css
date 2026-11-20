@@ -7,6 +7,9 @@
 .sugbar { margin-top: 8px; padding: 2px 0 2px 12px; border-left: 3px solid var(--cq-accent); }
 .sugbar .cq-ai-verdict { margin: 0 0 4px; font-size: 22px; line-height: 1.2; }
 .sugbar .cq-ai-verdict.crit { color: var(--cq-crit-fg); }
+.just { margin: 0 0 6px; font-size: 12px; line-height: 1.45; color: var(--cq-ink); }
+.jlab { font-size: 11px; color: var(--cq-muted); }
+.ka .flag { display: inline-block; width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; background: var(--cq-crit-fg); vertical-align: 1px; }
 .sugwhy { font-size: 11px; line-height: 1.45; color: var(--cq-muted); white-space: pre-line; }
 .sugdiv { height: 1px; margin: 12px 0 10px; background: var(--cq-accent-line); }
 .lab { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }

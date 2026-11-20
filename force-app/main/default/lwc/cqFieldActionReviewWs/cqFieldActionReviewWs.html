@@ -22,11 +22,11 @@
                         <div class="cq-col lead">
                             <c-cq-ws-problem description={problem} photo-url={photoUrl} tiles={tiles}></c-cq-ws-problem>
                             <template if:true={hasSource}>
-                                <c-cq-ws-source record-id={v.sourceId} name={v.sourceName} lines={sourceLines} quote={v.reason}
-                                    quote-by={quoteBy} quote-on={v.requestedOn} onopen={handleOpen}></c-cq-ws-source>
+                                <c-cq-ws-source record-id={v.sourceId} name={v.sourceName} lines={sourceLines} onopen={handleOpen}></c-cq-ws-source>
                             </template>
                         </div>
-                        <c-cq-ws-suggestion verdict={v.suggestedOutcome} why={v.suggestedWhy} tone={verdictTone} know={v.know}></c-cq-ws-suggestion>
+                        <c-cq-ws-suggestion verdict={v.suggestedOutcome} why={v.suggestedWhy} tone={verdictTone} justification={v.reason}
+                            know={v.know} flag-when-yes="Is there a safety risk?|Was anyone injured?"></c-cq-ws-suggestion>
                     </div>
                 </template>
 
