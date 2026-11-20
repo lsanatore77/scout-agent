@@ -35,30 +35,28 @@ Not in it (on purpose): the desktop Report a Problem form, the Quality Event rev
 
 ## Test in a scratch org (you run these; log in yourself)
 
-From this folder (`packages/cq-mobile-intake`):
+From this folder (`packages/cq-mobile-intake`), with the Dev Hub logged in as `golden`. The scratch org comes from the
+**CQ16BaseSnap** snapshot (the same one atlas-seed uses), so CQ 16 is already installed: no package installs.
 
-```bash
-# 0. once: log in to the Dev Hub (Unlocked Packages must be on there)
-sf org login web --set-default-dev-hub --alias cqhub
+```
+# 1. scratch org from the CQ 16 snapshot
+sf org create scratch --definition-file config\cq16-snapshot-def.json --alias intake-test --duration-days 7 --target-dev-hub golden --no-namespace --wait 30
 
-# 1. scratch org
-sf org create scratch --definition-file config/project-scratch-def.json --alias intake-test --duration-days 7 --target-dev-hub cqhub
-
-# 2. CQ packages, in this order (add --installation-key <key> if CQ gave you one)
-sf package install --package 04tRn000000qxC5IAI --target-org intake-test --wait 60 --no-prompt
-sf package install --package 04tRn000000qznNIAQ --target-org intake-test --wait 60 --no-prompt
-sf package install --package 04tRn000000r0MsIAI --target-org intake-test --wait 60 --no-prompt
-
-# 3. deploy the intake and run its tests
+# 2. deploy the intake and run its tests
 sf project deploy start --source-dir force-app --target-org intake-test --test-level RunLocalTests --wait 30
 
-# 4. access, setup data (questions, clips, categories) copied from dev
+# 3. access, setup data (questions, clips, categories) copied from dev
 sf org assign permset --name CQ_Mobile_Intake_User --name CQ_Mobile_Intake_Admin --target-org intake-test
-node scripts/copy-intake-data.mjs --from <your dev alias> --to intake-test
+node scripts\copy-intake-data.mjs --from <your dev alias> --to intake-test
 
-# 5. try it
+# 4. try it
 sf org open --target-org intake-test --path /lightning/n/Report_an_Event
 ```
+
+Without the snapshot (`config/project-scratch-def.json`, an empty Enterprise org), install CQ first, in this order
+(add `--installation-key <key>` if CQ gave you one):
+`04tRn000000qxC5IAI` (ComplianceQuest), `04tRn000000qznNIAQ` (ComplianceQuest User Interface), `04tRn000000r0MsIAI` (CQ.AI Extension),
+each with `sf package install --package <id> --target-org intake-test --wait 60 --no-prompt`.
 
 Then in the scratch org: Setup > Object Manager > Case > Fields > Case Origin: add **Mobile Intake** (Case Origin
 accepts it without, but reports and list views read better with it), and set a Case assignment rule if you want
@@ -67,12 +65,12 @@ customer reports routed to a queue.
 ## Make the package (after the scratch org test passes)
 
 ```bash
-sf package create --name "CQ Mobile Intake" --package-type Unlocked --path force-app --no-namespace --target-dev-hub cqhub
-sf package version create --package "CQ Mobile Intake" --code-coverage --installation-key-bypass --wait 60 --target-dev-hub cqhub
+sf package create --name "CQ Mobile Intake" --package-type Unlocked --path force-app --no-namespace --target-dev-hub golden
+sf package version create --package "CQ Mobile Intake" --code-coverage --installation-key-bypass --wait 60 --target-dev-hub golden
 ```
 
-The version create prints an install link (`04t...`). Test it in a fresh scratch org: steps 1 and 2, then
-`sf package install --package <04t...> --target-org <new alias> --wait 30 --no-prompt`, then step 4.
+The version create prints an install link (`04t...`). Test it in a fresh scratch org: step 1, then
+`sf package install --package <04t...> --target-org <new alias> --wait 30 --no-prompt`, then step 3.
 
 ## After installing in a demo org
 
