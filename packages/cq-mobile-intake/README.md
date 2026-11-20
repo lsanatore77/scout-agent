@@ -13,6 +13,12 @@ main project, then rebuild:
     python3 scripts/build_mobile_intake_package.py          # from the repo root
     python3 scripts/build_mobile_intake_package.py --check  # is the package copy current?
 
+## Versions
+
+| Version | Id | Install | Notes |
+|---|---|---|---|
+| 1.1.0-1 (beta) | `04tfn000007wQpJAAU` | Sandbox: https://test.salesforce.com/packaging/installPackage.apexp?p0=04tfn000007wQpJAAU · Scratch: `sf package install --package 04tfn000007wQpJAAU --target-org <alias> --wait 30` | First working version (2026-11-20). Built from CQ16BaseSnap. Beta: promote before installing in a production or trial org. |
+
 ## What is in it
 
 | | |

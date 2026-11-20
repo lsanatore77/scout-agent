@@ -17,7 +17,8 @@
   ],
   "packageAliases": {
     "ComplianceQuest@16.0.0": "04tRn000000qxC5IAI",
-    "CQ Mobile Intake": "0Hofn0000001aHZCAY"
+    "CQ Mobile Intake": "0Hofn0000001aHZCAY",
+    "CQ Mobile Intake@1.1.0-1": "04tfn000007wQpJAAU"
   },
   "name": "cq-mobile-intake",
   "namespace": "",
