@@ -298,62 +298,77 @@
 
                     <template if:true={is4}>
                         <h3 class="cq-step-title">Recommendation</h3>
-                        <p class="cq-step-intro">Choose what you recommend. The committee approves it in the next step.</p>
-                        <div class="cq-optcards paths">
-                            <template for:each={outcomes} for:item="o">
-                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleOutcome} aria-pressed={o.pressed}>
-                                    <span class="cq-optcard-title">{o.id}</span>
-                                    <template if:true={o.cq}><c-cq-ai-why variant="pill" subject={o.id}></c-cq-ai-why></template>
-                                    <span class="cq-optcard-desc">{o.why}</span>
-                                </button>
-                            </template>
-                        </div>
-                        <template if:true={needed}>
-                            <div class="lab cq-mt14">Which Field Action?</div>
-                            <div class="list">
-                                <template for:each={faOpts} for:item="f">
-                                    <button key={f.id} class={f.cls} data-id={f.id} onclick={handleFa}>
-                                        <span class="tick round">{f.tick}</span>
-                                        <span class="rt"><span class="rv">{f.label}</span><span class="cq-sub">{f.why}</span></span>
-                                        <template if:true={f.cq}><c-cq-ai-why variant="pill" subject={f.label}></c-cq-ai-why></template>
-                                    </button>
-                                </template>
+                        <div class="recwrap">
+                            <div class="recsec">
+                                <div class="seclab">Outcome</div>
+                                <div class="ocgrid">
+                                    <template for:each={outcomes} for:item="o">
+                                        <button key={o.id} class="oc" data-id={o.id} onclick={handleOutcome} aria-pressed={o.pressed}>
+                                            <span class="rd"></span>
+                                            <span class="occ">
+                                                <span class="octop"><span class="oct">{o.id}</span><template if:true={o.cq}><span class="ailab"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={o.id}></c-cq-ai-why></span></template></span>
+                                                <span class="ocd">{o.why}</span>
+                                            </span>
+                                        </button>
+                                    </template>
+                                </div>
                             </div>
-                            <template if:true={isNew}>
-                                <div class="newfa">
-                                    <label class="cq-field"><span class="cq-label">Title<span class="cq-req">*</span></span>
-                                        <input type="text" data-f="faTitle" value={faTitle} oninput={handleInput} />
-                                    </label>
-                                    <div class="pair">
-                                        <label class="cq-field"><span class="cq-label">Action Type<span class="cq-req">*</span></span>
-                                            <select data-f="actionType" onchange={handleInput}>
-                                                <option value="">Choose</option>
-                                                <template for:each={typeOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
-                                            </select>
-                                        </label>
-                                        <label class="cq-field"><span class="cq-label">Recall Class</span>
-                                            <select data-f="recallClass" onchange={handleInput}>
-                                                <option value="">Not Yet Determined</option>
-                                                <template for:each={classOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
-                                            </select>
-                                        </label>
+                            <template if:true={needed}>
+                                <div class="ocgrid">
+                                    <div class="recsec fasec">
+                                        <div class="seclab">Field Action</div>
+                                        <div class="falist">
+                                            <template for:each={faOpts} for:item="f">
+                                                <button key={f.id} class={f.cls} data-id={f.id} onclick={handleFa}>
+                                                    <span class="rd"></span>
+                                                    <span class="occ">
+                                                        <span class="octop"><span class="fat">{f.label}</span><template if:true={f.cq}><span class="ailab"><c-cq-ai-why variant="label" text="CQ.AI Suggests" subject={f.label}></c-cq-ai-why></span></template></span>
+                                                        <span class="fam">{f.why}</span>
+                                                    </span>
+                                                </button>
+                                            </template>
+                                            <template if:true={isNew}>
+                                                <div class="newfa">
+                                                    <label class="cq-field"><span class="cq-label">Title<span class="cq-req">*</span></span>
+                                                        <input type="text" data-f="faTitle" value={faTitle} oninput={handleInput} />
+                                                    </label>
+                                                    <div class="pair">
+                                                        <label class="cq-field"><span class="cq-label">Action Type<span class="cq-req">*</span></span>
+                                                            <select data-f="actionType" onchange={handleInput}>
+                                                                <option value="">Choose</option>
+                                                                <template for:each={typeOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
+                                                            </select>
+                                                        </label>
+                                                        <label class="cq-field"><span class="cq-label">Recall Class</span>
+                                                            <select data-f="recallClass" onchange={handleInput}>
+                                                                <option value="">Not Yet Determined</option>
+                                                                <template for:each={classOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
+                                                            </select>
+                                                        </label>
+                                                    </div>
+                                                    <div class="recsec">
+                                                        <span class="cq-label">Scope<span class="cq-req">*</span></span>
+                                                        <div class="cq-chips">
+                                                            <template for:each={scopeOpts} for:item="o">
+                                                                <button key={o.id} class={o.cls} data-id={o.id} onclick={handleScope} aria-pressed={o.pressed}><template if:true={o.cq}><c-cq-ai-why variant="star" subject={o.id} tail=" scope?"></c-cq-ai-why>&nbsp;</template>{o.id}</button>
+                                                            </template>
+                                                        </div>
+                                                        <p class="scopenote">{scopeData.why} Full covers every lot of the part, including lots found later; Partial starts with this review's lot, and the rest are chosen and approved in the Field Action.</p>
+                                                        <template if:true={isFull}><p class="scopenote">{fullLine}</p></template>
+                                                        <template if:true={isPartial}><p class="scopenote">{startLine}</p></template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
                                     </div>
-                                    <div class="lab cq-mt14">Scope *</div>
-                                    <div class="cq-chips">
-                                        <template for:each={scopeOpts} for:item="o">
-                                            <button key={o.id} class={o.cls} data-id={o.id} onclick={handleScope} aria-pressed={o.pressed}><template if:true={o.cq}><c-cq-ai-why variant="star" subject={o.id} tail=" scope?"></c-cq-ai-why>&nbsp;</template>{o.id}</button>
-                                        </template>
-                                    </div>
-                                    <p class="cq-note">Full covers every lot of the part, including lots found later. Partial starts with this review's lot; the rest are chosen and approved in the Field Action.</p>
-                                    <template if:true={scopeSuggests}><p class="cq-note"><c-cq-ai-why variant="star" question="Which scope does CQ.AI suggest for the field action, and why?"></c-cq-ai-why> {scopeSuggests}</p></template>
-                                    <template if:true={isFull}><p class="cq-note">{fullLine}</p></template>
-                                    <template if:true={isPartial}><p class="cq-note">{startLine}</p></template>
                                 </div>
                             </template>
-                        </template>
-                        <label class="cq-field"><span class="cq-label">Rationale<span class="cq-req">*</span></span>
-                            <textarea rows="3" data-f="rationale" value={rationale} oninput={handleInput}></textarea>
-                        </label>
+                            <div class="recsec">
+                                <label class="cq-field"><span class="cq-label">Rationale<span class="cq-req">*</span></span>
+                                    <textarea rows="4" data-f="rationale" value={rationale} oninput={handleInput} placeholder="Why this outcome, in a sentence or two."></textarea>
+                                </label>
+                            </div>
+                        </div>
                     </template>
 
                     <template if:true={is5}>
