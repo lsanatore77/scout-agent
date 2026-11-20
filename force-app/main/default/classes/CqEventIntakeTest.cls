@@ -134,8 +134,8 @@ private class CqEventIntakeTest {
         System.assertEquals('Case', s.kind);
         System.assert(s.urgent, 'an injury is urgent');
         System.assertEquals(0, [SELECT COUNT() FROM Quality_Event__c WHERE Title__c = 'Cuff leaks at the customer'], 'a Case, not a Quality Event');
-        Case c = [SELECT CaseNumber, Subject, Description, Origin, Type, Priority, Product__c, Lot_Number__c, Aware_Date__c, Reported_By__c, AccountId,
-                         Product_Caused_Harm__c, Impact_on_Safety_or_Environment__c, Where_Found__c, Safety_Risk_Reported__c, Found_By__c, Customer_Reported__c
+        Case c = [SELECT Id, CaseNumber, Subject, Description, Origin, Type, Priority, Lot_Number__c, Aware_Date__c, Reported_By__c, AccountId,
+                         Where_Found__c, Safety_Risk_Reported__c, Found_By__c, Customer_Reported__c
                   FROM Case WHERE Id = :s.id];
         System.assertEquals('At a Customer', c.Where_Found__c, 'each question fills its Case field');
         System.assertEquals('Not Sure', c.Safety_Risk_Reported__c, 'the exact answer, where the triage field is left blank');
@@ -146,13 +146,20 @@ private class CqEventIntakeTest {
         System.assertEquals('Mobile Intake', c.Origin);
         System.assertEquals('Problem', c.Type);
         System.assertEquals('High', c.Priority);
-        System.assertEquals(partId(), c.Product__c);
         System.assertEquals('L7', c.Lot_Number__c);
         System.assertNotEquals(null, c.Aware_Date__c);
         System.assertEquals(UserInfo.getUserId(), c.Reported_By__c);
         System.assertEquals([SELECT Id FROM Account WHERE Name = 'Intake Test Customer'].Id, c.AccountId);
-        System.assertEquals('Yes', c.Product_Caused_Harm__c);
-        System.assertEquals(null, c.Impact_on_Safety_or_Environment__c, 'Not Sure is left for triage');
+        // Triage fields (CQ Triage Agent package): checked only in an org that has them.
+        Map<String, Schema.SObjectField> fm = Schema.SObjectType.Case.fields.getMap();
+        if (fm.containsKey(CqEventIntake.TRIAGE_PRODUCT) && fm.containsKey(CqEventIntake.TRIAGE_HARM) && fm.containsKey(CqEventIntake.TRIAGE_SAFETY)) {
+            Id cid = c.Id;
+            SObject t = Database.query('SELECT ' + CqEventIntake.TRIAGE_PRODUCT + ', ' + CqEventIntake.TRIAGE_HARM + ', ' + CqEventIntake.TRIAGE_SAFETY
+                + ' FROM Case WHERE Id = :cid');
+            System.assertEquals(partId(), t.get(CqEventIntake.TRIAGE_PRODUCT));
+            System.assertEquals('Yes', t.get(CqEventIntake.TRIAGE_HARM));
+            System.assertEquals(null, t.get(CqEventIntake.TRIAGE_SAFETY), 'Not Sure is left for triage');
+        }
         System.assert(c.Description.contains('Cuff loses pressure after 2 minutes'));
         System.assert(c.Description.contains('Which customer? Intake Test Customer'));
         System.assert(c.Description.contains('Units affected: 3'));
@@ -169,6 +176,12 @@ private class CqEventIntakeTest {
         CqEventIntake.put(c, 'Found_By__c', 'x'.repeat(300));
         System.assertEquals(255, c.Found_By__c.length(), 'cut to the field length');
         CqEventIntake.put(c, null, 'x');
+        CqEventIntake.put(c, 'Reported_By__c', 'not an id');
+        System.assertEquals(null, c.Reported_By__c, 'a lookup takes only an Id');
+        CqEventIntake.put(c, 'Reported_By__c', partId());
+        System.assertEquals(null, c.Reported_By__c, 'an Id of the wrong type is skipped');
+        CqEventIntake.put(c, 'Reported_By__c', UserInfo.getUserId());
+        System.assertEquals(UserInfo.getUserId(), c.Reported_By__c);
     }
 
     @IsTest

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Placeholder for the event intake record: the first report of a possible quality problem, before it becomes a Nonconformance or a Complaint. It holds the intake questions and answers (where it was found, injury, safety risk, aware date) so later steps such as the Field Action Review can show them. Skeleton only: the event review workspace is not built yet.</description>
+    <enableActivities>true</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Quality Event</label>
+    <nameField>
+        <displayFormat>EV-{0000}</displayFormat>
+        <label>Event Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Quality Events</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

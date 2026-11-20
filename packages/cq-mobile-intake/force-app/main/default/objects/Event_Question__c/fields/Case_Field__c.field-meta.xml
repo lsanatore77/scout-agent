@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Case_Field__c</fullName>
+    <description>API name of the Case field this question's answer is saved to when the report becomes a Case (for example Found_By__c). Blank: the answer goes in the Case Description only.</description>
+    <inlineHelpText>The Case field (API name) that gets this answer when a report found at a customer becomes a Case.</inlineHelpText>
+    <label>Case Field</label>
+    <length>80</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Audio_Wav_Base64__c</fullName>
+    <label>Audio WAV (base64)</label>
+    <description>Base64 of this question's read-aloud clip, stored as a PCM WAV. Played in the intake chat through the Web Audio API because the Salesforce mobile WebView blocks the HTML audio element. Populated from pre-generated TTS.</description>
+    <inlineHelpText>Base64 of a PCM WAV clip for this question; managed by the intake audio build.</inlineHelpText>
+    <type>LongTextArea</type>
+    <length>131072</length>
+    <visibleLines>3</visibleLines>
+</CustomField>

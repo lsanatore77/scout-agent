@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Part__c</fullName>
+    <label>Part</label>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <referenceTo>compliancequest__SQX_Part__c</referenceTo>
+    <relationshipLabel>Quality Events</relationshipLabel>
+    <relationshipName>Quality_Events</relationshipName>
+    <type>Lookup</type>
+</CustomField>

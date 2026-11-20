@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Question_Text__c</fullName><label>Question Text</label><description>The question exactly as it was asked, kept if the question is reworded later.</description><type>Text</type><length>255</length></CustomField>

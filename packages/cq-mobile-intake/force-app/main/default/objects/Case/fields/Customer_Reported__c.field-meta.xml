@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Customer_Reported__c</fullName>
+    <description>Mobile intake answer: the customer as the reporter named it. Account is set only when it matches one Account.</description>
+    <label>Customer (As Reported)</label>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

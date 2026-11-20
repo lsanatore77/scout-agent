@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reported_By__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The employee who reported the problem in the mobile intake. Contact stays for the customer.</description>
+    <label>Reported By</label>
+    <referenceTo>User</referenceTo>
+    <relationshipName>Cases_Reported</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

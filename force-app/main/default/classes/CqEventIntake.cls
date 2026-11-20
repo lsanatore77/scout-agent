@@ -129,7 +129,9 @@ public with sharing class CqEventIntake {
     @TestVisible
     static Sent toCase(Quality_Event__c ev, List<Event_Question__c> qs, Map<Id, String> given, Boolean urgent) {
         Case c = new Case(Subject = ev.Title__c, Origin = 'Mobile Intake', Type = 'Problem', Priority = urgent ? 'High' : 'Medium',
-            Aware_Date__c = ev.Aware_Date__c, Reported_By__c = ev.Reported_By__c, Lot_Number__c = ev.Lot_Number__c, Product__c = ev.Part__c);
+            Aware_Date__c = ev.Aware_Date__c, Reported_By__c = ev.Reported_By__c, Lot_Number__c = ev.Lot_Number__c);
+        // Triage fields from the CQ Triage Agent package: filled only when that package is in the org (no dependency on it).
+        put(c, TRIAGE_PRODUCT, ev.Part__c);
         List<String> lines = new List<String>();
         String customer;
         for (Event_Question__c q : qs) {
@@ -137,8 +139,8 @@ public with sharing class CqEventIntake {
             if (ans == null) { continue; }
             lines.add('- ' + q.Question__c + ' ' + ans);
             put(c, q.Case_Field__c, ans);
-            if (q.Role__c == 'Injury') { c.Product_Caused_Harm__c = yesNo(ans, false); }
-            else if (q.Role__c == 'Safety Risk') { c.Impact_on_Safety_or_Environment__c = yesNo(ans, false); }   // Not Sure stays blank for triage
+            if (q.Role__c == 'Injury') { put(c, TRIAGE_HARM, yesNo(ans, false)); }
+            else if (q.Role__c == 'Safety Risk') { put(c, TRIAGE_SAFETY, yesNo(ans, false)); }   // Not Sure stays blank for triage
             else if (q.Role__c == 'Customer') { customer = ans; }
         }
         c.AccountId = account(customer);
@@ -159,9 +161,14 @@ public with sharing class CqEventIntake {
     /**
      * Saves an answer to the Case field its question names (Event Question > Case Field). Text is cut to the field's
      * length; a picklist takes the answer only when it is one of the field's values (matched ignoring case); a checkbox
-     * takes Yes or No. Anything else, an unknown field or one the user cannot edit, is skipped: the answer is still in
-     * the Description.
+     * takes Yes or No; a lookup takes a record Id of the type it points to. Anything else, an unknown field (for example
+     * the triage fields in an org without the CQ Triage Agent package) or one the user cannot edit, is skipped: the
+     * answer is still in the Description.
      */
+    @TestVisible static final String TRIAGE_PRODUCT = 'Product__c';
+    @TestVisible static final String TRIAGE_HARM = 'Product_Caused_Harm__c';
+    @TestVisible static final String TRIAGE_SAFETY = 'Impact_on_Safety_or_Environment__c';
+
     @TestVisible
     static void put(Case c, String fieldName, String ans) {
         if (String.isBlank(fieldName) || String.isBlank(ans)) { return; }
@@ -170,7 +177,11 @@ public with sharing class CqEventIntake {
         Schema.DescribeFieldResult d = f.getDescribe();
         if (!d.isCreateable()) { return; }
         Schema.DisplayType t = d.getType();
-        if (t == Schema.DisplayType.STRING || t == Schema.DisplayType.TEXTAREA) {
+        if (t == Schema.DisplayType.REFERENCE) {
+            Id rid;
+            try { rid = Id.valueOf(ans); } catch (Exception e) { return; }
+            if (d.getReferenceTo().contains(rid.getSObjectType())) { c.put(f, rid); }
+        } else if (t == Schema.DisplayType.STRING || t == Schema.DisplayType.TEXTAREA) {
             c.put(f, ans.left(d.getLength()));
         } else if (t == Schema.DisplayType.PICKLIST) {
             for (Schema.PicklistEntry e : d.getPicklistValues()) {

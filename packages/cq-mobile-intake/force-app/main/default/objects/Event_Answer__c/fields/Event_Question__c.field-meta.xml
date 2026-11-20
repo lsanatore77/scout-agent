@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Event_Question__c</fullName><label>Event Question</label><description>The question that was asked.</description><type>Lookup</type><referenceTo>Event_Question__c</referenceTo><relationshipLabel>Answers</relationshipLabel><relationshipName>Answers</relationshipName><deleteConstraint>SetNull</deleteConstraint></CustomField>

@@ -1,0 +1,107 @@
+<template>
+    <div class="chat">
+        <div class="hd">
+            <span class="dot"></span>
+            <span class="title">Report an Event</span>
+            <span class="by">CQ.AI listens and fills in the form</span>
+            <button class={readAloudClass} onclick={toggleReadAloud} title="Read each question aloud">{readAloudLabel}</button>
+        </div>
+
+        <!-- COMPOSE: the big "tell your story" box -->
+        <template if:true={isCompose}>
+            <p class="lead"><b>Tell me what happened.</b> Describe the problem in your own words &mdash; what went wrong, and which product or lot.</p>
+            <div class={bigboxClass}>
+                <textarea class="story" rows="6" placeholder="Start typing, or tap Speak and talk&hellip;"
+                    value={story} oninput={handleStoryInput}></textarea>
+                <template if:true={showStoryMicStatus}>
+                    <div class="micstatus-in"><span class="pulse"></span>{micStatus}</div>
+                </template>
+            </div>
+            <template if:true={hasStory}>
+                <div class="boxfoot"><button class="clearbtn" onclick={clearStory}>&#8634; Clear &amp; start over</button></div>
+            </template>
+            <div class="actions">
+                <template if:true={canSpeak}>
+                    <button class={storyMicClass} onclick={micStory}>{storyMicLabel}</button>
+                </template>
+                <button class="btn primary" onclick={submitStory} disabled={submitDisabled}>Submit</button>
+            </div>
+        </template>
+
+        <!-- CHAT: compact report + clarifying Q&A -->
+        <template if:true={isChat}>
+            <div class="report">
+                <div class="lbl">Your report <button class="edit" onclick={editReport}>Edit</button></div>
+                <div class="txt">{description}</div>
+            </div>
+
+            <template if:true={showQHeader}><div class="chat-h">A few quick questions</div></template>
+
+            <div class="stream">
+                <template for:each={messages} for:item="m">
+                    <div key={m.id} class={m.who} data-who={m.who}>
+                        <template if:true={m.isAi}><span class="tag">CQ.AI</span></template>
+                        <div class="bubble" data-id={m.id} onclick={handleReplay}>{m.text}</div>
+                    </div>
+                </template>
+                <template if:true={busy}>
+                    <div class="ai"><span class="tag">CQ.AI</span><div class="bubble thinking">&hellip;</div></div>
+                </template>
+            </div>
+
+            <!-- tap choices for a Yes/No or pick-list question -->
+            <template if:true={hasChoices}>
+                <div class="chips">
+                    <template for:each={choices} for:item="c">
+                        <button key={c.k} class="chip" data-value={c.value} onclick={handleChoice}>{c.value}</button>
+                    </template>
+                </div>
+            </template>
+
+            <!-- answer a text question, or add a later detail; voice only when there are no chips; hidden while the lot Yes/No is waiting -->
+            <template if:true={showComposer}>
+                <div class="composer">
+                    <textarea class="box draftbox" rows="1" placeholder={inputPlaceholder}
+                        value={draft} oninput={handleInput} onkeydown={handleKey} disabled={inputDisabled}></textarea>
+                    <template if:true={showMic}>
+                        <button class={micClass} onclick={micChat} disabled={inputDisabled} title={micLabel}>{micLabel}</button>
+                    </template>
+                    <button class="go" onclick={handleSendClick} disabled={inputDisabled}>Send</button>
+                </div>
+                <template if:true={showMicStatus}>
+                    <div class={micStatusClass}><span class="live-dot"></span>{micStatus}</div>
+                </template>
+            </template>
+
+            <!-- submit when ready -->
+            <template if:true={showSubmit}>
+                <div class="submitrow">
+                    <button class="submit" onclick={handleSubmit} disabled={busy}>Send to a Reviewer</button>
+                </div>
+            </template>
+
+            <!-- what CQ.AI has understood so far (reference, below the action) -->
+            <template if:true={hasUnderstood}>
+                <div class="panel">
+                    <div class="panelhd">So far CQ.AI has</div>
+                    <div class="facts">
+                        <template for:each={understood} for:item="f">
+                            <span key={f.k} class="fact">
+                                <span class="fk">{f.label}</span>
+                                <span class="fv">{f.value}</span>
+                                <template if:true={f.needsConfirm}><span class="chk">?</span></template>
+                            </span>
+                        </template>
+                    </div>
+                    <template if:true={hasStillNeeded}>
+                        <div class="need">Still need:
+                            <template for:each={stillNeeded} for:item="s">
+                                <span key={s.k} class="needit">{s.text}</span>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </template>
+    </div>
+</template>

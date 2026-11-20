@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Role__c</fullName><label>Role</label><description>The question's role when it was asked.</description><type>Text</type><length>40</length></CustomField>

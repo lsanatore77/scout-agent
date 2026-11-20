@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Approved_By__c</fullName><label>Approved By</label><description>Who in the quality team approved the category for trend-only logging.</description><type>Lookup</type><referenceTo>User</referenceTo><relationshipLabel>Quick Log Categories Approved</relationshipLabel><relationshipName>Quick_Log_Categories_Approved</relationshipName><deleteConstraint>SetNull</deleteConstraint></CustomField>

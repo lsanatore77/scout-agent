@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Urgent__c</fullName><label>Urgent</label><description>An answer marked Urgent When was given (an injury or a safety risk). Urgent events are reviewed first.</description><type>Checkbox</type><defaultValue>false</defaultValue></CustomField>

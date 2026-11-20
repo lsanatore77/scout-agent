@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata"><fullName>Trend_Event__c</fullName><label>Trend Event</label><description>The Trend event opened when this NC's category reached its limit.</description><type>Lookup</type><referenceTo>Quality_Event__c</referenceTo><relationshipLabel>Trend NCs</relationshipLabel><relationshipName>Trend_NCs</relationshipName><deleteConstraint>SetNull</deleteConstraint></CustomField>
