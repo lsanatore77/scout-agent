@@ -18,7 +18,7 @@ EXTRA = os.path.join(PKG, 'package-only', 'main', 'default')
 
 CLASSES = ['CqEventIntake', 'CqIntakeChat', 'CqEventExtract', 'CqEventParts', 'CqEventLotLink']
 TESTS = ['CqIntakeTestData', 'CqEventIntakeTest', 'CqIntakeChatTest', 'CqIntakeChatClipTest', 'CqEventExtractTest', 'CqEventPartsTest', 'CqEventLotLinkTest']
-LWC = ['cqIntakeConversation', 'cqStyles']
+LWC = ['cqIntakeConversation', 'cqStyles', 'cqAiWhy']
 TRIGGERS = ['QualityEventLotLink']
 OBJECTS = ['Quality_Event__c', 'Event_Question__c', 'Event_Answer__c', 'Quick_Log_Category__c']   # whole objects
 TABS = ['Quality_Event__c']
