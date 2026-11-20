@@ -144,6 +144,8 @@
 /* shared fields and messages keep this screen's vertical rhythm */
 .cq-field { margin-top: 14px; }
 .riskcard .cq-field { margin-top: 0; }
+/* what the reviewer types, at the screen's 13px text size (trial on this screen) */
+.cq-field textarea, .cq-field input, .cq-field select { font-size: 13px; }
 /* Recommendation: the outcome cards and what sits under them keep to two thirds of the page, so nothing is stretched across it */
 .main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: 66.667%; box-sizing: border-box; }
 @media (max-width: 1100px) { .main > .paths, .main > .cq-field, .main > .newfa, .main > .list { width: 100%; } }
