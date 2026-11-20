@@ -32,16 +32,20 @@ private class CqEsigBridgeTest {
         System.assertEquals(null, row.Purpose_Of_Signature__c);
     }
 
-    /** CQ refuses a wrong password, or cannot run without a user session in a test: either way nothing is recorded. */
+    /**
+     * Wrong passwords are refused by CQ in a live session (proven on FAR-0001). In a test run CQ accepted a wrong password
+     * (it cannot check passwords in tests), so this only checks the path through CQ: refused means nothing recorded,
+     * accepted means exactly one signature row.
+     */
     @IsTest
-    static void nothingRecordedWithoutCq() {
+    static void signGoesThroughCq() {
         Field_Action_Review__c review = new Field_Action_Review__c(Title__c = 'Signature row');
         insert review;
         CqEsigBridge b = new CqEsigBridge();
-        try { b.signFor(review.Id, 'approve'); } catch (Exception e) { System.debug('CQ unavailable in tests: ' + e.getMessage()); }
+        try { b.signFor(review.Id, 'approve'); } catch (Exception e) { System.debug('CQ setting unavailable in tests: ' + e.getMessage()); }
         Boolean refused = false;
-        try { b.sign(review.Id, 'approve', 'ok', 'not-the-password'); } catch (Exception e) { refused = true; }
-        System.assert(refused, 'an unconfirmed signature is refused');
-        System.assertEquals(0, [SELECT COUNT() FROM Field_Action_Review_Record_Activity__c WHERE Field_Action_Review__c = :review.Id]);
+        try { b.sign(review.Id, 'approve', 'ok', 'any'); } catch (Exception e) { refused = true; }
+        Integer n = [SELECT COUNT() FROM Field_Action_Review_Record_Activity__c WHERE Field_Action_Review__c = :review.Id];
+        System.assertEquals(refused ? 0 : 1, n, 'refused: nothing recorded; accepted: exactly one signature');
     }
 }

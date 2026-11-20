@@ -19,6 +19,7 @@ State on 2026-11-19:
 - Live test on FAR-0001 / APR-00000068 passed: missing comment refused; a saved password chosen from Edge's list cleared; wrong password refused; real password signed (FRA-000001) and approved; FAR-0001 Decided.
 - Password box is a text box drawn with dots (`-webkit-text-security: disc`) so the browser does not offer saved passwords; it stays a real password box where a browser cannot draw the dots. Note: a screen reader may read the typed characters of a text box; revisit if accessibility review asks.
 - Messages about your seat show under its buttons.
+- In Apex tests CQ's `validateEsig` accepted a wrong password (no exception), so tests cannot prove refusal; the live test on FAR-0001 is the proof. CqEsigBridgeTest checks only that refused = no row, accepted = exactly one row.
 - Next: where signatures show (proposal on the design canvas, board "Where Signatures Show").
 
 ## To Build
