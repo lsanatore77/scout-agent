@@ -12,8 +12,10 @@
   - Each ZIP is deployed with the manuals' test: RunSpecifiedTests compliancequest.SQX_Test_1931_ContentVersionPerm.
 
   Usage (PowerShell, from the repo folder):
-    powershell -ExecutionPolicy Bypass -File .\scripts\deploy-cq16-zips.ps1 -TargetOrg CQ16AI -List     # check the files only
-    powershell -ExecutionPolicy Bypass -File .\scripts\deploy-cq16-zips.ps1 -TargetOrg CQ16AI
+    powershell -ExecutionPolicy Bypass -File .\scripts\deploy-cq16-zips.ps1 -TargetOrg CQ16AI -List    # check the files only
+    powershell -ExecutionPolicy Bypass -File .\scripts\deploy-cq16-zips.ps1 -TargetOrg CQ16AI          # steps 1-3, then stops
+    (upload the five picklists it lists)
+    powershell -ExecutionPolicy Bypass -File .\scripts\deploy-cq16-zips.ps1 -TargetOrg CQ16AI -From 4 -PicklistsDone
   Options: -Packages <folder> (default .\scripts\cq-packages), -Release CQSummer26, -WorkflowUser <username>,
            -Only "1,2,4" to rerun just the steps that failed (the summary prints the list), -From <number> to start later.
   - References to profiles the org does not have (a scratch org has no Standard Platform User) are taken out of CQ's
@@ -29,6 +31,7 @@ param(
     [string]$WorkflowUser,
     [int]$From = 1,
     [string]$Only,          # e.g. "1,2,4": deploy just these steps (to retry failures)
+    [switch]$PicklistsDone, # the five picklists that must come first are uploaded: go past step 3
     [switch]$List
 )
 $onlySteps = @()
@@ -76,6 +79,14 @@ $steps = @(
   @{ name = 'CQRegulatoryReports_Extension_Fresh_Installation_For_16.0.x';      needs = @('REG') },
   @{ name = 'CQRegulatoryReports_Extension_ExclusivePackage_Fresh_Installation_For_16.0.x'; needs = @('REG') },
   @{ name = 'CQManagementReviewDashboard_Extension_Fresh_Installation';         needs = @('MRD') }
+)
+
+# The manuals upload these picklists BEFORE their extension's external package (its record types use their values), so
+# the script stops after the core steps (1 to 3) until they are uploaded, then carries on with -PicklistsDone.
+$picklistsFirst = @(
+  'CQForms_Extension_Picklist_Package', 'CQProductLifecycleManagement_Extension_Picklist_Package',
+  'CQElectronicBatchRecord_Extension_Picklist_Package', 'CQLaboratoryIssues_Extension_Picklist_Package',
+  'CQEHS_Extension_Picklist_Package'
 )
 
 # Picklist ZIPs, uploaded by hand on SQX_Post_Actions > Picklist Update, in this order (Regulatory Reports: 1, then 2)
@@ -184,6 +195,14 @@ foreach ($s in $steps) {
     if ($List) { Write-Host "$label  ready: $($zip.Name)"; continue }
     if ($n -lt $From) { Write-Host "$label  skipped (-From $From)"; continue }
     if ($onlySteps.Count -gt 0 -and $onlySteps -notcontains $n) { continue }
+    if ($n -ge 4 -and -not $PicklistsDone -and -not $List) {
+        Write-Host ""
+        Write-Host "Stopping before step 4: upload these picklists first (Setup > Visualforce Pages > SQX_Post_Actions >" -ForegroundColor Yellow
+        Write-Host "Preview > Picklist Update; Upload Files, Publish, wait for Succeeded), one at a time:" -ForegroundColor Yellow
+        foreach ($p in $picklistsFirst) { $z = Find-Zip $p; if ($z) { Write-Host "  $($z.Name)" } else { Write-Host "  $p  (not in the folder)" -ForegroundColor Red } }
+        Write-Host "Then run again with:  -From 4 -PicklistsDone" -ForegroundColor Yellow
+        break
+    }
 
     # unzip to a short folder, find the folder(s) holding package.xml
     $dir = Join-Path $work ("{0:D2}" -f $n)
@@ -226,7 +245,8 @@ if ($failed.Count) {
 }
 
 Write-Host ""
-Write-Host "By hand, Setup > Visualforce Pages > SQX_Post_Actions > Preview > Picklist Update, in this order:" -ForegroundColor Cyan
+Write-Host "Picklists, all of them, before the snapshot (the five above go first, before steps 4 to 18)." -ForegroundColor Cyan
+Write-Host "Setup > Visualforce Pages > SQX_Post_Actions > Preview > Picklist Update, in this order:" -ForegroundColor Cyan
 $i = 0
 foreach ($p in $picklists) {
     $zip = Find-Zip $p
