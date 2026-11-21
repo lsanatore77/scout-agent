@@ -187,13 +187,34 @@ Write-Host "Org: $TargetOrg   Workflow user: $WorkflowUser   Packages: $Packages
 # Copies of the picklist ZIPs in two folders, so the upload dialog shows only what to pick (names unchanged)
 $firstDir = Join-Path $Packages '1 - upload first'; $afterDir = Join-Path $Packages '2 - upload after'
 foreach ($d in @($firstDir, $afterDir)) { if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d | Out-Null } }
+# Some picklist ZIPs carry an app too (Supplier Performance's CQSPM app): the same clean-up as the external ZIPs is applied
+# (references to profiles this org lacks are taken out), and the ZIP is rebuilt with the same name and folder layout.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$cleaned = @()
 foreach ($p in $picklists) {
     $z = Find-Zip $p
     if (-not $z) { continue }
     $to = if ($picklistsFirst -contains $p) { $firstDir } else { $afterDir }
-    Copy-Item $z.FullName -Destination (Join-Path $to $z.Name) -Force
+    $dest = Join-Path (Resolve-Path $to) $z.Name
+    $tmp = Join-Path $env:TEMP ('cqp\' + [IO.Path]::GetRandomFileName())
+    try {
+        Expand-Archive -Path $z.FullName -DestinationPath $tmp -Force
+        $gone = Remove-MissingProfiles $tmp
+        if (Test-Path $dest) { Remove-Item $dest -Force }
+        if ($gone -gt 0) {
+            [IO.Compression.ZipFile]::CreateFromDirectory($tmp, $dest, [IO.Compression.CompressionLevel]::Optimal, $false)
+            $cleaned += "$($z.Name) ($gone)"
+        } else {
+            Copy-Item $z.FullName -Destination $dest -Force
+        }
+    } catch {
+        Copy-Item $z.FullName -Destination $dest -Force
+    } finally {
+        if (Test-Path $tmp) { Remove-Item $tmp -Recurse -Force }
+    }
 }
 Write-Host "Picklist ZIPs copied to '$firstDir' (5) and '$afterDir' (7)."
+if ($cleaned.Count) { Write-Host "Cleaned for this org (references to missing profiles taken out): $($cleaned -join '; ')" }
 
 $done = @(); $failed = @(); $missing = @(); $notInstalled = @(); $failedSteps = @()
 $work = Join-Path $env:TEMP 'cqz'   # short path: some ZIPs have long names inside
