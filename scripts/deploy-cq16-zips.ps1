@@ -182,6 +182,17 @@ try {
 
 Write-Host "Org: $TargetOrg   Workflow user: $WorkflowUser   Packages: $Packages ($($zips.Count) ZIPs)" -ForegroundColor Cyan
 
+# Copies of the picklist ZIPs in two folders, so the upload dialog shows only what to pick (names unchanged)
+$firstDir = Join-Path $Packages '1 - upload first'; $afterDir = Join-Path $Packages '2 - upload after'
+foreach ($d in @($firstDir, $afterDir)) { if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d | Out-Null } }
+foreach ($p in $picklists) {
+    $z = Find-Zip $p
+    if (-not $z) { continue }
+    $to = if ($picklistsFirst -contains $p) { $firstDir } else { $afterDir }
+    Copy-Item $z.FullName -Destination (Join-Path $to $z.Name) -Force
+}
+Write-Host "Picklist ZIPs copied to '$firstDir' (5) and '$afterDir' (7)."
+
 $done = @(); $failed = @(); $missing = @(); $notInstalled = @(); $failedSteps = @()
 $work = Join-Path $env:TEMP 'cqz'   # short path: some ZIPs have long names inside
 $n = 0
