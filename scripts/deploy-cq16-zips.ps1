@@ -15,7 +15,9 @@
     powershell -ExecutionPolicy Bypass -File .\scripts\deploy-cq16-zips.ps1 -TargetOrg CQ16AI -List     # check the files only
     powershell -ExecutionPolicy Bypass -File .\scripts\deploy-cq16-zips.ps1 -TargetOrg CQ16AI
   Options: -Packages <folder> (default .\scripts\cq-packages), -Release CQSummer26, -WorkflowUser <username>,
-           -From <number> to start at a later step after fixing a failure.
+           -Only "1,2,4" to rerun just the steps that failed (the summary prints the list), -From <number> to start later.
+  - References to profiles the org does not have (a scratch org has no Standard Platform User) are taken out of CQ's
+    app files first; they only say which record page that profile sees.
 
   For a new CQ release: new folder of ZIPs, -Release set to its prefix, and the list below checked against the manuals.
   See docs/cq16_install_notes.md and the CQ 16 Install Runbook.
@@ -26,8 +28,11 @@ param(
     [string]$Release = "CQSummer26",
     [string]$WorkflowUser,
     [int]$From = 1,
+    [string]$Only,          # e.g. "1,2,4": deploy just these steps (to retry failures)
     [switch]$List
 )
+$onlySteps = @()
+if ($Only) { $onlySteps = @($Only -split '[,\s]+' | Where-Object { $_ } | ForEach-Object { [int]$_ }) }
 
 $TEST = 'compliancequest.SQX_Test_1931_ContentVersionPerm'
 
@@ -110,9 +115,45 @@ if (-not $WorkflowUser) {
 }
 if (-not $WorkflowUser) { Write-Host "Could not read the org's username; pass -WorkflowUser." -ForegroundColor Red; exit 1 }
 
+# Profiles in the org. CQ's files assign pages to profiles by their metadata name (Admin, Standard, StandardAul ...);
+# an org without a profile's license (a scratch org has no Salesforce Platform licenses, so no Standard Platform User)
+# rejects the whole file. References to missing profiles are taken out before deploying.
+$orgProfiles = @()
+try {
+    $orgProfiles = @((sf data query --query "SELECT Name FROM Profile" --target-org $TargetOrg --json 2>$null | Out-String | ConvertFrom-Json).result.records | ForEach-Object { $_.Name })
+} catch { }
+$stdProfile = @{ 'Admin' = 'System Administrator'; 'Standard' = 'Standard User'; 'StandardAul' = 'Standard Platform User'
+                 'ReadOnly' = 'Read Only'; 'ContractManager' = 'Contract Manager'; 'MarketingProfile' = 'Marketing User'
+                 'SolutionManager' = 'Solution Manager'; 'ChatterFreeUser' = 'Chatter Free User' }
+function Test-Profile([string]$metaName) {
+    if ($orgProfiles.Count -eq 0) { return $true }   # could not read them: change nothing
+    $name = if ($stdProfile.ContainsKey($metaName)) { $stdProfile[$metaName] } else { [Uri]::UnescapeDataString($metaName) }
+    return ($orgProfiles -contains $name)
+}
+# Takes out <profileActionOverrides> for missing profiles from the app files, and profile files for missing profiles
+function Remove-MissingProfiles([string]$dir) {
+    $count = 0
+    foreach ($f in @(Get-ChildItem -Path $dir -Recurse -File -Filter *.app)) {
+        $text = [IO.File]::ReadAllText($f.FullName)
+        $names = @([regex]::Matches($text, '<profile>([^<]+)</profile>') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
+        $new = $text
+        foreach ($p in $names) {
+            if (Test-Profile $p) { continue }
+            $pat = '(?s)\s*<profileActionOverrides>((?!</profileActionOverrides>).)*<profile>' + [regex]::Escape($p) + '</profile>((?!</profileActionOverrides>).)*</profileActionOverrides>'
+            $count += [regex]::Matches($new, $pat).Count
+            $new = [regex]::Replace($new, $pat, '')
+        }
+        if ($new -ne $text) { [IO.File]::WriteAllText($f.FullName, $new) }
+    }
+    foreach ($f in @(Get-ChildItem -Path $dir -Recurse -File -Filter *.profile)) {
+        if (-not (Test-Profile $f.BaseName)) { Remove-Item $f.FullName; $count++ }
+    }
+    return $count
+}
+
 Write-Host "Org: $TargetOrg   Workflow user: $WorkflowUser   Packages: $Packages ($($zips.Count) ZIPs)" -ForegroundColor Cyan
 
-$done = @(); $failed = @(); $missing = @(); $notInstalled = @()
+$done = @(); $failed = @(); $missing = @(); $notInstalled = @(); $failedSteps = @()
 $work = Join-Path $env:TEMP 'cqz'   # short path: some ZIPs have long names inside
 $n = 0
 foreach ($s in $steps) {
@@ -124,6 +165,7 @@ foreach ($s in $steps) {
     if ($need.Count -gt 0) { $notInstalled += "$($s.name) (needs $($need -join ', '))"; Write-Host "$label  skipped: $($need -join ', ') not installed" -ForegroundColor Yellow; continue }
     if ($List) { Write-Host "$label  ready: $($zip.Name)"; continue }
     if ($n -lt $From) { Write-Host "$label  skipped (-From $From)"; continue }
+    if ($onlySteps.Count -gt 0 -and $onlySteps -notcontains $n) { continue }
 
     # unzip to a short folder, find the folder(s) holding package.xml
     $dir = Join-Path $work ("{0:D2}" -f $n)
@@ -132,6 +174,9 @@ foreach ($s in $steps) {
     catch { $failed += "$($s.name): could not unzip ($($_.Exception.Message))"; Write-Host "$label  could not unzip" -ForegroundColor Red; continue }
     $roots = @(Get-ChildItem -Path $dir -Recurse -Filter package.xml -File | ForEach-Object { $_.DirectoryName })
     if ($roots.Count -eq 0) { $failed += "$($s.name): no package.xml inside"; Write-Host "$label  no package.xml inside" -ForegroundColor Red; continue }
+
+    $gone = Remove-MissingProfiles $dir
+    if ($gone -gt 0) { Write-Host "$label  took out $gone page assignment(s) or profile(s) for profiles this org does not have" }
 
     # Platform Event Subscriber Configs: the Default Workflow User
     if ($s.pesc) {
@@ -150,14 +195,17 @@ foreach ($s in $steps) {
         sf project deploy start --metadata-dir $root --target-org $TargetOrg --test-level RunSpecifiedTests --tests $TEST --wait 60
         if ($LASTEXITCODE -ne 0) { $ok = $false }
     }
-    if ($ok) { $done += $s.name } else { $failed += "$($s.name) (step $n; fix, then rerun with -From $n)" }
+    if ($ok) { $done += $s.name } else { $failed += "$($s.name) (step $n)"; $failedSteps += $n }
 }
 
 Write-Host ""
 Write-Host "Deployed: $($done.Count)" -ForegroundColor Green
 if ($notInstalled.Count) { Write-Host "Skipped, package not installed:" -ForegroundColor Yellow; $notInstalled | ForEach-Object { Write-Host "  $_" } }
 if ($missing.Count) { Write-Host "Missing ZIPs:" -ForegroundColor Yellow; $missing | ForEach-Object { Write-Host "  $_" } }
-if ($failed.Count) { Write-Host "Failed:" -ForegroundColor Red; $failed | ForEach-Object { Write-Host "  $_" } }
+if ($failed.Count) {
+    Write-Host "Failed:" -ForegroundColor Red; $failed | ForEach-Object { Write-Host "  $_" }
+    Write-Host "After fixing, rerun just these with:  -Only $($failedSteps -join ',')" -ForegroundColor Yellow
+}
 
 Write-Host ""
 Write-Host "By hand, Setup > Visualforce Pages > SQX_Post_Actions > Preview > Picklist Update, in this order:" -ForegroundColor Cyan
