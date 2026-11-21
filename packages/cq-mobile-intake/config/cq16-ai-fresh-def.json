@@ -1,7 +1,10 @@
 {
   "orgName": "CQ 16 with Generative AI",
   "edition": "Enterprise",
-  "features": ["Einstein1AIPlatform"],
+  "features": [
+    "Einstein1AIPlatform",
+    "StateAndCountryPicklist"
+  ],
   "settings": {
     "einsteinGptSettings": {
       "enableEinsteinGptPlatform": true
