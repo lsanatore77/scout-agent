@@ -86,12 +86,15 @@ $picklists = @(
 if (-not (Test-Path $Packages)) { Write-Host "No packages folder at $Packages" -ForegroundColor Red; exit 1 }
 $zips = @(Get-ChildItem -Path $Packages -Filter *.zip -File)
 
-# The file for a name: "extPkg_<Release>_<name>.zip", allowing " (1)" and CQ's one "<Release>-" spelling
+# The file for a name: "extPkg_<release>_<name>.zip". The release part is ignored (one folder per release), because CQ's
+# own links are not consistent: "CQSummer26-" on the EBR picklist, "CQSumemer26_" on the Regulatory Reports exclusive
+# package. A " (1)" your browser added is ignored too.
 function Find-Zip([string]$name) {
-    $want = @("extPkg_$($Release)_$name", "extPkg_$($Release)-$name") | ForEach-Object { $_.ToLowerInvariant() }
+    $want = $name.ToLowerInvariant()
     $hits = @($zips | Where-Object {
-        $stem = ($_.BaseName -replace '\s*\(\d+\)\s*$', '').Trim().ToLowerInvariant()
-        $want -contains $stem
+        $stem = ($_.BaseName -replace '\s*\(\d+\)\s*$', '').Trim()
+        $stem = ($stem -replace '^extPkg_[^_-]+[_-]', '').ToLowerInvariant()
+        $stem -eq $want
     } | Sort-Object LastWriteTime -Descending)
     if ($hits.Count -gt 0) { return $hits[0] } else { return $null }
 }
