@@ -148,8 +148,26 @@ function Remove-MissingProfiles([string]$dir) {
     foreach ($f in @(Get-ChildItem -Path $dir -Recurse -File -Filter *.profile)) {
         if (-not (Test-Profile $f.BaseName)) { Remove-Item $f.FullName; $count++ }
     }
+    # Permission set groups that include a Salesforce-licensed permission set (force__...) the org has no license for,
+    # e.g. force__AnalyticsViewOnlyUser without the Analytics View Only Embedded App license: that one entry is taken out.
+    foreach ($f in @(Get-ChildItem -Path $dir -Recurse -File -Filter *.permissionsetgroup*)) {
+        $text = [IO.File]::ReadAllText($f.FullName)
+        $new = $text
+        foreach ($m in @([regex]::Matches($text, '<permissionSets>(force__[^<]+)</permissionSets>'))) {
+            $ps = $m.Groups[1].Value
+            if (-not $permSetsRead -or $orgPermSets -contains $ps) { continue }
+            $new = [regex]::Replace($new, '\s*<permissionSets>' + [regex]::Escape($ps) + '</permissionSets>', '')
+            $count++
+        }
+        if ($new -ne $text) { [IO.File]::WriteAllText($f.FullName, $new) }
+    }
     return $count
 }
+$orgPermSets = @(); $permSetsRead = $false
+try {
+    $q = sf data query --query "SELECT Name FROM PermissionSet WHERE NamespacePrefix = 'force'" --target-org $TargetOrg --json 2>$null | Out-String | ConvertFrom-Json
+    if ($q.status -eq 0) { $permSetsRead = $true; $orgPermSets = @($q.result.records | ForEach-Object { "force__" + $_.Name }) }
+} catch { }
 
 Write-Host "Org: $TargetOrg   Workflow user: $WorkflowUser   Packages: $Packages ($($zips.Count) ZIPs)" -ForegroundColor Cyan
 
@@ -176,7 +194,7 @@ foreach ($s in $steps) {
     if ($roots.Count -eq 0) { $failed += "$($s.name): no package.xml inside"; Write-Host "$label  no package.xml inside" -ForegroundColor Red; continue }
 
     $gone = Remove-MissingProfiles $dir
-    if ($gone -gt 0) { Write-Host "$label  took out $gone page assignment(s) or profile(s) for profiles this org does not have" }
+    if ($gone -gt 0) { Write-Host "$label  took out $gone reference(s) to profiles or licensed permission sets this org does not have" }
 
     # Platform Event Subscriber Configs: the Default Workflow User
     if ($s.pesc) {
