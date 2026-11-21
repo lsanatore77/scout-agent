@@ -7,7 +7,9 @@
     "Communities",
     "SalesforceContentUser",
     "DevelopmentWave",
-    "AnalyticsAdminPerms"
+    "AnalyticsAdminPerms",
+    "LiveMessage",
+    "Chatbot"
   ],
   "settings": {
     "einsteinGptSettings": {
