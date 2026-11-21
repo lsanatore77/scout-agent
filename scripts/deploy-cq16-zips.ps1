@@ -144,7 +144,8 @@ function Test-Profile([string]$metaName) {
 # Takes out <profileActionOverrides> for missing profiles from the app files, and profile files for missing profiles
 function Remove-MissingProfiles([string]$dir) {
     $count = 0
-    foreach ($f in @(Get-ChildItem -Path $dir -Recurse -File -Filter *.app)) {
+    # app files come as Name.app or Name.app-meta.xml, depending on the ZIP
+    foreach ($f in @(Get-ChildItem -Path $dir -Recurse -File | Where-Object { $_.Name -like '*.app' -or $_.Name -like '*.app-meta.xml' })) {
         $text = [IO.File]::ReadAllText($f.FullName)
         $names = @([regex]::Matches($text, '<profile>([^<]+)</profile>') | ForEach-Object { $_.Groups[1].Value } | Sort-Object -Unique)
         $new = $text
@@ -156,8 +157,9 @@ function Remove-MissingProfiles([string]$dir) {
         }
         if ($new -ne $text) { [IO.File]::WriteAllText($f.FullName, $new) }
     }
-    foreach ($f in @(Get-ChildItem -Path $dir -Recurse -File -Filter *.profile)) {
-        if (-not (Test-Profile $f.BaseName)) { Remove-Item $f.FullName; $count++ }
+    foreach ($f in @(Get-ChildItem -Path $dir -Recurse -File | Where-Object { $_.Name -like '*.profile' -or $_.Name -like '*.profile-meta.xml' })) {
+        $pname = $f.Name -replace '\.profile(-meta\.xml)?$', ''
+        if (-not (Test-Profile $pname)) { Remove-Item $f.FullName; $count++ }
     }
     # Permission set groups that include a Salesforce-licensed permission set (force__...) the org has no license for,
     # e.g. force__AnalyticsViewOnlyUser without the Analytics View Only Embedded App license: that one entry is taken out.
