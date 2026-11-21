@@ -11,6 +11,9 @@
     },
     "emailAdministrationSettings": {
       "enableEnhancedEmailEnabled": true
+    },
+    "customAddressFieldSettings": {
+      "enableCustomAddressField": true
     }
   }
 }
