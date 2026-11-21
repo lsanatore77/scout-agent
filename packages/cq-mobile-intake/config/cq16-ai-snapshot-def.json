@@ -1,0 +1,10 @@
+{
+  "orgName": "CQ 16 with Generative AI",
+  "snapshot": "CQ16BaseSnap",
+  "features": ["Einstein1AIPlatform"],
+  "settings": {
+    "einsteinGptSettings": {
+      "enableEinsteinGptPlatform": true
+    }
+  }
+}
