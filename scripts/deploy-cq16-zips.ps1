@@ -189,6 +189,7 @@ $firstDir = Join-Path $Packages '1 - upload first'; $afterDir = Join-Path $Packa
 foreach ($d in @($firstDir, $afterDir)) { if (-not (Test-Path $d)) { New-Item -ItemType Directory -Path $d | Out-Null } }
 # Some picklist ZIPs carry an app too (Supplier Performance's CQSPM app): the same clean-up as the external ZIPs is applied
 # (references to profiles this org lacks are taken out), and the ZIP is rebuilt with the same name and folder layout.
+Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $cleaned = @()
 foreach ($p in $picklists) {
