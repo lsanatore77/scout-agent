@@ -46,6 +46,9 @@
     },
     "apexSettings": {
       "enableApexApprovalLockUnlock": true
+    },
+    "userManagementSettings": {
+      "userAccessPoliciesEnabled": true
     }
   }
 }
