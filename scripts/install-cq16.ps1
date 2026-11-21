@@ -6,8 +6,9 @@
     .\scripts\install-cq16.ps1 -TargetOrg CQ16AI
     .\scripts\install-cq16.ps1 -TargetOrg CQ16AI -InstallationKey <key>    # only if CQ gave you one
 
-  The org needs, before ComplianceQuest installs: Enhanced Email on (Setup > Enhanced Email), and for the CQ.AI
-  packages generative AI (scratch: config/cq16-ai-fresh-def.json has both). Not installed here, because a scratch
+  This installs the managed packages only. CQ's manuals also have, per package: settings to turn on first, external
+  packages (metadata ZIPs), picklist packages (uploaded on the SQX_Post_Actions page), setup scripts and post-install
+  steps. See docs/cq16_install_notes.md. Not installed here, because a scratch
   org cannot get what they need: CQ.AI Data Cloud Extension (Data Cloud), CQ Embedded Analytics and CQ EHS Extension
   Analytics (CRM Analytics). Not installed either: our own and colleagues' packages (Triage Agent, Deployment Agent,
   Mobile Intake), so a snapshot of the org stays plain CQ.
@@ -20,30 +21,32 @@ param(
     [string]$InstallationKey
 )
 
-# Order matters: each package comes after the ones it depends on.
+# Order matters, from CQ's Summer 2026 installation manuals (each package after what its manual requires).
+# (*) needs CRM Analytics licenses (CRM Analytics Plus / Analytics Platform); CQ.AI also needs Einstein and Agentforce
+# licenses. Without them in the org, those installs may fail: the script carries on and lists them at the end.
 $pkgs = [ordered]@{
   'ComplianceQuest'                       = '04tRn000000qxC5IAI'
   'ComplianceQuest User Interface'        = '04tRn000000qznNIAQ'
   'CQ Approval Extension'                 = '04tRn000000qzyfIAA'
-  'CQ Process Extension'                  = '04tRn000000r0I1IAI'
-  'CQ Design Extension'                   = '04tRn000000r0BaIAI'
+  'CQ Document Extensions App'            = '04tRn000000rveTIAQ'   # core manual installs it here
   'CQ Forms Extension'                    = '04tRn000000r08LIAQ'
-  'CQ Ratings Framework Extension'        = '04tRn000000r0Q5IAI'
-  'CQ Supplier Management'                = '04tRn000000r0BZIAY'
-  'CQ Supplier Performance Extension'     = '04tRn000000r3B3IAI'
-  'CQ Supplier Central Extension'         = '04tRn000000r0OTIAY'
-  'CQ Product Lifecycle Management Ext'   = '04tRn000000r0GPIAY'
-  'CQ Electronic Batch Record Extension'  = '04tRn000000r0RhIAI'
+  'CQ Ratings Framework Extension'        = '04tRn000000r0Q5IAI'   # (*)
+  'CQ.AI Extension'                       = '04tRn000000r0MsIAI'   # (*) Process needs it, so it comes early
+  'CQ Process Extension'                  = '04tRn000000r0I1IAI'   # needs CQ.AI
+  'CQ Design Extension'                   = '04tRn000000r0BaIAI'   # needs Process
+  'CQ Product Lifecycle Management Ext'   = '04tRn000000r0GPIAY'   # needs Design
+  'CQ Electronic Batch Record Extension'  = '04tRn000000r0RhIAI'   # needs Forms and Process
   'CQ Laboratory Issues Extension'        = '04tRn000000r0DBIAY'
-  'CQ Regulatory Reports Extension'       = '04tRn000000r057IAA'
-  'CQ Management Review Dashboard Ext'    = '04tRn000000r2WjIAI'
   'CQ myCQ Extension'                     = '04tRn000000r0EnIAI'
-  'CQ Document Extensions App'            = '04tRn000000rveTIAQ'
+  'CQ EHS Extension'                      = '04tRn000000r0UvIAI'   # needs Forms
+  'CQ EHS Extension Integration'          = '04tRn000000eQ5RIAU'   # needs EHS
+  'CQ EHS Extension AI'                   = '04tRn000000r2ZxIAI'   # needs EHS and CQ.AI
+  'CQ Supplier Management'                = '04tRn000000r0BZIAY'
+  'CQ Supplier Central Extension'         = '04tRn000000r0OTIAY'   # needs Supplier Management; Partner Community licenses
+  'CQ Supplier Performance Extension'     = '04tRn000000r3B3IAI'   # (*) needs Supplier Management and Ratings
+  'CQ Regulatory Reports Extension'       = '04tRn000000r057IAA'   # (*)
+  'CQ Management Review Dashboard Ext'    = '04tRn000000r2WjIAI'   # (*) needs Ratings
   'CQ Backup and Restore Extension'       = '04tRn000000qtwTIAQ'
-  'CQ EHS Extension'                      = '04tRn000000r0UvIAI'
-  'CQ EHS Extension Integration'          = '04tRn000000eQ5RIAU'
-  'CQ.AI Extension'                       = '04tRn000000r0MsIAI'
-  'CQ EHS Extension AI'                   = '04tRn000000r2ZxIAI'
 }
 
 # what is installed already (package version ids)
