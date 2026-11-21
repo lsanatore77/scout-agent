@@ -205,11 +205,16 @@ foreach ($p in $picklists) {
         if ($gone -gt 0) {
             # built entry by entry: Windows PowerShell's ZipFile.CreateFromDirectory writes paths with backslashes,
             # and Salesforce then finds no package.xml. Entries need forward slashes, as in CQ's own ZIPs.
-            $root = (Resolve-Path $tmp).Path.TrimEnd('\')
+            # the root comes from Get-Item, like the files' FullName: Temp can be a short 8.3 path (LOUSAN~1), and mixing
+            # the two forms put junk in front of every entry. Folder entries first, as in CQ's own ZIPs.
+            $root = (Get-Item -LiteralPath $tmp).FullName.TrimEnd('\')
             $fs = [IO.File]::Open($dest, [IO.FileMode]::Create)
             $za = New-Object IO.Compression.ZipArchive($fs, [IO.Compression.ZipArchiveMode]::Create)
             try {
-                foreach ($f in @(Get-ChildItem -Path $root -Recurse -File)) {
+                foreach ($d in @(Get-ChildItem -LiteralPath $root -Recurse -Directory)) {
+                    [void]$za.CreateEntry(($d.FullName.Substring($root.Length + 1) -replace '\\', '/') + '/')
+                }
+                foreach ($f in @(Get-ChildItem -LiteralPath $root -Recurse -File)) {
                     $rel = $f.FullName.Substring($root.Length + 1) -replace '\\', '/'
                     [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($za, $f.FullName, $rel, [IO.Compression.CompressionLevel]::Optimal)
                 }
