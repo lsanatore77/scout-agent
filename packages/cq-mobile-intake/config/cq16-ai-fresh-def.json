@@ -3,17 +3,23 @@
   "edition": "Enterprise",
   "features": [
     "Einstein1AIPlatform",
-    "StateAndCountryPicklist"
+    "StateAndCountryPicklist",
+    "Communities",
+    "SalesforceContentUser",
+    "DevelopmentWave",
+    "AnalyticsAdminPerms"
   ],
   "settings": {
-    "einsteinGptSettings": {
-      "enableEinsteinGptPlatform": true
-    },
-    "emailAdministrationSettings": {
-      "enableEnhancedEmailEnabled": true
-    },
-    "customAddressFieldSettings": {
-      "enableCustomAddressField": true
-    }
+    "einsteinGptSettings": { "enableEinsteinGptPlatform": true },
+    "emailAdministrationSettings": { "enableEnhancedEmailEnabled": true },
+    "customAddressFieldSettings": { "enableCustomAddressField": true },
+    "enhancedNotesSettings": { "enableEnhancedNotes": true },
+    "communitiesSettings": { "enableNetworksEnabled": true },
+    "languageSettings": { "enableTranslationWorkbench": true },
+    "chatterSettings": { "enableChatter": true },
+    "contentSettings": { "enableContent": true, "skipContentAssetTriggersOnDeploy": true },
+    "securitySettings": { "sessionSettings": { "lockerServiceNext": true } },
+    "flowSettings": { "enableFlowFieldFilterEnabled": true },
+    "apexSettings": { "enableApexApprovalLockUnlock": true }
   }
 }
