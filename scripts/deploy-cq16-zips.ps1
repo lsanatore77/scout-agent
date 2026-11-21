@@ -202,7 +202,17 @@ foreach ($p in $picklists) {
         $gone = Remove-MissingProfiles $tmp
         if (Test-Path $dest) { Remove-Item $dest -Force }
         if ($gone -gt 0) {
-            [IO.Compression.ZipFile]::CreateFromDirectory($tmp, $dest, [IO.Compression.CompressionLevel]::Optimal, $false)
+            # built entry by entry: Windows PowerShell's ZipFile.CreateFromDirectory writes paths with backslashes,
+            # and Salesforce then finds no package.xml. Entries need forward slashes, as in CQ's own ZIPs.
+            $root = (Resolve-Path $tmp).Path.TrimEnd('\')
+            $fs = [IO.File]::Open($dest, [IO.FileMode]::Create)
+            $za = New-Object IO.Compression.ZipArchive($fs, [IO.Compression.ZipArchiveMode]::Create)
+            try {
+                foreach ($f in @(Get-ChildItem -Path $root -Recurse -File)) {
+                    $rel = $f.FullName.Substring($root.Length + 1) -replace '\\', '/'
+                    [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($za, $f.FullName, $rel, [IO.Compression.CompressionLevel]::Optimal)
+                }
+            } finally { $za.Dispose(); $fs.Dispose() }
             $cleaned += "$($z.Name) ($gone)"
         } else {
             Copy-Item $z.FullName -Destination $dest -Force
