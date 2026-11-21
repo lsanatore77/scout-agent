@@ -208,7 +208,7 @@ foreach ($s in $steps) {
     if ($List) { Write-Host "$label  ready: $($zip.Name)"; continue }
     if ($n -lt $From) { Write-Host "$label  skipped (-From $From)"; continue }
     if ($onlySteps.Count -gt 0 -and $onlySteps -notcontains $n) { continue }
-    if ($n -ge 4 -and -not $PicklistsDone -and -not $List) {
+    if ($n -ge 4 -and -not $PicklistsDone -and -not $List -and $onlySteps.Count -eq 0) {
         Write-Host ""
         Write-Host "Stopping before step 4: upload these picklists first (Setup > Visualforce Pages > SQX_Post_Actions >" -ForegroundColor Yellow
         Write-Host "Preview > Picklist Update; Upload Files, Publish, wait for Succeeded), one at a time:" -ForegroundColor Yellow
