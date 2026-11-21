@@ -205,18 +205,16 @@ foreach ($p in $picklists) {
         if ($gone -gt 0) {
             # built entry by entry: Windows PowerShell's ZipFile.CreateFromDirectory writes paths with backslashes,
             # and Salesforce then finds no package.xml. Entries need forward slashes, as in CQ's own ZIPs.
-            # the root comes from Get-Item, like the files' FullName: Temp can be a short 8.3 path (LOUSAN~1), and mixing
-            # the two forms put junk in front of every entry. Folder entries first, as in CQ's own ZIPs.
-            $root = (Get-Item -LiteralPath $tmp).FullName.TrimEnd('\')
+            # Paths are cut after the temp folder's own (random) name: Temp can be written short (LOUSAN~1) or long
+            # (LouSanatore), and counting characters from the root put junk like "ni/" in front of every entry.
+            $leaf = '\' + (Split-Path $tmp -Leaf) + '\'
+            function Rel([string]$full) { $i = $full.IndexOf($leaf); return ($full.Substring($i + $leaf.Length) -replace '\\', '/') }
             $fs = [IO.File]::Open($dest, [IO.FileMode]::Create)
             $za = New-Object IO.Compression.ZipArchive($fs, [IO.Compression.ZipArchiveMode]::Create)
             try {
-                foreach ($d in @(Get-ChildItem -LiteralPath $root -Recurse -Directory)) {
-                    [void]$za.CreateEntry(($d.FullName.Substring($root.Length + 1) -replace '\\', '/') + '/')
-                }
-                foreach ($f in @(Get-ChildItem -LiteralPath $root -Recurse -File)) {
-                    $rel = $f.FullName.Substring($root.Length + 1) -replace '\\', '/'
-                    [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($za, $f.FullName, $rel, [IO.Compression.CompressionLevel]::Optimal)
+                foreach ($d in @(Get-ChildItem -LiteralPath $tmp -Recurse -Directory)) { [void]$za.CreateEntry((Rel $d.FullName) + '/') }
+                foreach ($f in @(Get-ChildItem -LiteralPath $tmp -Recurse -File)) {
+                    [void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($za, $f.FullName, (Rel $f.FullName), [IO.Compression.CompressionLevel]::Optimal)
                 }
             } finally { $za.Dispose(); $fs.Dispose() }
             $cleaned += "$($z.Name) ($gone)"
