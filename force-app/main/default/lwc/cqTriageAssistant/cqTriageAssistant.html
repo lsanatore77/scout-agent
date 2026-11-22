@@ -16,7 +16,7 @@
             </template>
             <div class="cq-ws-body body">
                 <nav class="cq-rail" aria-label="Triage Steps">
-                    <div class="cq-rail-title"><span class="star">&#10022;</span> CQ.AI Triage Steps</div>
+                    <div class="cq-rail-title">Review Steps</div>
                     <template for:each={steps} for:item="s">
                         <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}>
                             <span class="mark">

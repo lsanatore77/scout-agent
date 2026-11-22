@@ -85,3 +85,8 @@ Left out on purpose: .cq-field input.date at 170px is not shared, because Triage
   Disposition), rows `td.k` (muted label, 160px; 110px on a phone) and `td.v` (keeps line breaks). Max width 760px.
 - All five done screens use it: Triage Complete, Investigation, Disposition, Field Action Review and the old Field Action workspace.
 - `.cq-kv` stays in cqStyles for the other boxed lines (Triage's added containments).
+
+## Standard: step rail title (2026-11-22, Lou)
+
+- Every workspace's step rail is titled plain `Review Steps`: no ✦ mark, no "CQ.AI", no workspace name. The shared shell
+  (cqWsShell) already defaults to it; Field Action, Triage, Investigation, Disposition and the Ask CQ workspace now match.
