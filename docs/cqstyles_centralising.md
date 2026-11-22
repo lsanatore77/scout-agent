@@ -77,3 +77,11 @@ Left out on purpose: .cq-field input.date at 170px is not shared, because Triage
 - Chips have their own height token, `--cq-chip-h`: 28px (1.75rem) on a desktop, 44px (2.75rem) on a phone (tap target).
   Text boxes and buttons keep `--cq-field-h` (34px desktop). Lou: "this will be the new standard."
 - A text line set beside a row of chips uses `line-height: 28px` so it sits level with them.
+
+## Standard: done-screen summary table (2026-11-22, Lou)
+
+- The summary on a finished workspace's done screen is a table in the shared table style, not a stack of boxed lines:
+  `.cq-tblwrap.cq-sum > table.cq-tbl`, header `Item` and `Decision` (Field Action Review) or `Recorded` (Triage, Investigation,
+  Disposition), rows `td.k` (muted label, 160px; 110px on a phone) and `td.v` (keeps line breaks). Max width 760px.
+- All five done screens use it: Triage Complete, Investigation, Disposition, Field Action Review and the old Field Action workspace.
+- `.cq-kv` stays in cqStyles for the other boxed lines (Triage's added containments).

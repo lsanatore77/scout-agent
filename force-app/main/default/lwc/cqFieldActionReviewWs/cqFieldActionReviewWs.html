@@ -410,9 +410,10 @@
 
                 <template if:true={showSummary}>
                     <div class="cq-donehead"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">Decision Submitted</h3></div>
-                    <template for:each={summaryRows} for:item="r">
-                        <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
-                    </template>
+                    <div class="cq-tblwrap cq-sum"><table class="cq-tbl">
+                        <thead><tr><th>Item</th><th>Decision</th></tr></thead>
+                        <tbody><template for:each={summaryRows} for:item="r"><tr key={r.key}><td class="k">{r.k}</td><td class="v">{r.v}</td></tr></template></tbody>
+                    </table></div>
                     <div class="cq-opts">
                         <button class="cq-btn-primary" onclick={handleFinish}>Done</button>
                         <template if:true={hasFa}><button class="cq-btn-outline" data-id={v.faId} onclick={handleOpen}>Open {v.faName}</button></template>

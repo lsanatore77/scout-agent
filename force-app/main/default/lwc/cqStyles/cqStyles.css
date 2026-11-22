@@ -298,6 +298,12 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-kv-k { flex: 0 0 160px; color: var(--cq-muted); }
 .cq-kv-v { flex: 1 1 auto; min-width: 0; font-weight: 600; }
 @media (max-width: 760px) { .cq-kv-k { flex-basis: 110px; } }
+/* what a finished workspace recorded, on its done screen: .cq-tblwrap.cq-sum > table.cq-tbl, td.k (what it is) + td.v (what was recorded) */
+.cq-tblwrap.cq-sum { max-width: 760px; margin-top: 0; }
+.cq-sum + .cq-msg { margin-top: 10px; }
+.cq-sum td.k { width: 160px; color: var(--cq-muted); }
+.cq-sum td.v { white-space: pre-line; }
+@media (max-width: 760px) { .cq-sum td.k { width: 110px; } }
 /* the green tick that heads a finished step; green is positive only */
 .cq-donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .cq-okdot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: 13px; font-weight: 700; }

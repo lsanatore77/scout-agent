@@ -390,9 +390,10 @@
                         </div>
                         <template if:true={waiting}><p class="cq-step-intro">CQ finishes this in the background; it takes a few seconds.</p></template>
                         <template if:true={stillWaiting}><div class="cq-msg warn">CQ has not finished yet. Refresh the page in a minute to see the investigation complete.</div></template>
-                        <template for:each={doneRows} for:item="r">
-                            <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
-                        </template>
+                        <div class="cq-tblwrap cq-sum"><table class="cq-tbl">
+                            <thead><tr><th>Item</th><th>Recorded</th></tr></thead>
+                            <tbody><template for:each={doneRows} for:item="r"><tr key={r.key}><td class="k">{r.k}</td><td class="v">{r.v}</td></tr></template></tbody>
+                        </table></div>
                         <div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div>
                     </template>
 

@@ -404,9 +404,10 @@
 
                     <template if:true={showSummary}>
                         <div class="cq-donehead"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">Triage Complete</h3></div>
-                        <template for:each={summary} for:item="r">
-                            <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
-                        </template>
+                        <div class="cq-tblwrap cq-sum"><table class="cq-tbl">
+                            <thead><tr><th>Item</th><th>Recorded</th></tr></thead>
+                            <tbody><template for:each={summary} for:item="r"><tr key={r.key}><td class="k">{r.k}</td><td class="v">{r.v}</td></tr></template></tbody>
+                        </table></div>
                         <template if:true={warning}><div class="cq-msg warn">{warning}</div></template>
                         <template if:true={popup}><div class="cq-opts"><button class="cq-btn-primary" onclick={handleClose}>Back to the Nonconformance</button></div></template>
                         <template if:true={inline}><div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div></template>

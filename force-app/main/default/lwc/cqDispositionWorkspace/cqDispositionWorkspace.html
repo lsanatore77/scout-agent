@@ -177,9 +177,10 @@
 
                     <template if:true={showDone}>
                         <div class="cq-donehead"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">{doneHeading}</h3></div>
-                        <template for:each={doneRows} for:item="r">
-                            <div key={r.key} class="cq-kv"><span class="cq-kv-k">{r.k}</span><span class="cq-kv-v">{r.v}</span></div>
-                        </template>
+                        <div class="cq-tblwrap cq-sum"><table class="cq-tbl">
+                            <thead><tr><th>Item</th><th>Recorded</th></tr></thead>
+                            <tbody><template for:each={doneRows} for:item="r"><tr key={r.key}><td class="k">{r.k}</td><td class="v">{r.v}</td></tr></template></tbody>
+                        </table></div>
                         <template if:true={doneLeftNote}><div class="cq-msg warn">{doneLeftNote}</div></template>
                         <div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div>
                     </template>
