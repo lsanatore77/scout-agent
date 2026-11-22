@@ -71,3 +71,9 @@ Still local, and why:
 
 Left out on purpose: .cq-field input.date at 170px is not shared, because Triage uses a different width.
 
+
+## Standard: chip height (2026-11-21, Lou)
+
+- Chips have their own height token, `--cq-chip-h`: 28px (1.75rem) on a desktop, 44px (2.75rem) on a phone (tap target).
+  Text boxes and buttons keep `--cq-field-h` (34px desktop). Lou: "this will be the new standard."
+- A text line set beside a row of chips uses `line-height: 28px` so it sits level with them.
