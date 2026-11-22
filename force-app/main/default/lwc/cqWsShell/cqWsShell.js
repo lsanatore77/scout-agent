@@ -23,6 +23,8 @@ export default class CqWsShell extends LightningElement {
     @api askSuggestions;
     /** Ask CQ.AI's pin button under an answer (e.g. Add to Evidence); a pin is passed on as askcqpin. */
     @api pinLabel;
+    @api placeholder;           // the Ask CQ.AI box's hint; the popover's own when not set
+    get askPlaceholder() { return this.placeholder || 'Ask about this review\u2026'; }
     @api railTitle = 'Review Steps';
     /** [{ label, sub, done, active, locked, mark?, later?, alert? }] in order. mark replaces the step number (e.g. '–'),
      *  later greys a step set aside for later, alert shows its sub line in red. */

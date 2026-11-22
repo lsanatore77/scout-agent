@@ -4,36 +4,14 @@
             <template if:true={popup}>
             <header class="top">
                 <div class="tt"><div class="h"><span class="star">&#10022;</span> {heading}</div><div class="sub">{title}</div></div>
-                <template if:true={popup}><button class="x" onclick={handleClose} aria-label="Close">&times;</button></template>
-                <template if:true={topNav}>
-                    <div class="topnav">
-                        <span class="cq-blocker">{blocker}</span>
-                        <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
-                        <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
-                    </div>
-                </template>
+                <button class="x" onclick={handleClose} aria-label="Close">&times;</button>
             </header>
             </template>
-            <div class="cq-ws-body body">
-                <nav class="cq-rail" aria-label="Triage Steps">
-                    <div class="cq-rail-title">Review Steps</div>
-                    <template for:each={steps} for:item="s">
-                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}>
-                            <span class="mark">
-                                <template if:true={s.done}>&#10003;</template>
-                                <template if:true={s.notDone}>{s.n}</template>
-                            </span>
-                            <span class="txt">
-                                <span class="lbl">{s.label}</span>
-                                <span class="ssub">{s.sub}</span>
-                            </span>
-                        </button>
-                    </template>
-                    <div class="progress">{progress}</div>
-                    <template if:true={canRestart}><button class="cq-restart" onclick={handleRestart}>Start Over</button></template>
-                </nav>
-                <div class="cq-ws-main main">
-                    <template if:true={showResumed}><div class="resumed">Picked up where you left off.</div></template>
+            <c-cq-ws-shell record-id={recordId} icon="standard:incident" object-label="Nonconformance" record-name={g.name}
+                fields={headerFields} show-edit={inline} agent-name={agentName} placeholder="Ask about this nonconformance…" ask-step={askStep} ask-suggestions={askSuggestions}
+                steps={railSteps} can-restart={canRestart} resumed={showResumed} error={error} progress={progress}
+                show-foot={footNav} blocker={blocker} back-disabled={cantBack} next-disabled={cantNext} next-label={nextLabel}
+                onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onrestart={handleRestart} onopen={handleShellOpen}>
                     <template if:true={isGlance}><template if:true={inline}><h3 class="cq-step-title">Triage at a Glance</h3></template><slot></slot>
                         <template if:true={showRepGlance}>
                             <div class="cq-recur">
@@ -412,24 +390,7 @@
                         <template if:true={popup}><div class="cq-opts"><button class="cq-btn-primary" onclick={handleClose}>Back to the Nonconformance</button></div></template>
                         <template if:true={inline}><div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div></template>
                     </template>
-                    <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
-                    <template if:true={inline}><template if:true={footNav}>
-                        <footer class="cq-ws-foot">
-                            <span class="cq-blocker">{blocker}</span>
-                            <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
-                            <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
-                        </footer>
-                    </template></template>
-                </div>
-            </div>
-            <template if:true={popup}><template if:true={footNav}>
-                <footer class="foot">
-                    <span class="cq-grow"></span>
-                    <span class="cq-blocker">{blocker}</span>
-                    <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
-                    <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>{nextLabel}</button>
-                </footer>
-            </template></template>
+            </c-cq-ws-shell>
         </div>
     </div>
 </template>

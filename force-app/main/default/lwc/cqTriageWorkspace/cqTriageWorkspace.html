@@ -1,38 +1,8 @@
 <template>
     <template if:true={error}><div class="cq-msg crit">{error}</div></template>
     <template if:true={ready}>
-        <div class="cq-box">
-            <header class="cq-hl">
-                <div class="cq-hl-top">
-                    <div class="cq-hl-who">
-                        <span class="cq-hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Nonconformance"></lightning-icon></span>
-                        <div class="cq-hl-name">
-                            <span class="cq-hl-obj">Nonconformance</span>
-                            <span class="cq-hl-title">{g.name}</span>
-                        </div>
-                    </div>
-                    <div class="cq-hl-actions">
-                        <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Quality" placeholder="Ask about this nonconformance…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
-                        <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
-                    </div>
-                </div>
-                <div class="cq-hl-fields">
-                    <div class="cq-hl-f"><span class="cq-hl-k">Title</span><span class="cq-hl-v">{titleText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Part</span>
-                        <template if:true={g.partId}><a class="cq-hl-v link" href={partHref} target="_blank">{g.partNumber}</a></template>
-                        <template if:false={g.partId}><span class="cq-hl-v">&mdash;</span></template>
-                    </div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Lot</span><span class="cq-hl-v">{lotText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Type</span><span class="cq-hl-v">{typeText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Severity</span><span class="cq-hl-v">{severityText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Status</span><span class="cq-hl-v">{statusText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Owner</span><span class="cq-hl-v">{ownerText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Occurred</span><span class="cq-hl-v">{occurredText}</span></div>
-                </div>
-            </header>
-            <c-cq-triage-assistant inline record-id={recordId} glance={g} has-photo={hasPhoto} onchanged={handleChanged} ondone={handleChanged} onstepchange={handleStep}>
-                <c-cq-triage-glance embedded record-id={recordId} onchanged={handleChanged}></c-cq-triage-glance>
-            </c-cq-triage-assistant>
-        </div>
+        <c-cq-triage-assistant inline record-id={recordId} glance={g} has-photo={hasPhoto} onchanged={handleChanged} ondone={handleChanged}>
+            <c-cq-triage-glance embedded record-id={recordId} onchanged={handleChanged}></c-cq-triage-glance>
+        </c-cq-triage-assistant>
     </template>
 </template>

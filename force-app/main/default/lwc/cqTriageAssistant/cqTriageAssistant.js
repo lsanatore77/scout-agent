@@ -1,4 +1,5 @@
 import { LightningElement, api } from 'lwc';
+import { NavigationMixin } from 'lightning/navigation';
 import getNext from '@salesforce/apex/CqTriageNext.getNext';
 import completeTriage from '@salesforce/apex/CqTriageNext.completeTriage';
 import startTriage from '@salesforce/apex/CqTriageNext.startTriage';
@@ -24,13 +25,23 @@ const ESCALATE = 'Escalate to CAPA';
 const LINK = 'Link to Earlier CAPA';
 const NOT_NEEDED = 'Not Needed';
 const LINK_PAGE = 5;   // investigations a page on Next Steps
+// Ask CQ.AI ready questions for each triage step (no commas: the popover splits on them)
+const ASK = {
+    'Triage at a Glance': 'Summarize this nonconformance,What is left on this triage?,What else is open on this part?',
+    Containment: 'Why does CQ.AI suggest this containment?,How much of this lot is on hand or shipped?,What containment is on this NC?',
+    'Data Check': 'What is missing before this can go on?,Is the data good enough?',
+    Risk: 'How was the risk worked out?,Why is the likelihood what it is?',
+    'Next Steps': 'Does this need a disposition?,Should this be investigated or logged only?,Which investigations should be linked and why?',
+    'Triage complete': 'Summarize this nonconformance,What is still open on this NC?,Does this need a field action review?'
+};
+const LOT_ASK = 'Which relevant records share the lot?';
 
 /**
  * Triage Assistant: containment, data check, risk, investigation links. CQ.AI suggests, the triager decides.
  * As a popup it is those four steps. With inline set (Triage workspace) it sits in the page, Triage at a Glance
  * is slotted in as step 1, and work in progress is remembered on the record.
  */
-export default class CqTriageAssistant extends LightningElement {
+export default class CqTriageAssistant extends NavigationMixin(LightningElement) {
     @api recordId;
     @api glance;
     @api hasPhoto = false;
@@ -264,6 +275,35 @@ export default class CqTriageAssistant extends LightningElement {
         if (this.inline) { saveDraft({ recordId: this.recordId, draft: null }).catch(() => {}); }
     }
 
+    // ---- the record header, drawn by the shared frame (c-cq-ws-shell)
+    dash(x) { return x === undefined || x === null || x === '' ? '\u2014' : String(x); }
+    get headerFields() {
+        const g = this.g;
+        return [
+            { key: 'title', label: 'Title', value: this.dash(g.title) },
+            g.partId ? { key: 'part', label: 'Part', value: g.partNumber, id: g.partId } : { key: 'part', label: 'Part', value: '\u2014' },
+            { key: 'lot', label: 'Lot', value: this.dash(g.lot) },
+            { key: 'type', label: 'Type', value: this.dash(g.ncType) },
+            { key: 'sev', label: 'Severity', value: this.dash(g.severity) },
+            { key: 'status', label: 'Status', value: this.dash(g.status) },
+            { key: 'owner', label: 'Owner', value: this.dash(g.owner) },
+            { key: 'occ', label: 'Occurred', value: g.occurred ? new Date(g.occurred + 'T00:00:00').toLocaleDateString() : '\u2014' }
+        ];
+    }
+    /** The part link opens in a new tab, as it did before the shared frame. */
+    handleShellOpen(event) { window.open('/lightning/r/' + event.detail + '/view', '_blank'); }
+    handleEdit() {
+        this[NavigationMixin.Navigate]({ type: 'standard__recordPage',
+            attributes: { recordId: this.recordId, objectApiName: 'compliancequest__SQX_Nonconformance__c', actionName: 'edit' } });
+    }
+    // Ask CQ.AI: the Quality agent, told which triage step is open (in the page only)
+    get agentName() { return this.inline ? 'CQAI_Quality' : null; }
+    get askStep() { return this.done ? 'Triage complete' : this.names()[this.step] || 'Triage at a Glance'; }
+    get askSuggestions() {
+        const base = ASK[this.askStep] || ASK['Triage at a Glance'];
+        return this.g.lot && this.askStep === 'Triage at a Glance' ? base + ',' + LOT_ASK : base;
+    }
+
     // ---- facts from the glance
     get g() { return this.glance || {}; }
     card(id) { return (this.g.cards || []).find((c) => c.id === id) || { facts: [] }; }
@@ -305,6 +345,8 @@ export default class CqTriageAssistant extends LightningElement {
                 cls: 'step' + ((!this.done && i === this.step) || (this.finished && i === 0) ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done };
         });
     }
+    /** The rail as the shared frame (c-cq-ws-shell) draws it. */
+    get railSteps() { return this.steps.map((s) => ({ label: s.label, sub: s.sub, done: s.done, active: s.cls.includes('active'), locked: s.locked })); }
     get progress() { return this.steps.filter((x) => x.done).length + ' of ' + this.steps.length + ' steps complete'; }
     get live() { return this.booted && !this.done; }
     get isGlance() { return (this.live && this.cur === -1) || (this.done && this.finished); }
@@ -692,7 +734,7 @@ export default class CqTriageAssistant extends LightningElement {
     }
     handleBack() { if (this.step > 0) { this.go(this.step - 1); } }
     handleStep(event) {
-        const i = Number(event.currentTarget.dataset.i);
+        const i = Number(event.detail);
         if (!this.done) { this.go(i); }
     }
     handleClose() { this.dispatchEvent(new CustomEvent('close')); }
