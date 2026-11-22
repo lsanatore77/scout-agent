@@ -6,7 +6,7 @@ import saveDraft from '@salesforce/apex/CqFieldActionReview.saveDraft';
 import getScope from '@salesforce/apex/CqFieldActionLots.getScope';
 import submitToCommittee from '@salesforce/apex/CqFieldActionLots.submitToCommittee';
 import actOnStep from '@salesforce/apex/CqFarCommittee.act';
-import getSignFor from '@salesforce/apex/CqFarCommittee.getSignFor';
+import getSign from '@salesforce/apex/CqFarCommittee.getSign';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import noteSuggestions from '@salesforce/apex/CqFarSuggestions.note';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
@@ -180,30 +180,27 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     }
 
     /**
-     * What CQ's signature policy asks for approving and for sending back. CQ takes about three seconds for each, so the
-     * two are asked in separate requests at the same time, and the answer is kept in this browser tab for 10 minutes.
-     * The kept answer only shapes the seat: every signature is checked against CQ's policy again on the server.
+     * What CQ's signature policy asks for approving and for sending back. CQ takes several seconds to answer (it runs its
+     * signature flows for each action), so the answer is kept in this browser tab for 8 hours and asked once a working day.
+     * Two requests at once were slower, not faster: CQ's lookups slowed each other down. The kept answer only shapes the
+     * seat: every signature is checked against CQ's policy again on the server.
      */
     askSign(fresh) {
         const key = 'cqSign:Field_Action_Review__c';
         if (!fresh) {
             try {
                 const kept = JSON.parse(window.sessionStorage.getItem(key) || 'null');
-                if (kept && Date.now() - kept.at < 600000) { return Promise.resolve(kept.signs); }
+                if (kept && Date.now() - kept.at < 8 * 3600000) { return Promise.resolve(kept.signs); }
             } catch (e) { /* no storage: ask CQ */ }
         }
-        const one = (action) => new Promise((resolve) => {
-            // a request of its own (Lightning sends calls made at the same moment together, one after the other)
-            // eslint-disable-next-line @lwc/lwc/no-async-operation
-            setTimeout(() => { getSignFor({ recordId: this.recordId, action }).then(resolve).catch(() => resolve({ unknown: true })); }, 0);
-        });
-        return Promise.all([one('approve'), one('reject')]).then(([approve, reject]) => {
-            const signs = { approve, reject };
-            if (!approve.unknown && !reject.unknown) {
+        return getSign({ recordId: this.recordId }).then((g) => {
+            const signs = g || {};
+            const ok = (x) => x && !x.unknown;
+            if (ok(signs.approve) && ok(signs.reject)) {
                 try { window.sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), signs })); } catch (e) { /* not kept */ }
             }
             return signs;
-        });
+        }).catch(() => ({ approve: { unknown: true }, reject: { unknown: true } }));
     }
     /** With the committee, the seat waits for CQ's answer so Approve never goes without the password box when one is needed. */
     async loadSign(fresh) {
