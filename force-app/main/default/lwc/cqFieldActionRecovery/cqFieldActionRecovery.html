@@ -60,39 +60,49 @@
                     </div>
 
                     <template if:true={adding}>
-                        <div class="addform">
-                            <label class="cq-field"><span class="cq-label">Customer</span>
-                                <select data-f="customerId" onchange={handleForm}>
-                                    <template for:each={custOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
-                                </select></label>
-                            <template if:true={isNewCustomer}>
-                                <label class="cq-field"><span class="cq-label">New Customer<span class="cq-req">*</span></span>
-                                    <input type="text" data-f="newCustomer" value={form.newCustomer} oninput={handleForm} /></label>
-                            </template>
-                            <label class="cq-field"><span class="cq-label">Lot</span>
-                                <select data-f="lot" onchange={handleForm}>
-                                    <template for:each={lotOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
-                                </select></label>
-                            <label class="cq-field"><span class="cq-label">Type</span>
-                                <select data-f="type" onchange={handleForm}>
-                                    <template for:each={typeOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
-                                </select></label>
-                            <label class="cq-field wide"><span class="cq-label">Task</span>
-                                <input type="text" data-f="subject" value={form.subject} placeholder={subjectHint} oninput={handleForm} /></label>
-                            <label class="cq-field"><span class="cq-label">Assigned to</span>
-                                <select data-f="ownerId" onchange={handleForm}>
-                                    <template for:each={ownerOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
-                                </select></label>
-                            <label class="cq-field"><span class="cq-label">Due</span>
-                                <input type="date" data-f="due" value={form.due} onchange={handleForm} /></label>
-                            <template if:true={formHasUnits}>
-                                <label class="cq-field"><span class="cq-label">Units So Far</span>
-                                    <input class="w80" type="number" min="0" data-f="units" value={form.units} oninput={handleForm} /></label>
-                            </template>
-                            <div class="formbtns">
-                                <button class="cq-btn-primary" onclick={handleAdd} disabled={cantAdd}>Add</button>
-                                <button class="cq-btn-outline" onclick={handleOpenAdd}>Cancel</button>
-                            </div>
+                        <div class="cq-modal-back" onkeydown={handleAddKey}>
+                            <section class="cq-modal" role="dialog" aria-modal="true" aria-labelledby="addtask-head">
+                                <header class="cq-modal-head">
+                                    <h2 id="addtask-head" class="cq-modal-title">Add Task</h2>
+                                    <button class="cq-modal-x" aria-label="Close" onclick={handleOpenAdd}>&times;</button>
+                                </header>
+                                <div class="cq-modal-body">
+                                    <div class="mgrid">
+                                        <label class="cq-field"><span class="cq-label">Customer</span>
+                                            <select data-f="customerId" onchange={handleForm}>
+                                                <template for:each={custOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                            </select></label>
+                                        <template if:true={isNewCustomer}>
+                                            <label class="cq-field"><span class="cq-label">New Customer<span class="cq-req">*</span></span>
+                                                <input type="text" data-f="newCustomer" value={form.newCustomer} oninput={handleForm} /></label>
+                                        </template>
+                                        <label class="cq-field"><span class="cq-label">Lot</span>
+                                            <select data-f="lot" onchange={handleForm}>
+                                                <template for:each={lotOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                            </select></label>
+                                        <label class="cq-field"><span class="cq-label">Type</span>
+                                            <select data-f="type" onchange={handleForm}>
+                                                <template for:each={typeOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                            </select></label>
+                                        <label class="cq-field span2"><span class="cq-label">Task</span>
+                                            <input type="text" data-f="subject" value={form.subject} placeholder={subjectHint} oninput={handleForm} /></label>
+                                        <label class="cq-field"><span class="cq-label">Assigned to</span>
+                                            <select data-f="ownerId" onchange={handleForm}>
+                                                <template for:each={ownerOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                            </select></label>
+                                        <label class="cq-field"><span class="cq-label">Due</span>
+                                            <input type="date" data-f="due" value={form.due} onchange={handleForm} /></label>
+                                        <template if:true={formHasUnits}>
+                                            <label class="cq-field"><span class="cq-label">Units So Far</span>
+                                                <input type="number" min="0" data-f="units" value={form.units} oninput={handleForm} /></label>
+                                        </template>
+                                    </div>
+                                </div>
+                                <footer class="cq-modal-foot">
+                                    <button class="cq-btn-outline" onclick={handleOpenAdd}>Cancel</button>
+                                    <button class="cq-btn-primary" onclick={handleAdd} disabled={cantAdd}>Add Task</button>
+                                </footer>
+                            </section>
                         </div>
                     </template>
 

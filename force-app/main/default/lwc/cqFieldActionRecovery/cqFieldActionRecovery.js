@@ -221,7 +221,7 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
     get hasRows() { return this.rows.length > 0; }
     get emptyLine() {
-        if (this.search.trim()) { return 'No customer matches \u201c' + this.search.trim() + '\u201d.'; }
+        if (this.search.trim()) { return 'No customer matches “' + this.search.trim() + '”.'; }
         return this.filter !== 'all' ? 'No tasks match.' : this.v.customers.length ? 'No tasks yet.' : 'No customers yet: add lot shipments for the lots in scope, or add a task for a customer by hand.';
     }
     handleToggle(event) {
@@ -268,6 +268,7 @@ export default class CqFieldActionRecovery extends LightningElement {
         this.adding = !this.adding;
         this.form = { customerId: '', newCustomer: '', lot: '', type: 'Track return', subject: '', ownerId: this.t.me, due: '', units: '' };
     }
+    handleAddKey(event) { if (event.key === 'Escape') { this.adding = false; } }
     get custOpts() {
         const f = this.form;
         return [{ value: '', label: 'No Customer', selected: !f.customerId }]
@@ -329,7 +330,7 @@ export default class CqFieldActionRecovery extends LightningElement {
 
     // ---- 4. verdict
     /** How many customers have acknowledged, against the check level's target: shown beside the Customers and Tasks heading. */
-    get progressLine() { return this.respLine + ' \u00b7 ' + this.targetText; }
+    get progressLine() { return this.respLine + ' · ' + this.targetText; }
     get respLine() { return this.v.total ? this.v.acked + ' of ' + this.v.total + ' customers acknowledged' : 'No customers yet'; }
     get targetText() {
         if (this.v.target === 0) { return 'No check needed'; }
