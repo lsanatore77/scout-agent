@@ -55,6 +55,7 @@
                 <section class="cq-stepcard">
                     <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">Customers and Tasks</span><span class="cq-grow"></span>
                         <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
+                        <span class="cq-sub">{progressLine}</span>
                         <button class="cq-btn-outline" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
                     </div>
 
@@ -117,11 +118,12 @@
                         </template>
                     </template>
 
+                    <div class="cq-field srch"><input type="search" value={search} oninput={handleSearch} placeholder="Search customers" aria-label="Search customers" /></div>
                     <template if:true={hasRows}>
-                        <div class="cq-tblwrap">
+                        <div class="cq-tblwrap custwrap" style={custTableStyle}>
                             <table class="ht tt">
                                 <thead><tr>
-                                    <th><span class="hcell"><button class="chev" onclick={handleToggleAll} aria-label={allLabel}>{allChev}</button>Customer / Lot / Task</span></th>
+                                    <th><span class="hcell"><span class="chsp"></span>Customer / Lot / Task</span></th>
                                     <th>Owner</th><th>Due</th><th class="num">Status</th>
                                 </tr></thead>
                                 <tbody>
@@ -129,7 +131,7 @@
                                         <tr key={r.key}>
                                             <template if:true={r.isCust}>
                                                 <td class="crow"><span class="cell2">
-                                                    <button class="chev" data-id={r.id} onclick={handleToggle} aria-label={r.toggleLabel}>{r.chev}</button>
+                                                    <button class="rchevbtn" data-id={r.id} onclick={handleToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button>
                                                     <span class="fn"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
                                                 <td class="crow"></td><td class="crow"></td>
                                                 <td class="crow num"><template if:true={r.hasPill}><span class={r.pillCls}>{r.pill}</span></template></td>
@@ -166,9 +168,20 @@
                                 </tbody>
                             </table>
                         </div>
+                        <template if:true={hasCustPages}>
+                            <div class="cq-pager">
+                                <nav class="cq-pages" aria-label="Customer pages">
+                                    <button class="pg" onclick={handleCustPrev} disabled={cantPrevCust} aria-label="Previous page">&laquo;</button>
+                                    <template for:each={custPageItems} for:item="p">
+                                        <button key={p.key} class={p.cls} data-p={p.p} onclick={handleCustPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
+                                    </template>
+                                    <button class="pg" onclick={handleCustNext} disabled={cantNextCust} aria-label="Next page">&raquo;</button>
+                                </nav>
+                            </div>
+                        </template>
                     </template>
                     <template if:false={hasRows}><p class="cq-note">{emptyLine}</p></template>
-                    <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table. {respLine}; {targetText}.</span>
+                    <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table.</span>
                 </section>
 
                 <section class="cq-stepcard">

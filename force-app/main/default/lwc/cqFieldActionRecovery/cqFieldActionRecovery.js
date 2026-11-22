@@ -14,6 +14,20 @@ const TYPES = ['Send recall notice', 'Collect response', 'Track return', 'Confir
 const UNIT_TYPES = ['Track return', 'Confirm destruction', 'Confirm correction'];
 const NEW_CUSTOMER = '__new';
 const NO_CUSTOMER = '__none';
+const CUST_PAGE = 5;     // customers a page in the Customers and Tasks table; a customer's open rows stay with it
+/** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
+function pageLinks(n, cur) {
+    const keep = [];
+    for (let i = 0; i < n; i++) { if (n <= 7 || i === 0 || i === n - 1 || Math.abs(i - cur) <= 2) { keep.push(i); } }
+    const out = [];
+    keep.forEach((i, k) => {
+        if (k > 0 && i - keep[k - 1] > 1) { out.push({ key: 'g' + i, text: '…', cls: 'pg gap', off: true, label: 'More pages' }); }
+        const on = i === cur;
+        out.push({ key: 'p' + i, p: i, text: String(i + 1), cls: 'pg' + (on ? ' on' : ''), off: on, current: on ? 'page' : 'false',
+            label: 'Page ' + (i + 1) });
+    });
+    return out;
+}
 
 /**
  * Field Action step 6, Recovery and Effectiveness: units back per lot, the customers and their recall tasks,
@@ -33,6 +47,9 @@ export default class CqFieldActionRecovery extends LightningElement {
     form = {};
     unitsFor = '';           // task whose units are being edited
     unitsVal = '';
+    search = '';             // customer name search
+    custPage = 0;
+    custMin = 0;             // the table keeps the height of its first page, so the page numbers do not jump
 
     async connectedCallback() { await this.load(); }
     async load() {
@@ -64,6 +81,10 @@ export default class CqFieldActionRecovery extends LightningElement {
 
     renderedCallback() {
         if (!this.v) { return; }
+        if (this.hasCustPages && !this.custMin && this.custPageNow === 0 && !Object.values(this.openCust).some(Boolean)) {
+            const w = this.template.querySelector('.custwrap');
+            if (w && w.clientHeight) { this.custMin = w.clientHeight; }
+        }
         const detail = { show: this.showStep, label: this.confirmLabel, disabled: this.cantConfirm, blocker: this.showStep ? this.blocker : '' };
         const sig = JSON.stringify(detail);
         if (sig !== this.footSig) { this.footSig = sig; this.dispatchEvent(new CustomEvent('footchange', { detail })); }
@@ -119,7 +140,7 @@ export default class CqFieldActionRecovery extends LightningElement {
                 cls: 'tcard' + (this.filter === key ? ' on' : ''),
                 numCls: 'tnum' + (key === 'done' && n ? ' okc' : key === 'over' && n ? ' badc' : '') }));
     }
-    handleCard(event) { const k = event.currentTarget.dataset.key; this.filter = this.filter === k ? 'all' : k; }
+    handleCard(event) { const k = event.currentTarget.dataset.key; this.filter = this.filter === k ? 'all' : k; this.custPage = 0; }
     keepTask(x) {
         switch (this.filter) {
             case 'open': return !x.done;
@@ -136,22 +157,40 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
 
     // ---- 2. customers and tasks: customer, then the lots shipped to them, then the tasks on each
-    get rows() {
+    /** The customers the table lists: those with tasks matching the card filter, whose name matches the search. */
+    get custList() {
         const t = this.t;
-        const rows = [];
         const custs = this.v.customers.map((c) => ({ ...c }));
         const loose = t.tasks.filter((x) => !x.customerId || !custs.some((c) => c.id === x.customerId));
         if (loose.length) { custs.push({ id: NO_CUSTOMER, name: 'Other tasks', other: true }); }
-        custs.forEach((c) => {
+        const q = this.search.trim().toLowerCase();
+        return custs.map((c) => {
             const mine = c.other ? loose : t.tasks.filter((x) => x.customerId === c.id);
-            const shown = mine.filter((x) => this.keepTask(x));
-            if (this.filter !== 'all' && !shown.length) { return; }
+            return { c, mine, shown: mine.filter((x) => this.keepTask(x)) };
+        }).filter((e) => (this.filter === 'all' || e.shown.length > 0) && (!q || (e.c.name || '').toLowerCase().includes(q)));
+    }
+    get custPageCount() { return Math.max(1, Math.ceil(this.custList.length / CUST_PAGE)); }
+    get custPageNow() { return Math.min(this.custPage, this.custPageCount - 1); }
+    get hasCustPages() { return this.custList.length > CUST_PAGE; }
+    get cantPrevCust() { return this.custPageNow === 0; }
+    get cantNextCust() { return this.custPageNow >= this.custPageCount - 1; }
+    get custPageItems() { return pageLinks(this.custPageCount, this.custPageNow); }
+    get custTableStyle() { return this.hasCustPages && this.custMin ? 'min-height:' + this.custMin + 'px' : ''; }
+    handleCustPrev() { this.custPage = Math.max(0, this.custPageNow - 1); }
+    handleCustNext() { this.custPage = Math.min(this.custPageCount - 1, this.custPageNow + 1); }
+    handleCustPage(event) { this.custPage = Number(event.currentTarget.dataset.p); }
+    handleSearch(event) { this.search = event.target.value; this.custPage = 0; }
+    get rows() {
+        const t = this.t;
+        const rows = [];
+        const from = this.custPageNow * CUST_PAGE;
+        this.custList.slice(from, from + CUST_PAGE).forEach(({ c, mine, shown }) => {
             const open = this.filter !== 'all' || !!this.openCust[c.id];
             const openCount = mine.filter((x) => !x.done).length;
             const lots = c.other ? [] : (t.lotsByCustomer[c.id] || []).slice();
             mine.forEach((x) => { if (x.lot && !lots.includes(x.lot)) { lots.push(x.lot); } });
-            rows.push({ key: 'c' + c.id, isCust: true, id: c.id, title: c.name, chev: open ? '▾' : '▸',
-                toggleLabel: (open ? 'Fold ' : 'Show ') + c.name,
+            rows.push({ key: 'c' + c.id, isCust: true, id: c.id, title: c.name, chevCls: 'rchev' + (open ? ' open' : ''),
+                expanded: open ? 'true' : 'false', toggleLabel: (open ? 'Fold ' : 'Show ') + c.name,
                 sub: c.other ? openCount + ' open' : [c.units !== undefined && c.units !== null ? c.units + ' units' : '',
                     lots.length + ' lot' + (lots.length === 1 ? '' : 's'), openCount + ' open task' + (openCount === 1 ? '' : 's'),
                     c.source === 'Shipment' ? '' : 'added by hand'].filter(Boolean).join(' · '),
@@ -182,15 +221,8 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
     get hasRows() { return this.rows.length > 0; }
     get emptyLine() {
+        if (this.search.trim()) { return 'No customer matches \u201c' + this.search.trim() + '\u201d.'; }
         return this.filter !== 'all' ? 'No tasks match.' : this.v.customers.length ? 'No tasks yet.' : 'No customers yet: add lot shipments for the lots in scope, or add a task for a customer by hand.';
-    }
-    get anyOpen() { return Object.values(this.openCust).some(Boolean); }
-    get allChev() { return this.anyOpen ? '▾' : '▸'; }
-    get allLabel() { return this.anyOpen ? 'Close All Customers' : 'Open All Customers'; }
-    handleToggleAll() {
-        const m = {};
-        if (!this.anyOpen) { this.v.customers.forEach((c) => { m[c.id] = true; }); m[NO_CUSTOMER] = true; }
-        this.openCust = m;
     }
     handleToggle(event) {
         const id = event.currentTarget.dataset.id;
@@ -296,6 +328,8 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
 
     // ---- 4. verdict
+    /** How many customers have acknowledged, against the check level's target: shown beside the Customers and Tasks heading. */
+    get progressLine() { return this.respLine + ' \u00b7 ' + this.targetText; }
     get respLine() { return this.v.total ? this.v.acked + ' of ' + this.v.total + ' customers acknowledged' : 'No customers yet'; }
     get targetText() {
         if (this.v.target === 0) { return 'No check needed'; }
