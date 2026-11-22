@@ -51,194 +51,209 @@
                 </template>
             </div>
 
-            <div class="grid">
-                <section class="cq-stepcard">
-                    <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">Customers and Tasks</span><span class="cq-grow"></span>
-                        <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
-                        <span class="cq-sub">{progressLine}</span>
-                        <button class="cq-btn-outline" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
-                    </div>
+            <section class="cq-stepcard">
+                <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">Customers and Tasks</span><span class="cq-grow"></span>
+                    <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
+                    <span class="cq-sub">{progressLine}</span>
+                    <button class="cq-btn-outline" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
+                </div>
 
-                    <template if:true={adding}>
-                        <div class="cq-modal-back" onkeydown={handleAddKey}>
-                            <section class="cq-modal" role="dialog" aria-modal="true" aria-labelledby="addtask-head">
-                                <header class="cq-modal-head">
-                                    <h2 id="addtask-head" class="cq-modal-title">Add Task</h2>
-                                    <button class="cq-modal-x" aria-label="Close" onclick={handleOpenAdd}>&times;</button>
-                                </header>
-                                <div class="cq-modal-body">
-                                    <div class="mgrid">
-                                        <label class="cq-field"><span class="cq-label">Customer</span>
-                                            <select data-f="customerId" onchange={handleForm}>
-                                                <template for:each={custOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
-                                            </select></label>
-                                        <template if:true={isNewCustomer}>
-                                            <label class="cq-field"><span class="cq-label">New Customer<span class="cq-req">*</span></span>
-                                                <input type="text" data-f="newCustomer" value={form.newCustomer} oninput={handleForm} /></label>
-                                        </template>
-                                        <label class="cq-field"><span class="cq-label">Lot</span>
-                                            <select data-f="lot" onchange={handleForm}>
-                                                <template for:each={lotOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
-                                            </select></label>
-                                        <label class="cq-field"><span class="cq-label">Type</span>
-                                            <select data-f="type" onchange={handleForm}>
-                                                <template for:each={typeOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
-                                            </select></label>
-                                        <label class="cq-field span2"><span class="cq-label">Task</span>
-                                            <input type="text" data-f="subject" value={form.subject} placeholder={subjectHint} oninput={handleForm} /></label>
-                                        <label class="cq-field"><span class="cq-label">Assigned to</span>
-                                            <select data-f="ownerId" onchange={handleForm}>
-                                                <template for:each={ownerOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
-                                            </select></label>
-                                        <label class="cq-field"><span class="cq-label">Due</span>
-                                            <input type="date" data-f="due" value={form.due} onchange={handleForm} /></label>
-                                        <template if:true={formHasUnits}>
-                                            <label class="cq-field"><span class="cq-label">Units So Far</span>
-                                                <input type="number" min="0" data-f="units" value={form.units} oninput={handleForm} /></label>
-                                        </template>
-                                    </div>
-                                </div>
-                                <footer class="cq-modal-foot">
-                                    <button class="cq-btn-outline" onclick={handleOpenAdd}>Cancel</button>
-                                    <button class="cq-btn-primary" onclick={handleAdd} disabled={cantAdd}>Add Task</button>
-                                </footer>
-                            </section>
-                        </div>
-                    </template>
-
-                    <template if:true={hasSuggestions}>
-                        <div class="cq-ai-card row">
-                            <span class="cq-grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{t.suggestLine}</span></span>
-                            <button class="cq-btn-outline xs ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
-                        </div>
-                        <template if:true={reviewing}>
-                            <div class="sugg">
-                                <template for:each={suggestRows} for:item="s">
-                                    <label key={s.key} class="srow">
-                                        <input type="checkbox" data-key={s.key} checked={s.checked} onchange={handleKeep} aria-label={s.label} />
-                                        <span class="cq-grow">{s.subject}</span><span class="cq-sub nw">{s.due}</span>
-                                    </label>
-                                </template>
-                                <div class="formbtns">
-                                    <button class="cq-btn-primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
-                                    <button class="cq-btn-outline" onclick={handleReview}>Cancel</button>
-                                    <span class="cq-hint">Assigned to you; reassign any task from the Add Task form or the Task record.</span>
+                <template if:true={adding}>
+                    <div class="cq-modal-back" onkeydown={handleAddKey}>
+                        <section class="cq-modal" role="dialog" aria-modal="true" aria-labelledby="addtask-head">
+                            <header class="cq-modal-head">
+                                <h2 id="addtask-head" class="cq-modal-title">Add Task</h2>
+                                <button class="cq-modal-x" aria-label="Close" onclick={handleOpenAdd}>&times;</button>
+                            </header>
+                            <div class="cq-modal-body">
+                                <div class="mgrid">
+                                    <label class="cq-field"><span class="cq-label">Customer</span>
+                                        <select data-f="customerId" onchange={handleForm}>
+                                            <template for:each={custOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                        </select></label>
+                                    <template if:true={isNewCustomer}>
+                                        <label class="cq-field"><span class="cq-label">New Customer<span class="cq-req">*</span></span>
+                                            <input type="text" data-f="newCustomer" value={form.newCustomer} oninput={handleForm} /></label>
+                                    </template>
+                                    <label class="cq-field"><span class="cq-label">Lot</span>
+                                        <select data-f="lot" onchange={handleForm}>
+                                            <template for:each={lotOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                        </select></label>
+                                    <label class="cq-field"><span class="cq-label">Type</span>
+                                        <select data-f="type" onchange={handleForm}>
+                                            <template for:each={typeOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                        </select></label>
+                                    <label class="cq-field span2"><span class="cq-label">Task</span>
+                                        <input type="text" data-f="subject" value={form.subject} placeholder={subjectHint} oninput={handleForm} /></label>
+                                    <label class="cq-field"><span class="cq-label">Assigned to</span>
+                                        <select data-f="ownerId" onchange={handleForm}>
+                                            <template for:each={ownerOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                        </select></label>
+                                    <label class="cq-field"><span class="cq-label">Due</span>
+                                        <input type="date" data-f="due" value={form.due} onchange={handleForm} /></label>
+                                    <template if:true={formHasUnits}>
+                                        <label class="cq-field"><span class="cq-label">Units So Far</span>
+                                            <input type="number" min="0" data-f="units" value={form.units} oninput={handleForm} /></label>
+                                    </template>
                                 </div>
                             </div>
-                        </template>
-                    </template>
+                            <footer class="cq-modal-foot">
+                                <button class="cq-btn-outline" onclick={handleOpenAdd}>Cancel</button>
+                                <button class="cq-btn-primary" onclick={handleAdd} disabled={cantAdd}>Add Task</button>
+                            </footer>
+                        </section>
+                    </div>
+                </template>
 
-                    <div class="cq-field srch"><input type="search" value={search} oninput={handleSearch} placeholder="Search customers" aria-label="Search customers" /></div>
-                    <template if:true={hasRows}>
-                        <div class="cq-tblwrap custwrap" style={custTableStyle}>
-                            <table class="ht tt">
-                                <thead><tr>
-                                    <th><span class="hcell"><span class="chsp"></span>Customer / Lot / Task</span></th>
-                                    <th>Owner</th><th>Due</th><th class="num">Status</th>
-                                </tr></thead>
-                                <tbody>
-                                    <template for:each={rows} for:item="r">
-                                        <tr key={r.key}>
-                                            <template if:true={r.isCust}>
-                                                <td class="crow"><span class="cell2">
-                                                    <button class="rchevbtn" data-id={r.id} onclick={handleToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button>
-                                                    <span class="fn"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
-                                                <td class="crow"></td><td class="crow"></td>
-                                                <td class="crow num"><template if:true={r.hasPill}><span class={r.pillCls}>{r.pill}</span></template></td>
-                                            </template>
-                                            <template if:true={r.isLot}>
-                                                <td class="lrow"><span class="cell2"><span class="ind i1"></span>
-                                                    <span class="fn"><span class="lotline"><span class="lotn">{r.title}</span><template if:true={r.inRecall}><span class="cq-pill soft neu">In this recall</span></template></span><span class="cq-sub block">{r.sub}</span></span></span></td>
-                                                <td class="lrow"></td><td class="lrow"></td><td class="lrow"></td>
-                                            </template>
-                                            <template if:true={r.isTask}>
-                                                <td><span class="cell2"><span class={r.indentCls}></span>
-                                                    <input class="tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
-                                                    <span class="fn">
-                                                        <a class="tlink" href={r.href} target="_blank">{r.title}</a>
-                                                        <template if:true={r.hasUnits}>
-                                                            <template if:true={r.notEditingUnits}>
-                                                                <button class="ulink" data-id={r.id} onclick={handleEditUnits} disabled={locked} title="Click to edit">{r.unitsText}</button>
-                                                            </template>
-                                                            <template if:true={r.editingUnits}>
-                                                                <span class="locwrap">
-                                                                    <span class="cq-field ni"><input type="number" min="0" value={r.unitsVal} oninput={handleUnitsInput} aria-label="Units" /></span>
-                                                                    <button class="cq-btn-primary xs" onclick={handleUnitsSave} disabled={busy}>Save</button>
-                                                                    <button class="cq-btn-outline xs" onclick={handleUnitsCancel}>Cancel</button>
-                                                                </span>
-                                                            </template>
+                <template if:true={hasSuggestions}>
+                    <div class="cq-ai-card row">
+                        <span class="cq-grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{t.suggestLine}</span></span>
+                        <button class="cq-btn-outline xs ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
+                    </div>
+                    <template if:true={reviewing}>
+                        <div class="sugg">
+                            <template for:each={suggestRows} for:item="s">
+                                <label key={s.key} class="srow">
+                                    <input type="checkbox" data-key={s.key} checked={s.checked} onchange={handleKeep} aria-label={s.label} />
+                                    <span class="cq-grow">{s.subject}</span><span class="cq-sub nw">{s.due}</span>
+                                </label>
+                            </template>
+                            <div class="formbtns">
+                                <button class="cq-btn-primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
+                                <button class="cq-btn-outline" onclick={handleReview}>Cancel</button>
+                                <span class="cq-hint">Assigned to you; reassign any task from the Add Task form or the Task record.</span>
+                            </div>
+                        </div>
+                    </template>
+                </template>
+
+                <div class="cq-field srch"><input type="search" value={search} oninput={handleSearch} placeholder="Search customers" aria-label="Search customers" /></div>
+                <template if:true={hasRows}>
+                    <div class="cq-tblwrap custwrap" style={custTableStyle}>
+                        <table class="ht tt">
+                            <thead><tr>
+                                <th><span class="hcell"><span class="chsp"></span>Customer / Lot / Task</span></th>
+                                <th>Owner</th><th>Due</th><th class="num">Status</th>
+                            </tr></thead>
+                            <tbody>
+                                <template for:each={rows} for:item="r">
+                                    <tr key={r.key}>
+                                        <template if:true={r.isCust}>
+                                            <td class="crow"><span class="cell2">
+                                                <button class="rchevbtn" data-id={r.id} onclick={handleToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button>
+                                                <span class="fn"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
+                                            <td class="crow"></td><td class="crow"></td>
+                                            <td class="crow num"><template if:true={r.hasPill}><span class={r.pillCls}>{r.pill}</span></template></td>
+                                        </template>
+                                        <template if:true={r.isLot}>
+                                            <td class="lrow"><span class="cell2"><span class="ind i1"></span>
+                                                <span class="fn"><span class="lotline"><span class="lotn">{r.title}</span><template if:true={r.inRecall}><span class="cq-pill soft neu">In this recall</span></template></span><span class="cq-sub block">{r.sub}</span></span></span></td>
+                                            <td class="lrow"></td><td class="lrow"></td><td class="lrow"></td>
+                                        </template>
+                                        <template if:true={r.isTask}>
+                                            <td><span class="cell2"><span class={r.indentCls}></span>
+                                                <input class="tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
+                                                <span class="fn">
+                                                    <a class="tlink" href={r.href} target="_blank">{r.title}</a>
+                                                    <template if:true={r.hasUnits}>
+                                                        <template if:true={r.notEditingUnits}>
+                                                            <button class="ulink" data-id={r.id} onclick={handleEditUnits} disabled={locked} title="Click to edit">{r.unitsText}</button>
                                                         </template>
-                                                    </span></span></td>
-                                                <td class="nw">{r.owner}</td>
-                                                <td class={r.dueCls}>{r.due}</td>
-                                                <td class="num"><span class={r.pillCls}>{r.pill}</span></td>
-                                            </template>
+                                                        <template if:true={r.editingUnits}>
+                                                            <span class="locwrap">
+                                                                <span class="cq-field ni"><input type="number" min="0" value={r.unitsVal} oninput={handleUnitsInput} aria-label="Units" /></span>
+                                                                <button class="cq-btn-primary xs" onclick={handleUnitsSave} disabled={busy}>Save</button>
+                                                                <button class="cq-btn-outline xs" onclick={handleUnitsCancel}>Cancel</button>
+                                                            </span>
+                                                        </template>
+                                                    </template>
+                                                </span></span></td>
+                                            <td class="nw">{r.owner}</td>
+                                            <td class={r.dueCls}>{r.due}</td>
+                                            <td class="num"><span class={r.pillCls}>{r.pill}</span></td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                    <template if:true={hasCustPages}>
+                        <div class="cq-pager">
+                            <nav class="cq-pages" aria-label="Customer pages">
+                                <button class="pg" onclick={handleCustPrev} disabled={cantPrevCust} aria-label="Previous page">&laquo;</button>
+                                <template for:each={custPageItems} for:item="p">
+                                    <button key={p.key} class={p.cls} data-p={p.p} onclick={handleCustPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
+                                </template>
+                                <button class="pg" onclick={handleCustNext} disabled={cantNextCust} aria-label="Next page">&raquo;</button>
+                            </nav>
+                        </div>
+                    </template>
+                </template>
+                <template if:false={hasRows}><p class="cq-note">{emptyLine}</p></template>
+                <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table.</span>
+            </section>
+
+            <div class="grid">
+                <section class="cq-stepcard">
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">3</span><span class="cq-stepcard-title">Held Stock</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{dispLine}</span></div>
+                    <template if:true={hasHolds}>
+                        <div class="cq-tblwrap">
+                            <table class="ht">
+                                <thead><tr><th>Lot</th><th>Item</th><th class="num">On Hand</th><th>Disposition</th></tr></thead>
+                                <tbody>
+                                    <template for:each={holdRows} for:item="h">
+                                        <tr key={h.id}>
+                                            <td class="b nw">{h.lot}</td>
+                                            <td><span class="fn"><span>{h.kindText}</span><template if:true={h.item}><span class="cq-sub block">{h.item}</span></template></span></td>
+                                            <td class="num">{h.onHandText}</td>
+                                            <td class="dcol"><span class="cq-field full"><select data-id={h.id} onchange={handleDisposition} disabled={locked} aria-label={h.label}>
+                                                <template for:each={h.opts} for:item="o">
+                                                    <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                                </template>
+                                            </select></span></td>
                                         </tr>
                                     </template>
                                 </tbody>
                             </table>
                         </div>
-                        <template if:true={hasCustPages}>
-                            <div class="cq-pager">
-                                <nav class="cq-pages" aria-label="Customer pages">
-                                    <button class="pg" onclick={handleCustPrev} disabled={cantPrevCust} aria-label="Previous page">&laquo;</button>
-                                    <template for:each={custPageItems} for:item="p">
-                                        <button key={p.key} class={p.cls} data-p={p.p} onclick={handleCustPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
-                                    </template>
-                                    <button class="pg" onclick={handleCustNext} disabled={cantNextCust} aria-label="Next page">&raquo;</button>
-                                </nav>
-                            </div>
-                        </template>
-                    </template>
-                    <template if:false={hasRows}><p class="cq-note">{emptyLine}</p></template>
-                    <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table.</span>
-                </section>
-
-                <section class="cq-stepcard">
-                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">3</span><span class="cq-stepcard-title">Held Stock</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{dispLine}</span></div>
-                    <template if:true={hasHolds}>
-                        <div class="list">
-                            <template for:each={holdRows} for:item="h">
-                                <div key={h.id} class="hrow">
-                                    <span class="hl"><span class="b">{h.lot}</span><span class="cq-sub ell">{h.what}</span></span>
-                                    <span class="cq-field full"><select data-id={h.id} onchange={handleDisposition} disabled={locked} aria-label={h.label}>
-                                        <template for:each={h.opts} for:item="o">
-                                            <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
-                                        </template>
-                                    </select></span>
-                                </div>
-                            </template>
-                        </div>
                     </template>
                     <template if:false={hasHolds}><p class="cq-note">No stock was held in the strategy.</p></template>
                     <span class="cq-hint">Stock still in our control, held in the Strategy step. A finished lot's disposition also covers the units customers send back. &#10022; marks CQ.AI's suggestion; dispositions are fixed when the verdict is confirmed.</span>
                 </section>
-            </div>
 
-            <section class="cq-stepcard">
-                <div class="cq-stepcard-head"><span class="cq-stepcard-n">4</span><span class="cq-stepcard-title">Effectiveness Verdict</span></div>
-                <div class="vrow">
-                    <div class="cq-field">
-                        <span class="cq-label">Verdict<span class="cq-req">*</span></span>
-                        <div class="cq-chips" role="group" aria-label="Verdict">
-                            <template for:each={verdicts} for:item="o">
-                                <button key={o.key} class={o.cls} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handleVerdict}>{o.label}</button>
-                            </template>
-                        </div>
+                <section class="cq-stepcard">
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">4</span><span class="cq-stepcard-title">Effectiveness Verdict</span></div>
+                    <div class="checks" role="list" aria-label="What the verdict rests on">
+                        <template for:each={verdictChecks} for:item="c">
+                            <div key={c.key} class="chk" role="listitem">
+                                <span class={c.markCls} aria-label={c.state}>{c.mark}</span>
+                                <span class="fn"><span>{c.label}</span><span class="cq-sub block">{c.detail}</span></span>
+                            </div>
+                        </template>
                     </div>
-                    <template if:true={notEffective}>
-                        <label class="cq-field">
-                            <span class="cq-label">What Happens Next<span class="cq-req">*</span></span>
-                            <select onchange={handleNext} disabled={locked}>
-                                <template for:each={nextOpts} for:item="o">
-                                    <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                    <div class="vrow">
+                        <div class="cq-field">
+                            <span class="cq-label">Verdict<span class="cq-req">*</span></span>
+                            <div class="cq-chips" role="group" aria-label="Verdict">
+                                <template for:each={verdicts} for:item="o">
+                                    <button key={o.key} class={o.cls} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handleVerdict}>{o.label}</button>
                                 </template>
-                            </select>
-                        </label>
-                    </template>
-                    <div class="cq-ai-card cq-grow"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="What does CQ.AI suggest for the recovery verdict, and why?"></c-cq-ai-why></div><div class="cq-ai-text">{v.aiLine}</div></div>
-                </div>
-            </section>
+                            </div>
+                        </div>
+                        <template if:true={notEffective}>
+                            <label class="cq-field">
+                                <span class="cq-label">What Happens Next<span class="cq-req">*</span></span>
+                                <select onchange={handleNext} disabled={locked}>
+                                    <template for:each={nextOpts} for:item="o">
+                                        <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
+                                    </template>
+                                </select>
+                            </label>
+                        </template>
+                        <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="What does CQ.AI suggest for the recovery verdict, and why?"></c-cq-ai-why></div><div class="cq-ai-text">{aiVerdictLine}</div></div>
+                    </div>
+                </section>
+            </div>
 
             <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
         </template>

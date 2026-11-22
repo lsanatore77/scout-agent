@@ -26,10 +26,20 @@
 
 .locwrap { display: inline-flex; align-items: center; gap: 6px; }
 
-.list { display: flex; flex-direction: column; }
 .fn { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 
-.vrow { display: flex; align-items: flex-start; gap: 20px; flex-wrap: wrap; }
+.vrow { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 12px; }
+/* what the verdict rests on: plain marks as on Scope (green met, amber open, red open and blocking) */
+.checks { display: flex; flex-direction: column; }
+.chk { display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-top: 1px solid var(--cq-line); }
+.chk:first-child { border-top: none; padding-top: 0; }
+.mk { flex: none; width: 14px; font-weight: 700; text-align: center; }
+.mk.ok { color: var(--cq-pos-fg); }
+.mk.op { color: var(--cq-warn-fg); }
+.mk.no { color: var(--cq-crit-fg); }
+/* the customers table spans the page; held stock and the verdict share the row under it */
+.tcards + .cq-stepcard { margin-top: 16px; }
+.dcol { width: 1%; }
 
 
 /* task summary cards: click to filter; no coloured borders, only the overdue number turns red */
@@ -73,10 +83,6 @@
 .ulink { align-self: flex-start; padding: 0; border: none; background: none; font: inherit; font-size: 13px; color: var(--cq-muted); cursor: pointer; text-decoration: underline dotted; }
 .ulink:disabled { cursor: default; text-decoration: none; }
 
-/* held stock: lot and description on the left, a narrow disposition menu on the same line */
-.hrow { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--cq-line); }
-.hl { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
-.hl .ell { display: block; }
 /* fields, buttons, pills, chips, messages and the CQ.AI suggestion card come from cqStyles */
 /* Add Task popup: two columns of fields, the task text across both */
 .mgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
@@ -85,7 +91,7 @@
 .cq-field.full { flex: none; width: 172px; }
 .cq-field.ni { width: 76px; }
 .cq-field.ni input { min-height: 28px; padding: 2px 8px; text-align: right; }
-.cq-ai-card { min-width: 280px; padding: 10px 12px; }
+.cq-ai-card { padding: 10px 12px; }
 .cq-ai-card.row { display: flex; align-items: center; gap: 10px; min-width: 0; }
 /* small buttons inside a table row or a suggestion line: the shared buttons, shorter */
 .cq-btn-outline.xs, .cq-btn-primary.xs { flex: none; min-height: 24px; padding: 0 8px 1px; font-size: 13px; border-radius: 999px; }

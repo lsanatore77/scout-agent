@@ -315,9 +315,9 @@ export default class CqFieldActionRecovery extends LightningElement {
     // ---- 3. held stock
     get holdRows() {
         return this.v.holds.map((h) => ({ ...h,
-            what: [h.kind === 'Finished Lot' ? 'Finished lot' : (h.item || 'Component lot'),
-                h.onHand !== undefined && h.onHand !== null ? h.onHand + ' on hand' : '',
-                h.kind !== 'Finished Lot' && h.reason && h.reason.startsWith('NC ') ? h.reason.split(' ')[1] : ''].filter(Boolean).join(' · '),
+            kindText: h.kind === 'Finished Lot' ? 'Finished lot'
+                : 'Component lot' + (h.reason && h.reason.startsWith('NC ') ? ' · ' + h.reason.split(' ')[1] : ''),
+            onHandText: this.num(h.onHand),
             opts: [{ value: '', label: 'Choose…', selected: !h.disposition }].concat(DISPOSITIONS.map((d) => ({
                 value: d, label: (d === h.suggested ? '✦ ' : '') + d, selected: d === h.disposition }))),
             label: 'Disposition for ' + h.lot }));
@@ -329,6 +329,52 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
 
     // ---- 4. verdict
+    /**
+     * What the verdict rests on, with the plain marks used on Scope: ✓ met, ! open but not blocking, ✕ open and blocking.
+     * The same facts CQ.AI weighs, so its suggestion can stay a one-line bottom line.
+     */
+    get verdictChecks() {
+        const v = this.v;
+        const t = this.t;
+        const out = [];
+        const lvl = v.level || 'target';
+        out.push(this.check('cust', 'Customers acknowledged', v.target === 0 ? 'No check needed'
+            : v.total ? v.acked + ' of ' + v.total + ' · ' + lvl + (v.targetMet ? ' met' : ' needs ' + v.target + '%') : 'No customers listed yet',
+            v.targetMet, v.ackRequired));
+        if (!this.isNotice) {
+            const inField = v.shipped - v.recovered;
+            out.push(this.check('units', 'Units recovered', !v.shippedKnown ? 'Units shipped are not recorded on the Scope step'
+                : inField > 0 ? inField + ' of ' + v.shipped + ' shipped still in the field' : 'All ' + v.shipped + ' shipped units accounted for',
+                v.shippedKnown && inField <= 0, false));
+        }
+        const all = t.open + t.completed;
+        if (all) {
+            out.push(this.check('tasks', 'Recall tasks', t.completed + ' of ' + all + ' completed' + (t.overdue ? ' · ' + t.overdue + ' overdue' : ''),
+                !t.overdue, false));
+        }
+        out.push(this.check('holds', 'Held stock decided', v.holds.length ? v.decided + ' of ' + v.holds.length + ' lots' : 'No stock was held',
+            v.decided >= v.holds.length, true));
+        return out;
+    }
+    /**
+     * CQ.AI's suggestion under the verdict. When it suggests Effective its own line is shown; otherwise the open checks are
+     * already listed above, so only the bottom line is given here (the agent still gets the full reasons).
+     */
+    get aiVerdictLine() {
+        const v = this.v;
+        if (v.aiVerdict) { return v.aiLine; }
+        const chk = v.level ? v.level + ' check' : 'check';
+        if (!v.checkBy) { return 'Not yet: the checks above are still open.'; }
+        const due = new Date(v.checkBy + 'T00:00:00');
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        return due >= today ? 'Not yet: wait for the ' + chk + ' due ' + this.day(v.checkBy) + ' before deciding.'
+            : 'Not yet: the ' + chk + ' was due ' + this.day(v.checkBy) + ' and the checks above are still open.';
+    }
+    check(key, label, detail, ok, blocks) {
+        const kind = ok ? 'ok' : blocks ? 'no' : 'op';
+        return { key, label, detail, mark: ok ? '✓' : blocks ? '✕' : '!', markCls: 'mk ' + kind,
+            state: ok ? 'Met' : blocks ? 'Open, needed before the verdict' : 'Open' };
+    }
     /** How many customers have acknowledged, against the check level's target: shown beside the Customers and Tasks heading. */
     get progressLine() { return this.respLine + ' · ' + this.targetText; }
     get respLine() { return this.v.total ? this.v.acked + ' of ' + this.v.total + ' customers acknowledged' : 'No customers yet'; }
