@@ -1,52 +1,10 @@
 <template>
     <div class="ws" onask={handleAsk} onchanged={handleChanged}>
-        <header class="cq-hl">
-            <div class="cq-hl-top">
-                <div class="cq-hl-who">
-                    <span class="cq-hl-icon"><lightning-icon icon-name="standard:custom" size="medium" alternative-text="Product History Review"></lightning-icon></span>
-                    <div class="cq-hl-name">
-                        <span class="cq-hl-obj">Product History Review</span>
-                        <span class="cq-hl-title">{title}</span>
-                    </div>
-                </div>
-                <div class="cq-hl-actions">
-                    <c-ask-cq-popover record-id={recordId} agent-name={agentName} suggestions={suggestions}></c-ask-cq-popover>
-                    <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
-                </div>
-            </div>
-            <div class="cq-hl-fields">
-                <div class="cq-hl-f"><span class="cq-hl-k">Complaint</span><a href={complaintLink} target="_blank" class="cq-hl-v link">{complaintName}</a></div>
-                <div class="cq-hl-f"><span class="cq-hl-k">Part</span><span class="cq-hl-v">{partName}</span></div>
-                <div class="cq-hl-f"><span class="cq-hl-k">Lot</span><span class="cq-hl-v">{lotNumber}</span></div>
-                <div class="cq-hl-f"><span class="cq-hl-k">Owner</span><span class="cq-hl-v">{ownerName}</span></div>
-                <div class="cq-hl-f"><span class="cq-hl-k">Status</span><span class="cq-hl-v">{phrStatus}</span></div>
-                <div class="cq-hl-f"><span class="cq-hl-k">Pending Checklist</span><span class="cq-hl-v">{pendingChecklist}</span></div>
-            </div>
-        </header>
-
-        <template if:true={error}>
-            <div class="cq-msg crit err">{error}</div>
-        </template>
-
-        <div class="cq-ws-body">
-            <nav class="cq-rail">
-                <div class="cq-rail-title">Review Steps</div>
-                <template for:each={steps} for:item="s">
-                    <button key={s.key} class={s.cls} data-key={s.key} onclick={handleStep}>
-                        <span class="mark">
-                            <template if:true={s.done}>&#10003;</template>
-                            <template if:true={s.notDone}>{s.n}</template>
-                        </span>
-                        <span class="txt">
-                            <span class="lbl">{s.label}</span>
-                            <span class="ssub">{s.sub}</span>
-                        </span>
-                    </button>
-                </template>
-                <div class="progress">{progress}</div>
-            </nav>
-
-            <main class="work">
+        <c-cq-ws-shell record-id={recordId} icon="standard:custom" icon-color="#747e96" object-label="Product History Review" record-name={title}
+            fields={headerFields} show-edit agent-name={agentName} ask-suggestions={askSuggestions}
+            steps={railSteps} progress={progress} error={error}
+            show-foot={notRecords} back-disabled={noBack} next-disabled={noNext} next-outline={canSubmit}
+            onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onopen={handleShellOpen}>
                 <template if:true={isRecords}>
                     <c-ask-cq-records-demo record-id={recordId}>
                         <button slot="actions" class="cq-btn-primary" onclick={handleNext}>Next</button>
@@ -117,18 +75,13 @@
                         </template>
                     </div>
                 </template>
-                <template if:false={isRecords}>
-                <footer class="cq-ws-foot">
+                <template if:false={isRecords}><span slot="foot" class="footacts">
                     <span class={footCls}>{footNote}</span>
                     <template if:true={isChecklist}>
                         <button class="cq-btn-outline" onclick={handleSaveDraft} disabled={cantSaveDraft}>Save</button>
                         <button class="cq-btn-primary" onclick={handleSubmitChecklist} disabled={cantSubmit}>Submit Checklist</button>
                     </template>
-                    <template if:true={hasBack}><button class="cq-btn-outline" onclick={handleBack}>Back</button></template>
-                    <template if:true={hasNext}><button class={nextCls} onclick={handleNext}>Next</button></template>
-                </footer>
-                </template>
-            </main>
-        </div>
+                </span></template>
+        </c-cq-ws-shell>
     </div>
 </template>

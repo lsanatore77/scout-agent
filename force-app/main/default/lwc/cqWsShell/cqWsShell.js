@@ -12,6 +12,9 @@ import getLook from '@salesforce/apex/CqWsSettings.get';
 export default class CqWsShell extends LightningElement {
     @api recordId;
     @api icon = 'standard:record';
+    /** The icon's background colour, when the object's own differs from the icon's default (e.g. '#747e96'). */
+    @api iconColor;
+    get iconStyle() { return this.iconColor ? '--slds-c-icon-color-background: ' + this.iconColor + '; --sds-c-icon-color-background: ' + this.iconColor + ';' : ''; }
     @api objectLabel;
     @api recordName;
     /** [{ key, label, value, id?, tone? }]: a field with an id shows as a link to that record; tone (pos, warn, crit) colours the value */
@@ -95,4 +98,6 @@ export default class CqWsShell extends LightningElement {
     /** An action link in an Ask CQ.AI answer (e.g. Create CAPA): passed on to the workspace as askcqaction. */
     handleAskAction(event) { this.fire('askcqaction', event.detail); }
     handleAskPin(event) { this.fire('askcqpin', event.detail); }
+    /** Puts a question to the header's Ask CQ.AI (e.g. a Generate with CQ.AI button in a step). */
+    @api ask(question) { const p = this.template.querySelector('c-ask-cq-popover'); if (p) { p.ask(question); } }
 }

@@ -1,18 +1,11 @@
 @import 'c/cqStyles';
 
-.ws { background: var(--cq-bg); border-radius: 8px; border: 1px solid var(--cq-line); overflow: hidden; }
+/* The icon colour (theme colour 747E96, the Product History Review object's own) is passed to the shared frame as icon-color. */
 
-/* highlights panel */
-/* Same icon and colour Salesforce gives the Product History Review object (theme colour 747E96, no custom icon). */
-.cq-hl-icon lightning-icon { --slds-c-icon-color-background: #747e96; --sds-c-icon-color-background: #747e96; }
-
-
-.work { flex: 1; min-width: 0; background: var(--cq-bg); display: flex; flex-direction: column; }
-/* the work area is flush (each section pads itself), so the shared footer gets its side padding here */
-.cq-ws-foot { padding: 16px 20px; }
+.footacts { display: contents; }
 .blocker { color: var(--cq-warn-fg); font-weight: 600; font-size: 13px; }
 .footnote { color: var(--cq-muted); font-size: 13px; }
-.sect { padding: 12px 20px 8px; }
+.sect { padding: 0 0 8px; }
 .sect-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; flex-wrap: wrap; }
 .sect-title { font-size: 15px; font-weight: 700; }
 .sect-sub { font-size: 13px; color: var(--cq-muted); }
@@ -28,9 +21,6 @@
 .file { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); font-size: 13px; }
 .file a { font-weight: 700; }
 .file lightning-formatted-date-time { color: var(--cq-faint); font-size: 13px; margin-left: auto; }
-/* this header sits flush inside its container, so no rounded top */
-.cq-hl { border-radius: 0; }
-.cq-msg.err { margin: 10px 16px 0; }
 .cq-msg.ok { margin: 0 0 8px; }
 .ynwrap { flex: none; flex-wrap: nowrap; }
 .ynwrap .cq-chip { min-width: 64px; }

@@ -135,6 +135,8 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
             cls: 'step' + (d.key === this.current ? ' active' : '') + (d.done ? ' done' : '')
         }));
     }
+    /** The rail as the shared frame (c-cq-ws-shell) draws it. */
+    get railSteps() { return this.steps.map((s) => ({ label: s.label, sub: s.sub, done: s.done, active: s.key === this.current })); }
     get progress() {
         const done = this.steps.filter((s) => s.done).length;
         return done + ' of ' + this.steps.length + ' steps complete';
@@ -150,6 +152,19 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
     get ownerName() { return (this.status && this.status.ownerName) || '—'; }
     get phrStatus() { return (this.status && this.status.phrStatus) || '—'; }
     get pendingChecklist() { return this.status ? this.status.pendingChecklist : '—'; }
+    /** The header fields the shared frame draws; the complaint opens in a new tab. */
+    get headerFields() {
+        const s = this.status || {};
+        return [
+            { key: 'complaint', label: 'Complaint', value: s.complaintName, id: s.complaintId },
+            { key: 'part', label: 'Part', value: this.partName },
+            { key: 'lot', label: 'Lot', value: this.lotNumber },
+            { key: 'owner', label: 'Owner', value: this.ownerName },
+            { key: 'status', label: 'Status', value: this.phrStatus },
+            { key: 'pending', label: 'Pending Checklist', value: this.pendingChecklist }
+        ];
+    }
+    handleShellOpen(event) { window.open('/' + event.detail, '_blank'); }
 
     handleEdit() {
         this[NavigationMixin.Navigate]({
@@ -174,7 +189,7 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
 
     /** Which agent and which ready questions the popover carries on this step. */
     get agentName() { return this.current === 'checklist' ? 'Scout_Checklist' : 'PHR_Agent'; }
-    get suggestions() {
+    get askSuggestions() {
         switch (this.current) {
             case 'checklist': return 'Explain the CQ.AI suggested answers,What is the scrap rate?,Which questions still need an answer?';
             case 'summary': return 'Generate the PHR Summary,What should the summary cover?';
@@ -197,10 +212,13 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
         this.current = key;
         if (key === 'checklist') { await this.loadChecklist(); }
     }
-    handleStep(event) { return this.go(event.currentTarget.dataset.key); }
+    handleStep(event) { return this.go(STEP_ORDER[Number(event.detail)]); }
     get stepIndex() { return STEP_ORDER.indexOf(this.current); }
     get hasBack() { return this.stepIndex > 0; }
     get hasNext() { return this.stepIndex < STEP_ORDER.length - 1; }
+    get noBack() { return !this.hasBack; }
+    get noNext() { return !this.hasNext; }
+    get notRecords() { return !this.isRecords; }
     handleBack() { return this.go(STEP_ORDER[this.stepIndex - 1]); }
     handleNext() { return this.go(STEP_ORDER[this.stepIndex + 1]); }
     get cantSaveDraft() { return this.saving || !this.dirty; }
@@ -220,7 +238,8 @@ export default class AskCqWorkspace extends NavigationMixin(LightningElement) {
 
     // ----- Ask CQ -----
 
-    get pop() { return this.template.querySelector('c-ask-cq-popover'); }
+    /** Ask CQ.AI lives in the shared frame's header; the frame passes questions on to it. */
+    get pop() { return this.template.querySelector('c-cq-ws-shell'); }
     handleAsk(event) {
         const q = event.detail && event.detail.question;
         if (q && this.pop) { this.pop.ask(q); }
