@@ -3,13 +3,22 @@
  * change, every CQ.AI Suggestion with its facts and records, every decision on a suggestion, and every signature;
  * and the signatures on their own, with the committee seats still waiting.
  *
- * Field Action Reviews for now; other workspaces add their record type here as they move to the workspace model.
+ * Field Action Reviews and Field Actions; other workspaces add their record type here as they move to the workspace model.
+ * Every electronic signature (CqEsign) shows here, in the timeline and in the Signatures list (docs/esignature.md).
  * The person must be able to read the record; the entries themselves are read in system mode, as they are written.
  */
 public with sharing class CqAuditTrail {
 
     public class Src { @AuraEnabled public String label; @AuraEnabled public String id; }
-    public class Entry {
+    public class Entry implements Comparable {
+        /** Newest first. */
+        public Integer compareTo(Object o) {
+            Datetime b = ((Entry) o).at;
+            if (at == b) { return 0; }
+            if (at == null) { return 1; }
+            if (b == null) { return -1; }
+            return at > b ? -1 : 1;
+        }
         @AuraEnabled public String id; @AuraEnabled public Datetime at; @AuraEnabled public String who; @AuraEnabled public Boolean cq = false;
         @AuraEnabled public String kind;      // suggestion, decision, edit, signature, create, delete
         @AuraEnabled public String title; @AuraEnabled public String detail;
@@ -60,7 +69,7 @@ public with sharing class CqAuditTrail {
     private static Trail fieldAction(Id recordId) {
         Field_Action__c fa;
         try {
-            fa = [SELECT Id, Name FROM Field_Action__c WHERE Id = :recordId WITH USER_MODE];
+            fa = [SELECT Id, Name, Status__c, Closed_By__r.Name, Closed_On__c, Closure_Summary__c FROM Field_Action__c WHERE Id = :recordId WITH USER_MODE];
         } catch (QueryException e) {
             throw new AuraHandledException('You do not have access to this record.');
         }
@@ -80,6 +89,28 @@ public with sharing class CqAuditTrail {
             x.detail = bits.isEmpty() ? null : String.join(bits, ': ');
             t.entries.add(x);
         }
+        // closing it, and the signatures: each in the timeline, and the signatures again in their own list
+        if (fa.Closed_On__c != null) {
+            Entry x = new Entry();
+            x.id = fa.Id + '-closed'; x.at = fa.Closed_On__c; x.kind = 'decision'; x.who = fa.Closed_By__r?.Name;
+            x.title = 'Closed the Field Action'; x.detail = cut(fa.Closure_Summary__c, 600);
+            t.entries.add(x);
+        }
+        for (Field_Action_Record_Activity__c a : new Reader().faSignaturesOf(recordId)) {
+            Sign s = new Sign();
+            s.key = a.Id; s.at = a.CreatedDate; s.who = a.CreatedBy.Name; s.seat = 'Recall Coordinator';
+            s.meaning = String.isNotBlank(a.Purpose_Of_Signature__c) ? a.Purpose_Of_Signature__c : 'Close Field Action';
+            s.comment = String.isNotBlank(a.Comment_Long__c) ? a.Comment_Long__c : a.Comment__c;
+            s.verified = a.Verified_By__c == CqEsigBridge.PASSWORD ? 'Password checked' : String.isBlank(a.Verified_By__c) ? 'Recorded by CQ' : a.Verified_By__c;
+            t.signatures.add(s);
+            Entry x = new Entry();
+            x.id = a.Id; x.at = a.CreatedDate; x.kind = 'signature'; x.who = a.CreatedBy.Name;
+            x.title = 'Signed: ' + s.meaning; x.detail = s.comment;
+            t.entries.add(x);
+        }
+        t.entries.sort();
+        t.signLine = t.signatures.isEmpty() ? (fa.Status__c == 'Closed' ? 'Closed without a signature' : 'Waiting for the recall coordinator')
+            : t.signatures.size() == 1 ? '1 signature' : t.signatures.size() + ' signatures';
         return t;
     }
 
@@ -247,6 +278,10 @@ public with sharing class CqAuditTrail {
             return [SELECT Id, Name, CreatedDate, Action__c, Changed_By__c, Field_Name__c, Field_Label__c, Old_Value__c, New_Value__c,
                            Record_Name__c, Suggestion_Key__c, Suggestion__c, Facts__c, Sources__c, Reason__c, Signature__c
                     FROM Field_Action_Review_Audit__c WHERE Record_Id__c = :recordId ORDER BY CreatedDate DESC, Name DESC LIMIT 1000];
+        }
+        List<Field_Action_Record_Activity__c> faSignaturesOf(Id recordId) {
+            return [SELECT Id, CreatedDate, CreatedBy.Name, Activity_Code__c, Purpose_Of_Signature__c, Comment__c, Comment_Long__c, Verified_By__c
+                    FROM Field_Action_Record_Activity__c WHERE Field_Action__c = :recordId ORDER BY CreatedDate DESC LIMIT 200];
         }
         List<Field_Action_Review_Record_Activity__c> signaturesOf(Id recordId) {
             return [SELECT Id, CreatedDate, CreatedBy.Name, Activity_Code__c, Purpose_Of_Signature__c, Comment__c, Comment_Long__c, Verified_By__c

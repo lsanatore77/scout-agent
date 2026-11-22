@@ -456,8 +456,10 @@ public with sharing class CqFieldActionRecovery {
         return getView(recordId);
     }
 
-    /** Close Field Action: every blocking checklist item done, then the status is Closed and the record takes no more changes. */
-    @AuraEnabled
+    /**
+     * Close Field Action: every blocking checklist item done, then the status is Closed and the record takes no more changes.
+     * Not called from the screen: closing goes through CqFieldActionClose.signAndClose, which signs first (docs/esignature.md).
+     */
     public static View closeFieldAction(Id recordId, String summary) {
         View v = getView(recordId);
         if (v.closed) { throw new AuraHandledException('This field action is already closed.'); }

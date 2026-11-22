@@ -40,8 +40,18 @@ private class CqFarEsigPoliciesTest {
     }
 
     @IsTest
-    static void oneProviderForFieldActionReview() {
+    static void oneProviderEachForReviewAndFieldAction() {
         List<compliancequest.SQX_Extension_Object_Policy_Provider> all = new CqFarEsigPolicies().getAllESigPolicyProviders();
-        System.assertEquals(1, all.size());
+        System.assertEquals(2, all.size());
+    }
+
+    @IsTest
+    static void aFieldActionSignatureRowLinksToItsFieldAction() {
+        Field_Action__c fa = new Field_Action__c(Title__c = 'Esig field action');
+        insert fa;
+        Field_Action_Record_Activity__c row = new Field_Action_Record_Activity__c();
+        new CqFarEsigPolicies().setParentByChildRecordId(row, fa.Id);
+        System.assertEquals(fa.Id, row.Field_Action__c);
+        System.assertEquals(null, new CqFarEsigPolicies().getApplicableActionForExtensionObject(fa.Id, true), 'no CQ approvals on a field action');
     }
 }

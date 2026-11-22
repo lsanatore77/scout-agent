@@ -109,3 +109,8 @@ State on 2026-11-19:
 - Still open here: server-side guard in decide() (mostly in place: decide() checks CQ's policy), Old vs New switch-over
   (retire cqFieldActionWorkspace; it still has the purple Your Recommendation card and the distribution note),
   findings note for CQ on e-signature lookups (offered), Entra signing.
+
+## Shared standard (2026-11-22)
+
+- Every signature now uses `c-cq-sign-seat` + `CqEsign`; see `docs/esignature.md`.
+- Field Action Closure signs and closes (Recall Coordinator = Field Action owner). Live on FA-0001 (2026-11-22): the Signature card shows the Recall Coordinator seat (Lou), comment, password and Sign and Close Field Action, blocked until scope and verdict are done. Lou to confirm the CQ policy for Field Action · Close Field Action in eSig Settings (required, comment optional, purpose).

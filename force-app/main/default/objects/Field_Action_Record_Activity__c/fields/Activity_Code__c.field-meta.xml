@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Activity_Code__c</fullName>
+    <label>Activity Code</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>close</fullName><default>false</default><label>Close Field Action</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

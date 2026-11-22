@@ -133,3 +133,11 @@ Newest first.
 
 ### 17 Nov 2026
 - **Intake read-aloud (audio)**: two new Event_Question fields — `Audio_Wav_Base64__c` (Long Text, base64 PCM WAV clip) and `Audio_Source_Text__c` (the text the clip speaks, for staleness). Read + Edit granted on both in **CQ.AI Quality** so the intake Apex (user mode) can return the clip and admins can populate/edit it. Clips play in the chat via the Web Audio API (the Salesforce mobile WebView blocks the HTML audio element + MP3/WAV file decoders).
+
+### 22 Nov 2026
+- **Field Action Closure signature** (new): Field Action Closure now signs and closes in one step (`CqFieldActionClose.getSigner` / `signAndClose`, Apex access). Only the Field Action owner (the Recall Coordinator) can close; an admin can close for the owner only when CQ's policy needs no signature. `CqFieldActionRecovery.closeFieldAction` is no longer callable from a page.
+- **Field_Action_Record_Activity__c** (new object, FAA-…): one row per signature on a Field Action. **Field Actions User**: Create and Read on the object and Read on its 11 fields (no Edit or Delete). Sharing is controlled by the Field Action.
+- **CqFieldActionKeepSigned** (new trigger): a Field Action with a signature cannot be deleted.
+- **CqFarEsigPolicies**: now also registers Field Action (action Close Field Action) with CQ. No new Extension Esig Policy Provider row: the existing `CqFarEsigPolicies` row covers both objects.
+- **CqAuditTrail**: the Field Action trail shows Closed the Field Action and the signature. No new access.
+- The shared e-signature standard is in `docs/esignature.md`.

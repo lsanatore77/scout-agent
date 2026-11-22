@@ -1,11 +1,12 @@
 /**
- * CqFarEsigPolicies: registers Field Action Review with CQ's electronic signature, the way CQ's own add-on
- * modules do (cqext CQDC_Esig_Policies and others).
+ * CqFarEsigPolicies: registers Field Action Review and Field Action with CQ's electronic signature, the way CQ's own
+ * add-on modules do (cqext CQDC_Esig_Policies and others). Every signable object of this app is added here (docs/esignature.md).
  *
  * To turn it on, an admin adds a row named CqFarEsigPolicies to the CQ Extension Esig Policy Provider custom
  * metadata (CQ Admin > Manage Extension Settings). CQ then offers Field Action Review in its Electronic Signature
  * Policies, with the actions in Field Action Review Record Activity's Activity Code (Committee Approve, Committee
- * Send Back), and writes each signature to that object.
+ * Send Back), and writes each signature to that object. Field Action is offered the same way, with the actions in
+ * Field Action Record Activity's Activity Code (Close Field Action).
  *
  * Global because CQ's managed code finds and creates it by name.
  */
@@ -13,7 +14,7 @@ global with sharing class CqFarEsigPolicies implements compliancequest.SQX_Ext_O
     public static final String APPROVE = 'approve';
     public static final String REJECT = 'reject';
 
-    /** One provider: Field Action Review, its signature log, and the field whose values are the signable actions. */
+    /** One provider per signable object: the object, its signature log, and the field whose values are the signable actions. */
     global List<compliancequest.SQX_Extension_Object_Policy_Provider> getAllESigPolicyProviders() {
         return new List<compliancequest.SQX_Extension_Object_Policy_Provider>{
             new compliancequest.SQX_Extension_Object_Policy_Provider(
@@ -21,6 +22,12 @@ global with sharing class CqFarEsigPolicies implements compliancequest.SQX_Ext_O
                 Field_Action_Review_Record_Activity__c.SObjectType,
                 Field_Action_Review_Record_Activity__c.Activity_Code__c,
                 new Set<String>{ REJECT },      // sending back always needs a comment
+                false),
+            new compliancequest.SQX_Extension_Object_Policy_Provider(
+                Field_Action__c.SObjectType,
+                Field_Action_Record_Activity__c.SObjectType,
+                Field_Action_Record_Activity__c.Activity_Code__c,
+                new Set<String>(),
                 false)
         };
     }
@@ -31,8 +38,14 @@ global with sharing class CqFarEsigPolicies implements compliancequest.SQX_Ext_O
         return isApprove == true ? APPROVE : REJECT;
     }
 
-    /** Links a signature log row to its review, whether CQ hands us the review, its approval or an approval step. */
+    /** Links a signature log row to its record: a field action's row to the field action; a review's row to the review, whether CQ hands us the review, its approval or an approval step. */
     global void setParentByChildRecordId(SObject sobj, Id childRecordId) {
+        if (sobj != null && sobj.getSObjectType() == Field_Action_Record_Activity__c.SObjectType) {
+            if (childRecordId != null && childRecordId.getSObjectType() == Field_Action__c.SObjectType) {
+                sobj.put(Field_Action_Record_Activity__c.Field_Action__c, childRecordId);
+            }
+            return;
+        }
         if (sobj == null || sobj.getSObjectType() != Field_Action_Review_Record_Activity__c.SObjectType) { return; }
         Id review = reviewFor(childRecordId);
         if (review != null) { sobj.put(Field_Action_Review_Record_Activity__c.Field_Action_Review__c, review); }

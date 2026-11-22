@@ -62,6 +62,19 @@
                         </template>
                     </div>
                 </section>
+                <section class="cq-stepcard seatcard">
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">4</span><span class="cq-stepcard-title">Signature</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{signCount}</span></div>
+                    <c-cq-sign-seat record-id={recordId} policy-key="Field_Action__c" actions={seatActions}
+                        seat="Recall Coordinator" person={signPerson} sub={signSub} quote={signQuote} status={signStatus} tone={signTone}
+                        mine={signMine} meaning="confirm the field action is complete and its effectiveness verified" comment-hint="Optional."
+                        submit={seatSubmit} disabled={cantClose}>
+                        <template if:true={adminClose}>
+                            <div class="sadmin"><span class="cq-sub">As admin:</span><button class="cq-link" onclick={handleAdminClose} disabled={cantClose}>Close Field Action</button></div>
+                        </template>
+                    </c-cq-sign-seat>
+                    <template if:true={signBlocker}><p class="snote blk">{signBlocker}.</p></template>
+                    <p class="snote">{signNote}</p>
+                </section>
             </div>
         </div>
         <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>

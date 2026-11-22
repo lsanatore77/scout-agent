@@ -2,7 +2,9 @@ import { LightningElement, api } from 'lwc';
 import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqFieldActionRecovery.getView';
 import saveClosure from '@salesforce/apex/CqFieldActionRecovery.saveClosure';
-import closeFieldAction from '@salesforce/apex/CqFieldActionRecovery.closeFieldAction';
+import getSigner from '@salesforce/apex/CqFieldActionClose.getSigner';
+import signAndClose from '@salesforce/apex/CqFieldActionClose.signAndClose';
+import { askPolicies, anyRequired } from 'c/cqEsign';
 import createCapaApex from '@salesforce/apex/CqFieldActionRecovery.createCapa';
 
 /** The step an open checklist item is settled on (the workspace opens it on a gostep event), and its name. */
@@ -17,10 +19,17 @@ export default class CqFieldActionClosure extends LightningElement {
     saving = 0;
     footSig;
     typed;               // the summary as typed, before it is saved
+    signer;              // the recall coordinator (the owner), who signs and closes; and the signature once made
+    needSign = true;     // whether CQ's policy asks for a signature: an administrator may close for the coordinator only when not
 
     connectedCallback() { this._loading = this.load(); }
     async load() {
-        try { this.apply(await getView({ recordId: this.recordId })); }
+        try {
+            const [v, s] = await Promise.all([getView({ recordId: this.recordId }), getSigner({ recordId: this.recordId })]);
+            this.signer = s;
+            this.apply(v);
+            if (s.canAdmin && !s.closed) { this.needSign = anyRequired(await askPolicies(this.recordId, ['close'], 'Field_Action__c')); }
+        }
         catch (e) { this.error = this.msg(e, 'Could not read closure.'); }
     }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
@@ -35,7 +44,7 @@ export default class CqFieldActionClosure extends LightningElement {
         catch (e) { this.error = this.msg(e, fallback); }
         this.saving -= 1;
     }
-    get ready() { return !!this.v; }
+    get ready() { return !!this.v && !!this.signer; }
     get busy() { return this.saving > 0; }
     get locked() { return this.v.closed; }
 
@@ -44,11 +53,12 @@ export default class CqFieldActionClosure extends LightningElement {
         // a textarea shows its text through its value property, so it is set here (not while someone is typing in it)
         const ta = this.template.querySelector('textarea.ta');
         if (ta && this.template.activeElement !== ta && ta.value !== this.summaryText) { ta.value = this.summaryText; }
-        const detail = { show: true, label: this.closeLabel, disabled: this.cantClose, blocker: this.blocker };
+        // closing is signed in the Signature card (c-cq-sign-seat), so the footer keeps only Back and Next
+        const detail = { show: false, label: '', disabled: true, blocker: '' };
         const sig = JSON.stringify(detail);
         if (sig !== this.footSig) { this.footSig = sig; this.dispatchEvent(new CustomEvent('footchange', { detail })); }
     }
-    @api confirm() { return this.handleClose(); }
+    @api confirm() { /* closing is signed in the Signature card */ }
     /** Ask CQ.AI's Create CAPA link lands here. */
     @api async createCapa() { await this._loading; return this.handleCreateCapa(); }
 
@@ -59,7 +69,7 @@ export default class CqFieldActionClosure extends LightningElement {
     }
     get intro() {
         return this.v.closed ? 'This field action is closed and takes no more changes.'
-            : 'Check that everything is done, record the closing summary and what follows, then close. A closed field action is locked.';
+            : 'Check that everything is done, record the closing summary and what follows, then sign and close. A closed field action is locked.';
     }
 
     // ---- checklist: plain marks as on Scope and the Verdict (✓ done, ✕ open and stops closing, ! open but does not,
@@ -144,11 +154,42 @@ export default class CqFieldActionClosure extends LightningElement {
         return open.length ? 'Before closing: ' + open.join(', ') : '';
     }
     get cantClose() { return this.v.closed || this.busy || !this.v.canClose; }
-    get closeLabel() { return this.busy ? 'Saving…' : this.v.closed ? 'Field Action Closed' : 'Close Field Action'; }
-    async handleClose() {
+
+    // ---- signature: the shared signature seat (docs/esignature.md); the recall coordinator, the owner, signs and closes
+    seatActions = [{ action: 'close', label: 'Close Field Action', doing: 'Closing', signing: 'closing the field action' }];
+    get signMine() { return !!this.signer.mine && !this.v.closed; }
+    get signPerson() { return this.signer.name + (this.signer.mine ? ' (you)' : ''); }
+    get signSub() {
+        const s = this.signer;
+        if (s.signed) { return 'Signed ' + new Date(s.signedOn).toLocaleString() + ' · electronic signature'; }
+        if (this.v.closed) { return 'Closed ' + new Date(this.v.closedOn).toLocaleString() + (this.v.closedBy ? ' by ' + this.v.closedBy : '') + ' · no signature asked'; }
+        return s.mine ? 'Waiting for you' : 'Waiting for ' + s.name;
+    }
+    get signQuote() { return this.signer.signed && this.signer.comment ? '“' + this.signer.comment + '”' : ''; }
+    get signStatus() { return this.signer.signed ? 'Signed' : this.v.closed ? 'Closed' : this.signMine ? 'Your Signature' : 'Waiting'; }
+    get signTone() { return this.v.closed ? 'pos' : this.signMine ? 'you' : 'warn'; }
+    get signCount() { return (this.signer.signed ? 1 : 0) + ' of 1 signed'; }
+    get signNote() {
+        if (this.v.closed) { return this.signer.signed ? 'Signed with CQ\'s electronic signature. The signature is also in the Audit Trail.' : 'Closed. CQ\'s signature policy asked for no signature; the closing is in the Audit Trail.'; }
+        return 'Signatures run on CQ\'s electronic signature. The field action closes when the recall coordinator signs.';
+    }
+    get signBlocker() { return this.v.closed ? '' : this.blocker; }
+    get adminClose() { return !!this.signer.canAdmin && !this.needSign && !this.v.closed; }
+    /** The seat signs and closes in one request (CqFieldActionClose.signAndClose); a refusal shows under its button. */
+    seatSubmit = async ({ comment, password }) => {
+        this.error = undefined; this.saving += 1;
+        try {
+            this.apply(await signAndClose({ recordId: this.recordId, summary: this.summaryText, comment, password }));
+            this.typed = undefined;
+            this.signer = await getSigner({ recordId: this.recordId });
+            notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
+        } finally { this.saving -= 1; }
+    };
+    /** An administrator closes for the coordinator: only when CQ's policy asks for no signature. */
+    async handleAdminClose() {
         if (this.cantClose) { return; }
-        const summary = this.summaryText;
-        await this.call(() => closeFieldAction({ recordId: this.recordId, summary }), 'Could not close the field action.');
+        await this.call(() => signAndClose({ recordId: this.recordId, summary: this.summaryText, comment: null, password: null }), 'Could not close the field action.');
         this.typed = undefined;
+        try { this.signer = await getSigner({ recordId: this.recordId }); } catch (e) { /* the card keeps what it had */ }
     }
 }

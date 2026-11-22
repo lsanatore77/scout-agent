@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Field Action Record Activity object is CQ&apos;s electronic signature log for a Field Action: one row per signed action (closing it), with Activity Code, Purpose of Signature, Comment and who signed. Its Activity Code values are the actions an admin can require a signature for.</description>
+    <label>Field Action Record Activity</label>
+    <nameField>
+        <displayFormat>FAA-{000000}</displayFormat>
+        <label>Activity Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Field Action Record Activities</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

@@ -15,3 +15,9 @@
 .capaopts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .or { font-size: 13px; color: var(--cq-muted); }
 .capaopts select { flex: 1; width: auto; }
+/* the Signature card is the shared signature seat (c-cq-sign-seat) in a card without padding, as on Field Action Review */
+.seatcard { padding: 0; overflow: hidden; }
+.seatcard .cq-stepcard-head { padding: 14px 16px 10px; margin: 0; }
+.sadmin { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.snote { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--cq-line); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
+.snote.blk { color: var(--cq-warn-fg); font-weight: 600; }
