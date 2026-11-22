@@ -14,9 +14,9 @@
 .sgh { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .sumcard { display: flex; flex-direction: column; gap: 10px; }
 .sumrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-/* the health hazard summary sits in What Was Decided, under the rationale: a quiet label beside the text, no card of its own */
-.hazline { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; font-size: 14px; line-height: 1.45; }
-.hazk { font-size: 13px; color: var(--cq-muted); white-space: nowrap; line-height: 1.6; }
+/* the health hazard summary sits in What Was Decided, under the rationale: a quiet label over the text, no card of its own */
+.hazline { display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 1.45; }
+.hazk { font-size: 13px; color: var(--cq-muted); }
 .hazv { white-space: pre-line; }
 .sumcard > .cq-para { margin-top: 0; }
 /* the glance tables (Reviews That Led Here, Signals on This Part) sit under their card heading; a review's reason opens under it */
@@ -28,6 +28,8 @@
 .rchev { display: inline-block; width: 12px; font-size: 18px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
 .rchev.open { transform: rotate(90deg); }
 .cq-tbl .evrow td { padding: 8px 12px; }
+/* one line a review: the approval takes the spare width and ends in an ellipsis when it is too long (the whole line shows on hover) */
+.cq-tbl td.apcell { width: 100%; max-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--cq-muted); }
 .logrow { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); font-size: 13px; }
 .logrow:last-child { border-bottom: none; }
 .logwhen { flex: 0 0 150px; color: var(--cq-muted); }

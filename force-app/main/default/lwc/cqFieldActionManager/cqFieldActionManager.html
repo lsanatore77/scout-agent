@@ -66,15 +66,15 @@
                                     <template if:true={hasReviews}>
                                         <div class="cq-tblwrap">
                                             <table class="cq-tbl">
-                                                <thead><tr><th class="chcol"><span class="sr">Open</span></th><th>Review</th><th>Source</th><th>Lot</th><th>Risk</th><th>Decided</th></tr></thead>
+                                                <thead><tr><th class="chcol"><span class="sr">Open</span></th><th>Review</th><th>Approval</th><th>Source</th><th>Risk</th><th>Decided</th></tr></thead>
                                                 <tbody>
                                                     <template for:each={reviewRows} for:item="r">
                                                         <template if:true={r.isRev}>
                                                             <tr key={r.key}>
                                                                 <td class="chcol"><template if:true={r.rationale}><button class="rchevbtn" data-id={r.id} onclick={handleRevToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></template></td>
-                                                                <td class="wide"><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button><div class="cq-sub">{r.approval}</div></td>
+                                                                <td class="cq-nowrap"><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button></td>
+                                                                <td class="apcell" title={r.approval}>{r.approval}</td>
                                                                 <td class="cq-nowrap">{r.source}</td>
-                                                                <td class="cq-nowrap">{r.lotText}</td>
                                                                 <td class="cq-nowrap">{r.riskText}</td>
                                                                 <td class="cq-nowrap">{r.dayText}</td>
                                                             </tr>
