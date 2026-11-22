@@ -637,7 +637,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     }
     /** The cover over your seat: while CQ is asked whether a signature is needed, and while your action is processed. */
     get covering() { return !!this.acting || this.signsLoading; }
-    get coverLine() { return this.acting ? this.actingLine : 'Getting your signature ready\u2026'; }
+    get coverLine() { return this.acting ? this.actingLine : 'Getting your signature ready…'; }
     get seatBusy() { return this.saving || this.signsLoading; }
     get commentRequired() { return !!this.signOf('approve').comment; }
     get commentHint() { return this.commentRequired ? 'Required with your signature.' : 'Required when you send it back.'; }
