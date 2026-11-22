@@ -44,8 +44,8 @@
                         <h3 class="cq-step-title">Field Action at a Glance</h3>
                         <div class="cq-cols top wide32">
                             <div class="cq-col lead">
-                                <div class="card sug sumcard">
-                                    <div class="lab">What Was Decided</div>
+                                <div class="card sumcard">
+                                    <div class="lab quiet">What Was Decided</div>
                                     <div class="cq-big">{v.title}</div>
                                     <div class="sumrow">
                                         <span class="cq-pill soft neu">{v.actionType}</span>
@@ -69,15 +69,28 @@
                                 <div class="card">
                                     <div class="lab">Reviews That Led Here</div>
                                     <template if:true={hasReviews}>
-                                        <template for:each={reviews} for:item="r">
-                                            <div key={r.id} class="revrow">
-                                                <span class="cq-stack">
-                                                    <span><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button> <span class="cq-sub">{r.meta}</span></span>
-                                                    <span class="cq-sub">{r.approval}</span>
-                                                    <template if:true={r.rationale}><span class="cq-sub">{r.rationale}</span></template>
-                                                </span>
-                                            </div>
-                                        </template>
+                                        <div class="cq-tblwrap">
+                                            <table class="cq-tbl">
+                                                <thead><tr><th class="chcol"><span class="sr">Open</span></th><th>Review</th><th>Source</th><th>Lot</th><th>Risk</th><th>Decided</th></tr></thead>
+                                                <tbody>
+                                                    <template for:each={reviewRows} for:item="r">
+                                                        <template if:true={r.isRev}>
+                                                            <tr key={r.key}>
+                                                                <td class="chcol"><template if:true={r.rationale}><button class="rchevbtn" data-id={r.id} onclick={handleRevToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></template></td>
+                                                                <td class="wide"><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button><div class="cq-sub">{r.approval}</div></td>
+                                                                <td class="cq-nowrap">{r.source}</td>
+                                                                <td class="cq-nowrap">{r.lotText}</td>
+                                                                <td class="cq-nowrap">{r.riskText}</td>
+                                                                <td class="cq-nowrap">{r.dayText}</td>
+                                                            </tr>
+                                                        </template>
+                                                        <template if:true={r.isWhy}>
+                                                            <tr key={r.key} class="evrow"><td></td><td colspan="5" class="cq-sub">{r.text}</td></tr>
+                                                        </template>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </template>
                                     <template if:false={hasReviews}><p class="cq-note">No review is linked to this field action.</p></template>
                                 </div>
@@ -85,9 +98,28 @@
                             <div class="card">
                                 <div class="lab">Signals on This Part</div>
                                 <template if:true={hasSignals}>
-                                    <template for:each={signals} for:item="s">
-                                        <div key={s.id} class="cq-krow" data-tone={s.strength}>
-                                            <span class="cq-stack"><span class="sgh"><span class="sgt">{s.rule}</span><span class={s.pillCls}>{s.strength}</span><span class="cq-sub">{s.where}</span></span><span class="cq-sub">{s.label}</span></span>
+                                    <div class="cq-tblwrap sigwrap" style={sigTableStyle}>
+                                        <table class="cq-tbl">
+                                            <thead><tr><th>Signal</th><th>What We See</th></tr></thead>
+                                            <tbody>
+                                                <template for:each={signalPage} for:item="s">
+                                                    <tr key={s.id}>
+                                                        <td class="sigcell"><div class="sgh"><span class="cq-strong">{s.rule}</span><span class={s.pillCls}>{s.strength}</span></div><div class="cq-sub">{s.where}</div></td>
+                                                        <td class="wide">{s.label}</td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <template if:true={hasSigPages}>
+                                        <div class="cq-pager">
+                                            <nav class="cq-pages" aria-label="Signal pages">
+                                                <button class="pg" onclick={handleSigPrev} disabled={cantPrevSig} aria-label="Previous page">&laquo;</button>
+                                                <template for:each={sigPageItems} for:item="p">
+                                                    <button key={p.key} class={p.cls} data-p={p.p} onclick={handleSigPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
+                                                </template>
+                                                <button class="pg" onclick={handleSigNext} disabled={cantNextSig} aria-label="Next page">&raquo;</button>
+                                            </nav>
                                         </div>
                                     </template>
                                 </template>

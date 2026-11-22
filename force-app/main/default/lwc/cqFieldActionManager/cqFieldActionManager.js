@@ -20,7 +20,7 @@ function titleCase(text) {
     if (!text) { return text; }
     return String(text).replace(/[A-Za-z][A-Za-z']*/g, (w, i, all) => {
         const before = all.slice(0, i);
-        const start = /^\s*$/.test(before) || /[.\u00b7:(]\s*$/.test(before);   // first word, or first after . · : (
+        const start = /^\s*$/.test(before) || /[.·:(]\s*$/.test(before);   // first word, or first after . · : (
         if (!start && SMALL_WORDS.has(w.toLowerCase())) { return w.toLowerCase(); }
         return w.charAt(0).toUpperCase() + w.slice(1);
     });
@@ -46,6 +46,20 @@ const STRATEGY = 2;
 const RECOVERY = 5;
 const CLOSURE = 6;
 const PAGE = 10;   // lots per page in the scope table
+const SIG_PAGE = 5; // signals per page on the glance, as on Field Action Review
+/** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
+function pageLinks(n, cur) {
+    const keep = [];
+    for (let i = 0; i < n; i++) { if (n <= 7 || i === 0 || i === n - 1 || Math.abs(i - cur) <= 2) { keep.push(i); } }
+    const out = [];
+    keep.forEach((i, k) => {
+        if (k > 0 && i - keep[k - 1] > 1) { out.push({ key: 'g' + i, text: '…', cls: 'pg gap', off: true, label: 'More pages' }); }
+        const on = i === cur;
+        out.push({ key: 'p' + i, p: i, text: String(i + 1), cls: 'pg' + (on ? ' on' : ''), off: on, current: on ? 'page' : 'false',
+            label: 'Page ' + (i + 1) });
+    });
+    return out;
+}
 const TRACE = {
     Verified: { mark: '✔ ', cls: 'tr ok' },
     NC: { mark: '✖ ', cls: 'tr bad' },
@@ -251,10 +265,41 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         }));
     }
     get hasReviews() { return this.reviews.length > 0; }
+    /** The reviews table: a row per review, and under it, once opened, the reason it gave. */
+    openRev = {};
+    get reviewRows() {
+        const out = [];
+        this.reviews.forEach((r) => {
+            const open = !!this.openRev[r.id];
+            out.push({ ...r, key: r.id, isRev: true, expanded: open ? 'true' : 'false', chevCls: 'rchev' + (open ? ' open' : ''),
+                toggleLabel: (open ? 'Hide' : 'Show') + ' the reason for ' + r.name,
+                lotText: r.lot || '', riskText: r.risk ? r.risk + (r.score !== undefined && r.score !== null ? ' · ' + r.score : '') : '', dayText: this.day(r.decidedOn) || '' });
+            if (open && r.rationale) { out.push({ key: r.id + '-why', isWhy: true, text: r.rationale }); }
+        });
+        return out;
+    }
+    handleRevToggle(event) {
+        const id = event.currentTarget.dataset.id;
+        this.openRev = { ...this.openRev, [id]: !this.openRev[id] };
+    }
     get signals() {
         return (this.v.signals || []).map((s) => ({ ...s, pillCls: 'cq-pill soft ' + ({ watch: 'warn', assess: 'warn', escalate: 'crit' }[(s.strength || '').toLowerCase()] || 'neu'), where: s.lot ? 'Lot ' + s.lot : 'Whole Part', label: titleCase(s.label) }));
     }
     get hasSignals() { return this.signals.length > 0; }
+    // five signals a page, as on Field Action Review; the table keeps the height of its first page
+    sigPage = 0;
+    sigMin = 0;
+    get sigPageCount() { return Math.max(1, Math.ceil(this.signals.length / SIG_PAGE)); }
+    get sigPageNow() { return Math.min(this.sigPage, this.sigPageCount - 1); }
+    get signalPage() { const from = this.sigPageNow * SIG_PAGE; return this.signals.slice(from, from + SIG_PAGE); }
+    get hasSigPages() { return this.signals.length > SIG_PAGE; }
+    get cantPrevSig() { return this.sigPageNow === 0; }
+    get cantNextSig() { return this.sigPageNow >= this.sigPageCount - 1; }
+    get sigTableStyle() { return this.hasSigPages && this.sigMin ? 'min-height:' + this.sigMin + 'px' : ''; }
+    handleSigPrev() { this.sigPage = Math.max(0, this.sigPageNow - 1); }
+    handleSigNext() { this.sigPage = Math.min(this.sigPageCount - 1, this.sigPageNow + 1); }
+    handleSigPage(event) { this.sigPage = Number(event.currentTarget.dataset.p); }
+    get sigPageItems() { return pageLinks(this.sigPageCount, this.sigPageNow); }
     goScope() { this.step = SCOPE; }
 
     // ---- step 2: scope
@@ -300,24 +345,15 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     tableMin = 0;
     get tableStyle() { return this.hasPages && this.tableMin ? 'min-height:' + this.tableMin + 'px' : ''; }
     renderedCallback() {
+        if (this.is0 && this.hasSigPages && !this.sigMin && this.sigPageNow === 0) {
+            const s = this.template.querySelector('.sigwrap');
+            if (s && s.clientHeight) { this.sigMin = s.clientHeight; }
+        }
         if (!this.is1 || !this.hasPages || this.tableMin || this.pageNow !== 0 || this.anyOpen) { return; }
         const w = this.template.querySelector('.tree');
         if (w && w.clientHeight) { this.tableMin = w.clientHeight; }
     }
-    /** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
-    get pageItems() {
-        const n = this.pageCount; const cur = this.pageNow;
-        const keep = [];
-        for (let i = 0; i < n; i++) { if (n <= 7 || i === 0 || i === n - 1 || Math.abs(i - cur) <= 2) { keep.push(i); } }
-        const out = [];
-        keep.forEach((i, k) => {
-            if (k > 0 && i - keep[k - 1] > 1) { out.push({ key: 'g' + i, text: '…', cls: 'pg gap', off: true, label: 'More pages' }); }
-            const on = i === cur;
-            out.push({ key: 'p' + i, p: i, text: String(i + 1), cls: 'pg' + (on ? ' on' : ''), off: on, current: on ? 'page' : 'false',
-                label: 'Page ' + (i + 1) });
-        });
-        return out;
-    }
+    get pageItems() { return pageLinks(this.pageCount, this.pageNow); }
 
     /** The nested table: each lot, and when expanded what it was built from, level by level, with where-used rows. */
     get rows() {

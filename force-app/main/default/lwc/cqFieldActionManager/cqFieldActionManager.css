@@ -1,20 +1,27 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: 13px; --cq-r-card: 4px; --cq-r-field: 4px; }
+/* square corners, as on Field Action Review */
+.cq-tblwrap, .cq-tile, .cq-modal { border-radius: 4px; }
 .ssub.alert { color: var(--cq-crit-fg); font-weight: 600; }
 /* card headings: bold, Title Case, body size, the same as the sub-heading on a CQ.AI suggestion card (Reported Answers) */
 .lab { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
-.card { padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
-.card.sug { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
+.card { padding: 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+/* What Was Decided is the committee's decision, not CQ.AI's: a plain card with a quiet caption over the title (purple is CQ.AI's colour) */
+.lab.quiet { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .pill { flex: none; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); color: var(--cq-accent); font-size: 11px; font-weight: 600; white-space: nowrap; }
 .sgh { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.sgt { font-size: 14px; font-weight: 700; }
 .sumcard { display: flex; flex-direction: column; gap: 10px; }
 .sumrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.revrow { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--cq-line); }
-.revrow:last-child { border-bottom: none; padding-bottom: 0; }
-/* the review link and its details: a real gap, since the template drops the space between them */
-.revrow .cq-link { margin-right: 8px; }
+/* the glance tables (Reviews That Led Here, Signals on This Part) sit under their card heading; a review's reason opens under it */
+.card .cq-tblwrap { margin-top: 8px; }
+.cq-tbl .chcol { width: 1%; padding-right: 0; }
+.cq-tbl td.sigcell { min-width: 160px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.rchevbtn { padding: 0; border: none; background: none; cursor: pointer; }
+.rchev { display: inline-block; width: 12px; font-size: 18px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
+.rchev.open { transform: rotate(90deg); }
+.cq-tbl .evrow td { padding: 8px 12px; }
 .logrow { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); font-size: 13px; }
 .logrow:last-child { border-bottom: none; }
 .logwhen { flex: 0 0 150px; color: var(--cq-muted); }
@@ -23,7 +30,7 @@
 .pendline { font-size: 13px; color: var(--cq-muted); }
 .pendline.warn { color: var(--cq-warn-fg); font-weight: 600; }
 /* the lot tree: its own scroll, a header that stays put, tighter rows */
-.tree { margin-top: 8px; max-height: 560px; overflow: auto; border-radius: 10px; }
+.tree { margin-top: 8px; max-height: 560px; overflow: auto; border-radius: 4px; }
 .tree .cq-tbl th { position: sticky; top: 0; z-index: 1; }
 .tree .cq-tbl td { padding: 6px 10px; vertical-align: middle; }
 .cscope { width: 112px; }
@@ -52,9 +59,3 @@
 .b { font-weight: 600; }
 /* buttons, pills, chips and messages come from cqStyles */
 .cq-pill.notconf { margin-left: 8px; }
-/* signals: a side bar in the colour of the signal's strength, the same device as the flagged rows on a CQ.AI suggestion card */
-/* the rows sit flush so the bars join into one solid line; even padding above and below each row, and room beside the bar */
-.cq-krow[data-tone] { padding: 9px 0 9px 14px; border-left: 3px solid var(--cq-line-field); }
-.lab + .cq-krow[data-tone] { margin-top: 8px; }
-.cq-krow[data-tone="Escalate"] { border-left-color: var(--cq-crit-solid); }
-.cq-krow[data-tone="Assess"], .cq-krow[data-tone="Watch"] { border-left-color: var(--cq-warn-solid); }
