@@ -1,54 +1,11 @@
 <template>
     <template if:true={loadError}><div class="cq-msg crit">{loadError}</div></template>
     <template if:true={ready}>
-        <div class="cq-box">
-            <header class="cq-hl">
-                <div class="cq-hl-top">
-                    <div class="cq-hl-who">
-                        <span class="cq-hl-icon"><lightning-icon icon-name="standard:incident" size="medium" alternative-text="Nonconformance"></lightning-icon></span>
-                        <div class="cq-hl-name">
-                            <span class="cq-hl-obj">Nonconformance</span>
-                            <span class="cq-hl-title">{v.name}</span>
-                        </div>
-                    </div>
-                    <div class="cq-hl-actions">
-                        <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Quality" placeholder="Ask about this disposition…" step={askStep} suggestions={askSuggestions}></c-ask-cq-popover>
-                        <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
-                    </div>
-                </div>
-                <div class="cq-hl-fields">
-                    <div class="cq-hl-f"><span class="cq-hl-k">Title</span><span class="cq-hl-v">{titleText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Part</span>
-                        <template if:true={v.partId}><a class="cq-hl-v link" href={partHref} target="_blank">{v.partNumber}</a></template>
-                        <template if:false={v.partId}><span class="cq-hl-v">&mdash;</span></template>
-                    </div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Lot</span><span class="cq-hl-v">{lotText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Stage</span><span class="cq-hl-v">{stageText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Risk</span><span class={riskCls}>{riskText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Disposition Due</span><span class="cq-hl-v">{dueText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Owner</span><span class="cq-hl-v">{ownerText}</span></div>
-                </div>
-            </header>
-
-            <div class="cq-ws-body">
-                <nav class="cq-rail" aria-label="Disposition Steps">
-                    <div class="cq-rail-title">Review Steps</div>
-                    <template for:each={steps} for:item="s">
-                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep}>
-                            <span class="mark">
-                                <template if:true={s.done}>&#10003;</template>
-                                <template if:true={s.notDone}>{s.n}</template>
-                            </span>
-                            <span class="txt">
-                                <span class="lbl">{s.label}</span>
-                                <span class="ssub">{s.sub}</span>
-                            </span>
-                        </button>
-                    </template>
-                    <div class="progress">{progress}</div>
-                </nav>
-
-                <div class="cq-ws-main">
+        <c-cq-ws-shell record-id={recordId} icon="standard:incident" object-label="Nonconformance" record-name={v.name}
+            fields={headerFields} show-edit agent-name="CQAI_Quality" ask-step={askStep} ask-suggestions={askSuggestions}
+            steps={railSteps} progress={progress} error={error}
+            show-foot={notDone} blocker={blocker} back-disabled={cantBack} next-disabled={cantNext} next-outline={cantNext}
+            onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onopen={handleShellOpen}>
                     <template if:true={showGlance}>
                         <h3 class="cq-step-title">Disposition at a Glance</h3>
                         <div class="cq-cols wide">
@@ -185,18 +142,7 @@
                         <div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div>
                     </template>
 
-                    <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
-                    <template if:false={showDone}>
-                        <footer class="cq-ws-foot">
-                            <span class="cq-blocker">{blocker}</span>
-                            <template if:true={showDispose}><button class="cq-btn-primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
-                            <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
-                            <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
-                        </footer>
-                    </template>
-                </div>
-            </div>
-
-        </div>
+                    <template if:true={showDispose}><button slot="foot" class="cq-btn-primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
+        </c-cq-ws-shell>
     </template>
 </template>

@@ -11,7 +11,7 @@
                 </div>
                 <div class="cq-hl-actions">
                     <template if:true={auditTrail}><c-cq-audit-trail record-id={recordId}></c-cq-audit-trail></template>
-                    <template if:true={agentName}><c-ask-cq-popover record-id={recordId} agent-name={agentName} step={askStep} suggestions={askSuggestions} onaskcqaction={handleAskAction}></c-ask-cq-popover></template>
+                    <template if:true={agentName}><c-ask-cq-popover record-id={recordId} agent-name={agentName} step={askStep} suggestions={askSuggestions} pin-label={pinLabel} onaskcqaction={handleAskAction} onaskcqpin={handleAskPin}></c-ask-cq-popover></template>
                     <template if:true={showEdit}><button class="cq-btn-outline" onclick={handleEdit}>Edit</button></template>
                 </div>
             </div>
@@ -20,7 +20,7 @@
                     <template for:each={fieldRows} for:item="f">
                         <div key={f.key} class="cq-hl-f"><span class="cq-hl-k">{f.label}</span>
                             <template if:true={f.isLink}><button class="cq-hl-v link" data-id={f.id} onclick={handleOpen}>{f.value}</button></template>
-                            <template if:false={f.isLink}><span class="cq-hl-v">{f.value}</span></template>
+                            <template if:false={f.isLink}><span class={f.vcls}>{f.value}</span></template>
                         </div>
                     </template>
                 </div>

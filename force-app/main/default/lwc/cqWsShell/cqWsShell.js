@@ -14,13 +14,15 @@ export default class CqWsShell extends LightningElement {
     @api icon = 'standard:record';
     @api objectLabel;
     @api recordName;
-    /** [{ key, label, value, id? }]: a field with an id shows as a link to that record */
+    /** [{ key, label, value, id?, tone? }]: a field with an id shows as a link to that record; tone (pos, warn, crit) colours the value */
     @api fields = [];
     @api showEdit = false;
     @api auditTrail = false;     // shows the Audit Trail link (c-cq-audit-trail) in the header
     @api agentName;
     @api askStep;
     @api askSuggestions;
+    /** Ask CQ.AI's pin button under an answer (e.g. Add to Evidence); a pin is passed on as askcqpin. */
+    @api pinLabel;
     @api railTitle = 'Review Steps';
     /** [{ label, sub, done, active, locked, mark?, later?, alert? }] in order. mark replaces the step number (e.g. '–'),
      *  later greys a step set aside for later, alert shows its sub line in red. */
@@ -65,7 +67,8 @@ export default class CqWsShell extends LightningElement {
     get fieldRows() {
         return (this.fields || []).map((f) => {
             const blank = f.value === undefined || f.value === null || f.value === '';
-            return { ...f, key: f.key || f.label, value: blank ? '—' : String(f.value), isLink: !!f.id && !blank };
+            return { ...f, key: f.key || f.label, value: blank ? '—' : String(f.value), isLink: !!f.id && !blank,
+                vcls: 'cq-hl-v' + (f.tone && !blank ? ' tone-' + f.tone : '') };
         });
     }
     get stepRows() {
@@ -89,4 +92,5 @@ export default class CqWsShell extends LightningElement {
     handleOpen(event) { this.fire('open', event.currentTarget.dataset.id); }
     /** An action link in an Ask CQ.AI answer (e.g. Create CAPA): passed on to the workspace as askcqaction. */
     handleAskAction(event) { this.fire('askcqaction', event.detail); }
+    handleAskPin(event) { this.fire('askcqpin', event.detail); }
 }

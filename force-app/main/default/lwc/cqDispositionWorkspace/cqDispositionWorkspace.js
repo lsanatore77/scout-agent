@@ -67,12 +67,26 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get lotText() { return this.dash(this.v.lot); }
     get stageText() { return this.v.stage ? this.v.stage.replace(/\s*\/\s*/, ' / ') : '—'; }
     get riskText() { return this.dash(this.v.risk); }
-    get riskCls() { return 'cq-hl-v lvl ' + (this.v.risk ? this.v.risk.toLowerCase() : ''); }
     get dueText() { return this.dateText(this.v.dispDue); }
     get ownerText() { return this.dash(this.v.owner); }
     get partHref() { return '/lightning/r/compliancequest__SQX_Part__c/' + this.v.partId + '/view'; }
     get invHref() { return this.href(this.v.investigationId); }
     get userText() { return 'you'; }
+    /** The header fields the shared frame (c-cq-ws-shell) draws; the risk level in its colour. */
+    get headerFields() {
+        const tone = { low: 'pos', medium: 'warn', high: 'crit' }[(this.v.risk || '').toLowerCase()];
+        return [
+            { key: 'title', label: 'Title', value: this.titleText },
+            { key: 'part', label: 'Part', value: this.v.partNumber, id: this.v.partId },
+            { key: 'lot', label: 'Lot', value: this.lotText },
+            { key: 'stage', label: 'Stage', value: this.stageText },
+            { key: 'risk', label: 'Risk', value: this.riskText, tone },
+            { key: 'due', label: 'Disposition Due', value: this.dueText },
+            { key: 'owner', label: 'Owner', value: this.ownerText }
+        ];
+    }
+    /** A header link (the part) opens in a new tab, as it did before the shared frame. */
+    handleShellOpen(event) { window.open(this.href(event.detail), '_blank'); }
     handleEdit() {
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage',
             attributes: { recordId: this.recordId, objectApiName: 'compliancequest__SQX_Nonconformance__c', actionName: 'edit' } });
@@ -101,6 +115,9 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
             cls: 'step' + (!done && i === this.step ? ' active' : '') + (stepDone[i] ? ' done' : '')
         }));
     }
+    /** The rail as the shared frame draws it. */
+    get railSteps() { return this.steps.map((s) => ({ label: s.label, sub: s.sub, done: s.done, active: s.cls.includes('active') })); }
+    get notDone() { return !this.showDone; }
     get progress() { return this.steps.filter((s) => s.done).length + ' of 2 steps complete'; }
     get planSummary() {
         const by = {};
@@ -257,7 +274,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
         this.seen = { ...this.seen, [i]: true };
         this.error = undefined;
     }
-    handleStep(event) { if (!this.isDone) { this.go(Number(event.currentTarget.dataset.i)); } }
+    handleStep(event) { if (!this.isDone) { this.go(Number(event.detail)); } }
     handleBack() { if (this.step > 0) { this.go(this.step - 1); } }
     handleNext() { if (this.step < STEPS.length - 1) { this.go(this.step + 1); } }
 
