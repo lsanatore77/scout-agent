@@ -84,6 +84,12 @@
                                                             <td class="num">{r.n}</td>
                                                         </tr>
                                                     </template>
+                                                    <template if:true={r.isSeen}>
+                                                        <tr key={r.key} class="evrow">
+                                                            <td></td>
+                                                            <td colspan="3" class="cq-sub">{r.text}</td>
+                                                        </tr>
+                                                    </template>
                                                     <template if:true={r.isRec}>
                                                         <tr key={r.key} class="evrow">
                                                             <td></td>
@@ -138,6 +144,12 @@
                                                                 <td class="sigcell"><div class="sghead"><span class="cq-strong">{r.rule}</span><span class={r.pillCls}>{r.strength}</span></div><div class="cq-sub">{r.sub}</div></td>
                                                                 <td class="wide"><div>{r.label}</div><template if:true={r.why}><div class="cq-sub">{r.why}</div></template></td>
                                                                 <td class="num">{r.n}</td>
+                                                            </tr>
+                                                        </template>
+                                                        <template if:true={r.isSeen}>
+                                                            <tr key={r.key} class="evrow">
+                                                                <td></td>
+                                                                <td colspan="3" class="cq-sub">{r.text}</td>
                                                             </tr>
                                                         </template>
                                                         <template if:true={r.isRec}>

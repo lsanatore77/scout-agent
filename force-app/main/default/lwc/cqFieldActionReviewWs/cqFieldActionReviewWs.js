@@ -353,7 +353,9 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         const n = all.length;
         const rest = this.showAll[s.id] ? 0 : Math.max(0, n - PAGE);
         return { ...s, pillCls: 'cq-pill soft ' + (STRENGTH_TONE[(s.strength || '').toLowerCase()] || 'neu'),
-            meta: titleCase([s.name, s.trend, seen ? 'first seen ' + seen : '', !s.lot ? 'whole part' : s.lot === this.v.lot ? 'this lot' : 'lot ' + s.lot,
+            // the first-seen date shows when the signal is opened, so the line under its name stays on one line
+            seenLine: seen ? 'First Seen ' + seen : '',
+            meta: titleCase([s.name, s.trend, !s.lot ? 'whole part' : s.lot === this.v.lot ? 'this lot' : 'lot ' + s.lot,
                 s.raisedBy ? 'raised by ' + s.raisedBy : '', s.status === 'Dismissed' ? 'dismissed earlier' : ''].filter(Boolean).join(' · ')),
             label: titleCase(s.label),
             why: titleCase(s.why),
@@ -372,6 +374,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
                 expanded: open ? 'true' : 'false', chevCls: 'chev' + (open ? ' open' : ''),
                 rowCls: 'srow' + (this.hotSig === s.id ? ' hot' : '') + (open ? ' isopen' : '') });
             if (open) {
+                if (s.seenLine) { rows.push({ key: 'f' + s.id, isSeen: true, text: s.seenLine }); }
                 s.records.forEach((r) => rows.push({ key: 'r' + s.id + r.id, isRec: true, id: r.id, name: r.name, line: r.line, meta: r.meta, sameLot: r.sameLot }));
                 if (s.hasRest) { rows.push({ key: 'm' + s.id, isRest: true, id: s.id, restLabel: s.restLabel }); }
             }
