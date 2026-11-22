@@ -5,6 +5,10 @@ import saveClosure from '@salesforce/apex/CqFieldActionRecovery.saveClosure';
 import closeFieldAction from '@salesforce/apex/CqFieldActionRecovery.closeFieldAction';
 import createCapaApex from '@salesforce/apex/CqFieldActionRecovery.createCapa';
 
+/** The step an open checklist item is settled on (the workspace opens it on a gostep event), and its name. */
+const STEP_OF = { scope: 'scope', strategy: 'strategy', units: 'recovery', customers: 'recovery', tasks: 'recovery', holds: 'recovery', verdict: 'recovery' };
+const STEP_LABEL = { scope: 'Scope', strategy: 'Strategy', recovery: 'Recovery' };
+
 /** Field Action step 7, Closure: the checklist, the closing summary, what follows, and Close Field Action. */
 export default class CqFieldActionClosure extends LightningElement {
     @api recordId;
@@ -58,22 +62,51 @@ export default class CqFieldActionClosure extends LightningElement {
             : 'Check that everything is done, record the closing summary and what follows, then close. A closed field action is locked.';
     }
 
-    // ---- checklist
-    get checks() {
-        return this.v.checks.map((c) => ({ ...c,
-            mark: c.state === 'ok' ? '✓' : c.state === 'na' ? '–' : '!',
-            markCls: 'mk ' + c.state,
-            createCapa: c.key === 'capa' && c.state === 'open' && !this.v.closed && !this.busy }));
+    // ---- checklist: plain marks as on Scope and the Verdict (✓ done, ✕ open and stops closing, ! open but does not,
+    // – not applicable), grouped so what stops closing comes first. An open item links to the step that settles it.
+    get groups() {
+        const rows = this.v.checks.map((c) => {
+            const open = c.state === 'open';
+            const step = STEP_OF[c.key];
+            return { ...c,
+                mark: c.state === 'ok' ? '✓' : open ? (c.blocks ? '✕' : '!') : '–',
+                markCls: 'mk ' + (c.state === 'ok' ? 'ok' : open ? (c.blocks ? 'no' : 'op') : 'na'),
+                state: c.state === 'ok' ? 'Done' : open ? (c.blocks ? 'Open, needed before closing' : 'Open') : 'Not applicable',
+                hasGo: open && !!step && !this.v.closed, goStep: step, goLabel: step ? 'Go to ' + STEP_LABEL[step] + ' ›' : '',
+                createCapa: c.key === 'capa' && open && !this.v.closed && !this.busy };
+        });
+        const need = rows.filter((c) => c.state !== 'Not applicable' && c.blocks);
+        const finish = rows.filter((c) => c.state !== 'Not applicable' && !c.blocks);
+        const na = rows.filter((c) => c.state === 'Not applicable');
+        const out = [];
+        if (need.length) { out.push({ key: 'need', label: 'Needed to Close', rows: need }); }
+        if (finish.length) { out.push({ key: 'finish', label: 'Good to Finish', rows: finish }); }
+        if (na.length) {
+            const detail = na.map((c) => (c.detail || '').replace(/^Not Applicable: /, '')).join(' · ');
+            out.push({ key: 'na', label: 'Not Applicable', rows: [{ key: 'na', text: na.map((c) => c.text).join(' · '),
+                detail: detail.charAt(0).toUpperCase() + detail.slice(1), mark: '–', markCls: 'mk na', state: 'Not applicable' }] });
+        }
+        return out;
     }
     get checkLine() {
         const done = this.v.checks.filter((c) => c.state === 'ok').length;
         const na = this.v.checks.filter((c) => c.state === 'na').length;
-        return done + ' of ' + (this.v.checks.length - na) + ' done' + (na ? ' · ' + na + ' not applicable' : '');
+        const stops = this.v.checks.filter((c) => c.state === 'open' && c.blocks).length;
+        return done + ' of ' + (this.v.checks.length - na) + ' done' + (stops ? ' · ' + stops + ' block closing' : '');
+    }
+    handleGo(event) {
+        this.dispatchEvent(new CustomEvent('gostep', { detail: { step: event.currentTarget.dataset.step }, bubbles: true }));
     }
 
     // ---- summary and links
     get summaryText() { return this.typed !== undefined ? this.typed : this.v.summary || this.v.sSummary || ''; }
     get isDraft() { return !this.v.summary && this.typed === undefined; }
+    get canRedraft() { return !this.isDraft && !this.locked; }
+    /** Redraft: clear the saved summary, so CQ.AI's current draft (built from the checklist) shows again. */
+    async handleRedraft() {
+        this.typed = undefined;
+        await this.call(() => saveClosure({ recordId: this.recordId, field: 'summary', value: '' }), 'Could not redraft the summary.');
+    }
     handleSummaryInput(event) { this.typed = event.target.value; }
     async handleSummary(event) {
         const value = event.target.value;

@@ -10,13 +10,24 @@
 .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .aitag { color: var(--cq-accent); font-size: 13px; font-weight: 600; }
 
-.list { display: flex; flex-direction: column; }
-.lrow { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--cq-line); }
+/* the checklist: groups (needed to close, good to finish, not applicable), plain marks as on Scope and the Verdict */
+.grp { display: flex; flex-direction: column; }
+.grp + .grp { margin-top: 12px; }
+.glabel { font-size: 11px; font-weight: 700; color: var(--cq-muted); letter-spacing: .4px; text-transform: uppercase; margin-bottom: 2px; }
+.lrow { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; border-top: 1px solid var(--cq-line); }
+.glabel + .lrow { border-top: none; }
 .fn { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.mk { flex: none; width: 18px; height: 18px; box-sizing: border-box; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
-.mk.ok { background: var(--cq-pos-solid); color: #fff; }
-.mk.na { background: var(--cq-hl-bg); color: var(--cq-muted); border: 1px solid var(--cq-line-field); }
-.mk.open { background: var(--cq-warn-bg); color: var(--cq-warn-fg); }
+.mk { flex: none; width: 14px; font-weight: 700; text-align: center; }
+.mk.ok { color: var(--cq-pos-fg); }
+.mk.op { color: var(--cq-warn-fg); }
+.mk.no { color: var(--cq-crit-fg); }
+.mk.na { color: var(--cq-faint); }
+.golink { flex: none; padding: 0; border: none; background: none; cursor: pointer; font: inherit; font-size: 13px; color: var(--cq-link); white-space: nowrap; }
+.golink:hover { text-decoration: underline; }
+/* what the user types, at the screen's 13px text size (as on Field Action Review); the summary starts at its 5 rows */
+.cq-field textarea, .cq-field input, .cq-field select { font-size: 13px; }
+.cq-field textarea.ta { min-height: 0; }
+.cq-stepcard-head .mklink { margin-left: 10px; }
 
 .mklink { padding: 0; border: none; background: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; color: var(--cq-link); text-decoration: none; align-self: flex-start; }
 .mklink:hover { text-decoration: underline; }

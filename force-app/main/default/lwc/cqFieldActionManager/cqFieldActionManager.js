@@ -45,6 +45,8 @@ const SCOPE = 1;
 const STRATEGY = 2;
 const RECOVERY = 5;
 const CLOSURE = 6;
+/** A step's "Go to" link (Closure's checklist) names the step it opens. */
+const STEP_KEYS = { scope: SCOPE, strategy: STRATEGY, recovery: RECOVERY, closure: CLOSURE };
 const PAGE = 10;   // lots per page in the scope table
 const SIG_PAGE = 5; // signals per page on the glance, as on Field Action Review
 /** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
@@ -89,6 +91,10 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     rail = {};           // strategy, recovery, verdict and status for the later steps
 
     async connectedCallback() {
+        this.template.addEventListener('gostep', (event) => {
+            const i = STEP_KEYS[event.detail && event.detail.step];
+            if (i !== undefined && !this.isLocked(i)) { this.go(i); }
+        });
         try { this.apply(await getView({ recordId: this.recordId })); }
         catch (e) { this.error = this.msg(e, 'Could not read this field action.'); }
         await this.loadRail();
