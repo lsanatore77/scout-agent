@@ -350,7 +350,7 @@ export default class CqFieldActionRecovery extends LightningElement {
         const all = t.open + t.completed;
         if (all) {
             out.push(this.check('tasks', 'Recall tasks', t.completed + ' of ' + all + ' completed' + (t.overdue ? ' · ' + t.overdue + ' overdue' : ''),
-                !t.overdue, false));
+                t.open === 0, false));
         }
         out.push(this.check('holds', 'Held stock decided', v.holds.length ? v.decided + ' of ' + v.holds.length + ' lots' : 'No stock was held',
             v.decided >= v.holds.length, true));
