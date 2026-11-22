@@ -97,12 +97,27 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     // ---- header
     get statusText() { return this.dash(this.v.status); }
     get riskText() { return this.dash(this.v.risk); }
-    get riskCls() { return 'cq-hl-v lvl ' + (this.v.risk ? this.v.risk.toLowerCase() : ''); }
+    get riskCls() { return 'cq-hl-v lvl ' + (this.v.risk ? this.v.risk.toLowerCase() : ''); }   // the Risk tile on the glance
     get dueText() { return this.dateText(this.v.due); }
     get ownerText() { return this.dash(this.v.owner); }
     get lotText() { return this.dash(this.v.lot); }
     get ncHref() { return this.href(this.v.ncId); }
     get partHref() { return '/lightning/r/compliancequest__SQX_Part__c/' + this.v.partId + '/view'; }
+    /** The header fields the shared frame (c-cq-ws-shell) draws; the risk level in its colour. */
+    get headerFields() {
+        const tone = { low: 'pos', medium: 'warn', high: 'crit' }[(this.v.risk || '').toLowerCase()];
+        return [
+            { key: 'nc', label: 'Nonconformance', value: this.v.ncName, id: this.v.ncId },
+            { key: 'part', label: 'Part', value: this.v.partNumber, id: this.v.partId },
+            { key: 'lot', label: 'Lot', value: this.lotText },
+            { key: 'status', label: 'Status', value: this.statusText },
+            { key: 'risk', label: 'Risk', value: this.riskText, tone },
+            { key: 'due', label: 'Investigation Due', value: this.dueText },
+            { key: 'owner', label: 'Owner', value: this.ownerText }
+        ];
+    }
+    /** A header link (the nonconformance, the part) opens in a new tab, as it did before the shared frame. */
+    handleShellOpen(event) { window.open(this.href(event.detail), '_blank'); }
     handleEdit() {
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage',
             attributes: { recordId: this.v.investigationId, objectApiName: 'compliancequest__SQX_Investigation__c', actionName: 'edit' } });
@@ -147,6 +162,9 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         }
         return causes ? this.plural(causes, 'Root Cause', 'Root Causes') : 'No Root Cause Yet';
     }
+    /** The rail as the shared frame draws it. */
+    get railSteps() { return this.steps.map((s) => ({ label: s.label, sub: s.sub, done: s.done, active: s.cls.includes('active') })); }
+    get notDone() { return !this.showDone; }
     get progress() { return this.steps.filter((s) => s.done).length + ' of 6 steps complete'; }
     get doneWord() { return this.v.inApproval || (this.result && this.result.needsApproval) ? 'In Approval' : 'Complete'; }
 
@@ -846,7 +864,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         this.notice = undefined;
         if (i === 5) { this.sumFill = true; } // the value binding alone can leave the box empty when the step opens
     }
-    handleStep(event) { if (!this.isDone) { this.go(Number(event.currentTarget.dataset.i)); } }
+    handleStep(event) { if (!this.isDone) { this.go(Number(event.detail)); } }
     handleBack() { if (this.step > 0) { this.go(this.step - 1); } }
     handleNext() { if (this.step < STEPS.length - 1) { this.go(this.step + 1); } }
 

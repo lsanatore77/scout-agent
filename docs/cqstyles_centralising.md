@@ -128,4 +128,4 @@ Kept local for now: the popover card (Scope's On Hand breakdown), until a second
 - **Themes**: every colour and corner token in cqStyles reads `--cqt-<name>` first. A theme is a `:host(.cq-theme-<name>)` block in cqStyles that sets the `--cqt-*` values; the shell puts the class on itself, so every step and nested component inside it follows. Add a theme by adding a block; nothing else changes.
 - Header text has its own tokens (`--cq-hl-ink`, `--cq-hl-muted`) so a theme can colour the header band separately. A dark header band still needs the Audit Trail and Ask CQ.AI header controls to follow header tokens first.
 - **Side area**: the shell has `slot="side"`, a right-hand column that shows only when a step puts something in it, and drops under the step on narrow screens. Nothing uses it yet.
-- Workspaces on the shared frame: Field Action Review, Field Action. Others (Triage, Investigation, Disposition, Ask CQ) get the setting when they move onto `c-cq-ws-shell`.
+- Workspaces on the shared frame: Field Action Review, Field Action, Disposition, Investigation. Others (Triage, Ask CQ) get the setting when they move onto `c-cq-ws-shell`.
