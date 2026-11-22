@@ -61,6 +61,7 @@ public with sharing class CqAuditTrail {
 
     private static List<Entry> entries(Id recordId) {
         List<Field_Action_Review_Audit__c> rows = new Reader().rowsOf(String.valueOf(recordId));
+        Map<String, String> named = names(rows);
         // the decisions on each suggestion, newest first (rows are newest first)
         Map<Id, Field_Action_Review_Audit__c> lastDecision = new Map<Id, Field_Action_Review_Audit__c>();
         Map<Id, Field_Action_Review_Audit__c> byId = new Map<Id, Field_Action_Review_Audit__c>(rows);
@@ -113,10 +114,63 @@ public with sharing class CqAuditTrail {
             } else {
                 x.kind = 'edit';
                 x.title = 'Edited ' + (e.Field_Label__c == null ? e.Field_Name__c : e.Field_Label__c);
-                x.detail = 'Old: ' + (String.isBlank(e.Old_Value__c) ? '(blank)' : cut(e.Old_Value__c, 300))
-                    + ' · New: ' + (String.isBlank(e.New_Value__c) ? '(blank)' : cut(e.New_Value__c, 300));
+                x.detail = 'Old: ' + (String.isBlank(e.Old_Value__c) ? '(blank)' : cut(shown(e.Old_Value__c, named), 300))
+                    + ' · New: ' + (String.isBlank(e.New_Value__c) ? '(blank)' : cut(shown(e.New_Value__c, named), 300));
             }
             out.add(x);
+        }
+        return out;
+    }
+
+    // ---- lookups: an edit of a lookup field records the record id; the trail shows that record's name ----
+
+    private static Id asId(String v) {
+        if (String.isBlank(v) || (v.length() != 15 && v.length() != 18)) { return null; }
+        try { return Id.valueOf(v); } catch (Exception e) { return null; }
+    }
+    private static String shown(String v, Map<String, String> named) {
+        Id i = asId(v);
+        return (i != null && named.containsKey(String.valueOf(i))) ? named.get(String.valueOf(i)) : v;
+    }
+    private static String nameFieldOf(Schema.SObjectType t) {
+        for (Schema.SObjectField f : t.getDescribe().fields.getMap().values()) {
+            Schema.DescribeFieldResult d = f.getDescribe();
+            if (d.isNameField()) { return d.getName(); }
+        }
+        return null;
+    }
+
+    /**
+     * The names of the records that lookup edits point to, by id. Read as the person (user mode): a record they cannot
+     * see keeps showing its id. The entry itself still holds the id, which never changes, so the record stays traceable.
+     */
+    private static Map<String, String> names(List<Field_Action_Review_Audit__c> rows) {
+        Map<String, Schema.SObjectField> fieldMap = Schema.SObjectType.Field_Action_Review__c.fields.getMap();
+        Map<Schema.SObjectType, Set<Id>> byType = new Map<Schema.SObjectType, Set<Id>>();
+        for (Field_Action_Review_Audit__c e : rows) {
+            if (e.Action__c != CqFarAudit.EDITED || String.isBlank(e.Field_Name__c)) { continue; }
+            Schema.SObjectField f = fieldMap.get(e.Field_Name__c.toLowerCase());
+            if (f == null || f.getDescribe().getType() != Schema.DisplayType.REFERENCE) { continue; }
+            for (String v : new List<String>{ e.Old_Value__c, e.New_Value__c }) {
+                Id i = asId(v);
+                if (i == null) { continue; }
+                Schema.SObjectType t = i.getSObjectType();
+                if (!byType.containsKey(t)) { byType.put(t, new Set<Id>()); }
+                byType.get(t).add(i);
+            }
+        }
+        Map<String, String> out = new Map<String, String>();
+        for (Schema.SObjectType t : byType.keySet()) {
+            try {
+                String nameField = nameFieldOf(t);
+                if (nameField == null) { continue; }
+                Set<Id> ids = byType.get(t);
+                String q = 'SELECT Id, ' + nameField + ' FROM ' + t.getDescribe().getName() + ' WHERE Id IN :ids';
+                for (SObject r : Database.query(q, AccessLevel.USER_MODE)) {
+                    Object n = r.get(nameField);
+                    if (n != null) { out.put(String.valueOf(r.Id), String.valueOf(n)); }
+                }
+            } catch (Exception ex) { /* not readable: the id shows */ }
         }
         return out;
     }

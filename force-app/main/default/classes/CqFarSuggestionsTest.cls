@@ -109,6 +109,21 @@ private class CqFarSuggestionsTest {
     }
 
     @IsTest
+    static void aLookupChangeShowsTheRecordNameNotItsId() {
+        Field_Action_Review__c r = new Field_Action_Review__c(Title__c = 'Lookup');
+        insert r;
+        update new Field_Action_Review__c(Id = r.Id, Reviewer__c = UserInfo.getUserId());
+        Boolean found = false;
+        for (CqAuditTrail.Entry e : CqAuditTrail.get(r.Id).entries) {
+            if (e.kind == 'edit' && e.detail != null && e.detail.contains(UserInfo.getName())) { found = true; }
+            if (e.kind == 'edit' && e.detail != null) {
+                System.assert(!e.detail.contains(String.valueOf(UserInfo.getUserId())), 'no raw id: ' + e.detail);
+            }
+        }
+        System.assert(found, 'the reviewer shows by name');
+    }
+
+    @IsTest
     static void onlyReviewsForNow() {
         try { CqAuditTrail.get(UserInfo.getUserId()); System.assert(false); } catch (AuraHandledException e) { System.assert(true); }
     }
