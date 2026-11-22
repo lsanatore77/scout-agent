@@ -62,6 +62,9 @@
 .ind.i1 { width: 20px; }
 .ind.i2 { width: 40px; }
 .lotn { font-weight: 600; }
+/* a lot under its customer: a lighter band than the customer row, tagged when it is one of the recall's lots; its tasks nest one level further */
+.lrow { background: color-mix(in srgb, var(--cq-surface) 50%, var(--cq-bg)); }
+.lotline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .tick { flex: none; width: 15px; height: 15px; margin: 0; accent-color: var(--cq-pos-fg); cursor: pointer; }
 .tick:disabled { cursor: default; }
 .tlink { color: var(--cq-link); text-decoration: none; }

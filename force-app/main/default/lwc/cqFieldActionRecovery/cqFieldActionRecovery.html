@@ -147,9 +147,9 @@
                                                 <td class="crow num"><template if:true={r.hasPill}><span class={r.pillCls}>{r.pill}</span></template></td>
                                             </template>
                                             <template if:true={r.isLot}>
-                                                <td><span class="cell2"><span class="ind i1"></span>
-                                                    <span class="fn"><span class="lotn">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
-                                                <td></td><td></td><td></td>
+                                                <td class="lrow"><span class="cell2"><span class="ind i1"></span>
+                                                    <span class="fn"><span class="lotline"><span class="lotn">{r.title}</span><template if:true={r.inRecall}><span class="cq-pill soft info">In this recall</span></template></span><span class="cq-sub block">{r.sub}</span></span></span></td>
+                                                <td class="lrow"></td><td class="lrow"></td><td class="lrow"></td>
                                             </template>
                                             <template if:true={r.isTask}>
                                                 <td><span class="cell2"><span class={r.indentCls}></span>

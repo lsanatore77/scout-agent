@@ -202,7 +202,7 @@ export default class CqFieldActionRecovery extends LightningElement {
                 if (this.filter !== 'all' && !lt.length) { return; }
                 const shipped = t.shippedByLine[c.id + '|' + lot];
                 const back = mine.filter((x) => x.lot === lot && x.hasUnits).reduce((s, x) => s + Number(x.units || 0), 0);
-                rows.push({ key: 'l' + c.id + lot, isLot: true, title: lot,
+                rows.push({ key: 'l' + c.id + lot, isLot: true, title: lot, inRecall: this.v.lots.some((l) => l.lot === lot),
                     sub: [shipped !== undefined && shipped !== null ? shipped + ' shipped' : '', back + ' back'].filter(Boolean).join(' · ') });
                 lt.forEach((x) => rows.push(this.taskRow(x, 'i2')));
             });
