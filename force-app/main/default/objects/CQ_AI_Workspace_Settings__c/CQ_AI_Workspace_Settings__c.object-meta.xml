@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <description>How the CQ.AI workspaces look, for the whole org, a profile or one user. Steps Position puts the step list on the left (default) or across the top; Theme names a cqStyles theme (blank is the standard look).</description>
+    <enableFeeds>false</enableFeeds>
+    <label>CQ.AI Workspace Settings</label>
+    <visibility>Public</visibility>
+</CustomObject>

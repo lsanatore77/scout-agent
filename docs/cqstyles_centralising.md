@@ -118,3 +118,14 @@ Added to cqStyles so every workspace can use them (see the comments in cqStyles 
 12. Small in-row buttons: `.cq-btn-sm` on a shared button.
 
 Kept local for now: the popover card (Scope's On Hand breakdown), until a second screen needs one.
+
+## Layout setting, side area and themes (2026-11-22)
+
+- **CQ.AI Workspace Settings** (hierarchy custom setting, `CQ_AI_Workspace_Settings__c`): Setup > Custom Settings > CQ.AI Workspace Settings > Manage. Set it for the whole org (the default row) or for one profile or user (New, then pick the user), so one person can try a look without changing it for everyone.
+  - **Steps Position**: `Left` (default, also when blank) or `Top` (one row of steps under the header).
+  - **Theme**: blank for the standard look, or `Harbor` (warm grey, teal links, squarer corners).
+- `CqWsSettings.get()` reads it; the shared frame `c-cq-ws-shell` applies it. A workspace can override with `steps-at` and `theme` on the shell.
+- **Themes**: every colour and corner token in cqStyles reads `--cqt-<name>` first. A theme is a `:host(.cq-theme-<name>)` block in cqStyles that sets the `--cqt-*` values; the shell puts the class on itself, so every step and nested component inside it follows. Add a theme by adding a block; nothing else changes.
+- Header text has its own tokens (`--cq-hl-ink`, `--cq-hl-muted`) so a theme can colour the header band separately. A dark header band still needs the Audit Trail and Ask CQ.AI header controls to follow header tokens first.
+- **Side area**: the shell has `slot="side"`, a right-hand column that shows only when a step puts something in it, and drops under the step on narrow screens. Nothing uses it yet.
+- Workspaces on the shared frame: Field Action Review, Field Action. Others (Triage, Investigation, Disposition, Ask CQ) get the setting when they move onto `c-cq-ws-shell`.

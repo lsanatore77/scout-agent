@@ -1,14 +1,16 @@
 @import 'c/cqStyles';
 
-/* The workspace frame, in the CQ.AI standard: 4px corners, regular-weight header labels, a quiet rail. */
-:host { display: block; color: var(--cq-ink); font-size: 13px; --cq-r-card: 4px; --cq-r-field: 4px; }
-.cq-box { border-radius: 4px; }
-.cq-hl { border-radius: 4px 4px 0 0; }
+/* The workspace frame, in the CQ.AI standard: square corners (from the theme), regular-weight header labels, a quiet rail. */
+:host { display: block; color: var(--cq-ink); font-size: 13px; }
+.cq-box { border-radius: var(--cq-r-card); }
+.cq-hl { border-radius: var(--cq-r-card) var(--cq-r-card) 0 0; }
 .cq-hl-k { font-weight: 400; }
-.cq-rail .step { border-radius: 4px; }
+.cq-rail .step { border-radius: var(--cq-r-card); }
 /* 'Picked up where you left off.' sits on the step title's line, at the right, so it takes no line of its own */
 .cq-ws-main { position: relative; }
 .resumed { position: absolute; top: 26px; right: 20px; margin: 0; font-size: 12px; color: var(--cq-muted); }
 /* a step set aside for later is greyed; a step that needs attention shows its sub line in red */
 .cq-rail .step.later { opacity: .55; }
 .cq-rail .ssub.alert { color: var(--cq-crit-fg); font-weight: 600; }
+/* the side column shows only when a step puts something in it */
+.cq-ws-side.none { display: none; }

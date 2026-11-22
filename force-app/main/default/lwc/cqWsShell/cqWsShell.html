@@ -26,8 +26,8 @@
                 </div>
             </template>
         </header>
-        <div class="cq-ws-body">
-            <nav class="cq-rail" aria-label={railTitle}>
+        <div class={bodyCls}>
+            <nav class={railCls} aria-label={railTitle}>
                 <div class="cq-rail-title">{railTitle}</div>
                 <template for:each={stepRows} for:item="s">
                     <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked} aria-current={s.current}>
@@ -44,7 +44,10 @@
             </nav>
             <div class="cq-ws-main">
                 <template if:true={resumed}><div class="resumed">Picked up where you left off.</div></template>
-                <slot></slot>
+                <div class="cq-ws-cols">
+                    <div class="cq-ws-content"><slot></slot></div>
+                    <aside class={sideCls}><slot name="side" onslotchange={handleSideChange}></slot></aside>
+                </div>
                 <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
                 <template if:true={showFoot}>
                     <div class="cq-ws-foot">

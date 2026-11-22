@@ -1,8 +1,11 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
+import getLook from '@salesforce/apex/CqWsSettings.get';
 
 /**
  * cqWsShell: the frame every CQ.AI workspace sits in. The record header (icon, name, key fields, Ask CQ.AI, Edit),
  * the Review Steps rail, the step's own content (the default slot), any error, and the footer (blocker, Back, Next).
+ * How it looks comes from CQ.AI Workspace Settings (CqWsSettings): the steps on the left or across the top, and the
+ * cqStyles theme, set on this frame's host so every step inside picks it up. A step may put a side column in slot="side".
  * The workspace owns the data and the steps; the shell only draws them and reports clicks as events:
  * step (detail: index), back, next, edit, restart, reopen, open (detail: record id).
  */
@@ -36,6 +39,27 @@ export default class CqWsShell extends LightningElement {
     @api nextOutline = false;
     /** A line at the foot of the rail, e.g. '1 of 7 steps complete'. */
     @api progress;
+    /** left | top: overrides CQ.AI Workspace Settings > Steps Position for this workspace. */
+    @api stepsAt;
+    /** A cqStyles theme name: overrides CQ.AI Workspace Settings > Theme for this workspace ('none' for the standard look). */
+    @api theme;
+
+    look = { steps: 'left', theme: '' };
+    hasSide = false;
+    @wire(getLook)
+    wiredLook({ data }) { if (data) { this.look = data; this.paintTheme(); } }
+    connectedCallback() { this.paintTheme(); }
+    get themeName() { const t = this.theme !== undefined && this.theme !== null ? this.theme : this.look.theme; return t && t !== 'none' ? String(t).toLowerCase() : ''; }
+    /** The theme is a class on the host (:host(.cq-theme-<name>) in cqStyles), so it reaches the slotted steps and their components. */
+    paintTheme() {
+        Array.from(this.classList).filter((c) => c.startsWith('cq-theme-')).forEach((c) => this.classList.remove(c));
+        if (this.themeName) { this.classList.add('cq-theme-' + this.themeName); }
+    }
+    get atTop() { return (this.stepsAt || this.look.steps) === 'top'; }
+    get bodyCls() { return 'cq-ws-body' + (this.atTop ? ' top' : ''); }
+    get railCls() { return 'cq-rail' + (this.atTop ? ' top' : ''); }
+    get sideCls() { return 'cq-ws-side' + (this.hasSide ? '' : ' none'); }
+    handleSideChange(event) { this.hasSide = event.target.assignedElements().length > 0; }
 
     get hasFields() { return (this.fields || []).length > 0; }
     get fieldRows() {

@@ -142,3 +142,4 @@ Newest first.
 - **CqAuditTrail**: the Field Action trail shows Closed the Field Action and the signature. No new access.
 - The shared e-signature standard is in `docs/esignature.md`.
 - **Field Action Settings** (`Field_Action_Settings__c`, new hierarchy custom setting) with **Demo Mode** (`Demo_Mode__c`). Read by Apex from the org default, so users need no access. Off: every Closure checklist item blocks signing; on: units, customers and recall tasks do not. Turned on and off by an admin in Setup > Custom Settings.
+- **CqWsSettings** (new): Apex access for anyone who opens a workspace on the shared frame (c-cq-ws-shell); reads **CQ.AI Workspace Settings** (new hierarchy custom setting: Steps Position, Theme). No object access needed.

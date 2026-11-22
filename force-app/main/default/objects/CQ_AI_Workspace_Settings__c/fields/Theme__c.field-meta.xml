@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Theme__c</fullName>
+    <description>The cqStyles theme the workspaces use. Blank is the standard look; Harbor is the backup style.</description>
+    <inlineHelpText>Leave blank for the standard look, or type Harbor.</inlineHelpText>
+    <label>Theme</label>
+    <length>40</length>
+    <type>Text</type>
+</CustomField>

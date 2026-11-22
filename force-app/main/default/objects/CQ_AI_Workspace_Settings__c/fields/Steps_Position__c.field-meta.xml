@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Steps_Position__c</fullName>
+    <description>Where the workspace steps sit: Left (the default, also when blank) or Top.</description>
+    <inlineHelpText>Type Left or Top. Blank means Left.</inlineHelpText>
+    <label>Steps Position</label>
+    <length>10</length>
+    <type>Text</type>
+</CustomField>
