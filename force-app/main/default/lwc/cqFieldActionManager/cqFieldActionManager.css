@@ -10,7 +10,8 @@
 /* What Was Decided is the committee's decision, not CQ.AI's: a plain card with a quiet caption over the title (purple is CQ.AI's colour) */
 .lab.quiet { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .pill { flex: none; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); color: var(--cq-accent); font-size: 11px; font-weight: 600; white-space: nowrap; }
-.sgh { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+/* a signal's name and strength pill stay on one line, as on Field Action Review; What We See takes the rest and wraps */
+.sgh { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
 .sumcard { display: flex; flex-direction: column; gap: 10px; }
 .sumrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* the glance tables (Reviews That Led Here, Signals on This Part) sit under their card heading; a review's reason opens under it */
