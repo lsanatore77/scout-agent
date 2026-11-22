@@ -2,7 +2,7 @@
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
         <c-cq-ws-shell record-id={recordId} icon="custom:custom87" object-label="Field Action" record-name={v.name}
-            fields={headerFields} show-edit audit-trail agent-name="CQAI_Field_Action" ask-step={askStep} ask-suggestions={askSuggestions}
+            fields={headerFields} show-edit audit-trail agent-name="CQAI_Field_Action" placeholder="Ask about this field action…" ask-step={askStep} ask-suggestions={askSuggestions}
             steps={railSteps} progress={progress} error={error}
             show-foot blocker={footBlocker} back-disabled={cantBack} next-disabled={cantNext} next-outline={showStepAction}
             onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onopen={handleShellOpen} onaskcqaction={handleAskAction}>

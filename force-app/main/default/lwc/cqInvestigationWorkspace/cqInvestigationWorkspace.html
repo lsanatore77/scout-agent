@@ -2,7 +2,7 @@
     <template if:true={loadError}><div class="cq-msg crit">{loadError}</div></template>
     <template if:true={ready}>
         <c-cq-ws-shell record-id={v.investigationId} icon="standard:search" object-label="Investigation" record-name={v.investigationName}
-            fields={headerFields} show-edit agent-name="CQAI_Quality" ask-step={askStep} ask-suggestions={askSuggestions} pin-label={pinLabel}
+            fields={headerFields} show-edit agent-name="CQAI_Quality" placeholder="Ask about this investigation…" ask-step={askStep} ask-suggestions={askSuggestions} pin-label={pinLabel}
             steps={railSteps} progress={progress} error={error}
             show-foot={notDone} blocker={blocker} back-disabled={cantBack} next-disabled={cantNext} next-outline={cantNext}
             onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onopen={handleShellOpen} onaskcqpin={handleAskPin}>

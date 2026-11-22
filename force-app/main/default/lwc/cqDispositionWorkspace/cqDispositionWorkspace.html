@@ -2,7 +2,7 @@
     <template if:true={loadError}><div class="cq-msg crit">{loadError}</div></template>
     <template if:true={ready}>
         <c-cq-ws-shell record-id={recordId} icon="standard:incident" object-label="Nonconformance" record-name={v.name}
-            fields={headerFields} show-edit agent-name="CQAI_Quality" ask-step={askStep} ask-suggestions={askSuggestions}
+            fields={headerFields} show-edit agent-name="CQAI_Quality" placeholder="Ask about this disposition…" ask-step={askStep} ask-suggestions={askSuggestions}
             steps={railSteps} progress={progress} error={error}
             show-foot={notDone} blocker={blocker} back-disabled={cantBack} next-disabled={cantNext} next-outline={cantNext}
             onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onopen={handleShellOpen}>
