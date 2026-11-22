@@ -67,6 +67,24 @@ export default class CqIntakeConversation extends LightningElement {
         this.canSpeak = typeof (window.SpeechRecognition || window.webkitSpeechRecognition) === 'function';
         const synth = this.getSynth();
         this.canSpeakOut = !!synth && !!this.getUtter('x');
+        // Chrome loads its voices in the background the first time a page asks; speech requested before they
+        // arrive is dropped without an error (the first question was silent until a refresh). Ask now, early.
+        try { if (synth && synth.getVoices) { synth.getVoices(); } } catch (e) { /* ignore */ }
+    }
+
+    // Resolves once the browser's voices are loaded, or after a short wait if they never report in.
+    voicesReady() {
+        const s = this.getSynth();
+        return new Promise((resolve) => {
+            try {
+                if (!s || !s.getVoices || s.getVoices().length > 0) { resolve(); return; }
+                let done = false;
+                const finish = () => { if (!done) { done = true; resolve(); } };
+                if (s.addEventListener) { s.addEventListener('voiceschanged', finish, { once: true }); }
+                // eslint-disable-next-line @lwc/lwc/no-async-operation
+                setTimeout(finish, 1500);
+            } catch (e) { resolve(); }
+        });
     }
 
     disconnectedCallback() {
@@ -201,16 +219,19 @@ export default class CqIntakeConversation extends LightningElement {
     // ---- voice out (read aloud) ----
     speak(text) {
         if (!this.canSpeakOut || !this.readAloud || !text) { return; }
-        try {
-            const s = this.getSynth();
-            if (!s) { return; }
-            s.cancel();
-            const u = this.getUtter(text);
-            if (!u) { return; }
-            u.lang = 'en-US';
-            u.rate = 1;
-            s.speak(u);
-        } catch (e) { /* ignore */ }
+        this.voicesReady().then(() => {
+            try {
+                if (!this.readAloud) { return; }
+                const s = this.getSynth();
+                if (!s) { return; }
+                s.cancel();
+                const u = this.getUtter(text);
+                if (!u) { return; }
+                u.lang = 'en-US';
+                u.rate = 1;
+                s.speak(u);
+            } catch (e) { /* ignore */ }
+        });
     }
 
     toggleReadAloud() {
@@ -277,11 +298,19 @@ export default class CqIntakeConversation extends LightningElement {
             const buf = this.wavToBuffer(this.audioCtx, b64);
             if (!buf) { return; }
             if (this.clipSrc) { try { this.clipSrc.stop(); } catch (e) { /* ignore */ } }
-            const src = this.audioCtx.createBufferSource();
-            src.buffer = buf;
-            src.connect(this.audioCtx.destination);
-            src.start();
-            this.clipSrc = src;
+            const ctx = this.audioCtx;
+            const start = () => {
+                try {
+                    const src = ctx.createBufferSource();
+                    src.buffer = buf;
+                    src.connect(ctx.destination);
+                    src.start();
+                    this.clipSrc = src;
+                } catch (e) { /* ignore */ }
+            };
+            // The context is switched on by the first click, but resume() finishes a moment later; a clip started
+            // before then was lost on a first load. Wait until it is running.
+            if (ctx.state !== 'running' && ctx.resume) { ctx.resume().then(start).catch(start); } else { start(); }
         } catch (e) { /* ignore */ }
     }
 
