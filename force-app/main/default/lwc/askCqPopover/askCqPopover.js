@@ -3,6 +3,8 @@ import startSession from '@salesforce/apex/AskCqService.startSession';
 import sendMessage from '@salesforce/apex/AskCqService.sendMessage';
 import endSession from '@salesforce/apex/AskCqService.endSession';
 import agentIdFor from '@salesforce/apex/AskCqAgents.idFor';
+import claudeEnabled from '@salesforce/apex/AskClaudeService.isEnabled';
+import askClaude from '@salesforce/apex/AskClaudeService.ask';
 
 /**
  * Ask CQ: the Scout agent in a popover on any record page. Other components call `ask(question)`
@@ -61,11 +63,40 @@ export default class AskCqPopover extends LightningElement {
     connectedCallback() {
         this._onAsk = (event) => { const q = event.detail && event.detail.question; if (q) { this.ask(q); } };
         document.addEventListener('cqaiask', this._onAsk);
+        // Ask Claude (demo orgs only): the button shows only for users granted the Ask_Claude custom permission.
+        claudeEnabled().then((on) => { this.claudeOn = !!on; }).catch(() => { this.claudeOn = false; });
     }
     disconnectedCallback() { document.removeEventListener('cqaiask', this._onAsk); }
 
     get shownMessages() {
-        return this.messages.map((m) => ({ ...m, canPin: !!this.pinLabel && m.isAgent && !this.pinned[m.key], pinned: m.isAgent && !!this.pinned[m.key] }));
+        return this.messages.map((m) => {
+            const canPin = !!this.pinLabel && m.isAgent && !m.isClaude && !this.pinned[m.key];
+            const canClaude = this.claudeOn && m.isAgent && !m.isClaude && !this.claudeAsked[m.key];
+            return { ...m, canPin, canClaude, hasActions: canPin || canClaude, pinned: m.isAgent && !m.isClaude && !!this.pinned[m.key] };
+        });
+    }
+
+    // ---- Ask Claude (demo orgs only): a fuller explanation of one CQ.AI answer, shown under it in Claude's colour
+    claudeOn = false;
+    claudeAsked = {};
+    async handleClaude(event) {
+        const k = event.currentTarget.dataset.key;
+        const i = this.messages.findIndex((m) => m.key === k);
+        if (i < 0 || this.busy) { return; }
+        const q = [...this.messages.slice(0, i)].reverse().find((m) => !m.isAgent);
+        this.claudeAsked = { ...this.claudeAsked, [k]: true };
+        this.error = undefined;
+        this.busy = true;
+        try {
+            const text = await askClaude({ question: q ? q.text : null, cqAnswer: this.messages[i].text, step: this.step || null });
+            this.push('claude', text || '(no answer)', k);
+        } catch (e) {
+            this.claudeAsked = { ...this.claudeAsked, [k]: false };
+            this.error = (e && e.body && e.body.message) || 'Claude could not answer.';
+        } finally {
+            this.busy = false;
+            this.scrollToEnd();
+        }
     }
     handlePin(event) {
         const k = event.currentTarget.dataset.key;
@@ -103,6 +134,7 @@ export default class AskCqPopover extends LightningElement {
         this.sequence = 1;
         this.messages = [];
         this.pinned = {};
+        this.claudeAsked = {};
         this.asked = false;
         this._starting = undefined;
         this._sentStep = undefined;
@@ -185,16 +217,21 @@ export default class AskCqPopover extends LightningElement {
     handleKey(event) { if (event.key === 'Enter' && !this.sendDisabled) { this.ask(this.draft); } }
     handleSend() { this.ask(this.draft); }
 
-    push(role, text) {
+    /** Adds a message; a Claude reply goes straight after the answer it explains (afterKey). */
+    push(role, text, afterKey) {
         this._seq += 1;
         const key = 'm' + this._seq;
-        this.messages = [...this.messages, {
+        const answer = role !== 'user';
+        const m = {
             key,
             text,
-            cls: role === 'user' ? 'msg user' : 'msg agent',
-            isAgent: role === 'agent',
-            blocks: role === 'agent' ? this.blocks(text, key) : []
-        }];
+            cls: role === 'user' ? 'msg user' : role === 'claude' ? 'msg agent claude' : 'msg agent',
+            isAgent: answer,
+            isClaude: role === 'claude',
+            blocks: answer ? this.blocks(text, key) : []
+        };
+        const at = afterKey ? this.messages.findIndex((x) => x.key === afterKey) : -1;
+        this.messages = at < 0 ? [...this.messages, m] : [...this.messages.slice(0, at + 1), m, ...this.messages.slice(at + 1)];
         this.scrollToEnd();
     }
 

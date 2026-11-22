@@ -18,6 +18,7 @@
                         <div key={m.key} class={m.cls}>
                             <template if:false={m.isAgent}><lightning-formatted-text value={m.text}></lightning-formatted-text></template>
                             <template if:true={m.isAgent}>
+                                <template if:true={m.isClaude}><div class="ctag">Claude &middot; demo only</div></template>
                                 <div class="ans">
                                     <template for:each={m.blocks} for:item="b">
                                         <div key={b.key} class={b.cls}>
@@ -26,7 +27,10 @@
                                         </div>
                                     </template>
                                 </div>
-                                <template if:true={m.canPin}><div class="pinrow"><button class="pinbtn" data-key={m.key} onclick={handlePin}>{pinLabel}</button></div></template>
+                                <template if:true={m.hasActions}><div class="pinrow">
+                                    <template if:true={m.canPin}><button class="pinbtn" data-key={m.key} onclick={handlePin}>{pinLabel}</button></template>
+                                    <template if:true={m.canClaude}><button class="pinbtn claudebtn" data-key={m.key} onclick={handleClaude} disabled={busy} title="Demo orgs only: sends this question and answer to Anthropic's Claude">Ask Claude</button></template>
+                                </div></template>
                                 <template if:true={m.pinned}><div class="pinrow pinned">&#10003; {pinnedText}</div></template>
                             </template>
                         </div>

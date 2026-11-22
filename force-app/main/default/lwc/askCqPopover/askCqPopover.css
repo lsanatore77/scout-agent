@@ -37,7 +37,14 @@
 .alink.act { padding: 0; border: none; background: none; cursor: pointer; font: inherit; font-weight: 600; color: var(--cq-link); }
 
 /* Add to Evidence (or another pinLabel) under an answer */
-.pinrow { margin-top: 6px; }
+.pinrow { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
 .pinbtn { border: 1px solid var(--cq-line-field); background: var(--cq-bg); border-radius: 4px; padding: 2px 10px 3px; font: inherit; font-size: 12px; font-weight: 600; color: var(--cq-ink); cursor: pointer; }
 .pinbtn:hover { background: var(--cq-hl-bg); }
 .pinrow.pinned { font-size: 12px; font-weight: 600; color: var(--cq-pos-fg); }
+
+/* Ask Claude (demo orgs only): Claude's colour, so it is never mistaken for CQ.AI */
+.pinbtn.claudebtn { border-color: #c96442; color: #a8502f; }
+.pinbtn.claudebtn:hover { background: #fbf1ec; }
+.pinbtn:disabled { opacity: .5; cursor: default; }
+.msg.agent.claude { background: #faf6f1; border: 1px solid #ecdccb; }
+.ctag { font-size: 11px; font-weight: 700; color: #a8502f; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 2px; }

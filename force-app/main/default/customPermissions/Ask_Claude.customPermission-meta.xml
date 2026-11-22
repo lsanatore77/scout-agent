@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomPermission xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Shows the Ask Claude button under Ask CQ answers. Demo orgs only: never for FDA-regulated or customer production use. Off unless granted.</description>
+    <isLicensed>false</isLicensed>
+    <label>Ask Claude (demo orgs only)</label>
+</CustomPermission>
