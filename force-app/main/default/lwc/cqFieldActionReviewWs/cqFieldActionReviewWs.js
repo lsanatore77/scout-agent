@@ -6,7 +6,7 @@ import saveDraft from '@salesforce/apex/CqFieldActionReview.saveDraft';
 import getScope from '@salesforce/apex/CqFieldActionLots.getScope';
 import submitToCommittee from '@salesforce/apex/CqFieldActionLots.submitToCommittee';
 import actOnStep from '@salesforce/apex/CqFarCommittee.act';
-import getSign from '@salesforce/apex/CqFarCommittee.getSign';
+import getSignFor from '@salesforce/apex/CqFarCommittee.getSignFor';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import noteSuggestions from '@salesforce/apex/CqFarSuggestions.note';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
@@ -121,7 +121,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     async connectedCallback() {
         // CQ's signature policy is asked at the same time as the review is read, not after it: the seat would otherwise
         // wait for both in turn ("Getting your signature ready"). The answer is used only when the review is with the committee.
-        this._signAsk = getSign({ recordId: this.recordId }).catch(() => null);
+        this._signAsk = this.askSign();
         try {
             const [v, sc] = await Promise.all([getView({ recordId: this.recordId }), getScope({ recordId: this.recordId })]);
             this.sc = sc;
@@ -179,17 +179,39 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         this.team = team;
     }
 
-    /** With the committee, ask CQ (in its own request) whether approving or sending back needs a signature. */
-    async loadSign() {
+    /**
+     * What CQ's signature policy asks for approving and for sending back. CQ takes about three seconds for each, so the
+     * two are asked in separate requests at the same time, and the answer is kept in this browser tab for 10 minutes.
+     * The kept answer only shapes the seat: every signature is checked against CQ's policy again on the server.
+     */
+    askSign(fresh) {
+        const key = 'cqSign:Field_Action_Review__c';
+        if (!fresh) {
+            try {
+                const kept = JSON.parse(window.sessionStorage.getItem(key) || 'null');
+                if (kept && Date.now() - kept.at < 600000) { return Promise.resolve(kept.signs); }
+            } catch (e) { /* no storage: ask CQ */ }
+        }
+        const one = (action) => new Promise((resolve) => {
+            // a request of its own (Lightning sends calls made at the same moment together, one after the other)
+            // eslint-disable-next-line @lwc/lwc/no-async-operation
+            setTimeout(() => { getSignFor({ recordId: this.recordId, action }).then(resolve).catch(() => resolve({ unknown: true })); }, 0);
+        });
+        return Promise.all([one('approve'), one('reject')]).then(([approve, reject]) => {
+            const signs = { approve, reject };
+            if (!approve.unknown && !reject.unknown) {
+                try { window.sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), signs })); } catch (e) { /* not kept */ }
+            }
+            return signs;
+        });
+    }
+    /** With the committee, the seat waits for CQ's answer so Approve never goes without the password box when one is needed. */
+    async loadSign(fresh) {
         if (!this.waiting) { this.signs = {}; this.signsLoading = false; return; }
         this.signsLoading = true;
         // the answer asked for while the page loaded, if there is one; otherwise ask now
-        const early = this._signAsk; this._signAsk = null;
-        try {
-            let g = early ? await early : null;
-            if (!g) { g = await getSign({ recordId: this.recordId }); }
-            this.signs = g || {};
-        }
+        const early = fresh ? null : this._signAsk; this._signAsk = null;
+        try { this.signs = (await (early || this.askSign(fresh))) || {}; }
         catch (e) { this.signs = { approve: { unknown: true }, reject: { unknown: true } }; }
         this.signsLoading = false;
     }
@@ -701,7 +723,11 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             if (this.done) { this.showSummary = true; }
             else if (!this.waiting) { this.step = REC; }      // sent back: the coordinator picks it up at the recommendation
             notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
-        } catch (e) { this.fail(this.msg(e, 'Could not record that.')); }
+        } catch (e) {
+            this.fail(this.msg(e, 'Could not record that.'));
+            // went without a signature and was refused: the policy may have changed since it was kept, so ask CQ again
+            if (!g.required) { this.loadSign(true); }
+        }
         this.saving = false; this.acting = '';
     }
 

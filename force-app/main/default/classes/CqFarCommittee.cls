@@ -228,6 +228,16 @@ public with sharing class CqFarCommittee {
     }
 
     /**
+     * What CQ's policy asks for one committee action. The screen asks for 'approve' and 'reject' in two requests at once:
+     * CQ takes about three seconds for each, so asking for both in one request took twice as long.
+     */
+    @AuraEnabled
+    public static Sign getSignFor(Id recordId, String action) {
+        if (action != 'approve' && action != 'reject') { throw new AuraHandledException('Choose Approve or Send Back.'); }
+        return signFor(recordId, action);
+    }
+
+    /**
      * A member approves or sends back a step of the CQ Approval on recordId. The last approval closes the approval;
      * a send back closes it as rejected. When CQ's electronic signature policy requires it, only the assigned person
      * (or their delegate) can act, with their password, and CQ records the signature before anything changes.

@@ -99,6 +99,8 @@ private class CqFarCommitteeTest {
         CqFarCommittee.Info x = CqFarCommittee.info([SELECT Id, Status__c, Emergency__c, Emergency_Reason__c, Recommended_By__r.Name, Recommended_On__c,
             Committee_Approval__c FROM Field_Action_Review__c WHERE Id = :review.Id]);
         System.assert(CqFarCommittee.getSign(review.Id).get('approve').required);
+        System.assert(CqFarCommittee.getSignFor(review.Id, 'reject').required, 'one action at a time');
+        try { CqFarCommittee.getSignFor(review.Id, 'delete'); System.assert(false); } catch (AuraHandledException e) { System.assert(true); }
         System.assertEquals(1, x.steps.size());
         System.assert(x.steps[0].mine);
     }

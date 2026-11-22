@@ -4,9 +4,21 @@
  * The password is passed straight to CQ: never stored or logged.
  */
 public with sharing class CqEsigBridge implements CqEsigGateway {
+    /**
+     * CQ's answer for each record and action, kept for this request only. Asking CQ takes it about three seconds (it runs
+     * its signature flows each time), and a signature asked twice: once to check a signature is needed, once for its meaning.
+     */
+    private Map<String, compliancequest.SQX_Esig_Policy_Provider.SQX_Esig_Signature_Setting> asked =
+        new Map<String, compliancequest.SQX_Esig_Policy_Provider.SQX_Esig_Signature_Setting>();
+    private compliancequest.SQX_Esig_Policy_Provider.SQX_Esig_Signature_Setting setting(Id recordId, String action) {
+        String key = recordId + '|' + action;
+        if (!asked.containsKey(key)) { asked.put(key, compliancequest.SQX_Esig_Policy_Provider.retriveEsigSetting(recordId, action)); }
+        return asked.get(key);
+    }
+
     public CqFarCommittee.Sign signFor(Id recordId, String action) {
         CqFarCommittee.Sign g = new CqFarCommittee.Sign();
-        compliancequest.SQX_Esig_Policy_Provider.SQX_Esig_Signature_Setting c = compliancequest.SQX_Esig_Policy_Provider.retriveEsigSetting(recordId, action);
+        compliancequest.SQX_Esig_Policy_Provider.SQX_Esig_Signature_Setting c = setting(recordId, action);
         if (c != null) {
             g.required = c.enabled == true && c.required == true;
             g.comment = g.required && c.comment == true;
@@ -34,7 +46,7 @@ public with sharing class CqEsigBridge implements CqEsigGateway {
         }
         String purpose;
         try {
-            compliancequest.SQX_Esig_Policy_Provider.SQX_Esig_Signature_Setting c = compliancequest.SQX_Esig_Policy_Provider.retriveEsigSetting(recordId, action);
+            compliancequest.SQX_Esig_Policy_Provider.SQX_Esig_Signature_Setting c = setting(recordId, action);   // already asked when the action was checked
             purpose = c == null ? null : c.purposeOfSignature;
         } catch (Exception e) {
             purpose = null;
