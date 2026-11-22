@@ -6,4 +6,6 @@
 .cq-hl { border-radius: 4px 4px 0 0; }
 .cq-hl-k { font-weight: 400; }
 .cq-rail .step { border-radius: 4px; }
-.resumed { margin: -6px 0 12px; font-size: 13px; color: var(--cq-muted); }
+/* 'Picked up where you left off.' sits on the step title's line, at the right, so it takes no line of its own */
+.cq-ws-main { position: relative; }
+.resumed { position: absolute; top: 26px; right: 20px; margin: 0; font-size: 12px; color: var(--cq-muted); }
