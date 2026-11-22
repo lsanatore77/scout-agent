@@ -289,7 +289,7 @@ public with sharing class CqFarCommittee {
             try { if (r.Review_Draft__c != null) { d = (Map<String, Object>) JSON.deserializeUntyped(r.Review_Draft__c); } } catch (Exception e) { d = new Map<String, Object>(); }
             String choice = (String) d.get('faChoice');
             Id joinId = r.Outcome__c == 'Field Action Needed' && choice != null && choice != 'new' && choice != '' ? (Id) choice : null;
-            CqFieldActionReview.decide(r.Id, r.Health_Hazard_Summary__c, r.Review_Summary__c,
+            CqFieldActionReview.submit(r.Id, r.Health_Hazard_Summary__c, r.Review_Summary__c,
                 r.Risk_Score__c == null ? null : r.Risk_Score__c.intValue(), r.Risk_Level__c, r.Outcome__c, r.Outcome_Rationale__c,
                 joinId, (String) d.get('faTitle'), (String) d.get('actionType'), (String) d.get('recallClass'));
         }
