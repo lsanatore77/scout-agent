@@ -89,3 +89,16 @@ State on 2026-11-19:
 - Held (in scratchpad, not deployed): the closing approval reads the review view once less (~0.2 s). Bundle with the
   signing fixes once a debug log of one real Sign and Approve shows where the ~12 s goes (likely mostly CQ: password
   check, approval engine, Field Action creation).
+
+## Signing timing, measured (2026-11-21, late)
+
+- Debug logs of a real Sign and Approve: each call to CQ's `retriveEsigSetting` costs ~2.7-4 s (CQ runs "CQ SQ Step Esig
+  Options" x4 and "CQUI eSig - Get eSig Provider LWC" each time). Sign and Approve asked three times; the seat's policy
+  check twice.
+- Now: CqEsigBridge keeps CQ's answer for the request, so a signature asks twice (our check + CQ's own inside
+  validateEsig). Logged run: 12.4 s -> 10.7 s (Lou: ~10 s -> ~8 s, both with logging on).
+- Seat: one getSign request (two in parallel each took 12-13 s; CQ's lookups slow each other), kept in sessionStorage
+  for 8 hours. The server still checks CQ's policy on every signature; a refused unsigned action re-asks CQ.
+- What remains in Sign and Approve is CQ's: password check (with its own policy lookup) and the approval engine (~2 s).
+  Dev sandbox timings were noisy tonight (Submit to Committee 4 s, then 16 s, with no change).
+- getSignFor(recordId, action) stays on CqFarCommittee (tested) but the screen does not use it.
