@@ -176,7 +176,7 @@
                                                             <template if:true={r.canOpen}><button class="ohbtn" data-key={r.key} onclick={handleStock} aria-expanded={r.stockExpanded} aria-label={r.popLabel}>{r.onHandText}</button></template>
                                                             <template if:false={r.canOpen}>{r.onHandText}</template>
                                                             <template if:true={r.stockOpen}>
-                                                                <div class="pop" role="dialog" aria-label={r.popLabel}>
+                                                                <div class="pop" role="dialog" aria-label={r.popLabel} onclick={handlePopClick}>
                                                                     <div class="pophead"><span class="b">Lot {r.name}</span><span class="cq-grow"></span><span class="cq-sub">{r.onHandText} on hand</span></div>
                                                                     <template for:each={r.places} for:item="k">
                                                                         <div key={k.key} class="poprow"><a class="cq-ploc" href={k.href} target="_blank">{k.location}</a><span class="cq-grow"></span><span>{k.units}</span></div>

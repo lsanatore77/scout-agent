@@ -91,6 +91,11 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     rail = {};           // strategy, recovery, verdict and status for the later steps
 
     async connectedCallback() {
+        // the On Hand card closes on any click outside it, or on Escape
+        this.closePop = () => { if (this.keepPop) { this.keepPop = false; } else if (this.stockOpen) { this.stockOpen = ''; } };
+        this.escPop = (e) => { if (e.key === 'Escape' && this.stockOpen) { this.stockOpen = ''; } };
+        document.addEventListener('click', this.closePop);
+        document.addEventListener('keydown', this.escPop);
         this.template.addEventListener('gostep', (event) => {
             const i = STEP_KEYS[event.detail && event.detail.step];
             if (i !== undefined && !this.isLocked(i)) { this.go(i); }
@@ -99,6 +104,10 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         catch (e) { this.error = this.msg(e, 'Could not read this field action.'); }
         await this.loadRail();
         await this.loadStock();
+    }
+    disconnectedCallback() {
+        document.removeEventListener('click', this.closePop);
+        document.removeEventListener('keydown', this.escPop);
     }
     async loadStock() {
         if (!this.v) { return; }
@@ -512,7 +521,10 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     handleStock(event) {
         const key = event.currentTarget.dataset.key;
         this.stockOpen = this.stockOpen === key ? '' : key;
+        this.keepPop = true;
     }
+    /** A click inside the On Hand card (a location link, say) keeps it open. */
+    handlePopClick() { this.keepPop = true; }
     async run(call, after) {
         if (this.saving) { return; }
         this.saving = true; this.error = undefined;
