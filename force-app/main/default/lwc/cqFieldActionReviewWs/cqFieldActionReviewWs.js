@@ -6,11 +6,11 @@ import saveDraft from '@salesforce/apex/CqFieldActionReview.saveDraft';
 import getScope from '@salesforce/apex/CqFieldActionLots.getScope';
 import submitToCommittee from '@salesforce/apex/CqFieldActionLots.submitToCommittee';
 import actOnStep from '@salesforce/apex/CqFarCommittee.act';
-import getSign from '@salesforce/apex/CqFarCommittee.getSign';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import noteSuggestions from '@salesforce/apex/CqFarSuggestions.note';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 import { readDraft, writeDraft, upTo } from 'c/cqWsDraft';
+import { askPolicies, anyRequired, anyUnknown } from 'c/cqEsign';
 
 // shared pill tones (cqStyles .cq-pill.soft.*)
 const STRENGTH_TONE = { watch: 'warn', assess: 'warn', escalate: 'crit' };
@@ -109,14 +109,8 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     emergency = false;
     emergencyReason = '';
     emergencyUser = '';
-    comment = '';        // a committee member's comment when approving or sending back
-    pwWarn = '';         // why the signature password was cleared (it was filled in, not typed)
-    seatError = '';      // why signing or acting on your seat did not go through, shown under its buttons
-    acting = '';         // 'approve' or 'reject' while that seat action is being processed (spinner and status line)
-    _pw = '';            // the signature password: never rendered, never stored, cleared after every attempt
-    signs = {};          // 'approve' / 'reject' -> what CQ's e-signature policy asks for (its own request: see loadSign)
-    signsLoading = false; // that request is out: the seat waits ("Getting your signature ready") so Approve never goes without the password box
-    actingSign = false;  // whether the action being processed is a signature (fixed at the click, so the status line does not change mid-way)
+    comment = '';        // an administrator's comment when acting for a member (your own seat has its own, in c-cq-sign-seat)
+    signs = {};          // 'approve' / 'reject' -> what CQ's e-signature policy asks for (see askSign)
     evTab = 'signals';   // the evidence tab open beside the checklist
 
     async connectedCallback() {
@@ -181,37 +175,16 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     }
 
     /**
-     * What CQ's signature policy asks for approving and for sending back. CQ takes several seconds to answer (it runs its
-     * signature flows for each action), so the answer is kept in this browser tab for 8 hours and asked once a working day.
-     * Two requests at once were slower, not faster: CQ's lookups slowed each other down. The kept answer only shapes the
-     * seat: every signature is checked against CQ's policy again on the server.
+     * What CQ's signature policy asks for approving and for sending back (c/cqEsign: kept in the tab for 8 hours, and a
+     * question already being asked is shared with your seat). Asked as the page loads, so your seat does not wait for it.
      */
-    askSign(fresh) {
-        const key = 'cqSign:Field_Action_Review__c';
-        if (!fresh) {
-            try {
-                const kept = JSON.parse(window.sessionStorage.getItem(key) || 'null');
-                if (kept && Date.now() - kept.at < 8 * 3600000) { return Promise.resolve(kept.signs); }
-            } catch (e) { /* no storage: ask CQ */ }
-        }
-        return getSign({ recordId: this.recordId }).then((g) => {
-            const signs = g || {};
-            const ok = (x) => x && !x.unknown;
-            if (ok(signs.approve) && ok(signs.reject)) {
-                try { window.sessionStorage.setItem(key, JSON.stringify({ at: Date.now(), signs })); } catch (e) { /* not kept */ }
-            }
-            return signs;
-        }).catch(() => ({ approve: { unknown: true }, reject: { unknown: true } }));
-    }
-    /** With the committee, the seat waits for CQ's answer so Approve never goes without the password box when one is needed. */
+    askSign(fresh) { return askPolicies(this.recordId, ['approve', 'reject'], 'Field_Action_Review__c', fresh); }
+    /** With the committee: whether a signature is needed decides whether an administrator may act for a member. */
     async loadSign(fresh) {
-        if (!this.waiting) { this.signs = {}; this.signsLoading = false; return; }
-        this.signsLoading = true;
-        // the answer asked for while the page loaded, if there is one; otherwise ask now
+        if (!this.waiting) { this.signs = {}; return; }
         const early = fresh ? null : this._signAsk; this._signAsk = null;
         try { this.signs = (await (early || this.askSign(fresh))) || {}; }
         catch (e) { this.signs = { approve: { unknown: true }, reject: { unknown: true } }; }
-        this.signsLoading = false;
     }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     get ready() { return !!this.v; }
@@ -643,76 +616,36 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
                 ...s, yours, adminAct: s.canAct && !yours && !this.needSign,     // a signature is the assigned person's own: no acting for others
                 who: s.person + (s.mine ? ' (you)' : ''),
                 label: open ? (yours ? 'Your Approval' : 'Waiting') : (STEP_LABEL[s.status] || s.status),
-                cls: 'cq-pill soft ' + (yours ? 'you' : SEAT_TONE[(s.status || '').toLowerCase()] || 'neu'),
-                rowCls: 'seat' + (yours ? ' yours' : ''),
+                tone: yours ? 'you' : SEAT_TONE[(s.status || '').toLowerCase()] || 'neu',
                 line, quote: s.comment ? '“' + s.comment + '”' : ''
             };
         });
     }
     get hasYours() { return this.csteps.some((s) => s.yours); }
-    // ---- electronic signature: what CQ's policy asks for each action on this review
+    // ---- electronic signature: your own seat is c-cq-sign-seat (the standard); this page only needs to know whether
+    // a signature is needed, because an administrator may act for a member only when it is not
     signOf(action) { return (this.signs || {})[action] || {}; }
-    get needSign() { return !!(this.signOf('approve').required || this.signOf('reject').required); }
-    get signUnknown() { return !!(this.signOf('approve').unknown || this.signOf('reject').unknown); }
-    get approveLabel() {
-        const sign = this.signOf('approve').required;
-        if (this.acting === 'approve') { return sign ? 'Signing…' : 'Approving…'; }
-        return sign ? 'Sign and Approve' : 'Approve';
-    }
-    get rejectLabel() {
-        const sign = this.signOf('reject').required;
-        if (this.acting === 'reject') { return sign ? 'Signing…' : 'Sending Back…'; }
-        return sign ? 'Sign and Send Back' : 'Send Back';
-    }
-    /** The line beside the spinner while your seat action is processed (also announced to screen readers). */
-    get actingLine() {
-        if (!this.acting) { return ''; }
-        const sign = this.actingSign;
-        if (this.acting === 'approve') { return sign ? 'Checking your signature with CQ and approving…' : 'Approving…'; }
-        return sign ? 'Checking your signature with CQ and sending it back…' : 'Sending it back…';
-    }
-    /** The cover over your seat: while CQ is asked whether a signature is needed, and while your action is processed. */
-    get covering() { return !!this.acting || this.signsLoading; }
-    get coverLine() { return this.acting ? this.actingLine : 'Getting your signature ready…'; }
-    get seatBusy() { return this.saving || this.signsLoading; }
-    get commentRequired() { return !!this.signOf('approve').comment; }
-    get commentHint() { return this.commentRequired ? 'Required with your signature.' : 'Required when you send it back.'; }
-    get signMeaning() {
-        const p = this.signOf('approve').purpose;
-        return 'By signing, you ' + (p ? 'confirm: ' + p : 'approve this field action recommendation') + '. Type your password; it is not saved.';
-    }
-    /** Only typed characters count: autofill, paste and drop are refused, so the signer types the password themselves. */
-    handlePwInput(event) {
-        const t = event.inputType || '';
-        if (t.startsWith('insertText') || t.startsWith('delete') || t === 'insertCompositionText') {
-            this._pw = event.target.value; this.pwWarn = '';
-            return;
-        }
-        this.refusePw(event.target);
-    }
-    handlePwBlock(event) { event.preventDefault(); this.refusePw(event.target); }
-    /** The browser filled the field itself (its autofill animation starts): clear it. */
-    handlePwAutofill(event) { if ((event.animationName || '').toLowerCase().includes('autofill')) { this.refusePw(event.target); } }
-    refusePw(el) {
-        if (el) { el.value = ''; }
-        this._pw = '';
-        this.pwWarn = 'Please type your password. Filled-in or pasted passwords are not accepted for a signature.';
-    }
-    /**
-     * The signature box is a text box drawn with dots, so the browser does not treat it as a password box and offer
-     * saved passwords. Where the browser cannot draw the dots it stays a password box, so the password is never shown.
-     */
-    get pwMasked() {
-        try { return typeof CSS !== 'undefined' && !!CSS.supports && CSS.supports('-webkit-text-security', 'disc'); }
-        catch (e) { return false; }
-    }
-    get pwType() { return this.pwMasked ? 'text' : 'password'; }
-    get pwAuto() { return this.pwMasked ? 'off' : 'new-password'; }
-    get pwStyle() { return this.pwMasked ? '-webkit-text-security: disc;' : ''; }
-    clearPw() {
-        this._pw = '';
-        const el = this.template.querySelector('input.sigpw');
-        if (el) { el.value = ''; }
+    get needSign() { return anyRequired(this.signs); }
+    get signUnknown() { return anyUnknown(this.signs) && !this.hasYours; }
+    seatActions = [
+        { action: 'approve', label: 'Approve', doing: 'Approving', signing: 'approving' },
+        { action: 'reject', label: 'Send Back', doing: 'Sending Back', signing: 'sending it back', needsComment: true,
+            commentWhy: 'Add a comment saying why you are sending it back.' }
+    ];
+    /** Your seat signs and acts in one request: CqFarCommittee.act signs through CqEsign first when CQ's policy asks. */
+    seatSubmit = async ({ ref, action, comment, password }) => {
+        this.saving = true; this.error = undefined;
+        try {
+            const v = await actOnStep({ recordId: this.recordId, stepId: ref, action, comment, password });
+            this.afterAct(v);
+        } finally { this.saving = false; }
+    };
+    afterAct(v) {
+        this.comment = '';
+        this.apply(v, false);
+        if (this.done) { this.showSummary = true; }
+        else if (!this.waiting) { this.step = REC; }      // sent back: the coordinator picks it up at the recommendation
+        notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
     }
     get adminComment() { return this.canActAny && !this.hasYours; }
     /** The outcome matches what CQ.AI suggested. */
@@ -739,32 +672,19 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val, isOutcome: k === 'Outcome' }));
     }
     get outcomeNow() { return this.outcome || this.v.outcome; }
-    /** A message about acting on a seat: under your seat's buttons, or in the page banner when acting as admin. */
-    fail(m) { if (this.hasYours) { this.seatError = m; } else { this.error = m; } }
+    /** An administrator acts for a member (only when CQ's policy asks for no signature): the comment box under the seats. */
     async handleAct(event) {
         const d = event.currentTarget.dataset;
-        if (this.saving || this.signsLoading) { return; }
-        this.seatError = '';
-        if (d.a === 'reject' && !this.comment.trim()) { this.fail('Add a comment saying why you are sending it back.'); return; }
-        const g = this.signOf(d.a);
-        if (g.required && g.comment && !this.comment.trim()) { this.fail('A comment is required with your signature.'); return; }
-        if (g.required && !this._pw) { this.fail('Type your password to sign.'); return; }
-        const password = g.required ? this._pw : null;
-        this.clearPw();                 // never kept, whatever happens next
-        this.saving = true; this.error = undefined; this.actingSign = !!g.required; this.acting = d.a;
+        if (this.saving) { return; }
+        if (d.a === 'reject' && !this.comment.trim()) { this.error = 'Add a comment saying why you are sending it back.'; return; }
+        this.saving = true; this.error = undefined;
         try {
-            const v = await actOnStep({ recordId: this.recordId, stepId: d.id, action: d.a, comment: this.comment.trim(), password });
-            this.comment = '';
-            this.apply(v, false);
-            if (this.done) { this.showSummary = true; }
-            else if (!this.waiting) { this.step = REC; }      // sent back: the coordinator picks it up at the recommendation
-            notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
+            this.afterAct(await actOnStep({ recordId: this.recordId, stepId: d.id, action: d.a, comment: this.comment.trim(), password: null }));
         } catch (e) {
-            this.fail(this.msg(e, 'Could not record that.'));
-            // went without a signature and was refused: the policy may have changed since it was kept, so ask CQ again
-            if (!g.required) { this.loadSign(true); }
+            this.error = this.msg(e, 'Could not record that.');
+            this.loadSign(true);     // refused: the policy may have changed since it was kept, so ask CQ again
         }
-        this.saving = false; this.acting = '';
+        this.saving = false;
     }
 
     // ---- navigation: any step opens from the list, Back and Next always move; Submit to Committee waits for every step

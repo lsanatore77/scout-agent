@@ -30,8 +30,8 @@ private class CqEsigBridgeTest {
     static void fingerprintChangesWithTheRecommendation() {
         Field_Action_Review__c a = new Field_Action_Review__c(Outcome__c = 'No Field Action', Outcome_Rationale__c = 'Low risk');
         Field_Action_Review__c b = new Field_Action_Review__c(Outcome__c = 'No Field Action', Outcome_Rationale__c = 'Low risk.');
-        System.assertEquals(CqEsigBridge.fingerprint(a), CqEsigBridge.fingerprint(a.clone()));
-        System.assertNotEquals(CqEsigBridge.fingerprint(a), CqEsigBridge.fingerprint(b), 'one character changes it');
+        System.assertEquals(CqFarSignable.fingerprint(a), CqFarSignable.fingerprint(a.clone()));
+        System.assertNotEquals(CqFarSignable.fingerprint(a), CqFarSignable.fingerprint(b), 'one character changes it');
     }
 
     @IsTest

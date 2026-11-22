@@ -4,9 +4,9 @@ private class CqFarCommitteeTest {
     private class FakeEsig implements CqEsigGateway {
         Boolean required = false; Boolean comment = false; Boolean fail = false; Boolean accept = true;
         Integer signed = 0;
-        public CqFarCommittee.Sign signFor(Id recordId, String action) {
+        public CqEsign.Policy signFor(Id recordId, String action) {
             if (fail) { throw new CalloutException('no session'); }
-            CqFarCommittee.Sign g = new CqFarCommittee.Sign();
+            CqEsign.Policy g = new CqEsign.Policy();
             g.required = required; g.comment = comment; g.purpose = 'Committee Approve';
             return g;
         }
@@ -37,8 +37,8 @@ private class CqFarCommitteeTest {
         Field_Action_Review__c review = new Field_Action_Review__c(Title__c = 'Sign review');
         insert review;
         FakeEsig f = new FakeEsig(); f.required = true; f.comment = true;
-        CqFarCommittee.esig = f;
-        CqFarCommittee.Sign g = CqFarCommittee.signFor(review.Id, 'approve');
+        CqEsign.gateway = f;
+        CqEsign.Policy g = CqFarCommittee.signFor(review.Id, 'approve');
         System.assert(g.required && g.comment && !g.unknown);
 
         f.fail = true;
@@ -51,7 +51,7 @@ private class CqFarCommitteeTest {
         insert review;
         cqext__CQAPR_Approval_Step__c step = openStep(review);
         FakeEsig f = new FakeEsig(); f.required = true; f.comment = true;
-        CqFarCommittee.esig = f;
+        CqEsign.gateway = f;
 
         System.assertNotEquals(null, error(review.Id, step.Id, 'approve', 'ok', null), 'no password: refused');
         System.assertNotEquals(null, error(review.Id, step.Id, 'approve', '', 'pw'), 'comment required: refused');
@@ -69,7 +69,7 @@ private class CqFarCommitteeTest {
         insert review;
         cqext__CQAPR_Approval_Step__c step = openStep(review);
         FakeEsig f = new FakeEsig(); f.required = true;
-        CqFarCommittee.esig = f;
+        CqEsign.gateway = f;
         String err = error(review.Id, step.Id, 'approve', 'agree', 'pw');
         System.assertEquals(1, f.signed, 'CQ signed first: ' + err);
     }
@@ -80,7 +80,7 @@ private class CqFarCommitteeTest {
         insert review;
         cqext__CQAPR_Approval_Step__c step = openStep(review);
         FakeEsig f = new FakeEsig();
-        CqFarCommittee.esig = f;
+        CqEsign.gateway = f;
         error(review.Id, step.Id, 'approve', null, null);
         System.assertEquals(0, f.signed);
         System.assertNotEquals(null, error(review.Id, step.Id, 'reject', '', null), 'sending back needs a comment');
@@ -95,7 +95,7 @@ private class CqFarCommitteeTest {
         update new Field_Action_Review__c(Id = review.Id, Status__c = 'With Committee',
             Committee_Approval__c = [SELECT cqext__CQAPR_Approval__c FROM cqext__CQAPR_Approval_Step__c WHERE Id = :step.Id].cqext__CQAPR_Approval__c);
         FakeEsig f = new FakeEsig(); f.required = true;
-        CqFarCommittee.esig = f;
+        CqEsign.gateway = f;
         CqFarCommittee.Info x = CqFarCommittee.info([SELECT Id, Status__c, Emergency__c, Emergency_Reason__c, Recommended_By__r.Name, Recommended_On__c,
             Committee_Approval__c FROM Field_Action_Review__c WHERE Id = :review.Id]);
         System.assert(CqFarCommittee.getSign(review.Id).get('approve').required);

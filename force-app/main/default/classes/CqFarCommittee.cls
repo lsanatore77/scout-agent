@@ -38,15 +38,6 @@ public with sharing class CqFarCommittee {
         @AuraEnabled public String recommendedBy; @AuraEnabled public Datetime recommendedOn;
         @AuraEnabled public String sentBack;    // the committee's comments when the last approval was sent back
     }
-    /** What CQ's electronic signature policy asks for one committee action on a review. */
-    public class Sign {
-        @AuraEnabled public Boolean required = false;
-        @AuraEnabled public Boolean comment = false;      // a comment is required with the signature
-        @AuraEnabled public String purpose;               // the meaning of the signature, from CQ
-        @AuraEnabled public Boolean sso = false;
-        @AuraEnabled public Boolean mfa = false;
-        @AuraEnabled public Boolean unknown = false;      // CQ could not be asked: the action is refused rather than taken unsigned
-    }
     public class Member { @AuraEnabled public Id functionId; @AuraEnabled public Id userId; }
 
     private static String seatName(String functionName) {
@@ -197,34 +188,16 @@ public with sharing class CqFarCommittee {
         return CqFieldActionReview.getView(recordId);
     }
 
-    /** CQ's electronic signature, reached by name through CqEsigGateway (see there for why). Tests put in a stand-in. */
-    @TestVisible
-    private static CqEsigGateway esig {
-        get { if (esig == null) { esig = (CqEsigGateway) Type.forName('CqEsigBridge').newInstance(); } return esig; }
-        set;
-    }
-
-    /**
-     * What CQ's electronic signature policy asks for an action on a record. CQ is asked in the user's session (its check
-     * fails without one). If it cannot be asked, the setting comes back unknown and the action is refused, never taken unsigned.
-     */
-    public static Sign signFor(Id recordId, String action) {
-        try {
-            Sign g = esig.signFor(recordId, action);
-            return g == null ? new Sign() : g;
-        } catch (Exception e) {
-            Sign g = new Sign(); g.unknown = true;
-            return g;
-        }
-    }
+    /** What CQ's electronic signature policy asks for an action on a review (CqEsign). */
+    public static CqEsign.Policy signFor(Id recordId, String action) { return CqEsign.policyFor(recordId, action); }
 
     /**
      * What CQ's policy asks for the committee's two actions on a review: 'approve' and 'reject'. The screen asks for this
      * in its own request, after loading: asking CQ inside the submission ran past the time limit with CQ's approval engine.
      */
     @AuraEnabled
-    public static Map<String, Sign> getSign(Id recordId) {
-        return new Map<String, Sign>{ 'approve' => signFor(recordId, 'approve'), 'reject' => signFor(recordId, 'reject') };
+    public static Map<String, CqEsign.Policy> getSign(Id recordId) {
+        return new Map<String, CqEsign.Policy>{ 'approve' => signFor(recordId, 'approve'), 'reject' => signFor(recordId, 'reject') };
     }
 
     /**
@@ -232,7 +205,7 @@ public with sharing class CqFarCommittee {
      * CQ takes about three seconds for each, so asking for both in one request took twice as long.
      */
     @AuraEnabled
-    public static Sign getSignFor(Id recordId, String action) {
+    public static CqEsign.Policy getSignFor(Id recordId, String action) {
         if (action != 'approve' && action != 'reject') { throw new AuraHandledException('Choose Approve or Send Back.'); }
         return signFor(recordId, action);
     }
@@ -258,14 +231,7 @@ public with sharing class CqFarCommittee {
         Boolean mine = t.cqext__CQAPR_Assignee_User__c == UserInfo.getUserId() || t.cqext__CQAPR_Delegate_User__c == UserInfo.getUserId();
         if (!mine && !isAdmin()) { throw new AuraHandledException('This step is assigned to someone else.'); }
 
-        Sign g = signFor(recordId, action);
-        if (g.unknown) { throw new AuraHandledException('Could not check whether this needs an electronic signature, so nothing was changed. Try again.'); }
-        if (g.required) {
-            if (!mine) { throw new AuraHandledException('This needs the electronic signature of the person it is assigned to.'); }
-            if (String.isBlank(password)) { throw new AuraHandledException('Type your password to sign.'); }
-            if (g.comment && String.isBlank(comment)) { throw new AuraHandledException('A comment is required with your signature.'); }
-            esig.sign(recordId, action, comment, password);
-        }
+        CqEsign.sign(recordId, action, comment, password, mine);   // signed first when CQ's policy asks; nothing changes if refused
 
         update new cqext__CQAPR_Approval_Step__c(Id = stepId, cqext__Activity_Code__c = action, cqext__Remark__c = String.isBlank(comment) ? null : comment.left(1024));
         if (action == 'reject') {

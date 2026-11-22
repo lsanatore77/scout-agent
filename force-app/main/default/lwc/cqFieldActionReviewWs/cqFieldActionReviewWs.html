@@ -358,43 +358,17 @@
                             <section class="card seats" aria-label="Committee">
                                 <div class="shead"><span class="lab">Committee</span><span class="cq-sub">{approvedLine}</span></div>
                                 <template for:each={csteps} for:item="s">
-                                    <div key={s.id} class={s.rowCls}>
-                                        <div class="stop">
-                                            <span class="cq-stack"><span class="fname">{s.seat}</span><span class="who">{s.who}</span><span class="cq-sub">{s.line}</span><template if:true={s.quote}><span class="cq-sub">{s.quote}</span></template></span>
-                                            <span class={s.cls}>{s.label}</span>
-                                        </div>
-                                        <template if:true={s.yours}>
-                                            <div class="signbox">
-                                                <label class="cq-field"><span class="cq-label">Comment<template if:true={commentRequired}><span class="cq-req">*</span></template></span>
-                                                    <textarea rows="2" data-f="comment" value={comment} oninput={handleInput} placeholder={commentHint} disabled={seatBusy}></textarea>
-                                                </label>
-                                                <template if:true={needSign}>
-                                                    <p class="signmean">{signMeaning}</p>
-                                                    <label class="cq-field"><span class="cq-label">Password<span class="cq-req">*</span></span>
-                                                        <input type={pwType} class="sigpw" name="cq-esig-confirm" autocomplete={pwAuto} style={pwStyle} spellcheck="false" autocapitalize="off" autocorrect="off" disabled={seatBusy}
-                                                            data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"
-                                                            oninput={handlePwInput} onpaste={handlePwBlock} ondrop={handlePwBlock} onanimationstart={handlePwAutofill} />
-                                                    </label>
-                                                    <template if:true={pwWarn}><span class="pwwarn">{pwWarn}</span></template>
-                                                </template>
-                                                <div class="sbtns">
-                                                    <button class="cq-btn-primary" data-id={s.id} data-a="approve" onclick={handleAct} disabled={seatBusy}>{approveLabel}</button>
-                                                    <button class="cq-btn-outline" data-id={s.id} data-a="reject" onclick={handleAct} disabled={seatBusy}>{rejectLabel}</button>
-                                                </div>
-                                                <template if:true={seatError}><span class="pwwarn" role="alert">{seatError}</span></template>
-                                                <!-- a cover over the comment, password and buttons: while the signature is got ready, and while signing; the spinner and what is happening -->
-                                                <div role="status" aria-live="polite">
-                                                    <template if:true={covering}><div class="signcover"><span class="spinhold"><lightning-spinner alternative-text="Working" size="medium"></lightning-spinner></span><span class="covertext">{coverLine}</span></div></template>
-                                                </div>
-                                            </div>
-                                        </template>
+                                    <c-cq-sign-seat key={s.id} record-id={recordId} policy-key="Field_Action_Review__c" actions={seatActions}
+                                        seat={s.seat} person={s.who} sub={s.line} quote={s.quote} status={s.label} tone={s.tone} mine={s.yours}
+                                        meaning="approve this field action recommendation" comment-hint="Required when you send it back."
+                                        ref={s.id} submit={seatSubmit} disabled={saving}>
                                         <template if:true={s.adminAct}>
                                             <div class="sadmin"><span class="cq-sub">As admin:</span>
                                                 <button class="cq-link" data-id={s.id} data-a="approve" onclick={handleAct} disabled={saving}>Approve</button>
                                                 <button class="cq-link" data-id={s.id} data-a="reject" onclick={handleAct} disabled={saving}>Send Back</button>
                                             </div>
                                         </template>
-                                    </div>
+                                    </c-cq-sign-seat>
                                 </template>
                                 <template if:true={adminComment}>
                                     <div class="seat"><label class="cq-field"><span class="cq-label">Comment</span>

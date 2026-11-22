@@ -1,0 +1,41 @@
+<template>
+    <div class={rowCls}>
+        <div class="stop">
+            <span class="cq-stack">
+                <span class="fname">{seat}</span>
+                <span class="who">{person}</span>
+                <template if:true={sub}><span class="cq-sub">{sub}</span></template>
+                <template if:true={quote}><span class="cq-sub">{quote}</span></template>
+            </span>
+            <template if:true={status}><span class={pillCls}>{status}</span></template>
+        </div>
+        <template if:true={mine}>
+            <div class="signbox">
+                <label class="cq-field"><span class="cq-label">Comment<template if:true={commentRequired}><span class="cq-req">*</span></template></span>
+                    <textarea rows="2" value={comment} oninput={handleComment} placeholder={hint} disabled={busy}></textarea>
+                </label>
+                <template if:true={needSign}>
+                    <p class="signmean">{signMeaning}</p>
+                    <label class="cq-field"><span class="cq-label">Password<span class="cq-req">*</span></span>
+                        <input type={pwType} class="sigpw" name="cq-esig-confirm" autocomplete={pwAuto} style={pwStyle} spellcheck="false" autocapitalize="off" autocorrect="off" disabled={busy}
+                            data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"
+                            oninput={handlePwInput} onpaste={handlePwBlock} ondrop={handlePwBlock} onanimationstart={handlePwAutofill} />
+                    </label>
+                    <template if:true={pwWarn}><span class="pwwarn">{pwWarn}</span></template>
+                </template>
+                <div class="sbtns">
+                    <template for:each={buttons} for:item="b">
+                        <button key={b.key} class={b.cls} data-a={b.action} onclick={handleAct} disabled={busy}>{b.text}</button>
+                    </template>
+                </div>
+                <template if:true={error}><span class="pwwarn" role="alert">{error}</span></template>
+                <template if:true={unknown}><span class="cq-sub unk">{unknownLine}</span></template>
+                <!-- a cover over the comment, password and buttons: while CQ's policy is asked, and while signing -->
+                <div role="status" aria-live="polite">
+                    <template if:true={covering}><div class="signcover"><span class="spinhold"><lightning-spinner alternative-text="Working" size="medium"></lightning-spinner></span><span class="covertext">{coverLine}</span></div></template>
+                </div>
+            </div>
+        </template>
+        <slot></slot>
+    </div>
+</template>
