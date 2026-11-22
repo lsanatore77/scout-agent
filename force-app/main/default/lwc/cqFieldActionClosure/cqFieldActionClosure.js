@@ -171,7 +171,15 @@ export default class CqFieldActionClosure extends LightningElement {
     get signCount() { return (this.signer.signed ? 1 : 0) + ' of 1 signed'; }
     get signNote() {
         if (this.v.closed) { return this.signer.signed ? 'Signed with CQ\'s electronic signature. The signature is also in the Audit Trail.' : 'Closed. CQ\'s signature policy asked for no signature; the closing is in the Audit Trail.'; }
-        return 'Signatures run on CQ\'s electronic signature. The field action closes when the recall coordinator signs.';
+        return (this.demo ? 'Demo Mode is on: units, customers and recall tasks do not stop closing, and the signature is marked as made in Demo Mode. ' : '')
+            + 'Signatures run on CQ\'s electronic signature. The field action closes when the recall coordinator signs.';
+    }
+    /** Field Action Settings > Demo Mode (org-wide): shown on the Signature card while the field action is open. */
+    get demo() { return !!this.v.demo && !this.v.closed; }
+    get checkHint() {
+        return 'Ticked automatically from the earlier steps. ' + (this.v.demo
+            ? '\u2715 items must be done before closing; ! items are flagged but do not stop it (Demo Mode).'
+            : 'Every item must be done before the recall coordinator can sign and close.');
     }
     get signBlocker() { return this.v.closed ? '' : this.blocker; }
     get adminClose() { return !!this.signer.canAdmin && !this.needSign && !this.v.closed; }

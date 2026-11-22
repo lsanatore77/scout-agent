@@ -43,6 +43,13 @@ The server always checks again: a page cannot skip the signature by calling Apex
 9. **Tests**: use a fake `CqEsign.gateway`; prove a blocked action is never signed, a signature writes exactly one row, and the delete guard holds. The real password check is proved by a live test, because CQ accepts any password inside Apex tests.
 10. **CQ setup (Lou)**: in CQ Admin > eSig Settings, create the policy for the new action (required, comment, purpose).
 
+## Demo Mode (Field Action Closure)
+
+Setup > Custom Settings > **Field Action Settings** > Manage > the org default > **Demo Mode**.
+
+- **Off (real use):** every Closure checklist item must be done before the Recall Coordinator can sign and close, including units recovered, customers confirmed and recall tasks completed.
+- **On (demos):** units, customers and recall tasks show as **!** and do not stop closing. The scope, strategy, held stock, verdict and CAPA still do. The Signature card shows a **Demo Mode** tag, and a signature made in Demo Mode is saved with Verified By "Password (CQ) · Demo mode" and shows in the Audit Trail as "signed in Demo Mode".
+
 ## In use
 
 | Object | Action | Signer | Log |

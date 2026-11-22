@@ -38,6 +38,16 @@ public with sharing class CqFieldActionRecovery {
     public class Capa { @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String title; }
     /** Off for now (Lou, 14 Nov 2026): the acknowledgement target is shown and suggested, but does not stop an Effective verdict or closing. Set true to require it again. */
     public static final Boolean ACK_REQUIRED = false;
+    /**
+     * Demo Mode (Setup > Custom Settings > Field Action Settings, org default). Off: every checklist item must be done
+     * before the Recall Coordinator can sign and close. On: units, customers and recall tasks are flagged but do not stop it.
+     */
+    @TestVisible private static Boolean demoOverride;
+    public static Boolean demoMode() {
+        if (demoOverride != null) { return demoOverride; }
+        Field_Action_Settings__c s = Field_Action_Settings__c.getOrgDefaults();
+        return s != null && s.Demo_Mode__c == true;
+    }
     public static final String CAPA_MISSING = 'CAPA has not been created yet';
     public static final String CAPA_RECORD_TYPE = 'CAPA_Field_Action';
     public static final Integer CAPA_DUE_DAYS = 60;
@@ -59,6 +69,7 @@ public with sharing class CqFieldActionRecovery {
         // closure
         @AuraEnabled public List<Check> checks = new List<Check>();
         @AuraEnabled public Boolean canClose = false;
+        @AuraEnabled public Boolean demo = false;   // Demo Mode: units, customers and tasks do not stop closing
         @AuraEnabled public String summary; @AuraEnabled public String sSummary;
         @AuraEnabled public Id capaId; @AuraEnabled public String capaName; @AuraEnabled public String capaTitle; @AuraEnabled public String capaStatus;
         @AuraEnabled public List<Capa> capas = new List<Capa>();
@@ -203,6 +214,8 @@ public with sharing class CqFieldActionRecovery {
     }
 
     private static void closure(View v, Field_Action__c fa, List<String> lotNames, Decimal inField) {
+        v.demo = demoMode();
+        Boolean strict = !v.demo;
         Boolean scopeOk = fa.Scope__c == CqFieldActionScope.FULL || fa.Scope_Status__c == 'Confirmed';
         add(v, 'scope', 'Scope confirmed', scopeOk ? lotNames.size() + ' lot' + (lotNames.size() == 1 ? '' : 's')
             + (fa.Scope_Confirmed_By__r == null ? '' : ' · confirmed by ' + fa.Scope_Confirmed_By__r.Name + ', ' + fa.Scope_Confirmed_On__c.date().format())
@@ -216,13 +229,13 @@ public with sharing class CqFieldActionRecovery {
         String unitsDetail = !v.shippedKnown ? 'Units shipped are not recorded on the Scope step'
             : inField == 0 ? v.recovered.intValue() + ' of ' + v.shipped.intValue() + ' shipped units accounted for'
             : inField.intValue() + ' of ' + v.shipped.intValue() + ' shipped units still in the field';
-        add(v, 'units', 'Units recovered', unitsDetail, v.shippedKnown && inField == 0 ? 'ok' : 'open', false);
+        add(v, 'units', 'Units recovered', unitsDetail, v.shippedKnown && inField == 0 ? 'ok' : 'open', strict);
         add(v, 'customers', 'Customers confirmed', v.total == 0 ? 'No customers listed'
             : v.acked + ' of ' + v.total + ' acknowledged' + (v.targetMet ? ' · ' + (v.level == null ? 'target' : v.level) + ' met' : ' · ' + (v.level == null ? 'target' : v.level) + ' needs ' + v.target.intValue() + '%'),
-            v.targetMet ? 'ok' : 'open', ACK_REQUIRED);
+            v.targetMet ? 'ok' : 'open', ACK_REQUIRED || strict);
         Integer allTasks = v.tasks.open + v.tasks.completed;
         add(v, 'tasks', 'Recall tasks completed', allTasks == 0 ? 'No recall tasks were created' : v.tasks.completed + ' of ' + allTasks + ' completed'
-            + (v.tasks.overdue > 0 ? ' · ' + v.tasks.overdue + ' overdue' : ''), v.tasks.open == 0 ? 'ok' : 'open', false);
+            + (v.tasks.overdue > 0 ? ' · ' + v.tasks.overdue + ' overdue' : ''), v.tasks.open == 0 ? 'ok' : 'open', strict);
         add(v, 'holds', 'Held stock decided', v.holds.isEmpty() ? 'No stock was held' : v.decided + ' of ' + v.holds.size() + ' lots' + dispSummary(v),
             v.decided == v.holds.size() ? 'ok' : 'open', true);
         Boolean verdictOk = fa.Recovery_Status__c == 'Confirmed' && fa.Verdict__c == EFFECTIVE;

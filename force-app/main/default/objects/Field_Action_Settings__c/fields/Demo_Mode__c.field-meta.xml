@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Demo_Mode__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>On: units recovered, customers confirmed and recall tasks completed do not stop closing (demo use). Off: every checklist item must be done before the Recall Coordinator can sign and close.</description>
+    <inlineHelpText>Turn on only for demos. Signatures made in demo mode are marked in the audit trail.</inlineHelpText>
+    <label>Demo Mode</label>
+    <type>Checkbox</type>
+</CustomField>

@@ -141,3 +141,4 @@ Newest first.
 - **CqFarEsigPolicies**: now also registers Field Action (action Close Field Action) with CQ. No new Extension Esig Policy Provider row: the existing `CqFarEsigPolicies` row covers both objects.
 - **CqAuditTrail**: the Field Action trail shows Closed the Field Action and the signature. No new access.
 - The shared e-signature standard is in `docs/esignature.md`.
+- **Field Action Settings** (`Field_Action_Settings__c`, new hierarchy custom setting) with **Demo Mode** (`Demo_Mode__c`). Read by Apex from the org default, so users need no access. Off: every Closure checklist item blocks signing; on: units, customers and recall tasks do not. Turned on and off by an admin in Setup > Custom Settings.

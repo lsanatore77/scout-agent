@@ -21,3 +21,4 @@
 .sadmin { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
 .snote { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--cq-line); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
 .snote.blk { color: var(--cq-warn-fg); font-weight: 600; }
+.seatcard .demo { margin-left: 10px; }

@@ -25,7 +25,7 @@
                         </template>
                     </div>
                 </template>
-                <span class="cq-hint">Ticked automatically from the earlier steps. &#10005; items must be done before closing; ! items are flagged but do not stop it.</span>
+                <span class="cq-hint">{checkHint}</span>
             </section>
 
             <div class="cq-col lead">
@@ -63,7 +63,7 @@
                     </div>
                 </section>
                 <section class="cq-stepcard seatcard">
-                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">4</span><span class="cq-stepcard-title">Signature</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{signCount}</span></div>
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">4</span><span class="cq-stepcard-title">Signature</span><template if:true={demo}><span class="cq-pill soft warn demo" title="Field Action Settings: Demo Mode is on">Demo Mode</span></template><span class="cq-grow"></span><span class="cq-stepcard-tot">{signCount}</span></div>
                     <c-cq-sign-seat record-id={recordId} policy-key="Field_Action__c" actions={seatActions}
                         seat="Recall Coordinator" person={signPerson} sub={signSub} quote={signQuote} status={signStatus} tone={signTone}
                         mine={signMine} meaning="confirm the field action is complete and its effectiveness verified" comment-hint="Optional."

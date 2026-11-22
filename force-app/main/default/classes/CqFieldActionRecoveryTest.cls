@@ -257,6 +257,7 @@ private class CqFieldActionRecoveryTest {
 
     @IsTest
     static void aFinishedFieldActionClosesAndLocks() {
+        CqFieldActionRecovery.demoOverride = true;   // 10 units are still in the field: only Demo Mode lets it close
         Field_Action__c fa = makeFa();
         update new Field_Action_Hold__c(Id = holdRow(fa.Id), Disposition__c = 'Scrap');
         update new Field_Action__c(Id = fa.Id, Recovery_Status__c = 'Confirmed', Verdict__c = CqFieldActionRecovery.EFFECTIVE,
@@ -291,5 +292,23 @@ private class CqFieldActionRecoveryTest {
             }
         }
         Test.stopTest();
+    }
+
+    @IsTest
+    static void outsideDemoModeEveryItemIsNeededToClose() {
+        Field_Action__c fa = makeFa();
+        CqFieldActionRecovery.demoOverride = false;
+        CqFieldActionRecovery.View v = CqFieldActionRecovery.getView(fa.Id);
+        System.assertEquals(false, v.demo);
+        for (String k : new List<String>{ 'units', 'customers', 'tasks' }) { System.assertEquals(true, check(v, k).blocks, k + ' blocks outside Demo Mode'); }
+        System.assertEquals(false, v.canClose);
+
+        CqFieldActionRecovery.demoOverride = true;
+        v = CqFieldActionRecovery.getView(fa.Id);
+        System.assertEquals(true, v.demo);
+        System.assertEquals(false, check(v, 'units').blocks, 'Demo Mode: units are flagged, not blocking');
+        System.assertEquals(CqFieldActionRecovery.ACK_REQUIRED, check(v, 'customers').blocks);
+        System.assertEquals(false, check(v, 'tasks').blocks);
+        System.assertEquals(true, check(v, 'verdict').blocks, 'the verdict still blocks in Demo Mode');
     }
 }

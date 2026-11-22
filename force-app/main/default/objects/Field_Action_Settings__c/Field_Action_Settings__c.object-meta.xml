@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <description>Org-wide settings for Field Actions. Demo Mode lets a Field Action close and be signed while units, customers or recall tasks are still open, so a demo does not get stuck; leave it off in real use.</description>
+    <enableFeeds>false</enableFeeds>
+    <label>Field Action Settings</label>
+    <visibility>Public</visibility>
+</CustomObject>

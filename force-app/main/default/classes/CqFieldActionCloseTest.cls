@@ -54,6 +54,7 @@ private class CqFieldActionCloseTest {
 
     @IsTest
     static void signsClosesAndShowsInTheAuditTrail() {
+        CqFieldActionRecovery.demoOverride = true;   // units and customers are still open: Demo Mode lets it close, and says so
         Field_Action__c fa = makeFa();
         update new Field_Action__c(Id = fa.Id, Recovery_Status__c = 'Confirmed', Verdict__c = CqFieldActionRecovery.EFFECTIVE,
             Verdict_By__c = UserInfo.getUserId(), Verdict_On__c = Datetime.now());
@@ -76,6 +77,7 @@ private class CqFieldActionCloseTest {
             Boolean closedEntry = false; Boolean signEntry = false;
             for (CqAuditTrail.Entry e : t.entries) { if (e.kind == 'decision') { closedEntry = true; } if (e.kind == 'signature') { signEntry = true; } }
             System.assert(closedEntry && signEntry, 'closing and the signature are both in the timeline');
+            System.assertEquals('Password checked · signed in Demo Mode', t.signatures[0].verified);
             try { delete new Field_Action__c(Id = fa.Id); System.assert(false, 'a signed field action stays'); }
             catch (DmlException e) { System.assert(e.getMessage().contains('electronic signature')); }
         } else {
@@ -88,6 +90,7 @@ private class CqFieldActionCloseTest {
     @IsTest
     static void signatureRowAndFingerprint() {
         Field_Action__c fa = makeFa();
+        CqFieldActionRecovery.demoOverride = false;
         CqFaSignable.signing = 'Summary one';
         CqEsigBridge.signable(fa.Id).record(fa.Id, 'close', 'x'.repeat(300), null, 'a'.repeat(64));
         Field_Action_Record_Activity__c row = [SELECT Comment__c, Comment_Long__c, Signed_Content__c, Verified_By__c, Type_of_Activity__c
@@ -96,6 +99,7 @@ private class CqFieldActionCloseTest {
         System.assertEquals(300, row.Comment_Long__c.length());
         System.assertEquals(64, row.Signed_Content__c.length());
         System.assertEquals('E-Signature', row.Type_of_Activity__c);
+        System.assertEquals(CqEsigBridge.PASSWORD, row.Verified_By__c, 'not Demo Mode: plain password');
         System.assertNotEquals(CqFaSignable.fingerprint(fa, 'Summary one'), CqFaSignable.fingerprint(fa, 'Summary two'));
         System.assertEquals(1, new CqFaSignable().signatureCount(fa.Id));
     }

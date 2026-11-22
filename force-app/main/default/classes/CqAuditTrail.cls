@@ -101,11 +101,13 @@ public with sharing class CqAuditTrail {
             s.key = a.Id; s.at = a.CreatedDate; s.who = a.CreatedBy.Name; s.seat = 'Recall Coordinator';
             s.meaning = String.isNotBlank(a.Purpose_Of_Signature__c) ? a.Purpose_Of_Signature__c : 'Close Field Action';
             s.comment = String.isNotBlank(a.Comment_Long__c) ? a.Comment_Long__c : a.Comment__c;
-            s.verified = a.Verified_By__c == CqEsigBridge.PASSWORD ? 'Password checked' : String.isBlank(a.Verified_By__c) ? 'Recorded by CQ' : a.Verified_By__c;
+            s.verified = a.Verified_By__c == CqEsigBridge.PASSWORD ? 'Password checked'
+                : a.Verified_By__c == CqEsigBridge.PASSWORD + CqFaSignable.DEMO ? 'Password checked · signed in Demo Mode'
+                : String.isBlank(a.Verified_By__c) ? 'Recorded by CQ' : a.Verified_By__c;
             t.signatures.add(s);
             Entry x = new Entry();
             x.id = a.Id; x.at = a.CreatedDate; x.kind = 'signature'; x.who = a.CreatedBy.Name;
-            x.title = 'Signed: ' + s.meaning; x.detail = s.comment;
+            x.title = 'Signed: ' + s.meaning + (a.Verified_By__c == CqEsigBridge.PASSWORD + CqFaSignable.DEMO ? ' (Demo Mode)' : ''); x.detail = s.comment;
             t.entries.add(x);
         }
         t.entries.sort();

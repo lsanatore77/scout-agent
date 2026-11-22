@@ -5,6 +5,8 @@
 public with sharing class CqFaSignable implements CqSignable {
     /** What is being signed, set by the action just before it signs (the closing summary): it goes into the fingerprint. */
     public static String signing;
+    /** Added to Verified By when the signature was made in Demo Mode, so the audit trail shows it. */
+    public static final String DEMO = ' · Demo mode';
 
     public Integer signatureCount(Id recordId) {
         return [SELECT COUNT() FROM Field_Action_Record_Activity__c WHERE Field_Action__c = :recordId WITH USER_MODE];
@@ -25,7 +27,7 @@ public with sharing class CqFaSignable implements CqSignable {
             Comment__c = said.left(255),
             Comment_Long__c = said.left(32768),
             Modified_By__c = UserInfo.getName() + ' (' + UserInfo.getUserName() + ')',
-            Verified_By__c = CqEsigBridge.PASSWORD,
+            Verified_By__c = CqEsigBridge.PASSWORD + (CqFieldActionRecovery.demoMode() ? DEMO : ''),
             Signed_Content__c = fingerprint(fa, signing),
             Transaction_Id__c = tokenHash);
         Database.insert(row, AccessLevel.USER_MODE);
