@@ -7,8 +7,7 @@
 /* card headings: bold, Title Case, body size, the same as the sub-heading on a CQ.AI suggestion card (Reported Answers) */
 .lab { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
 .card { padding: 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
-/* What Was Decided is the committee's decision, not CQ.AI's: a plain card with a quiet caption over the title (purple is CQ.AI's colour) */
-.lab.quiet { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
+/* the decision card is the committee's decision, not CQ.AI's: a plain card, no caption, the title first (purple is CQ.AI's colour) */
 .pill { flex: none; display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); color: var(--cq-accent); font-size: 11px; font-weight: 600; white-space: nowrap; }
 /* a signal's name and strength pill stay on one line, as on Field Action Review; What We See takes the rest and wraps */
 .sgh { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
