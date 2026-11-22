@@ -174,6 +174,32 @@ private class CqFieldActionScopeTest {
     }
 
     @IsTest
+    static void scopeChangesAreInTheAuditTrail() {
+        compliancequest__SQX_Part__c part = makePart();
+        Field_Action__c full = makeFa(part.Id, 'Full');
+        Field_Action__c partial = makeFa(part.Id, 'Partial');
+
+        Test.startTest();
+        CqFieldActionScope.getView(full.Id);
+        CqFieldActionScope.setLot(partial.Id, 'FAS-L1', true);
+        CqFieldActionScope.confirmScope(partial.Id);
+        Test.stopTest();
+
+        CqAuditTrail.Trail t = CqAuditTrail.get(full.Id);
+        System.assertEquals(2, t.entries.size(), 'each lot a Full scope added is in the trail');
+        System.assertEquals('scope', t.entries[0].kind);
+        System.assertEquals('Automatic', t.entries[0].who);
+        System.assert(t.entries[0].title.startsWith('Added Lot FAS-L'), t.entries[0].title);
+        System.assert(t.entries[0].detail.startsWith('Full scope covers every lot'), t.entries[0].detail);
+
+        t = CqAuditTrail.get(partial.Id);
+        System.assertEquals(1, t.entries.size(), 'a confirmed tick is in the trail; the draft itself is not');
+        System.assertEquals('Added Lot FAS-L1 to Scope', t.entries[0].title);
+        System.assertEquals(UserInfo.getName(), t.entries[0].who);
+        System.assert(t.signatures.isEmpty());
+    }
+
+    @IsTest
     static void closedOrUnscopedFieldActionsAreNotChanged() {
         compliancequest__SQX_Part__c part = makePart();
         Field_Action__c none = makeFa(part.Id, null);

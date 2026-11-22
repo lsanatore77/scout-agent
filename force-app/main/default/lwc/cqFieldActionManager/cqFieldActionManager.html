@@ -12,6 +12,7 @@
                         </div>
                     </div>
                     <div class="cq-hl-actions">
+                        <c-cq-audit-trail record-id={recordId}></c-cq-audit-trail>
                         <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Field_Action" step={askStep} suggestions={askSuggestions} onaskcqaction={handleAskAction}></c-ask-cq-popover>
                         <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
                     </div>
@@ -224,16 +225,6 @@
                             </template>
                         </template>
                         <template if:false={hasLots}><p class="cq-note">No lots of this part were found.</p></template>
-
-                        <div class="sec">
-                            <div class="lab">Scope Changes</div>
-                            <template if:true={hasChanges}>
-                                <template for:each={changes} for:item="c">
-                                    <div key={c.key} class="logrow"><span class="logwhen">{c.at}</span><span class="cq-stack"><span>{c.line}</span><span class="cq-sub">{c.by}</span></span></div>
-                                </template>
-                            </template>
-                            <template if:false={hasChanges}><p class="cq-note">No confirmed changes yet.</p></template>
-                        </div>
                     </template>
 
                     <template if:true={is2}>

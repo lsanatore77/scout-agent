@@ -60,13 +60,14 @@ function pageLinks(n, cur) {
     });
     return out;
 }
+/** Trace marks are plain text in the row's colour (green, amber, red): no emoji, which some browsers draw in their own colours. */
 const TRACE = {
-    Verified: { mark: '✔ ', cls: 'tr ok' },
-    NC: { mark: '✖ ', cls: 'tr bad' },
-    'No lot recorded': { mark: '⚠ ', cls: 'tr warn' },
-    'No approved supplier': { mark: '⚠ ', cls: 'tr warn' },
-    'CoC missing': { mark: '⚠ ', cls: 'tr warn' },
-    'CoC expired': { mark: '⚠ ', cls: 'tr warn' }
+    Verified: { mark: '✓ ', cls: 'tr ok' },
+    NC: { mark: '✕ ', cls: 'tr bad' },
+    'No lot recorded': { mark: '! ', cls: 'tr warn' },
+    'No approved supplier': { mark: '! ', cls: 'tr warn' },
+    'CoC missing': { mark: '! ', cls: 'tr warn' },
+    'CoC expired': { mark: '! ', cls: 'tr warn' }
 };
 
 /** Field Action workspace: the coordinator's steps from what was decided through closure. */
@@ -412,7 +413,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             item: where ? 'Where used · Lot ' + l.name : 'Lot ' + l.name, itemCls: where ? 'it wu' : 'it lot',
             partRev: this.partText + (this.gens[l.name] && this.gens[l.name].revision ? ' · Rev ' + this.gens[l.name].revision : ''),
             lot: l.name, qty: l.built !== undefined && l.built !== null ? this.num(l.built) + ' built' : '—', supplier: '—',
-            trace: where ? 'Shares ' + sharedLot : (l.records ? '⚠ ' : '✔ ') + traceText,
+            trace: where ? 'Shares ' + sharedLot : (l.records ? '! ' : '✓ ') + traceText,
             traceCls: where || l.records ? 'tr warn' : 'tr ok',
             name: l.name,
             showCheck: this.isPartial, checked: l.inScope, checkDisabled: !this.canChange || l.locked || !!this.ticking[l.name],
@@ -517,11 +518,5 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         this.saving = false;
     }
 
-    // change log
-    get changes() {
-        return (this.v.changes || []).map((c, i) => ({ ...c, key: 'c' + i, at: this.when(c.doneAt),
-            line: c.change + ' lot ' + c.lot + (c.reason ? ': ' + c.reason : ''), by: c.how === 'Automatic' ? 'Automatic' : c.doneBy }));
-    }
-    get hasChanges() { return this.changes.length > 0; }
     get hasLots() { return this.lots.length > 0; }
 }

@@ -29,10 +29,6 @@
 .cq-tbl .evrow td { padding: 8px 12px; }
 /* one line a review: the approval takes the spare width and ends in an ellipsis when it is too long (the whole line shows on hover) */
 .cq-tbl td.apcell { width: 100%; max-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--cq-muted); }
-.logrow { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); font-size: 13px; }
-.logrow:last-child { border-bottom: none; }
-.logwhen { flex: 0 0 150px; color: var(--cq-muted); }
-.sec { margin-top: 20px; }
 .tbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
 .pendline { font-size: 13px; color: var(--cq-muted); }
 .pendline.warn { color: var(--cq-warn-fg); font-weight: 600; }

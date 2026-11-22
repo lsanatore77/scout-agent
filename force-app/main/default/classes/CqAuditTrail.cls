@@ -35,6 +35,7 @@ public with sharing class CqAuditTrail {
 
     @AuraEnabled
     public static Trail get(Id recordId) {
+        if (recordId != null && recordId.getSObjectType() == Field_Action__c.SObjectType) { return fieldAction(recordId); }
         if (recordId == null || recordId.getSObjectType() != Field_Action_Review__c.SObjectType) {
             throw new AuraHandledException('The audit trail is not available for this record yet.');
         }
@@ -49,6 +50,36 @@ public with sharing class CqAuditTrail {
         t.name = r.Name;
         t.entries = entries(recordId);
         signatures(t, r);
+        return t;
+    }
+
+    /**
+     * A Field Action's trail: every scope change, newest first. Each lot added or removed, by whom (or Automatic, when a
+     * Full scope widened itself), and the reason given. The Scope step no longer lists these itself.
+     */
+    private static Trail fieldAction(Id recordId) {
+        Field_Action__c fa;
+        try {
+            fa = [SELECT Id, Name FROM Field_Action__c WHERE Id = :recordId WITH USER_MODE];
+        } catch (QueryException e) {
+            throw new AuraHandledException('You do not have access to this record.');
+        }
+        Trail t = new Trail();
+        t.name = fa.Name;
+        for (Field_Action_Scope_Change__c c : [SELECT Id, Lot_Number__c, Change__c, How__c, Reason__c, CreatedBy.Name, CreatedDate
+                                               FROM Field_Action_Scope_Change__c WHERE Field_Action__c = :recordId WITH USER_MODE
+                                               ORDER BY CreatedDate DESC, Name DESC LIMIT 1000]) {
+            Boolean removed = c.Change__c == 'Removed';
+            Entry x = new Entry();
+            x.id = c.Id; x.at = c.CreatedDate; x.kind = 'scope';
+            x.who = c.How__c == 'Automatic' ? 'Automatic' : c.CreatedBy.Name;
+            x.title = (removed ? 'Removed Lot ' : 'Added Lot ') + c.Lot_Number__c + (removed ? ' From Scope' : ' to Scope');
+            List<String> bits = new List<String>();
+            if (c.How__c == 'Review') { bits.add('With the review decision'); }
+            if (String.isNotBlank(c.Reason__c)) { bits.add(c.Reason__c); }
+            x.detail = bits.isEmpty() ? null : String.join(bits, ': ');
+            t.entries.add(x);
+        }
         return t;
     }
 
