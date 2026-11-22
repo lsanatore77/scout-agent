@@ -17,6 +17,7 @@
   --cq-fs-meta:  0.8125rem;   /* 13 - secondary meta */
   --cq-fs-micro: 0.6875rem;   /* 11 - pill text, eyebrows */
   --cq-fs-btn:   0.875rem;    /* 14 - buttons */
+  --cq-fs-input: 1rem;        /* 16 on a phone - typed text in boxes (an iPhone zooms the page into a box with smaller text); 13 on a desktop */
 
   /* ---- neutral / records register ---- */
   --cq-ink:        #1b1f27;
@@ -49,8 +50,8 @@
   --cq-hl-line: #e5e5e5;
 
   /* ---- radius ---- */
-  --cq-r-field: 0.375rem;  /* 6  */
-  --cq-r-card:  0.625rem;  /* 10 */
+  --cq-r-field: 0.25rem;   /* 4: text boxes and buttons (standard 2026-11-22, Lou: square corners in every workspace) */
+  --cq-r-card:  0.25rem;   /* 4: cards, tables, popups, CQ.AI cards, tiles */
   --cq-r-pill:  999px;
 
   /* ---- spacing scale ---- */
@@ -72,6 +73,7 @@
   :host {
     --cq-field-h: 2.1rem; --cq-chip-h: 1.75rem; --cq-field-pad-y: 0.3125rem; --cq-field-pad-x: 0.5rem;
     --cq-row-gap: 0.625rem; --cq-label-gap: 0.25rem; --cq-grid-cols: 2;
+    --cq-fs-input: 0.8125rem;   /* typed text at 13px on a desktop, the size of the labels (standard 2026-11-22) */
   }
 }
 :host([data-density="comfortable"]) { --cq-field-h: 2.75rem; --cq-chip-h: 2.75rem; --cq-field-pad-y: 0.625rem; --cq-field-pad-x: 0.75rem; --cq-row-gap: 1rem; --cq-label-gap: 0.375rem; --cq-grid-cols: 1; }
@@ -148,7 +150,7 @@ button.cq-link { padding: 0; font-family: inherit; }
   padding: var(--cq-field-pad-y) var(--cq-field-pad-x);
   border: 1px solid var(--cq-line-field); border-radius: var(--cq-r-field);
   background: var(--cq-bg); color: var(--cq-ink);
-  font: inherit; font-size: var(--cq-fs-body); font-weight: 400; line-height: 1.3; outline: none;
+  font: inherit; font-size: var(--cq-fs-input); font-weight: 400; line-height: 1.3; outline: none;
 }
 .cq-field textarea { min-height: calc(var(--cq-field-h) * 2.2); resize: vertical; line-height: 1.45; }
 .cq-field input:focus, .cq-field select:focus, .cq-field textarea:focus { border-color: var(--cq-link); box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.18); }
@@ -253,7 +255,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 /* ============================ TABLE ====================================
    .cq-tblwrap > table.cq-tbl. The header is small and quiet (11px bold, muted, on the light surface): the one
    named exception to the 13px minimum. Cell helpers: num (right, tabular), center (narrow, centred), wide (takes the room). */
-.cq-tblwrap { overflow-x: auto; border: 1px solid var(--cq-line); border-radius: 8px; }
+.cq-tblwrap { overflow-x: auto; border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); }
 .cq-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
 .cq-tbl th { padding: 8px 12px; background: var(--cq-surface); text-align: left; font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); white-space: nowrap; }
 .cq-tbl td { padding: 10px 12px; border-top: 1px solid var(--cq-line); vertical-align: top; }
@@ -273,7 +275,7 @@ button.cq-link { padding: 0; font-family: inherit; }
    .cq-modal-back > section.cq-modal > header.cq-modal-head (h2.cq-modal-title + button.cq-modal-x), .cq-modal-body, footer.cq-modal-foot.
    Add popov when a search list inside must be able to open past the popup's edge. */
 .cq-modal-back { position: fixed; inset: 0; z-index: 9100; background: rgba(8, 7, 7, .45); display: flex; align-items: flex-start; justify-content: center; padding: 10vh 16px 16px; }
-.cq-modal { width: 100%; max-width: 560px; background: var(--cq-bg); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
+.cq-modal { width: 100%; max-width: 560px; background: var(--cq-bg); border-radius: var(--cq-r-card); box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
 .cq-modal-head { position: relative; padding: 16px 52px; border-bottom: 1px solid var(--cq-hl-line); text-align: center; }
 .cq-modal-title { margin: 0; font-size: 20px; font-weight: 700; }
 .cq-modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
@@ -281,7 +283,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 60vh; overflow-y: auto; }
 .cq-modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--cq-hl-line); background: var(--cq-hl-bg); }
 .cq-modal.popov, .cq-modal.popov .cq-modal-body { overflow: visible; max-height: none; }
-.cq-modal.popov .cq-modal-foot { border-radius: 0 0 8px 8px; }
+.cq-modal.popov .cq-modal-foot { border-radius: 0 0 var(--cq-r-card) var(--cq-r-card); }
 
 /* ============================ SMALL PIECES =============================
    Text helpers, key figures, result rows and the done mark that every workspace uses. */
@@ -290,11 +292,11 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-note { margin: 8px 0 0; font-size: 13px; color: var(--cq-muted); }
 /* key figures in a row: .cq-tiles > .cq-tile > .cq-tile-k (what it is) + .cq-tile-v (the figure) */
 .cq-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-.cq-tile { padding: 6px 10px; border-radius: 6px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
+.cq-tile { padding: 6px 10px; border-radius: var(--cq-r-card); background: var(--cq-bg); border: 1px solid var(--cq-line); }
 .cq-tile-k { font-size: var(--cq-fs-micro); color: var(--cq-muted); }
 .cq-tile-v { font-size: 13px; font-weight: 700; }
 /* a label and its value on one boxed line (what a completed step recorded) */
-.cq-kv { display: flex; align-items: center; gap: 12px; box-sizing: border-box; min-height: 44px; max-width: 760px; margin-bottom: 8px; padding: 8px 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.cq-kv { display: flex; align-items: center; gap: 12px; box-sizing: border-box; min-height: 44px; max-width: 760px; margin-bottom: 8px; padding: 8px 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .cq-kv-k { flex: 0 0 160px; color: var(--cq-muted); }
 .cq-kv-v { flex: 1 1 auto; min-width: 0; font-weight: 600; }
 @media (max-width: 760px) { .cq-kv-k { flex-basis: 110px; } }
@@ -311,8 +313,8 @@ button.cq-link { padding: 0; font-family: inherit; }
 
 /* ============================ WORKSPACE HEADER ========================= */
 /* every record workspace opens with this: .cq-box > header.cq-hl > .cq-hl-top (+ optional .cq-hl-fields) */
-.cq-box { display: flex; flex-direction: column; border: 1px solid var(--cq-hl-line); border-radius: 0.75rem; background: var(--cq-bg); }
-.cq-hl { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.875rem 1.25rem 0.75rem; background: var(--cq-hl-bg); border-bottom: 1px solid var(--cq-hl-line); border-radius: 0.75rem 0.75rem 0 0; }
+.cq-box { display: flex; flex-direction: column; border: 1px solid var(--cq-hl-line); border-radius: var(--cq-r-card); background: var(--cq-bg); }
+.cq-hl { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.875rem 1.25rem 0.75rem; background: var(--cq-hl-bg); border-bottom: 1px solid var(--cq-hl-line); border-radius: var(--cq-r-card) var(--cq-r-card) 0 0; }
 .cq-hl-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .cq-hl-who { display: flex; align-items: center; gap: 0.75rem; }
 .cq-hl-icon { display: inline-flex; }
@@ -362,7 +364,7 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 /* a step heading in a row with its status pill */
 .cq-sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 /* a plain grey box that explains what a button will do, or that there is nothing here yet */
-.cq-infobox { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-line); background: var(--cq-surface); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
+.cq-infobox { padding: 10px 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-surface); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
 .cq-infobox strong { color: var(--cq-ink); }
 /* the small grey detail line under a name; block = on its own line */
 .cq-sub { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
@@ -386,7 +388,7 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
    .cq-pick-picked (.cq-pick-label + button.cq-pick-x); then the list (list, plus up when it opens above, from the component) >
    .cq-pick-head, .cq-pick-row (.cq-pick-n + .cq-pick-sub), .cq-pick-empty. It matches the shared field: height, border, radius, focus. */
 .cq-pick, .cq-pick-box { position: relative; }
-.cq-pick-in { box-sizing: border-box; width: 100%; min-height: var(--cq-field-h); padding: var(--cq-field-pad-y) 2.1rem var(--cq-field-pad-y) var(--cq-field-pad-x); border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: var(--cq-fs-body); font-weight: 400; line-height: 1.3; color: var(--cq-ink); }
+.cq-pick-in { box-sizing: border-box; width: 100%; min-height: var(--cq-field-h); padding: var(--cq-field-pad-y) 2.1rem var(--cq-field-pad-y) var(--cq-field-pad-x); border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-bg); font: inherit; font-size: var(--cq-fs-input); font-weight: 400; line-height: 1.3; color: var(--cq-ink); }
 .cq-pick-in:focus { outline: none; border-color: var(--cq-link); box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.18); }
 .cq-pick-in::placeholder { color: var(--cq-faint); }
 .cq-pick-icon { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); --slds-c-icon-color-foreground-default: var(--cq-muted); }
@@ -411,7 +413,7 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-panel-intro { font-size: 0.8125rem; line-height: 1.4; }
 .cq-panel-error { color: var(--cq-crit-fg); font-size: 0.8125rem; }
 .cq-panel-empty { color: var(--cq-muted); font-size: 0.8125rem; }
-.cq-panel-card { background: var(--cq-bg); border: 1px solid var(--cq-line); border-radius: 0.5rem; overflow: hidden; }
+.cq-panel-card { background: var(--cq-bg); border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); overflow: hidden; }
 .cq-panel-pager { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.375rem; }
 .cq-panel-pages { display: flex; gap: 0.625rem; align-items: center; flex-wrap: wrap; }
 .cq-panel-pages .page { background: none; border: 0; padding: 0; color: var(--cq-link); cursor: pointer; font-size: 0.8125rem; }
@@ -441,7 +443,7 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .cq-prob { margin: 0; font-size: 14px; line-height: 1.45; }
 /* a numbered card inside a step: .cq-stepcard > .cq-stepcard-head (.cq-stepcard-n + .cq-stepcard-title, then .cq-grow + .cq-stepcard-tot) */
-.cq-stepcard { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.cq-stepcard { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .cq-stepcard-head { display: flex; align-items: baseline; gap: 8px; }
 .cq-stepcard-n { font-size: 13px; font-weight: 700; color: var(--cq-muted); }
 .cq-stepcard-title { font-size: 15px; font-weight: 700; }
@@ -459,11 +461,72 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-know summary { color: var(--cq-link); font-size: 13px; font-weight: 600; cursor: pointer; }
 .cq-restart { margin: 4px 8px 0; padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
 /* the small "From" / "For" card at the top of a popup, and the loading line */
-.cq-fromcard { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--cq-hl-line); background: var(--cq-surface); display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
+.cq-fromcard { padding: 10px 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-hl-line); background: var(--cq-surface); display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
 .cq-spin { position: relative; display: inline-block; width: 24px; height: 24px; }
 .cq-spinwrap { display: flex; align-items: center; gap: 10px; min-height: 40px; }
 /* "Happened Before": the amber warning box, its heading, the red link, and a button that is a link */
-.cq-recur { margin-top: 14px; padding: 14px; border-radius: 10px; border: 1px solid var(--cq-warn-line); background: var(--cq-warn-bg); display: flex; flex-direction: column; gap: 8px; }
+.cq-recur { margin-top: 14px; padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-warn-line); background: var(--cq-warn-bg); display: flex; flex-direction: column; gap: 8px; }
 .cq-recur-head { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--cq-warn-fg); }
 .cq-redlink { color: var(--cq-crit-fg); font-weight: 600; text-decoration: underline; }
 .cq-linkbtn { display: inline-flex; align-items: center; text-decoration: none; color: var(--cq-ink); }
+
+/* ============================ SHARED FROM FIELD ACTION (standard 2026-11-22, Lou) ============================ */
+/* compact table for dense screens: .cq-tblwrap > table.cq-tbl.compact (tighter rows, cells centred top to bottom) */
+.cq-tbl.compact th { padding: 6px 8px; }
+.cq-tbl.compact td { padding: 6px 8px; vertical-align: middle; }
+/* nested rows: tr.cq-row-parent (white, a heavier rule above where its group starts), tr.cq-row-child (a faint band);
+   span.cq-ind (one 20px indent step) or span.cq-ind.l2 (two) in the first cell */
+.cq-tbl tr.cq-row-parent > td { background: var(--cq-bg); border-top: 2px solid var(--cq-line); }
+.cq-tbl tr.cq-row-child > td { background: color-mix(in srgb, var(--cq-surface) 50%, var(--cq-bg)); }
+.cq-ind { flex: none; display: inline-block; width: 20px; }
+.cq-ind.l2 { width: 40px; }
+/* plain status marks, text not emoji: span.cq-mark.ok (\2713 green) .warn (! amber, open but not blocking) .bad (\2715 red, open and blocking) .na (\2013 grey).
+   .cq-marktext colours a whole line of text the same way (a trace column, say) */
+.cq-mark { flex: none; display: inline-block; width: 14px; font-weight: 700; text-align: center; }
+.cq-mark.ok, .cq-marktext.ok { color: var(--cq-pos-fg); }
+.cq-mark.warn, .cq-marktext.warn { color: var(--cq-warn-fg); }
+.cq-mark.bad, .cq-marktext.bad { color: var(--cq-crit-fg); }
+.cq-marktext.bad { font-weight: 600; }
+.cq-mark.na { color: var(--cq-faint); }
+/* checklist: .cq-checks > (.cq-grouplabel) + .cq-check rows: span.cq-mark + .cq-check-body (the item, then a .cq-sub block detail)
+   + an optional button.cq-link on the right (Go to ...). Groups follow one another as .cq-checks + .cq-checks */
+.cq-checks { display: flex; flex-direction: column; }
+.cq-checks + .cq-checks { margin-top: 12px; }
+.cq-check { display: flex; align-items: baseline; gap: 8px; padding: 7px 0; border-top: 1px solid var(--cq-line); }
+.cq-check:first-child { border-top: none; padding-top: 0; }
+.cq-grouplabel + .cq-check { border-top: none; }
+.cq-check-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+/* a neutral group heading: small, capitals, muted (the purple one for CQ.AI is .cq-ai-eyebrow) */
+.cq-grouplabel { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); letter-spacing: .4px; text-transform: uppercase; margin-bottom: 2px; }
+/* expand chevron: button.cq-rchev-btn > span.cq-rchev(.open) holding a single right angle quote; grey, it turns down when the row opens */
+.cq-rchev-btn { flex: none; width: 22px; padding: 0; border: none; background: none; cursor: pointer; }
+.cq-rchev { display: inline-block; width: 12px; font-size: 18px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
+.cq-rchev.open { transform: rotate(90deg); }
+/* the search box over a table, at its left: div.cq-field.cq-tblsearch > input[type=search] */
+.cq-field.cq-tblsearch { width: 260px; max-width: 100%; }
+/* tick box: input[type=checkbox].cq-tick, blue */
+.cq-tick { flex: none; width: 16px; height: 16px; margin: 0; accent-color: var(--cq-link); cursor: pointer; }
+.cq-tick:disabled { cursor: not-allowed; }
+/* filter cards over a list: .cq-statcards > button.cq-statcard(.on, aria-pressed) > .cq-statcard-k (what it counts) + .cq-statcard-v (the figure;
+   .ok green, .bad red). Click one to filter, again to show everything */
+.cq-statcards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .cq-statcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cq-statcard { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); font: inherit; text-align: left; cursor: pointer; }
+.cq-statcard:hover { border-color: var(--cq-line-field); }
+.cq-statcard.on { border: 2px solid var(--cq-link); background: var(--cq-surface); padding: 11px 13px; }
+.cq-statcard-k { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
+.cq-statcard-v { font-size: 28px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
+.cq-statcard-v.ok { color: var(--cq-pos-fg); }
+.cq-statcard-v.bad { color: var(--cq-crit-fg); }
+/* progress bar: .cq-bar > .cq-bar-track > .cq-bar-fill(.done when complete; width set on the element) + .cq-bar-pct */
+.cq-bar { display: flex; align-items: center; gap: 8px; }
+.cq-bar-track { flex: 1; height: 8px; border-radius: var(--cq-r-card); background: var(--cq-line); overflow: hidden; }
+.cq-bar-fill { display: block; height: 100%; background: var(--cq-link); }
+.cq-bar-fill.done { background: var(--cq-pos-solid); }
+.cq-bar-pct { width: 40px; text-align: right; font-size: 13px; color: var(--cq-muted); font-variant-numeric: tabular-nums; }
+/* fields in a popup or card, two columns (one on a phone): .cq-formgrid > .cq-field, and .cq-field.span2 runs across both */
+.cq-formgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.cq-formgrid .span2 { grid-column: 1 / -1; }
+@media (max-width: 560px) { .cq-formgrid { grid-template-columns: 1fr; } }
+/* small buttons inside a table row or a suggestion line: add .cq-btn-sm to a shared button */
+.cq-btn-outline.cq-btn-sm, .cq-btn-primary.cq-btn-sm, .cq-btn-ai.cq-btn-sm { flex: none; min-height: 24px; padding: 0 8px 1px; font-size: 13px; border-radius: var(--cq-r-pill); }

@@ -90,3 +90,31 @@ Left out on purpose: .cq-field input.date at 170px is not shared, because Triage
 
 - Every workspace's step rail is titled plain `Review Steps`: no ✦ mark, no "CQ.AI", no workspace name. The shared shell
   (cqWsShell) already defaults to it; Field Action, Triage, Investigation, Disposition and the Ask CQ workspace now match.
+
+## Standard: corners, typed text and tick boxes (2026-11-22, Lou)
+
+- **Corners are 4px in every workspace.** `--cq-r-card` and `--cq-r-field` are both 4px, and every hard-coded radius in cqStyles
+  now uses the token (tables, popups, tiles, boxed lines, the workspace header box, info boxes, step cards, warning boxes).
+  Pills, chips and round dots stay round (`--cq-r-pill`).
+- **Typed text is 13px on a desktop**, the size of the field labels: `--cq-fs-input`, used by `.cq-field` inputs, selects and
+  text boxes and by the search picker. On a phone it stays 16px, because an iPhone zooms the whole page into a box with smaller text.
+- **Tick boxes are blue** (`.cq-tick`, the link colour).
+
+## Standard: shared pieces from Field Action (2026-11-22, Lou)
+
+Added to cqStyles so every workspace can use them (see the comments in cqStyles for the markup):
+
+1. `.cq-tbl.compact`: tighter rows for dense screens.
+2. Nested rows: `tr.cq-row-parent` (white, a heavier rule where a group starts), `tr.cq-row-child` (a faint band), `.cq-ind` / `.cq-ind.l2` indents.
+3. Plain status marks: `.cq-mark.ok / .warn / .bad / .na` (✓ ! ✕ –, text not emoji); `.cq-marktext` colours a whole line the same way.
+4. Checklist: `.cq-checks > .cq-grouplabel + .cq-check` (mark, `.cq-check-body`, optional `button.cq-link` Go to …).
+5. Expand chevron: `button.cq-rchev-btn > span.cq-rchev(.open)`, a grey › that turns down.
+6. Table search: `div.cq-field.cq-tblsearch`, 260px at the table's left.
+7. Tick box: `input.cq-tick`, blue.
+8. Group heading: `.cq-grouplabel` (small, capitals, muted; the purple CQ.AI one stays `.cq-ai-eyebrow`).
+9. Filter cards: `.cq-statcards > button.cq-statcard(.on)` with `.cq-statcard-k` and `.cq-statcard-v(.ok / .bad)`.
+10. Progress bar: `.cq-bar > .cq-bar-track > .cq-bar-fill(.done)` + `.cq-bar-pct`.
+11. Form grid: `.cq-formgrid` (two columns, one on a phone; `.span2` runs across).
+12. Small in-row buttons: `.cq-btn-sm` on a shared button.
+
+Kept local for now: the popover card (Scope's On Hand breakdown), until a second screen needs one.
