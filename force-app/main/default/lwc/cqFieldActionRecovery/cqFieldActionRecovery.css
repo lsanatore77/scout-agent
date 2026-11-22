@@ -6,93 +6,45 @@
 .b { font-weight: 600; }
 .nw { white-space: nowrap; }
 
+/* held stock and the verdict share a row, two to one; the customers table above spans the page */
 .grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 16px; }
 @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
-.grid + .cq-stepcard, .cq-stepcard + .cq-stepcard { margin-top: 16px; }
+.cq-stepcard + .cq-stepcard, .tcards + .cq-stepcard { margin-top: 16px; }
 .grid > .cq-stepcard + .cq-stepcard { margin-top: 0; }
+.tcards { margin-top: 16px; }
 
-.ht { width: 100%; border-collapse: collapse; font-size: 13px; }
-.ht th { text-align: left; font-size: 11px; font-weight: 700; color: var(--cq-muted); padding: 6px 8px; background: var(--cq-surface); border-bottom: 1px solid var(--cq-line); white-space: nowrap; }
-.ht td { padding: 5px 8px; border-bottom: 1px solid var(--cq-line); vertical-align: middle; }
-.ht tr:last-child td { border-bottom: none; }
-.ht th.num, .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* tables, nested rows, marks, the checklist, chevron, tick, search, filter cards, bar, form grid and small buttons come from cqStyles */
 .barcol { width: 240px; }
-.warnc { color: #8a5a00; }
+.warnc { color: var(--cq-warn-fg); }
 .okc { color: var(--cq-pos-fg); }
-.barrow { display: flex; align-items: center; gap: 8px; }
-.track { flex: 1; height: 8px; border-radius: 4px; background: var(--cq-line); overflow: hidden; }
-.fill { display: block; height: 100%; }
-.pct { width: 40px; text-align: right; font-size: 13px; color: var(--cq-muted); font-variant-numeric: tabular-nums; }
-
+.badc { color: var(--cq-crit-fg); }
+.dcol { width: 1%; }
 .locwrap { display: inline-flex; align-items: center; gap: 6px; }
 
-.fn { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-
+/* the verdict: its checks, then the choice and CQ.AI's line, one under another */
 .vrow { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: 12px; }
-/* what the verdict rests on: plain marks as on Scope (green met, amber open, red open and blocking) */
-.checks { display: flex; flex-direction: column; }
-.chk { display: flex; align-items: baseline; gap: 8px; padding: 6px 0; border-top: 1px solid var(--cq-line); }
-.chk:first-child { border-top: none; padding-top: 0; }
-.mk { flex: none; width: 14px; font-weight: 700; text-align: center; }
-.mk.ok { color: var(--cq-pos-fg); }
-.mk.op { color: var(--cq-warn-fg); }
-.mk.no { color: var(--cq-crit-fg); }
-/* the customers table spans the page; held stock and the verdict share the row under it */
-.tcards + .cq-stepcard { margin-top: 16px; }
-.dcol { width: 1%; }
-
-
-/* task summary cards: click to filter; no coloured borders, only the overdue number turns red */
-.tcards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
-@media (max-width: 760px) { .tcards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.tcard { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); font: inherit; text-align: left; cursor: pointer; }
-.tcard:hover { border-color: var(--cq-line-field); }
-.tcard.on { border: 2px solid var(--cq-link); background: var(--cq-surface); padding: 11px 13px; }
-.tlab { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
-.tnum { font-size: 28px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
-.badc { color: var(--cq-crit-fg); }
 
 .cq-stepcard-head.mid { align-items: center; }
-.sugg { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--cq-accent-line); border-radius: 8px; }
+.sugg { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--cq-accent-line); border-radius: var(--cq-r-card); }
 .srow { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--cq-line); cursor: pointer; }
 .formbtns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 6px; }
 
-/* the nested customer / lot / task table; completed tasks keep normal text */
-.tt td { padding: 6px 8px; }
+/* the customer / lot / task table: the header leaves room for the chevron; a lot carries its "In this recall" tag */
 .hcell, .cell2 { display: flex; align-items: center; gap: 6px; }
-/* a customer opens with a grey chevron that turns, as in Field Action Review's tables; the header has none (no open-all) */
-.rchevbtn { flex: none; width: 22px; padding: 0; border: none; background: none; cursor: pointer; }
-.rchev { display: inline-block; width: 12px; font-size: 18px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
-.rchev.open { transform: rotate(90deg); }
 .chsp { flex: none; display: inline-block; width: 22px; }
-/* the customer search sits over the table, at the left */
-.cq-field.srch { width: 260px; max-width: 100%; }
-/* customer rows are white so the grey header stands alone; a heavier rule above each customer marks where its group starts (2px, so it wins over the row rule) */
-.crow { background: var(--cq-bg); border-top: 2px solid var(--cq-line); }
-.ind { flex: none; display: inline-block; }
-.ind.i1 { width: 20px; }
-.ind.i2 { width: 40px; }
 .lotn { font-weight: 600; }
-/* a lot under its customer: a lighter band than the customer row, tagged when it is one of the recall's lots; its tasks nest one level further */
-.lrow { background: color-mix(in srgb, var(--cq-surface) 50%, var(--cq-bg)); }
 .lotline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.tick { flex: none; width: 15px; height: 15px; margin: 0; accent-color: var(--cq-pos-fg); cursor: pointer; }
-.tick:disabled { cursor: default; }
+/* a task's title: a plain link that can wrap (the shared link is bold and stays on one line) */
 .tlink { color: var(--cq-link); text-decoration: none; }
 .tlink:hover { text-decoration: underline; }
+/* units on a task: click to edit */
 .ulink { align-self: flex-start; padding: 0; border: none; background: none; font: inherit; font-size: 13px; color: var(--cq-muted); cursor: pointer; text-decoration: underline dotted; }
 .ulink:disabled { cursor: default; text-decoration: none; }
 
-/* fields, buttons, pills, chips, messages and the CQ.AI suggestion card come from cqStyles */
-/* Add Task popup: two columns of fields, the task text across both */
-.mgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
-.mgrid .span2 { grid-column: 1 / -1; }
-@media (max-width: 560px) { .mgrid { grid-template-columns: 1fr; } }
-.cq-field.full { flex: none; width: 200px; }   /* fits ✦ Return to Supplier */
+.cq-field.full { flex: none; width: 200px; }   /* fits \2726 Return to Supplier */
 .cq-field.ni { width: 76px; }
 .cq-field.ni input { min-height: 28px; padding: 2px 8px; text-align: right; }
 .cq-ai-card { padding: 10px 12px; }
 .cq-ai-card.row { display: flex; align-items: center; gap: 10px; min-width: 0; }
-/* small buttons inside a table row or a suggestion line: the shared buttons, shorter */
-.cq-btn-outline.xs, .cq-btn-primary.xs { flex: none; min-height: 24px; padding: 0 8px 1px; font-size: 13px; border-radius: 999px; }
+/* Review is a CQ.AI action: the small button in purple */
 .cq-btn-outline.ghost { border-color: var(--cq-accent); color: var(--cq-accent); }

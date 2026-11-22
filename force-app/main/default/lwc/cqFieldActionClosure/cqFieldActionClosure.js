@@ -70,7 +70,7 @@ export default class CqFieldActionClosure extends LightningElement {
             const step = STEP_OF[c.key];
             return { ...c,
                 mark: c.state === 'ok' ? '✓' : open ? (c.blocks ? '✕' : '!') : '–',
-                markCls: 'mk ' + (c.state === 'ok' ? 'ok' : open ? (c.blocks ? 'no' : 'op') : 'na'),
+                markCls: 'cq-mark ' + (c.state === 'ok' ? 'ok' : open ? (c.blocks ? 'bad' : 'warn') : 'na'),
                 state: c.state === 'ok' ? 'Done' : open ? (c.blocks ? 'Open, needed before closing' : 'Open') : 'Not applicable',
                 hasGo: open && !!step && !this.v.closed, goStep: step, goLabel: step ? 'Go to ' + STEP_LABEL[step] + ' ›' : '',
                 createCapa: c.key === 'capa' && open && !this.v.closed && !this.busy };
@@ -84,7 +84,7 @@ export default class CqFieldActionClosure extends LightningElement {
         if (na.length) {
             const detail = na.map((c) => (c.detail || '').replace(/^Not Applicable: /, '')).join(' · ');
             out.push({ key: 'na', label: 'Not Applicable', rows: [{ key: 'na', text: na.map((c) => c.text).join(' · '),
-                detail: detail.charAt(0).toUpperCase() + detail.slice(1), mark: '–', markCls: 'mk na', state: 'Not applicable' }] });
+                detail: detail.charAt(0).toUpperCase() + detail.slice(1), mark: '–', markCls: 'cq-mark na', state: 'Not applicable' }] });
         }
         return out;
     }

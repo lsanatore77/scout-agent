@@ -16,7 +16,7 @@
             <section class="cq-stepcard">
                 <div class="cq-stepcard-head"><span class="cq-stepcard-n">1</span><span class="cq-stepcard-title">Recovery by Lot</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{recoveryLine}</span></div>
                 <div class="cq-tblwrap">
-                    <table class="ht">
+                    <table class="cq-tbl compact">
                         <thead><tr>
                             <th>Lot</th><th class="num">Shipped</th>
                             <template if:true={showCorrected}><th class="num">Corrected</th></template>
@@ -33,7 +33,7 @@
                                     <td class="num">{l.returnedText}</td>
                                     <template if:true={showDestroyed}><td class="num">{l.destroyedText}</td></template>
                                     <td class={l.fieldCls}>{l.fieldText}</td>
-                                    <td class="barcol"><template if:true={l.hasPct}><span class="barrow"><span class="track"><span class="fill" style={l.barStyle}></span></span><span class="pct">{l.pctText}</span></span></template></td>
+                                    <td class="barcol"><template if:true={l.hasPct}><span class="cq-bar"><span class="cq-bar-track"><span class={l.fillCls} style={l.barStyle}></span></span><span class="cq-bar-pct">{l.pctText}</span></span></template></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -43,10 +43,10 @@
             </section>
             </template>
 
-            <div class="tcards" role="group" aria-label="Filter tasks">
+            <div class="cq-statcards tcards" role="group" aria-label="Filter tasks">
                 <template for:each={cards} for:item="c">
                     <button key={c.key} class={c.cls} data-key={c.key} aria-pressed={c.pressed} onclick={handleCard}>
-                        <span class="tlab">{c.label}</span><span class={c.numCls}>{c.n}</span>
+                        <span class="cq-statcard-k">{c.label}</span><span class={c.numCls}>{c.n}</span>
                     </button>
                 </template>
             </div>
@@ -66,7 +66,7 @@
                                 <button class="cq-modal-x" aria-label="Close" onclick={handleOpenAdd}>&times;</button>
                             </header>
                             <div class="cq-modal-body">
-                                <div class="mgrid">
+                                <div class="cq-formgrid">
                                     <label class="cq-field"><span class="cq-label">Customer</span>
                                         <select data-f="customerId" onchange={handleForm}>
                                             <template for:each={custOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
@@ -108,7 +108,7 @@
                 <template if:true={hasSuggestions}>
                     <div class="cq-ai-card row">
                         <span class="cq-grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{t.suggestLine}</span></span>
-                        <button class="cq-btn-outline xs ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
+                        <button class="cq-btn-outline cq-btn-sm ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
                     </div>
                     <template if:true={reviewing}>
                         <div class="sugg">
@@ -127,33 +127,33 @@
                     </template>
                 </template>
 
-                <div class="cq-field srch"><input type="search" value={search} oninput={handleSearch} placeholder="Search customers" aria-label="Search customers" /></div>
+                <div class="cq-field cq-tblsearch"><input type="search" value={search} oninput={handleSearch} placeholder="Search customers" aria-label="Search customers" /></div>
                 <template if:true={hasRows}>
                     <div class="cq-tblwrap custwrap" style={custTableStyle}>
-                        <table class="ht tt">
+                        <table class="cq-tbl compact">
                             <thead><tr>
                                 <th><span class="hcell"><span class="chsp"></span>Customer / Lot / Task</span></th>
                                 <th>Owner</th><th>Due</th><th class="num">Status</th>
                             </tr></thead>
                             <tbody>
                                 <template for:each={rows} for:item="r">
-                                    <tr key={r.key}>
+                                    <tr key={r.key} class={r.rowCls}>
                                         <template if:true={r.isCust}>
-                                            <td class="crow"><span class="cell2">
-                                                <button class="rchevbtn" data-id={r.id} onclick={handleToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button>
-                                                <span class="fn"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
-                                            <td class="crow"></td><td class="crow"></td>
-                                            <td class="crow num"><template if:true={r.hasPill}><span class={r.pillCls}>{r.pill}</span></template></td>
+                                            <td><span class="cell2">
+                                                <button class="cq-rchev-btn" data-id={r.id} onclick={handleToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button>
+                                                <span class="cq-stack"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
+                                            <td></td><td></td>
+                                            <td class="num"><template if:true={r.hasPill}><span class={r.pillCls}>{r.pill}</span></template></td>
                                         </template>
                                         <template if:true={r.isLot}>
-                                            <td class="lrow"><span class="cell2"><span class="ind i1"></span>
-                                                <span class="fn"><span class="lotline"><span class="lotn">{r.title}</span><template if:true={r.inRecall}><span class="cq-pill soft neu">In this recall</span></template></span><span class="cq-sub block">{r.sub}</span></span></span></td>
-                                            <td class="lrow"></td><td class="lrow"></td><td class="lrow"></td>
+                                            <td><span class="cell2"><span class="cq-ind"></span>
+                                                <span class="cq-stack"><span class="lotline"><span class="lotn">{r.title}</span><template if:true={r.inRecall}><span class="cq-pill soft neu">In this recall</span></template></span><span class="cq-sub block">{r.sub}</span></span></span></td>
+                                            <td></td><td></td><td></td>
                                         </template>
                                         <template if:true={r.isTask}>
                                             <td><span class="cell2"><span class={r.indentCls}></span>
-                                                <input class="tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
-                                                <span class="fn">
+                                                <input class="cq-tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
+                                                <span class="cq-stack">
                                                     <a class="tlink" href={r.href} target="_blank">{r.title}</a>
                                                     <template if:true={r.hasUnits}>
                                                         <template if:true={r.notEditingUnits}>
@@ -162,8 +162,8 @@
                                                         <template if:true={r.editingUnits}>
                                                             <span class="locwrap">
                                                                 <span class="cq-field ni"><input type="number" min="0" value={r.unitsVal} oninput={handleUnitsInput} aria-label="Units" /></span>
-                                                                <button class="cq-btn-primary xs" onclick={handleUnitsSave} disabled={busy}>Save</button>
-                                                                <button class="cq-btn-outline xs" onclick={handleUnitsCancel}>Cancel</button>
+                                                                <button class="cq-btn-primary cq-btn-sm" onclick={handleUnitsSave} disabled={busy}>Save</button>
+                                                                <button class="cq-btn-outline cq-btn-sm" onclick={handleUnitsCancel}>Cancel</button>
                                                             </span>
                                                         </template>
                                                     </template>
@@ -198,13 +198,13 @@
                     <div class="cq-stepcard-head"><span class="cq-stepcard-n">3</span><span class="cq-stepcard-title">Held Stock</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{dispLine}</span></div>
                     <template if:true={hasHolds}>
                         <div class="cq-tblwrap">
-                            <table class="ht">
+                            <table class="cq-tbl compact">
                                 <thead><tr><th>Lot</th><th>Item</th><th class="num">On Hand</th><th>Disposition</th></tr></thead>
                                 <tbody>
                                     <template for:each={holdRows} for:item="h">
                                         <tr key={h.id}>
                                             <td class="b nw">{h.lot}</td>
-                                            <td><span class="fn"><span>{h.kindText}</span><template if:true={h.item}><span class="cq-sub block">{h.item}</span></template></span></td>
+                                            <td><span class="cq-stack"><span>{h.kindText}</span><template if:true={h.item}><span class="cq-sub block">{h.item}</span></template></span></td>
                                             <td class="num">{h.onHandText}</td>
                                             <td class="dcol"><span class="cq-field full"><select data-id={h.id} onchange={handleDisposition} disabled={locked} aria-label={h.label}>
                                                 <template for:each={h.opts} for:item="o">
@@ -223,11 +223,11 @@
 
                 <section class="cq-stepcard">
                     <div class="cq-stepcard-head"><span class="cq-stepcard-n">4</span><span class="cq-stepcard-title">Effectiveness Verdict</span></div>
-                    <div class="checks" role="list" aria-label="What the verdict rests on">
+                    <div class="cq-checks" role="list" aria-label="What the verdict rests on">
                         <template for:each={verdictChecks} for:item="c">
-                            <div key={c.key} class="chk" role="listitem">
+                            <div key={c.key} class="cq-check" role="listitem">
                                 <span class={c.markCls} aria-label={c.state}>{c.mark}</span>
-                                <span class="fn"><span>{c.label}</span><span class="cq-sub block">{c.detail}</span></span>
+                                <span class="cq-check-body"><span>{c.label}</span><span class="cq-sub block">{c.detail}</span></span>
                             </div>
                         </template>
                     </div>

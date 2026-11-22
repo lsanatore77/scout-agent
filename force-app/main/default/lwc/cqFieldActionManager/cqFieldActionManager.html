@@ -62,7 +62,7 @@
                                     </div>
                                 </div>
                                 <div class="card">
-                                    <div class="lab">Reviews That Led Here</div>
+                                    <div class="cq-card-title">Reviews That Led Here</div>
                                     <template if:true={hasReviews}>
                                         <div class="cq-tblwrap">
                                             <table class="cq-tbl">
@@ -71,7 +71,7 @@
                                                     <template for:each={reviewRows} for:item="r">
                                                         <template if:true={r.isRev}>
                                                             <tr key={r.key}>
-                                                                <td class="chcol"><template if:true={r.rationale}><button class="rchevbtn" data-id={r.id} onclick={handleRevToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></template></td>
+                                                                <td class="chcol"><template if:true={r.rationale}><button class="cq-rchev-btn" data-id={r.id} onclick={handleRevToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button></template></td>
                                                                 <td class="cq-nowrap"><button class="cq-link" data-id={r.id} onclick={handleOpen}>{r.name}</button></td>
                                                                 <td class="apcell" title={r.approval}>{r.approval}</td>
                                                                 <td class="cq-nowrap">{r.source}</td>
@@ -91,7 +91,7 @@
                                 </div>
                             </div>
                             <div class="card">
-                                <div class="lab">Signals on This Part</div>
+                                <div class="cq-card-title">Signals on This Part</div>
                                 <template if:true={hasSignals}>
                                     <div class="cq-tblwrap sigwrap" style={sigTableStyle}>
                                         <table class="cq-tbl">
@@ -139,7 +139,7 @@
                                 <template if:true={pendingLine}><span class="pendline warn">{pendingLine}</span></template>
                             </div>
                             <div class="cq-tblwrap tree" style={tableStyle}>
-                                <table class="cq-tbl">
+                                <table class="cq-tbl compact">
                                     <thead><tr>
                                         <th class="cscope">Scope</th><th>Level / Item</th><th>Part &middot; Rev</th><th>Lot</th><th class="num">Qty</th><th>Supplier</th><th>Trace</th>
                                         <th class="num">Shipped</th><th class="num">On Hand</th><th>Status</th>
@@ -154,7 +154,7 @@
                                                 <template if:true={r.isLot}>
                                                     <td class="cscope">
                                                         <template if:true={r.showCheck}>
-                                                            <input class="tick" type="checkbox" data-name={r.name} checked={r.checked} disabled={r.checkDisabled} onchange={handleTick} aria-label={r.checkLabel} />
+                                                            <input class="cq-tick" type="checkbox" data-name={r.name} checked={r.checked} disabled={r.checkDisabled} onchange={handleTick} aria-label={r.checkLabel} />
                                                         </template>
                                                     </td>
                                                     <td class="cq-nowrap">

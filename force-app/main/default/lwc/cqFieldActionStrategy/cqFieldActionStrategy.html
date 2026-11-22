@@ -66,14 +66,14 @@
                     </template>
                     <template if:true={isHolds}>
                     <div class="cq-tblwrap">
-                        <table class="ht">
+                        <table class="cq-tbl compact">
                             <thead><tr><th class="hc">Hold</th><th>Lot</th><th>What</th><th class="num">On Hand</th><th>Location</th><th>Held Since</th><th>Status</th></tr></thead>
                             <tbody>
                                 <template for:each={holdRows} for:item="h">
                                     <tr key={h.key} class={h.rowCls}>
                                         <template if:true={h.isGroup}><td colspan="7">{h.title}</td></template>
                                         <template if:false={h.isGroup}>
-                                            <td class="hc"><input class="tick" type="checkbox" data-id={h.id} checked={h.hold} disabled={locked} onchange={handleHold} aria-label={h.label} /></td>
+                                            <td class="hc"><input class="cq-tick" type="checkbox" data-id={h.id} checked={h.hold} disabled={locked} onchange={handleHold} aria-label={h.label} /></td>
                                             <td class="cq-nowrap b">{h.lot}</td>
                                             <td><span class="what">{h.item} <template if:true={h.ai}><c-cq-ai-why variant="tag" text="Suggested" lead="Why does CQ.AI suggest holding " subject={h.item}></c-cq-ai-why></template></span><span class="cq-sub block">{h.why}</span></td>
                                             <td class="num">{h.onHand}</td>

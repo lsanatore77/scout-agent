@@ -76,7 +76,7 @@ export default class CqFieldActionRecovery extends LightningElement {
     get showStep() { return this.ready && this.v.strategyConfirmed; }
     get t() { return (this.v && this.v.tasks) || { tasks: [], suggestions: [], people: [], lotsByCustomer: {}, shippedByLine: {}, open: 0, completed: 0, overdue: 0, dueWeek: 0 }; }
     num(x) { return x === undefined || x === null ? '—' : String(Number(x)); }
-    bar(pct) { return 'width:' + pct + '%;background:' + (pct >= 100 ? '#2e844a' : '#1d5fd1'); }
+    bar(pct) { return 'width:' + pct + '%'; }
     day(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString() : ''; }
 
     renderedCallback() {
@@ -123,7 +123,8 @@ export default class CqFieldActionRecovery extends LightningElement {
             return { ...l, shippedText: this.num(l.shipped), returnedText: this.num(l.returned), destroyedText: this.num(l.destroyed),
                 correctedText: this.num(l.corrected), fieldText: this.num(l.field),
                 fieldCls: 'num b ' + (l.field ? 'warnc' : l.field === 0 ? 'okc' : ''),
-                hasPct: l.shipped !== undefined && l.shipped !== null, pctText: pct + '%', barStyle: this.bar(pct) };
+                hasPct: l.shipped !== undefined && l.shipped !== null, pctText: pct + '%', barStyle: this.bar(pct),
+                fillCls: 'cq-bar-fill' + (pct >= 100 ? ' done' : '') };
         });
     }
     get recoveryLine() {
@@ -137,8 +138,8 @@ export default class CqFieldActionRecovery extends LightningElement {
         const t = this.t;
         return [['open', 'Open Tasks', t.open], ['done', 'Completed Tasks', t.completed], ['over', 'Overdue Tasks', t.overdue], ['week', 'Due This Week', t.dueWeek]]
             .map(([key, label, n]) => ({ key, label, n, pressed: this.filter === key ? 'true' : 'false',
-                cls: 'tcard' + (this.filter === key ? ' on' : ''),
-                numCls: 'tnum' + (key === 'done' && n ? ' okc' : key === 'over' && n ? ' badc' : '') }));
+                cls: 'cq-statcard' + (this.filter === key ? ' on' : ''),
+                numCls: 'cq-statcard-v' + (key === 'done' && n ? ' ok' : key === 'over' && n ? ' bad' : '') }));
     }
     handleCard(event) { const k = event.currentTarget.dataset.key; this.filter = this.filter === k ? 'all' : k; this.custPage = 0; }
     keepTask(x) {
@@ -189,7 +190,7 @@ export default class CqFieldActionRecovery extends LightningElement {
             const openCount = mine.filter((x) => !x.done).length;
             const lots = c.other ? [] : (t.lotsByCustomer[c.id] || []).slice();
             mine.forEach((x) => { if (x.lot && !lots.includes(x.lot)) { lots.push(x.lot); } });
-            rows.push({ key: 'c' + c.id, isCust: true, id: c.id, title: c.name, chevCls: 'rchev' + (open ? ' open' : ''),
+            rows.push({ key: 'c' + c.id, isCust: true, rowCls: 'cq-row-parent', id: c.id, title: c.name, chevCls: 'cq-rchev' + (open ? ' open' : ''),
                 expanded: open ? 'true' : 'false', toggleLabel: (open ? 'Fold ' : 'Show ') + c.name,
                 sub: c.other ? openCount + ' open' : [c.units !== undefined && c.units !== null ? c.units + ' units' : '',
                     lots.length + ' lot' + (lots.length === 1 ? '' : 's'), openCount + ' open task' + (openCount === 1 ? '' : 's'),
@@ -202,7 +203,7 @@ export default class CqFieldActionRecovery extends LightningElement {
                 if (this.filter !== 'all' && !lt.length) { return; }
                 const shipped = t.shippedByLine[c.id + '|' + lot];
                 const back = mine.filter((x) => x.lot === lot && x.hasUnits).reduce((s, x) => s + Number(x.units || 0), 0);
-                rows.push({ key: 'l' + c.id + lot, isLot: true, title: lot, inRecall: this.v.lots.some((l) => l.lot === lot),
+                rows.push({ key: 'l' + c.id + lot, isLot: true, rowCls: 'cq-row-child', title: lot, inRecall: this.v.lots.some((l) => l.lot === lot),
                     sub: [shipped !== undefined && shipped !== null ? shipped + ' shipped' : '', back + ' back'].filter(Boolean).join(' · ') });
                 lt.forEach((x) => rows.push(this.taskRow(x, 'i2')));
             });
@@ -211,7 +212,7 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
     taskRow(x, indent) {
         const editing = this.unitsFor === x.id;
-        return { key: 't' + x.id, isTask: true, id: x.id, title: x.subject, indentCls: 'ind ' + indent, href: '/lightning/r/Task/' + x.id + '/view',
+        return { key: 't' + x.id, isTask: true, rowCls: '', id: x.id, title: x.subject, indentCls: indent === 'i2' ? 'cq-ind l2' : 'cq-ind', href: '/lightning/r/Task/' + x.id + '/view',
             done: x.done, checkLabel: (x.done ? 'Reopen ' : 'Complete ') + x.subject,
             hasUnits: x.hasUnits, editingUnits: editing, notEditingUnits: !editing, unitsVal: editing ? this.unitsVal : x.units,
             unitsText: (x.units === undefined || x.units === null ? 'No' : Number(x.units)) + ' unit' + (Number(x.units) === 1 ? '' : 's')
@@ -371,8 +372,8 @@ export default class CqFieldActionRecovery extends LightningElement {
             : 'Not yet: the ' + chk + ' was due ' + this.day(v.checkBy) + ' and the checks above are still open.';
     }
     check(key, label, detail, ok, blocks) {
-        const kind = ok ? 'ok' : blocks ? 'no' : 'op';
-        return { key, label, detail, mark: ok ? '✓' : blocks ? '✕' : '!', markCls: 'mk ' + kind,
+        const kind = ok ? 'ok' : blocks ? 'bad' : 'warn';
+        return { key, label, detail, mark: ok ? '✓' : blocks ? '✕' : '!', markCls: 'cq-mark ' + kind,
             state: ok ? 'Met' : blocks ? 'Open, needed before the verdict' : 'Open' };
     }
     /** How many customers have acknowledged, against the check level's target: shown beside the Customers and Tasks heading. */

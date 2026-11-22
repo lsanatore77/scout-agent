@@ -2,7 +2,7 @@
 
 :host { display: block; color: var(--cq-ink); font-size: 13px; }
 
-.tabbox { display: flex; flex-direction: column; margin-top: 16px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.tabbox { display: flex; flex-direction: column; margin-top: 16px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 14px; border-bottom: 1px solid var(--cq-line); }
 .tab { display: inline-flex; align-items: center; gap: 6px; padding: 12px 12px 10px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--cq-muted); cursor: pointer; }
 .tab:hover { color: var(--cq-ink); }
@@ -15,17 +15,11 @@
 
 
 
-.ht { width: 100%; border-collapse: collapse; font-size: 13px; }
-.ht th { text-align: left; font-size: 11px; font-weight: 700; color: var(--cq-muted); padding: 6px 8px; background: var(--cq-surface); border-bottom: 1px solid var(--cq-line); white-space: nowrap; }
-.ht td { padding: 6px 8px; border-bottom: 1px solid var(--cq-line); vertical-align: middle; }
-.ht tr:last-child td { border-bottom: none; }
-.ht tr.grp td { padding: 8px 8px 4px; font-size: 11px; font-weight: 700; color: var(--cq-muted); }
+/* the hold table is the shared compact table; a group row names the kind of stock under it */
+.cq-tbl tr.grp td { padding: 8px 8px 4px; font-size: 11px; font-weight: 700; color: var(--cq-muted); }
 .hc { width: 40px; }
-.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .b { font-weight: 600; }
 .what { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.tick { width: 16px; height: 16px; margin: 0; accent-color: var(--cq-link); cursor: pointer; }
-.tick:disabled { cursor: not-allowed; }
 .addrow { display: flex; align-items: center; gap: 8px; }
 
 .cards { display: grid; gap: 10px; }

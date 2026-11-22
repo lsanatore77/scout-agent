@@ -64,12 +64,12 @@ function pageLinks(n, cur) {
 }
 /** Trace marks are plain text in the row's colour (green, amber, red): no emoji, which some browsers draw in their own colours. */
 const TRACE = {
-    Verified: { mark: '✓ ', cls: 'tr ok' },
-    NC: { mark: '✕ ', cls: 'tr bad' },
-    'No lot recorded': { mark: '! ', cls: 'tr warn' },
-    'No approved supplier': { mark: '! ', cls: 'tr warn' },
-    'CoC missing': { mark: '! ', cls: 'tr warn' },
-    'CoC expired': { mark: '! ', cls: 'tr warn' }
+    Verified: { mark: '✓ ', cls: 'cq-marktext ok' },
+    NC: { mark: '✕ ', cls: 'cq-marktext bad' },
+    'No lot recorded': { mark: '! ', cls: 'cq-marktext warn' },
+    'No approved supplier': { mark: '! ', cls: 'cq-marktext warn' },
+    'CoC missing': { mark: '! ', cls: 'cq-marktext warn' },
+    'CoC expired': { mark: '! ', cls: 'cq-marktext warn' }
 };
 
 /** Field Action workspace: the coordinator's steps from what was decided through closure. */
@@ -278,7 +278,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         const out = [];
         this.reviews.forEach((r) => {
             const open = !!this.openRev[r.id];
-            out.push({ ...r, key: r.id, isRev: true, expanded: open ? 'true' : 'false', chevCls: 'rchev' + (open ? ' open' : ''),
+            out.push({ ...r, key: r.id, isRev: true, expanded: open ? 'true' : 'false', chevCls: 'cq-rchev' + (open ? ' open' : ''),
                 toggleLabel: (open ? 'Hide' : 'Show') + ' the reason for ' + r.name,
                 lotText: r.lot || '', riskText: r.risk ? r.risk + (r.score !== undefined && r.score !== null ? ' · ' + r.score : '') : '', dayText: this.day(r.decidedOn) || '' });
             if (open && r.rationale) { out.push({ key: r.id + '-why', isWhy: true, text: r.rationale }); }
@@ -420,7 +420,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             partRev: this.partText + (this.gens[l.name] && this.gens[l.name].revision ? ' · Rev ' + this.gens[l.name].revision : ''),
             lot: l.name, qty: l.built !== undefined && l.built !== null ? this.num(l.built) + ' built' : '—', supplier: '—',
             trace: where ? 'Shares ' + sharedLot : (l.records ? '! ' : '✓ ') + traceText,
-            traceCls: where || l.records ? 'tr warn' : 'tr ok',
+            traceCls: where || l.records ? 'cq-marktext warn' : 'cq-marktext ok',
             name: l.name,
             showCheck: this.isPartial, checked: l.inScope, checkDisabled: !this.canChange || l.locked || !!this.ticking[l.name],
             checkLabel: (l.inScope ? 'Take lot ' : 'Put lot ') + l.name + (l.inScope ? ' out of scope' : ' in scope'),
@@ -437,7 +437,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         };
     }
     nodeRow(n, key, depth, hasKids, isOpen, lot, g) {
-        const t = TRACE[n.trace] || { mark: '', cls: 'tr' };
+        const t = TRACE[n.trace] || { mark: '', cls: 'cq-marktext' };
         const sharedCount = (n.usedIn || []).length;
         const traceText = n.trace === 'NC' ? 'NC' + (n.ncNumber ? ' · ' + n.ncNumber : '') : n.trace || '—';
         return {
@@ -451,7 +451,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             partRev: [n.partNumber, n.revision ? 'Rev ' + n.revision : ''].filter(Boolean).join(' · '),
             lot: this.dash(n.lot), qty: this.num(n.qtyUsed), supplier: this.dash(n.supplier),
             trace: t.mark + traceText + (sharedCount ? ' · used in ' + sharedCount + ' other lot' + (sharedCount === 1 ? '' : 's') : ''),
-            traceCls: sharedCount && t.cls === 'tr ok' ? 'tr warn' : t.cls,
+            traceCls: sharedCount && t.cls === 'cq-marktext ok' ? 'cq-marktext warn' : t.cls,
             covered: lot.inScope, coveredTitle: 'Comes with lot ' + lot.name + (g.batch ? ' (batch ' + g.batch + ')' : '')
         };
     }
