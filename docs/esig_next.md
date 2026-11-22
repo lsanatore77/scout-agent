@@ -79,3 +79,13 @@ State on 2026-11-19:
   signatures show are good for now. Both off the open list.
 - Small polish noted: lookup changes show raw Ids (e.g. Committee Approval `a52W...`); show the record name instead.
 - Still open: signing speed (measure first), server-side guard in `decide()`, Old vs New switch-over, Entra signing.
+
+## Speed (2026-11-21, evening)
+
+- Audit Trail: preloads when the review opens (pop-up opens at once, refreshes in the background); no longer reads the
+  committee seat lists. Server time ~0.14 s.
+- Seat: CQ's signature policy is asked alongside the review, not after it, and not again after each signature.
+- Lou: "quicker all around".
+- Held (in scratchpad, not deployed): the closing approval reads the review view once less (~0.2 s). Bundle with the
+  signing fixes once a debug log of one real Sign and Approve shows where the ~12 s goes (likely mostly CQ: password
+  check, approval engine, Field Action creation).
