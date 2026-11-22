@@ -57,7 +57,8 @@
 .chsp { flex: none; display: inline-block; width: 22px; }
 /* the customer search sits over the table, at the left */
 .cq-field.srch { width: 260px; max-width: 100%; }
-.crow { background: var(--cq-surface); }
+/* customer rows are white so the grey header stands alone; a heavier rule above each customer marks where its group starts (2px, so it wins over the row rule) */
+.crow { background: var(--cq-bg); border-top: 2px solid var(--cq-line); }
 .ind { flex: none; display: inline-block; }
 .ind.i1 { width: 20px; }
 .ind.i2 { width: 40px; }
