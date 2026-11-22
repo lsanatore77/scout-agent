@@ -177,8 +177,12 @@ public with sharing class CqAuditTrail {
 
     /** Every signature on the review, with its committee seat, and the seats still waiting on an open approval. */
     private static void signatures(Trail t, Field_Action_Review__c r) {
+        // only the approval and its steps: the seat lists a coordinator chooses from (every active user) are not needed here
         CqFarCommittee.Info c;
-        try { c = CqFarCommittee.info(r); } catch (Exception e) { c = null; }
+        try {
+            c = new CqFarCommittee.Info();
+            if (r.Committee_Approval__c != null) { CqFarCommittee.loadApproval(c, r.Committee_Approval__c, false); }
+        } catch (Exception e) { c = null; }
         Map<String, String> seatOf = new Map<String, String>();
         if (c != null) { for (CqFarCommittee.Step s : c.steps) { if (s.person != null) { seatOf.put(s.person, s.seat); } } }
 

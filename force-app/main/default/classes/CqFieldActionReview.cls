@@ -415,6 +415,16 @@ public with sharing class CqFieldActionReview {
     /** Decides the review. Called when the committee's CQ Approval is approved (see CqFarCommittee), never straight from the screen. */
     public static View submit(Id recordId, String hazard, String summary, Integer score, String riskLevel, String outcome, String rationale,
                               Id fieldActionId, String faTitle, String actionType, String recallClass) {
+        decide(recordId, hazard, summary, score, riskLevel, outcome, rationale, fieldActionId, faTitle, actionType, recallClass);
+        return getView(recordId);
+    }
+
+    /**
+     * The decision itself, without reading the view back afterwards: the approval trigger has no screen to return it to,
+     * and the screen that signed reads it once when the signature request returns.
+     */
+    public static void decide(Id recordId, String hazard, String summary, Integer score, String riskLevel, String outcome, String rationale,
+                              Id fieldActionId, String faTitle, String actionType, String recallClass) {
         if (outcome != 'No Field Action' && outcome != 'Field Action Needed') { throw new AuraHandledException('Choose an outcome.'); }
         if (String.isBlank(rationale)) { throw new AuraHandledException('A rationale is required.'); }
         View v = getView(recordId);
@@ -448,6 +458,5 @@ public with sharing class CqFieldActionReview {
             r.Field_Action__c = null;
         }
         update r;
-        return getView(recordId);
     }
 }

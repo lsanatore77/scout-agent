@@ -119,6 +119,9 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     evTab = 'signals';   // the evidence tab open beside the checklist
 
     async connectedCallback() {
+        // CQ's signature policy is asked at the same time as the review is read, not after it: the seat would otherwise
+        // wait for both in turn ("Getting your signature ready"). The answer is used only when the review is with the committee.
+        this._signAsk = getSign({ recordId: this.recordId }).catch(() => null);
         try {
             const [v, sc] = await Promise.all([getView({ recordId: this.recordId }), getScope({ recordId: this.recordId })]);
             this.sc = sc;
@@ -132,10 +135,12 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     }
 
     apply(v, first) {
+        const wasWaiting = this.waiting;
         this.v = v;
         this.done = v.status === 'Decided' || v.status === 'Closed';
         this.waiting = v.status === 'With Committee';
-        this.loadSign();
+        // CQ's policy does not change between signatures: ask again only when the review goes to or leaves the committee
+        if (first || this.waiting !== wasWaiting) { this.loadSign(); }
         if (!first) { return; }
         const d = this.done ? null : readDraft(v.draft, DRAFT);
         this.whyLevel = ''; this.whyOutcome = ''; this.whyFa = ''; this.whyScope = '';
@@ -178,7 +183,13 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     async loadSign() {
         if (!this.waiting) { this.signs = {}; this.signsLoading = false; return; }
         this.signsLoading = true;
-        try { this.signs = (await getSign({ recordId: this.recordId })) || {}; }
+        // the answer asked for while the page loaded, if there is one; otherwise ask now
+        const early = this._signAsk; this._signAsk = null;
+        try {
+            let g = early ? await early : null;
+            if (!g) { g = await getSign({ recordId: this.recordId }); }
+            this.signs = g || {};
+        }
         catch (e) { this.signs = { approve: { unknown: true }, reject: { unknown: true } }; }
         this.signsLoading = false;
     }

@@ -14,7 +14,7 @@ const RESULT_CLS = { Accepted: 'res pos', Changed: 'res warn', 'Not Answered Yet
 /**
  * Audit Trail: a small link for a workspace header. It opens a pop-up with the record's whole audit trail, newest first:
  * changes, CQ.AI Suggestions with the facts and records they rest on, what people decided on each, and signatures.
- * Read only. The trail is read fresh each time the pop-up opens.
+ * Read only. Read when the page opens and again each time the pop-up opens.
  */
 export default class CqAuditTrail extends NavigationMixin(LightningElement) {
     @api recordId;
@@ -25,14 +25,22 @@ export default class CqAuditTrail extends NavigationMixin(LightningElement) {
     filter = 'all';
     expanded = {};      // suggestion ids with their facts open
 
+    // The trail is read quietly when the page opens, so the pop-up opens with it at once; opening reads it again
+    // in the background, and the list updates if anything was added since.
+    connectedCallback() { this.read(); }
+    async read() {
+        try { this.trail = await getTrail({ recordId: this.recordId }); this.error = undefined; }
+        catch (e) { if (!this.trail) { this.error = (e && e.body && e.body.message) || 'Could not read the audit trail.'; } }
+    }
+
     async handleOpen() {
-        this.open = true; this.filter = 'all'; this.expanded = {}; this.error = undefined;
-        this.loading = true;
-        try { this.trail = await getTrail({ recordId: this.recordId }); }
-        catch (e) { this.error = (e && e.body && e.body.message) || 'Could not read the audit trail.'; }
-        this.loading = false;
+        this.open = true; this.filter = 'all'; this.expanded = {};
         // focus the close button so the keyboard is inside the dialog
         Promise.resolve().then(() => { const x = this.template.querySelector('.cq-modal-x'); if (x) { x.focus(); } });
+        if (this.trail) { this.read(); return; }
+        this.error = undefined; this.loading = true;
+        await this.read();
+        this.loading = false;
     }
     handleClose() { this.open = false; }
     handleKey(event) { if (event.key === 'Escape') { this.handleClose(); } }
