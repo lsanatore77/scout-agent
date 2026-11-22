@@ -54,18 +54,13 @@
                                         <span class="cq-sub">{decidedLine}</span>
                                     </div>
                                     <template if:true={v.rationale}><div class="cq-para">{v.rationale}</div></template>
+                                    <template if:true={v.hazard}><div class="hazline"><span class="hazk">Health Hazard</span><span class="hazv">{v.hazard}</span></div></template>
                                     <div class="cq-tiles">
                                         <template for:each={tiles} for:item="t">
                                             <div key={t.key} class="cq-tile"><div class="cq-tile-k">{t.label}</div><div class="cq-tile-v">{t.value}</div></div>
                                         </template>
                                     </div>
                                 </div>
-                                <template if:true={v.hazard}>
-                                    <div class="card">
-                                        <div class="lab">Health Hazard Summary</div>
-                                        <div class="cq-para">{v.hazard}</div>
-                                    </div>
-                                </template>
                                 <div class="card">
                                     <div class="lab">Reviews That Led Here</div>
                                     <template if:true={hasReviews}>
