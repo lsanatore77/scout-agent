@@ -72,3 +72,10 @@ State on 2026-11-19:
   review view (signals, records, trend, committee) about four times. Measure first, then read it once and reuse it.
 - **Audit trail note for older reviews** (offered): when a review has no CQ.AI Suggestions, say it was decided before
   suggestion tracking began (Nov 20, 2026).
+
+## Settled (2026-11-21)
+
+- Lou: the Audit Trail view (filters All / CQ.AI Suggestions / Changed From CQ.AI / Signatures, newest first) and where
+  signatures show are good for now. Both off the open list.
+- Small polish noted: lookup changes show raw Ids (e.g. Committee Approval `a52W...`); show the record name instead.
+- Still open: signing speed (measure first), server-side guard in `decide()`, Old vs New switch-over, Entra signing.
