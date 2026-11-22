@@ -6,7 +6,9 @@
 .lab { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
 .decided { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 12px; border-radius: 4px; background: var(--cq-pos-bg); color: var(--cq-pos-fg); font-weight: 600; }
 .card { padding: 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
-.card.sug { padding: 16px; border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
+/* the coordinator's own recommendation: a plain card (purple is CQ.AI's colour); a quiet caption over the outcome */
+.card.sug { padding: 16px; }
+.card.sug > .lab { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
 .sughead { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
 .score { font-size: 68px; font-weight: 700; line-height: 1; }
 .lvl { font-weight: 700; font-size: 16px; }
