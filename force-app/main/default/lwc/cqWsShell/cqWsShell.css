@@ -9,3 +9,6 @@
 /* 'Picked up where you left off.' sits on the step title's line, at the right, so it takes no line of its own */
 .cq-ws-main { position: relative; }
 .resumed { position: absolute; top: 26px; right: 20px; margin: 0; font-size: 12px; color: var(--cq-muted); }
+/* a step set aside for later is greyed; a step that needs attention shows its sub line in red */
+.cq-rail .step.later { opacity: .55; }
+.cq-rail .ssub.alert { color: var(--cq-crit-fg); font-weight: 600; }

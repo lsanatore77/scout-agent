@@ -140,8 +140,21 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     handleEdit() {
         this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: this.recordId, objectApiName: 'Field_Action__c', actionName: 'edit' } });
     }
-    handleOpen(event) {
-        this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: event.currentTarget.dataset.id, actionName: 'view' } });
+    handleOpen(event) { this.openRecord(event.currentTarget.dataset.id); }
+    /** The shared frame (c-cq-ws-shell) reports a header link as open, with the record id. */
+    handleShellOpen(event) { this.openRecord(event.detail); }
+    openRecord(id) {
+        this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: id, actionName: 'view' } });
+    }
+    /** The header fields the shared frame draws. */
+    get headerFields() {
+        return [
+            { key: 'part', label: 'Part', value: this.partText },
+            { key: 'type', label: 'Action Type', value: this.v.actionType },
+            { key: 'class', label: 'Recall Class', value: this.classText },
+            { key: 'scope', label: 'Scope', value: this.scopeText },
+            { key: 'status', label: 'Status', value: this.v.status }
+        ];
     }
 
     // ---- step rail
@@ -210,8 +223,13 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         for (let i = this.step + dir; i >= 0 && i < STEPS.length; i += dir) { if (!STEPS[i].later) { return i; } }
         return -1;
     }
+    /** The rail as the shared frame draws it: a step set aside for later shows a dash and is greyed. */
+    get railSteps() {
+        return this.steps.map((s) => ({ label: s.label, sub: s.sub, done: s.done, active: s.i === this.step, locked: s.locked,
+            mark: STEPS[s.i].later ? '\u2013' : undefined, later: !!STEPS[s.i].later, alert: s.subCls.includes('alert') }));
+    }
     get progress() { return this.steps.filter((s) => s.done).length + ' of ' + STEPS.length + ' steps complete'; }
-    handleStep(event) { const i = Number(event.currentTarget.dataset.i); if (!this.isLocked(i)) { this.go(i); } }
+    handleStep(event) { const i = Number(event.detail); if (!this.isLocked(i)) { this.go(i); } }
     go(i) { this.step = i; this.error = undefined; this.foot = { show: false, label: '', disabled: true, blocker: '' }; }
     // ---- Ask CQ.AI: the Field Action agent, told which step is open, with ready questions for that step
     get askStep() { return STEPS[this.step] ? STEPS[this.step].label : ''; }
@@ -238,7 +256,8 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     foot = { show: false, label: '', disabled: true, blocker: '' };
     handleFootChange(event) { this.foot = event.detail; }
     get showStepAction() { return (this.is2 || this.is5 || this.is6) && this.foot.show; }
-    get nextCls() { return this.showStepAction ? 'cq-btn-outline' : 'cq-btn-primary'; }
+    get hasFootActs() { return this.showStepAction || (this.is1 && this.isPartial && this.hasLots); }
+    get footBlocker() { return this.showStepAction ? this.foot.blocker : ''; }
     handleStepAction() {
         const s = this.template.querySelector('[data-step]');
         if (s) { s.confirm(); }

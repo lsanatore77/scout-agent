@@ -11,7 +11,7 @@
                 </div>
                 <div class="cq-hl-actions">
                     <template if:true={auditTrail}><c-cq-audit-trail record-id={recordId}></c-cq-audit-trail></template>
-                    <template if:true={agentName}><c-ask-cq-popover record-id={recordId} agent-name={agentName} step={askStep} suggestions={askSuggestions}></c-ask-cq-popover></template>
+                    <template if:true={agentName}><c-ask-cq-popover record-id={recordId} agent-name={agentName} step={askStep} suggestions={askSuggestions} onaskcqaction={handleAskAction}></c-ask-cq-popover></template>
                     <template if:true={showEdit}><button class="cq-btn-outline" onclick={handleEdit}>Edit</button></template>
                 </div>
             </div>
@@ -35,11 +35,12 @@
                             <template if:true={s.done}>&#10003;</template>
                             <template if:false={s.done}>{s.n}</template>
                         </span>
-                        <span class="txt"><span class="lbl">{s.label}</span><span class="ssub">{s.sub}</span></span>
+                        <span class="txt"><span class="lbl">{s.label}</span><span class={s.subCls}>{s.sub}</span></span>
                     </button>
                 </template>
                 <template if:true={canRestart}><button class="cq-restart" onclick={handleRestart}>Start Over</button></template>
                 <template if:true={canReopen}><button class="cq-restart" onclick={handleReopen}>{reopenLabel}</button></template>
+                <template if:true={progress}><div class="progress">{progress}</div></template>
             </nav>
             <div class="cq-ws-main">
                 <template if:true={resumed}><div class="resumed">Picked up where you left off.</div></template>
@@ -48,8 +49,9 @@
                 <template if:true={showFoot}>
                     <div class="cq-ws-foot">
                         <span class="cq-blocker">{blocker}</span>
+                        <slot name="foot"></slot>
                         <button class="cq-btn-outline" onclick={handleBack} disabled={backDisabled}>Back</button>
-                        <button class="cq-btn-primary" onclick={handleNext} disabled={nextDisabled}>{nextLabel}</button>
+                        <button class={nextCls} onclick={handleNext} disabled={nextDisabled}>{nextLabel}</button>
                     </div>
                 </template>
             </div>

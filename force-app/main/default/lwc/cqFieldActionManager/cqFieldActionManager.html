@@ -1,45 +1,11 @@
 <template>
     <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
     <template if:true={ready}>
-        <div class="cq-box">
-            <header class="cq-hl">
-                <div class="cq-hl-top">
-                    <div class="cq-hl-who">
-                        <span class="cq-hl-icon"><lightning-icon icon-name="custom:custom87" size="medium" alternative-text="Field Action"></lightning-icon></span>
-                        <div class="cq-hl-name">
-                            <span class="cq-hl-obj">Field Action</span>
-                            <span class="cq-hl-title">{v.name}</span>
-                        </div>
-                    </div>
-                    <div class="cq-hl-actions">
-                        <c-cq-audit-trail record-id={recordId}></c-cq-audit-trail>
-                        <c-ask-cq-popover record-id={recordId} agent-name="CQAI_Field_Action" step={askStep} suggestions={askSuggestions} onaskcqaction={handleAskAction}></c-ask-cq-popover>
-                        <button class="cq-btn-outline" onclick={handleEdit}>Edit</button>
-                    </div>
-                </div>
-                <div class="cq-hl-fields">
-                    <div class="cq-hl-f"><span class="cq-hl-k">Part</span><span class="cq-hl-v">{partText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Action Type</span><span class="cq-hl-v">{v.actionType}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Recall Class</span><span class="cq-hl-v">{classText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Scope</span><span class="cq-hl-v">{scopeText}</span></div>
-                    <div class="cq-hl-f"><span class="cq-hl-k">Status</span><span class="cq-hl-v">{v.status}</span></div>
-                </div>
-            </header>
-            <div class="cq-ws-body">
-                <nav class="cq-rail" aria-label="Field Action Steps">
-                    <div class="cq-rail-title">Review Steps</div>
-                    <template for:each={steps} for:item="s">
-                        <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked}>
-                            <span class="mark">
-                                <template if:true={s.done}>&#10003;</template>
-                                <template if:true={s.notDone}>{s.n}</template>
-                            </span>
-                            <span class="txt"><span class="lbl">{s.label}</span><span class={s.subCls}>{s.sub}</span></span>
-                        </button>
-                    </template>
-                    <div class="progress">{progress}</div>
-                </nav>
-                <div class="cq-ws-main">
+        <c-cq-ws-shell record-id={recordId} icon="custom:custom87" object-label="Field Action" record-name={v.name}
+            fields={headerFields} show-edit audit-trail agent-name="CQAI_Field_Action" ask-step={askStep} ask-suggestions={askSuggestions}
+            steps={railSteps} progress={progress} error={error}
+            show-foot blocker={footBlocker} back-disabled={cantBack} next-disabled={cantNext} next-outline={showStepAction}
+            onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onopen={handleShellOpen} onaskcqaction={handleAskAction}>
 
                     <template if:true={is0}>
                         <h3 class="cq-step-title">Field Action at a Glance</h3>
@@ -237,20 +203,14 @@
                         <c-cq-field-action-closure data-step="closure" record-id={recordId} onrailchange={handleRailChange} onfootchange={handleFootChange}></c-cq-field-action-closure>
                     </template>
 
-                    <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
-                    <div class="cq-ws-foot">
+                    <template if:true={hasFootActs}><span slot="foot" class="footacts">
                         <template if:true={showStepAction}>
-                            <span class="cq-blocker">{foot.blocker}</span>
                             <button class="cq-btn-primary" onclick={handleStepAction} disabled={foot.disabled}>{foot.label}</button>
                         </template>
                         <template if:true={is1}><template if:true={isPartial}><template if:true={hasLots}>
                             <button class="cq-btn-primary" onclick={handleConfirm} disabled={cantConfirm}>{confirmLabel}</button>
                         </template></template></template>
-                        <button class="cq-btn-outline" onclick={handleBack} disabled={cantBack}>Back</button>
-                        <button class={nextCls} onclick={handleNext} disabled={cantNext}>Next</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </span></template>
+        </c-cq-ws-shell>
     </template>
 </template>
