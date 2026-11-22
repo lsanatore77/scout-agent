@@ -40,7 +40,8 @@
 .tree { margin-top: 8px; max-height: 560px; overflow: auto; border-radius: 4px; }
 .tree .cq-tbl th { position: sticky; top: 0; z-index: 1; }
 .tree .cq-tbl td { padding: 6px 10px; vertical-align: middle; }
-.cscope { width: 112px; }
+/* the tick column is as narrow as the box; whether a lot is Added or Removing shows in the last column (Status) */
+.cscope { width: 1%; }
 .sc { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .tick { width: 16px; height: 16px; margin: 0; accent-color: var(--cq-link); cursor: pointer; }
 .tick:disabled { cursor: not-allowed; }

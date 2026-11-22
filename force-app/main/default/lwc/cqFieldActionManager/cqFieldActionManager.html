@@ -140,8 +140,8 @@
                             <div class="cq-tblwrap tree" style={tableStyle}>
                                 <table class="cq-tbl">
                                     <thead><tr>
-                                        <th class="cscope"><span class="sc"><button class="chev" onclick={handleAll} aria-label={allLabel} title={allLabel} aria-expanded={allExpanded}>{allChev}</button>Scope</span></th><th>Level / Item</th><th>Part &middot; Rev</th><th>Lot</th><th class="num">Qty</th><th>Supplier</th><th>Trace</th>
-                                        <th class="num">Shipped</th><th class="num">On Hand</th><th>Location</th>
+                                        <th class="cscope">Scope</th><th>Level / Item</th><th>Part &middot; Rev</th><th>Lot</th><th class="num">Qty</th><th>Supplier</th><th>Trace</th>
+                                        <th class="num">Shipped</th><th class="num">On Hand</th><th>Status</th>
                                     </tr></thead>
                                     <tbody>
                                         <template for:each={rows} for:item="r">
@@ -152,13 +152,9 @@
                                                 </template>
                                                 <template if:true={r.isLot}>
                                                     <td class="cscope">
-                                                        <span class="sc">
-                                                            <template if:true={r.showCheck}>
-                                                                <input class="tick" type="checkbox" data-name={r.name} checked={r.checked} disabled={r.checkDisabled} onchange={handleTick} aria-label={r.checkLabel} />
-                                                            </template>
-                                                            <template if:true={r.added}><span class="cq-pill soft pos" title={r.addedTitle}>Added</span></template>
-                                                            <template if:true={r.removing}><span class="cq-pill soft crit">Removing</span></template>
-                                                        </span>
+                                                        <template if:true={r.showCheck}>
+                                                            <input class="tick" type="checkbox" data-name={r.name} checked={r.checked} disabled={r.checkDisabled} onchange={handleTick} aria-label={r.checkLabel} />
+                                                        </template>
                                                     </td>
                                                     <td class="cq-nowrap">
                                                         <span class="ind" style={r.indentStyle}></span>
@@ -188,14 +184,12 @@
                                                                 </div>
                                                             </template>
                                                         </td>
-                                                        <td class="cq-nowrap">
-                                                            <template if:true={r.noPlaces}><span class="cq-muted">{r.locText}</span></template>
-                                                            <template for:each={r.places} for:item="k">
-                                                                <span key={k.key}><a class="cq-ploc" href={k.href} target="_blank">{k.location}</a> {k.units}<template if:true={k.sep}><span class="cq-dotsep"> &middot; </span></template></span>
-                                                            </template>
-                                                        </td>
                                                     </template>
-                                                    <template if:false={r.showStock}><td></td><td></td><td></td></template>
+                                                    <template if:false={r.showStock}><td></td><td></td></template>
+                                                    <td class="cq-nowrap">
+                                                        <template if:true={r.added}><span class="cq-pill soft pos" title={r.addedTitle}>Added</span></template>
+                                                        <template if:true={r.removing}><span class="cq-pill soft crit">Removing</span></template>
+                                                    </td>
                                                 </template>
                                                 <template if:true={r.isNode}>
                                                     <td class="cscope"></td>
