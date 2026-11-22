@@ -50,6 +50,7 @@
   --cq-hl-line: var(--cqt-hl-line, #e5e5e5);
   --cq-hl-ink:  var(--cqt-hl-ink, var(--cq-ink));     /* header title and values */
   --cq-hl-muted: var(--cqt-hl-muted, var(--cq-muted)); /* header object name and field labels */
+  --cq-hl-link: var(--cqt-hl-link, var(--cq-link));    /* header links: record links in the fields, Audit Trail */
 
   /* ---- radius ---- */
   --cq-r-field: var(--cqt-r-field, 0.25rem);   /* 4: text boxes and buttons (standard 2026-11-22, Lou: square corners in every workspace) */
@@ -358,7 +359,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-hl-f { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
 .cq-hl-k { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-hl-muted); }
 .cq-hl-v { font-size: var(--cq-fs-meta); color: var(--cq-hl-ink); }
-.cq-hl-v.link { font-weight: 600; color: var(--cq-link); }
+.cq-hl-v.link { font-weight: 600; color: var(--cq-hl-link); }
 button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inherit; cursor: pointer; }
 
 /* ============================ FIELD WIDTHS ============================= */

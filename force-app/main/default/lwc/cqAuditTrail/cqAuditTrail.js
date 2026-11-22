@@ -59,7 +59,7 @@ export default class CqAuditTrail extends NavigationMixin(LightningElement) {
     get filters() {
         return FILTERS.map(([id, label]) => ({
             id, label: label + ' ' + this.count(id), pressed: this.filter === id ? 'true' : 'false',
-            cls: 'chip' + (this.filter === id ? ' on' : '')
+            cls: 'cq-chip'   // the shared chip: the chosen one fills with the theme's link colour
         }));
     }
     handleFilter(event) { this.filter = event.currentTarget.dataset.id; }
