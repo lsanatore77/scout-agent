@@ -59,6 +59,7 @@
 
   /* ---- density: comfortable (default / mobile) ---- */
   --cq-field-h:     2.75rem;
+  --cq-chip-h:      2.75rem;   /* chips: as tall as a field on a phone (a thumb's tap target), shorter on a desktop */
   --cq-field-pad-y: 0.625rem;
   --cq-field-pad-x: 0.75rem;
   --cq-row-gap:     1rem;
@@ -69,12 +70,12 @@
 /* compact = desktop. Bound to width; override with data-density if needed. */
 @media (min-width: 56.25rem) {
   :host {
-    --cq-field-h: 2.1rem; --cq-field-pad-y: 0.3125rem; --cq-field-pad-x: 0.5rem;
+    --cq-field-h: 2.1rem; --cq-chip-h: 1.75rem; --cq-field-pad-y: 0.3125rem; --cq-field-pad-x: 0.5rem;
     --cq-row-gap: 0.625rem; --cq-label-gap: 0.25rem; --cq-grid-cols: 2;
   }
 }
-:host([data-density="comfortable"]) { --cq-field-h: 2.75rem; --cq-field-pad-y: 0.625rem; --cq-field-pad-x: 0.75rem; --cq-row-gap: 1rem; --cq-label-gap: 0.375rem; --cq-grid-cols: 1; }
-:host([data-density="compact"])     { --cq-field-h: 2.1rem;  --cq-field-pad-y: 0.3125rem; --cq-field-pad-x: 0.5rem; --cq-row-gap: 0.625rem; --cq-label-gap: 0.25rem; --cq-grid-cols: 2; }
+:host([data-density="comfortable"]) { --cq-field-h: 2.75rem; --cq-chip-h: 2.75rem; --cq-field-pad-y: 0.625rem; --cq-field-pad-x: 0.75rem; --cq-row-gap: 1rem; --cq-label-gap: 0.375rem; --cq-grid-cols: 1; }
+:host([data-density="compact"])     { --cq-field-h: 2.1rem; --cq-chip-h: 1.75rem;  --cq-field-pad-y: 0.3125rem; --cq-field-pad-x: 0.5rem; --cq-row-gap: 0.625rem; --cq-label-gap: 0.25rem; --cq-grid-cols: 2; }
 
 /* =============================== PILLS =================================== */
 /* STANDARD: solid fill, white text, centered (line-height 1 + top-biased pad) */
@@ -106,7 +107,7 @@ button.cq-pill.ai:focus-visible { outline: 2px solid var(--cq-accent); outline-o
 /* =============================== CHIPS ================================== */
 /* 3px of bottom padding on chips and buttons lifts the text to optical center in Salesforce Sans, which sits low */
 .cq-chip {
-  min-height: var(--cq-field-h); display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--cq-chip-h); display: inline-flex; align-items: center; justify-content: center;
   padding: 0 0.95rem 0.1875rem; border-radius: var(--cq-r-pill); border: 1px solid var(--cq-line-field);
   background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: var(--cq-fs-body);
   font-weight: 600; cursor: pointer; white-space: nowrap;
