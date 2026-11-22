@@ -71,7 +71,7 @@
                         <c-cq-ws-tabs tabs={evTabs} active={evTab} onchange={handleTab}>
                             <template if:true={tabSignals}>
                                 <template if:true={hasSignals}>
-                                    <div class="cq-tblwrap">
+                                    <div class="cq-tblwrap sigwrap" style={sigTableStyle}>
                                         <table class="cq-tbl stbl">
                                             <thead><tr><th class="chcol"><span class="sr">Open</span></th><th>Signal</th><th>What We See</th><th class="num">Records</th></tr></thead>
                                             <tbody>
@@ -101,6 +101,17 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                    <template if:true={hasSigPages}>
+                                        <div class="cq-pager">
+                                            <nav class="cq-pages" aria-label="Signal pages">
+                                                <button class="pg" onclick={handleSigPrev} disabled={cantPrevSig} aria-label="Previous page">&laquo;</button>
+                                                <template for:each={sigPageItems} for:item="p">
+                                                    <button key={p.key} class={p.cls} data-p={p.p} onclick={handleSigPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
+                                                </template>
+                                                <button class="pg" onclick={handleSigNext} disabled={cantNextSig} aria-label="Next page">&raquo;</button>
+                                            </nav>
+                                        </div>
+                                    </template>
                                 </template>
                                 <template if:false={hasSignals}>
                                     <p class="cq-note">No signals at Assess or above on this part or lot.</p>

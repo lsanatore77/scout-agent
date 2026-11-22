@@ -33,6 +33,7 @@ const COMMITTEE = 3;
 const READ_ONLY = [0, ASSESS, REC, COMMITTEE];   // steps that open while the review is with the committee (Assessment and Recommendation view only)
 const STEP_LABEL = { Open: 'Pending', Approved: 'Approved', Rejected: 'Sent Back', Void: 'Not Required', Skipped: 'Not Required' };
 const PAGE = 5;      // records shown under a signal before "Show more"
+const SIG_PAGE = 5;  // signals a page in the Signals table; a signal's open records stay with it
 
 const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'on', 'in', 'to', 'at', 'for', 'is', 'by', 'per', 'with']);
 /**
@@ -255,6 +256,11 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             const want = this[el.dataset.f] || '';
             if (el !== this.template.activeElement && el.value !== want) { el.value = want; }
         });
+        // the Signals table keeps the height of its first page (measured with no signal open)
+        if (this.hasSigPages && !this.sigMin && this.sigPageNow === 0 && !Object.values(this.openSig).some(Boolean)) {
+            const w = this.template.querySelector('.sigwrap');
+            if (w && w.clientHeight) { this.sigMin = w.clientHeight; }
+        }
     }
     get is5() { return this.open && this.step === COMMITTEE; }
     get showResumed() { return this.resumed && this.live; }
@@ -377,7 +383,37 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         const m = /^([^.]+)\.\s+(.*)$/.exec(why || '');
         return m && (label || '').toLowerCase().startsWith(m[1].trim().toLowerCase()) ? m[2] : why;
     }
-    get signalRows() { return this.sigRows(this.signals); }
+    get signalRows() {
+        const from = this.sigPageNow * SIG_PAGE;
+        return this.sigRows(this.signals.slice(from, from + SIG_PAGE));
+    }
+    // ---- five signals a page, with the same page numbers as the other tables (cqStyles .cq-pager)
+    sigPage = 0;
+    sigMin = 0;          // the table keeps the height of its first page, so the page numbers do not jump
+    get sigPageCount() { return Math.max(1, Math.ceil(this.sigCount / SIG_PAGE)); }
+    get sigPageNow() { return Math.min(this.sigPage, this.sigPageCount - 1); }
+    get sigCount() { return ((this.v && this.v.signals) || []).length; }
+    get hasSigPages() { return this.sigCount > SIG_PAGE; }
+    get cantPrevSig() { return this.sigPageNow === 0; }
+    get cantNextSig() { return this.sigPageNow >= this.sigPageCount - 1; }
+    get sigTableStyle() { return this.hasSigPages && this.sigMin ? 'min-height:' + this.sigMin + 'px' : ''; }
+    handleSigPrev() { this.sigPage = Math.max(0, this.sigPageNow - 1); }
+    handleSigNext() { this.sigPage = Math.min(this.sigPageCount - 1, this.sigPageNow + 1); }
+    handleSigPage(event) { this.sigPage = Number(event.currentTarget.dataset.p); }
+    /** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
+    get sigPageItems() {
+        const n = this.sigPageCount; const cur = this.sigPageNow;
+        const keep = [];
+        for (let i = 0; i < n; i++) { if (n <= 7 || i === 0 || i === n - 1 || Math.abs(i - cur) <= 2) { keep.push(i); } }
+        const out = [];
+        keep.forEach((i, k) => {
+            if (k > 0 && i - keep[k - 1] > 1) { out.push({ key: 'g' + i, text: '…', cls: 'pg gap', off: true, label: 'More pages' }); }
+            const on = i === cur;
+            out.push({ key: 'p' + i, p: i, text: String(i + 1), cls: 'pg' + (on ? ' on' : ''), off: on, current: on ? 'page' : 'false',
+                label: 'Page ' + (i + 1) });
+        });
+        return out;
+    }
     get moreSignalRows() { return this.sigRows(this.moreSignals); }
     handleSigToggle(event) {
         const id = event.currentTarget.dataset.id;
