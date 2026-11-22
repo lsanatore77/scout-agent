@@ -79,6 +79,8 @@
 .riskcard .cq-field { margin-top: 0; }
 /* what the reviewer types, at the screen's 13px text size */
 .cq-field textarea, .cq-field input, .cq-field select { font-size: 13px; }
+/* the hazard summary starts at its 2 rows (the shared minimum height would make it 3): it can still be dragged bigger */
+.riskcard textarea[data-f="hazard"] { min-height: 0; }
 /* Recommendation: sections in decision order; the field action list sits under Field Action Needed */
 .recwrap { display: flex; flex-direction: column; gap: 22px; max-width: 820px; }
 .recwrap > .cq-field { margin-top: 0; }
