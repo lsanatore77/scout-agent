@@ -102,3 +102,10 @@ State on 2026-11-19:
 - What remains in Sign and Approve is CQ's: password check (with its own policy lookup) and the approval engine (~2 s).
   Dev sandbox timings were noisy tonight (Submit to Committee 4 s, then 16 s, with no change).
 - getSignFor(recordId, action) stays on CqFarCommittee (tested) but the screen does not use it.
+
+## Next session (Lou, 2026-11-21 close)
+
+- Lou re-checks Field Action Review tomorrow, then: Field Action (the next workspace onto the shared pieces).
+- Still open here: server-side guard in decide() (mostly in place: decide() checks CQ's policy), Old vs New switch-over
+  (retire cqFieldActionWorkspace; it still has the purple Your Recommendation card and the distribution note),
+  findings note for CQ on e-signature lookups (offered), Entra signing.
