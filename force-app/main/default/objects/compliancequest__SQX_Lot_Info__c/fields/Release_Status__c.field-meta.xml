@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Release_Status__c</fullName>
-    <description>Where the lot stands for release: Pending QA, Released, On Hold, Quarantined, Rejected, Recall Pending or Recalled. Worked out by CqLotStatus: the strictest control wins.</description>
+    <description>Where the lot stands for release: Pending QA, Released, On Hold, Quarantined, Rejected, Expired, Recall Pending or Recalled. Worked out by CqLotStatus: the strictest control wins.</description>
     <label>Release Status</label>
     <type>Picklist</type>
     <valueSet>
@@ -32,6 +32,11 @@
                 <fullName>Rejected</fullName>
                 <default>false</default>
                 <label>Rejected</label>
+            </value>
+            <value>
+                <fullName>Expired</fullName>
+                <default>false</default>
+                <label>Expired</label>
             </value>
             <value>
                 <fullName>Recall Pending</fullName>

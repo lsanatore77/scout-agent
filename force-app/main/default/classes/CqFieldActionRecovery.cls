@@ -30,6 +30,8 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public Id id; @AuraEnabled public String lot; @AuraEnabled public String kind; @AuraEnabled public String item;
         @AuraEnabled public Decimal onHand; @AuraEnabled public String disposition; @AuraEnabled public String suggested; @AuraEnabled public String reason;
         @AuraEnabled public CqLotStatus.Outlook stays;   // what still holds the lot once this field action releases it (CqLotStatus)
+        @AuraEnabled public String reworkDone;           // 'Rework done by J. Rivera · 23 Nov 2026', once marked
+        @AuraEnabled public Boolean canMarkRework = false; // a confirmed Rework, not yet marked done: the lot stays On Hold until it is
     }
     public class Check {
         @AuraEnabled public String key; @AuraEnabled public String text; @AuraEnabled public String detail;
@@ -170,10 +172,16 @@ public with sharing class CqFieldActionRecovery {
         v.targetMet = v.target == 0 || (v.total > 0 && v.acked * 100 >= v.target * v.total);
 
         // 3. held stock
-        for (Field_Action_Hold__c h : [SELECT Id, Lot_Number__c, Kind__c, Item__c, Disposition__c, Reason__c FROM Field_Action_Hold__c
+        for (Field_Action_Hold__c h : [SELECT Id, Lot_Number__c, Kind__c, Item__c, Disposition__c, Disposition_On__c, Reason__c,
+                                              Rework_Done_On__c, Rework_Done_By__r.Name FROM Field_Action_Hold__c
                                        WHERE Field_Action__c = :recordId AND Held__c = true ORDER BY Kind__c DESC, Lot_Number__c]) {
             HoldDisp x = new HoldDisp();
             x.id = h.Id; x.lot = h.Lot_Number__c; x.kind = h.Kind__c; x.item = h.Item__c; x.disposition = h.Disposition__c; x.reason = h.Reason__c;
+            if (h.Disposition__c == 'Rework' && h.Rework_Done_On__c != null) {
+                x.reworkDone = 'Rework done' + (h.Rework_Done_By__r?.Name == null ? '' : ' by ' + h.Rework_Done_By__r.Name)
+                    + ' · ' + h.Rework_Done_On__c.format('d MMM yyyy');
+            }
+            x.canMarkRework = h.Disposition__c == 'Rework' && h.Disposition_On__c != null && h.Rework_Done_On__c == null;   // after closing too: the rework can finish later
             x.suggested = h.Kind__c == CqFieldActionStrategy.FINISHED ? 'Scrap' : 'Return to Supplier';
             v.holds.add(x);
             if (h.Disposition__c != null) { v.decided++; }
@@ -187,7 +195,7 @@ public with sharing class CqFieldActionRecovery {
         Set<String> heldLots = new Set<String>();
         for (HoldDisp x : v.holds) { heldLots.add(x.lot); }
         Map<String, CqLotStatus.Outlook> stays = CqLotStatus.outlook(heldLots, recordId, true);
-        for (HoldDisp x : v.holds) { if (x.disposition == null || x.disposition == 'Release') { x.stays = stays.get(x.lot); } }
+        for (HoldDisp x : v.holds) { if (x.disposition == null || x.disposition == 'Release' || x.reworkDone != null) { x.stays = stays.get(x.lot); } }
 
         // 4. CQ.AI on the verdict
         Decimal inField = v.shipped - v.recovered;
@@ -387,8 +395,25 @@ public with sharing class CqFieldActionRecovery {
         openForChange(fa);
         Field_Action_Hold__c h = [SELECT Id, Field_Action__c FROM Field_Action_Hold__c WHERE Id = :holdId];
         if (h.Field_Action__c != recordId) { throw new AuraHandledException('That hold belongs to another field action.'); }
-        update new Field_Action_Hold__c(Id = holdId, Disposition__c = String.isBlank(disposition) ? null : disposition, Disposition_On__c = null);
+        update new Field_Action_Hold__c(Id = holdId, Disposition__c = String.isBlank(disposition) ? null : disposition, Disposition_On__c = null,
+            Rework_Done_On__c = null, Rework_Done_By__c = null);
         reopen(fa);
+        return getView(recordId);
+    }
+
+    /**
+     * Rework Done: the rework the confirmed verdict called for is finished, so this field action lets go of the lot
+     * (CqLotStatus). It records a fact, not a new decision, so the verdict stays confirmed, and it can be marked after the
+     * field action is closed: the rework may finish later.
+     */
+    @AuraEnabled
+    public static View markReworkDone(Id recordId, Id holdId) {
+        Field_Action_Hold__c h = [SELECT Id, Field_Action__c, Disposition__c, Disposition_On__c, Rework_Done_On__c FROM Field_Action_Hold__c WHERE Id = :holdId];
+        if (h.Field_Action__c != recordId) { throw new AuraHandledException('That hold belongs to another field action.'); }
+        if (h.Disposition__c != 'Rework' || h.Disposition_On__c == null) { throw new AuraHandledException('Rework Done is for a confirmed Rework.'); }
+        if (h.Rework_Done_On__c == null) {
+            update new Field_Action_Hold__c(Id = holdId, Rework_Done_On__c = Datetime.now(), Rework_Done_By__c = UserInfo.getUserId());
+        }
         return getView(recordId);
     }
 

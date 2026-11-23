@@ -50,3 +50,6 @@
 .cq-btn-outline.ghost { border-color: var(--cq-accent); color: var(--cq-accent); }
 /* the lot stays held by something else after this field action releases it */
 .stillheld { display: block; margin-top: 6px; font-size: 12px; line-height: 1.4; color: var(--cq-warn-fg); }
+/* a confirmed Rework: the lot stays On Hold until someone marks the rework done */
+.rework { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.reworked { display: block; margin-top: 6px; font-size: 12px; color: var(--cq-pos-fg); }

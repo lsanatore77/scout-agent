@@ -52,6 +52,47 @@ private class CqLotStatusTest {
     }
 
     @IsTest
+    static void reworkDoneLetsGo() {
+        compliancequest__SQX_Part__c p = part();
+        insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-J', compliancequest__Part_Number__c = 'LST-1', Release_Status__c = 'Released');
+        Field_Action__c f = fa(p.Id, 'Rework done test');
+        Field_Action_Hold__c h = new Field_Action_Hold__c(Field_Action__c = f.Id, Lot_Number__c = 'LST-J', Hold__c = true, Held__c = true,
+            Disposition__c = 'Rework', Disposition_On__c = Datetime.now());
+        insert h;
+        System.assertEquals('On Hold', lot('LST-J').Release_Status__c);
+        update new Field_Action_Hold__c(Id = h.Id, Rework_Done_On__c = Datetime.now(), Rework_Done_By__c = UserInfo.getUserId());
+        System.assertEquals('Released', lot('LST-J').Release_Status__c, 'reworked: the field action lets go');
+    }
+
+    @IsTest
+    static void aFullScopeRecallCoversANewLot() {
+        compliancequest__SQX_Part__c p = part();
+        insert new Field_Action__c(Title__c = 'Full recall', Part__c = p.Id, Action_Type__c = 'Removal (Recall)', Scope__c = 'Full');
+        insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-K', compliancequest__Part_Number__c = 'LST-1', Release_Status__c = 'Released');
+        System.assertEquals('Recalled', lot('LST-K').Release_Status__c, 'a full scope covers every lot of the part, a new one too');
+        insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-K2', compliancequest__Part_Number__c = 'LST-OTHER', Release_Status__c = 'Released');
+        System.assertEquals('Released', lot('LST-K2').Release_Status__c, 'another part is not covered');
+    }
+
+    @IsTest
+    static void anExpiredLotIsHeld() {
+        insert new List<compliancequest__SQX_Lot_Info__c>{
+            new compliancequest__SQX_Lot_Info__c(Name = 'LST-X', compliancequest__Part_Number__c = 'LST-1', Release_Status__c = 'Released',
+                compliancequest__Expiration_Date__c = Date.today().addDays(-1)),
+            new compliancequest__SQX_Lot_Info__c(Name = 'LST-Y', compliancequest__Part_Number__c = 'LST-1', Release_Status__c = 'Released',
+                compliancequest__Expiration_Date__c = Date.today()) };
+        System.assertEquals('Expired', lot('LST-X').Release_Status__c);
+        System.assertEquals('Expiry', lot('LST-X').Status_Set_By__c);
+        System.assertEquals('Released', lot('LST-Y').Release_Status__c, 'usable through its expiry date');
+        System.assertEquals(null, CqLotStatus.expirySay(Date.today(), Date.today()));
+        System.assertEquals('Expired', CqLotStatus.expirySay(Date.today(), Date.today().addDays(1)).status, 'the day after, it is expired');
+        Test.startTest();
+        System.schedule('Lot Expiry test', '0 15 1 * * ?', new CqLotExpiry());
+        System.assertEquals(0, CqLotExpiry.run(), 'nothing new to hold');
+        Test.stopTest();
+    }
+
+    @IsTest
     static void aStatusSetByHandIsNeverLoosened() {
         compliancequest__SQX_Part__c p = part();
         insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-C', compliancequest__Part_Number__c = 'LST-1', Release_Status__c = 'Released');

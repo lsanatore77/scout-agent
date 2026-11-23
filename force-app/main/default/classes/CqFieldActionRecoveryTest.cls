@@ -196,6 +196,26 @@ private class CqFieldActionRecoveryTest {
     }
 
     @IsTest
+    static void reworkDoneIsMarkedOnAConfirmedRework() {
+        Field_Action__c fa = makeFa();
+        Id h = holdRow(fa.Id);
+        update new Field_Action_Hold__c(Id = h, Disposition__c = 'Rework');
+        Test.startTest();
+        CqFieldActionRecovery.View v = CqFieldActionRecovery.getView(fa.Id);
+        System.assertEquals(false, v.holds[0].canMarkRework, 'not until the verdict confirms the rework');
+        try { CqFieldActionRecovery.markReworkDone(fa.Id, h); System.assert(false, 'needs a confirmed Rework'); }
+        catch (AuraHandledException e) { System.assert(true); }
+        update new Field_Action_Hold__c(Id = h, Disposition_On__c = Datetime.now());
+        update new Field_Action__c(Id = fa.Id, Recovery_Status__c = 'Confirmed', Verdict__c = CqFieldActionRecovery.EFFECTIVE);
+        System.assertEquals(true, CqFieldActionRecovery.getView(fa.Id).holds[0].canMarkRework);
+        v = CqFieldActionRecovery.markReworkDone(fa.Id, h);
+        Test.stopTest();
+        System.assertEquals(false, v.holds[0].canMarkRework);
+        System.assert(v.holds[0].reworkDone.startsWith('Rework done by '), v.holds[0].reworkDone);
+        System.assertEquals('Confirmed', [SELECT Recovery_Status__c FROM Field_Action__c WHERE Id = :fa.Id].Recovery_Status__c, 'the verdict stays confirmed');
+    }
+
+    @IsTest
     static void notEffectiveSaysWhatHappensNext() {
         Field_Action__c fa = makeFa();
         CqFieldActionRecovery.setDisposition(fa.Id, holdRow(fa.Id), 'Rework');

@@ -2,6 +2,7 @@ import { LightningElement, api } from 'lwc';
 import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqFieldActionRecovery.getView';
 import setDisposition from '@salesforce/apex/CqFieldActionRecovery.setDisposition';
+import markReworkDone from '@salesforce/apex/CqFieldActionRecovery.markReworkDone';
 import saveVerdict from '@salesforce/apex/CqFieldActionRecovery.saveVerdict';
 import confirmVerdict from '@salesforce/apex/CqFieldActionRecovery.confirmVerdict';
 import createSuggested from '@salesforce/apex/CqFieldActionTasks.createSuggested';
@@ -327,6 +328,9 @@ export default class CqFieldActionRecovery extends LightningElement {
     get dispLine() { return this.v.decided + ' of ' + this.v.holds.length + ' decided'; }
     async handleDisposition(event) {
         await this.call(() => setDisposition({ recordId: this.recordId, holdId: event.target.dataset.id, disposition: event.target.value }), 'Could not save that disposition.');
+    }
+    async handleReworkDone(event) {
+        await this.call(() => markReworkDone({ recordId: this.recordId, holdId: event.target.dataset.id }), 'Could not mark the rework done.');
     }
 
     // ---- 4. verdict

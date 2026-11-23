@@ -211,6 +211,8 @@
                                                     <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
                                                 </template>
                                             </select></span>
+                                                <template if:true={h.canMarkRework}><span class="rework"><span class="cq-sub">The lot stays On Hold until the rework is done.</span><button class="cq-btn-outline" data-id={h.id} onclick={handleReworkDone}>Rework Done</button></span></template>
+                                                <template if:true={h.reworkDone}><span class="reworked">&#10003; {h.reworkDone}</span></template>
                                                 <template if:true={h.stays}><span class="stillheld" role="note">Releasing this hold won't release the lot. It stays <span class="b">{h.stays.status}</span><template if:true={h.stays.who}> by <a href={h.stays.href} target="_blank">{h.stays.who}</a></template><template if:true={h.stays.manual}>, set by hand</template>{h.stays.whyText}.</span></template>
                                             </td>
                                         </tr>

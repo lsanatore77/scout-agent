@@ -3,8 +3,8 @@
  *
  * What controls a lot (each keeps its own decision; the lot only shows the result):
  *   - a person: Manual Status, what was last set by hand on the lot (Released, Pending QA, Quarantined, Rejected...)
- *   - field action holds (Field_Action_Hold__c, held): open or Rework -> On Hold; confirmed Scrap or Return to Supplier
- *     -> Rejected; confirmed Release -> lets go
+ *   - field action holds (Field_Action_Hold__c, held): open or Rework -> On Hold until Rework Done; confirmed Scrap or
+ *     Return to Supplier -> Rejected; confirmed Release, or Rework Done -> lets go
  *   - CQ nonconformances (Impacted Part / Lot), matched on part and lot together: quantity left to dispose -> Quarantined
  *     when it covers the whole lot (all its stock, or always when Field Action Settings > NC Quarantines Whole Lot is on);
  *     a smaller quantity is shown on the lot's Quality list, not as a status
@@ -14,9 +14,12 @@
  *     status -> Pending QA. A lot with no batch record is not held by this (purchased lots follow receiving inspection)
  *   - receiving inspection on the lot: Rejected -> Rejected; Pending -> Quarantined
  *   - recall field actions (Action Type Removal (Recall)) through their scope (Field_Action_Lot__c): a lot in the scope
- *     -> Recall Pending; in the approved scope (Confirmed In Scope) -> Recalled. Once that field action confirms its own
- *     decision on the lot in Recovery (Release, Rework, Scrap...), that decision replaces the recall.
- * Strictness: Rejected > Recalled > Recall Pending > On Hold > Quarantined > Pending QA > Released. The lot is free only when every
+ *     -> Recall Pending; in the approved scope (Confirmed In Scope) -> Recalled. A Full scope covers every lot of the part,
+ *     a new lot included, before its scope row is added. Once that field action confirms its own decision on the lot in
+ *     Recovery (Release, Rework, Scrap...), that decision replaces the recall.
+ *   - expiry: the lot's Expiration Date, else its batch record's, before today -> Expired (a daily job, CqLotExpiry, finds
+ *     lots that expired overnight)
+ * Strictness: Rejected > Recalled > Recall Pending > Expired > On Hold > Quarantined > Pending QA > Released. The lot is free only when every
  * control has let go. Hold Reason names every active control; Status Set By names the one that set the status.
  * When final decisions disagree (one releases the lot, another scraps it), the stricter applies and Status Conflict
  * says so, for a person to settle.
@@ -29,7 +32,9 @@ public without sharing class CqLotStatus {
     public static Boolean syncing = false;
 
     static final Map<String, Integer> RANK = new Map<String, Integer>{
-        'Released' => 1, 'Pending QA' => 2, 'Quarantined' => 3, 'On Hold' => 4, 'Recall Pending' => 5, 'Recalled' => 6, 'Rejected' => 7 };
+        'Released' => 1, 'Pending QA' => 2, 'Quarantined' => 3, 'On Hold' => 4, 'Expired' => 5, 'Recall Pending' => 6,
+        'Recalled' => 7, 'Rejected' => 8 };
+    static final String FULL = 'Full';
     static final String RECALL = 'Removal (Recall)';
 
     /** One control's say on a lot. */
@@ -69,8 +74,8 @@ public without sharing class CqLotStatus {
         if (lotNumbers.isEmpty()) { return; }
         List<compliancequest__SQX_Lot_Info__c> lots = [SELECT Id, Name, compliancequest__Part_Number__c, Part__r.compliancequest__Part_Number__c,
                 Release_Status__c, Manual_Status__c, Hold_Reason__c, Receiving_Inspection__c, Status_Set_By__c, Status_Set_On__c,
-                Status_Conflict__c, Batch__c, Batch__r.Name, Batch__r.cqext__Status__c, Batch__r.cqext__Released_Date__c,
-                Batch__r.cqext__Quantity__c FROM compliancequest__SQX_Lot_Info__c WHERE Name IN :lotNumbers];
+                Status_Conflict__c, compliancequest__Expiration_Date__c, Batch__c, Batch__r.Name, Batch__r.cqext__Status__c,
+                Batch__r.cqext__Released_Date__c, Batch__r.cqext__Quantity__c FROM compliancequest__SQX_Lot_Info__c WHERE Name IN :lotNumbers];
         Map<Id, compliancequest__SQX_Lot_Info__c> was = new Map<Id, compliancequest__SQX_Lot_Info__c>();
         for (compliancequest__SQX_Lot_Info__c l : lots) { was.put(l.Id, l.clone(true, true, false, false)); }
         apply(lots, was);
@@ -103,18 +108,28 @@ public without sharing class CqLotStatus {
         sourceChanged(lots);
     }
 
-    /** A field action that becomes, or stops being, a recall: every lot in its scope. */
+    /** A field action that becomes, or stops being, a recall, or a Full scope: every lot in its scope, or of its part. */
     public static void actionTypeChanged(List<Field_Action__c> rows, Map<Id, Field_Action__c> before) {
         Set<Id> ids = new Set<Id>();
+        Set<Id> wide = new Set<Id>();
         for (Field_Action__c f : rows) {
             Field_Action__c b = before == null ? null : before.get(f.Id);
-            if (b != null) {
-                if (b.Action_Type__c != f.Action_Type__c) { ids.add(f.Id); }
-            }
+            if (b == null) { continue; }
+            if (b.Action_Type__c != f.Action_Type__c) { ids.add(f.Id); }
+            if (b.Scope__c != f.Scope__c || b.Status__c != f.Status__c) { ids.add(f.Id); }
+            if (f.Scope__c == FULL || b.Scope__c == FULL) { wide.add(f.Id); }
         }
         if (ids.isEmpty()) { return; }
         Set<String> lots = new Set<String>();
         for (Field_Action_Lot__c r : [SELECT Lot_Number__c FROM Field_Action_Lot__c WHERE Field_Action__c IN :ids]) { lots.add(r.Lot_Number__c); }
+        wide.retainAll(ids);
+        if (!wide.isEmpty()) {
+            Set<String> parts = new Set<String>();
+            for (Field_Action__c f : [SELECT Part__r.compliancequest__Part_Number__c FROM Field_Action__c WHERE Id IN :wide]) { parts.add(f.Part__r?.compliancequest__Part_Number__c); }
+            parts.remove(null);
+            for (compliancequest__SQX_Lot_Info__c l : [SELECT Name FROM compliancequest__SQX_Lot_Info__c WHERE compliancequest__Part_Number__c IN :parts
+                                                       OR Part__r.compliancequest__Part_Number__c IN :parts LIMIT 2000]) { lots.add(l.Name); }
+        }
         sourceChanged(lots);
     }
 
@@ -126,6 +141,7 @@ public without sharing class CqLotStatus {
                 cqext__CQEBR_Batch__c was = before == null ? null : before.get(b.Id);
                 if (was == null) { ids.add(b.Id); continue; }
                 if (was.cqext__Status__c != b.cqext__Status__c) { ids.add(b.Id); }
+                if (was.cqext__Expiration_Date__c != b.cqext__Expiration_Date__c) { ids.add(b.Id); }
             }
             if (ids.isEmpty()) { return; }
             Set<String> lots = new Set<String>();
@@ -192,7 +208,7 @@ public without sharing class CqLotStatus {
         lotNumbers.remove(null);
         if (lotNumbers.isEmpty()) { return out; }
         List<compliancequest__SQX_Lot_Info__c> lots = [SELECT Id, Name, compliancequest__Part_Number__c, Part__r.compliancequest__Part_Number__c,
-                Manual_Status__c, Receiving_Inspection__c, Batch__c, Batch__r.cqext__Quantity__c
+                Manual_Status__c, Receiving_Inspection__c, compliancequest__Expiration_Date__c, Batch__c, Batch__r.cqext__Quantity__c
                 FROM compliancequest__SQX_Lot_Info__c WHERE Name IN :lotNumbers];
         Set<String> names = new Set<String>();
         for (compliancequest__SQX_Lot_Info__c l : lots) { names.add(l.Name); }
@@ -218,7 +234,7 @@ public without sharing class CqLotStatus {
             o.manual = top.who == 'Manual';
             o.who = o.manual ? null : top.who;
             o.href = top.ref == null ? null : '/lightning/r/' + top.ref + '/view';
-            o.whyText = o.manual || top.detail == null ? '' : ' \u00b7 ' + top.detail;
+            o.whyText = o.manual || top.detail == null ? '' : ' · ' + top.detail;
             out.put(l.Name, o);
         }
         return out;
@@ -308,7 +324,8 @@ public without sharing class CqLotStatus {
 
         Set<String> decided = new Set<String>();   // field action + lot whose own decision is confirmed
         for (Field_Action_Hold__c h : [SELECT Lot_Number__c, Part_Number__c, Field_Action__c, Field_Action__r.Name, Held_On__c, Disposition__c, Disposition_On__c,
-                                              Field_Action__r.Strategy_Confirmed_By__r.Name, Field_Action__r.Verdict_By__r.Name
+                                              Field_Action__r.Strategy_Confirmed_By__r.Name, Field_Action__r.Verdict_By__r.Name,
+                                              Rework_Done_On__c, Rework_Done_By__r.Name
                                        FROM Field_Action_Hold__c WHERE Lot_Number__c IN :names AND Held__c = true ORDER BY Held_On__c]) {
             String pn = partOf.get(h.Lot_Number__c);
             if (h.Part_Number__c != null && pn != null && h.Part_Number__c != pn) { continue; }
@@ -317,8 +334,11 @@ public without sharing class CqLotStatus {
             Say s;
             if (h.Disposition_On__c == null) {
                 s = new Say('On Hold', fa, fa + ' hold' + (h.Held_On__c == null ? '' : ', ' + h.Held_On__c.format('d MMM yyyy')));
-            } else if (h.Disposition__c == 'Rework') {
+            } else if (h.Disposition__c == 'Rework' && h.Rework_Done_On__c == null) {
                 s = new Say('On Hold', fa, fa + ': rework');
+            } else if (h.Disposition__c == 'Rework') {
+                s = new Say(null, fa, null);     // reworked: lets go
+                s.finalRelease = true;
             } else if (h.Disposition__c == 'Scrap' || h.Disposition__c == 'Return to Supplier') {
                 s = new Say('Rejected', fa, fa + ': ' + h.Disposition__c);
                 s.finalReject = true;
@@ -331,16 +351,19 @@ public without sharing class CqLotStatus {
             s.detail = h.Disposition_On__c == null
                 ? 'Held at Confirm Strategy' + byWhom(h.Field_Action__r?.Strategy_Confirmed_By__r?.Name) + dated(h.Held_On__c)
                 : h.Disposition__c + ' confirmed' + byWhom(h.Field_Action__r?.Verdict_By__r?.Name) + dated(h.Disposition_On__c)
-                    + (h.Disposition__c == 'Rework' ? ' \u00b7 held until rework is done' : '');
+                    + (h.Disposition__c != 'Rework' ? '' : h.Rework_Done_On__c == null ? ' · held until rework is done'
+                        : ' · rework done' + byWhom(h.Rework_Done_By__r?.Name) + dated(h.Rework_Done_On__c));
             add(out, h.Lot_Number__c, s);
         }
 
         // recall field actions: in the scope -> Recall Pending; in the approved scope -> Recalled
+        Set<String> covered = new Set<String>();   // field action + lot with a scope row
         for (Field_Action_Lot__c r : [SELECT Lot_Number__c, Field_Action__c, Field_Action__r.Name, Field_Action__r.Part__r.compliancequest__Part_Number__c,
                                              In_Scope__c, Approved_In_Scope__c, Field_Action__r.Scope_Confirmed_On__c, Field_Action__r.Scope_Confirmed_By__r.Name
                                       FROM Field_Action_Lot__c
                                       WHERE Lot_Number__c IN :names AND Field_Action__r.Action_Type__c = :RECALL
                                         AND (In_Scope__c = true OR Approved_In_Scope__c = true)]) {
+            covered.add(String.valueOf(r.Field_Action__c) + '|' + r.Lot_Number__c);
             if (decided.contains(String.valueOf(r.Field_Action__c) + '|' + r.Lot_Number__c)) { continue; }   // its own decision replaces the recall
             String pn = partOf.get(r.Lot_Number__c);
             String fpn = r.Field_Action__r?.Part__r?.compliancequest__Part_Number__c;
@@ -354,9 +377,28 @@ public without sharing class CqLotStatus {
             s.faId = r.Field_Action__c;
             s.isRecall = true;
             s.detail = r.Approved_In_Scope__c == true
-                ? 'Recall \u00b7 scope approved' + byWhom(r.Field_Action__r?.Scope_Confirmed_By__r?.Name) + dated(approvedOn)
-                : 'Recall \u00b7 lot in scope, not yet approved';
+                ? 'Recall · scope approved' + byWhom(r.Field_Action__r?.Scope_Confirmed_By__r?.Name) + dated(approvedOn)
+                : 'Recall · lot in scope, not yet approved';
             add(out, r.Lot_Number__c, s);
+        }
+        // a Full scope covers every lot of the part, a new lot included, before its scope row is added
+        Set<String> parts = new Set<String>(partOf.values());
+        parts.remove(null);
+        if (!parts.isEmpty()) {
+            for (Field_Action__c f : [SELECT Id, Name, Part__r.compliancequest__Part_Number__c FROM Field_Action__c
+                                      WHERE Action_Type__c = :RECALL AND Scope__c = :FULL AND Status__c != 'Closed'
+                                        AND Part__r.compliancequest__Part_Number__c IN :parts LIMIT 50]) {
+                for (compliancequest__SQX_Lot_Info__c l : lots) {
+                    String k = String.valueOf(f.Id) + '|' + l.Name;
+                    if (partOf.get(l.Name) != f.Part__r.compliancequest__Part_Number__c || covered.contains(k) || decided.contains(k)) { continue; }
+                    Say s = new Say('Recalled', f.Name, f.Name + ': recall, full scope');
+                    s.ref = f.Id;
+                    s.faId = f.Id;
+                    s.isRecall = true;
+                    s.detail = 'Recall · full scope covers every lot of ' + f.Part__r.compliancequest__Part_Number__c;
+                    add(out, l.Name, s);
+                }
+            }
         }
 
         for (compliancequest__SQX_NC_Impacted_Product__c ip : [
@@ -378,7 +420,7 @@ public without sharing class CqLotStatus {
             // a part of the lot: on the Quality list, not a status
             Say s = whole ? new Say('Quarantined', nc, nc + ': ' + qty(left) + (size == null ? ' units' : ' of ' + qty(size) + ' units')) : new Say(null, nc, null);
             s.ref = ip.compliancequest__SQX_Nonconformance__c;
-            s.detail = whole ? units : units + ' \u00b7 not the whole lot';
+            s.detail = whole ? units : units + ' · not the whole lot';
             add(out, lot, s);
         }
 
@@ -443,15 +485,30 @@ public without sharing class CqLotStatus {
         Set<Id> batchIds = new Set<Id>();
         for (compliancequest__SQX_Lot_Info__c l : lots) { if (l.Batch__c != null) { batchIds.add(l.Batch__c); } }
         Map<Id, cqext__CQEBR_Batch__c> batches = batchIds.isEmpty() ? new Map<Id, cqext__CQEBR_Batch__c>()
-            : new Map<Id, cqext__CQEBR_Batch__c>([SELECT Id, Name, cqext__Status__c, cqext__Released_Date__c FROM cqext__CQEBR_Batch__c WHERE Id IN :batchIds]);
+            : new Map<Id, cqext__CQEBR_Batch__c>([SELECT Id, Name, cqext__Status__c, cqext__Released_Date__c, cqext__Expiration_Date__c
+                                                  FROM cqext__CQEBR_Batch__c WHERE Id IN :batchIds]);
         for (compliancequest__SQX_Lot_Info__c l : lots) {
             cqext__CQEBR_Batch__c bt = l.Batch__c == null ? null : batches.get(l.Batch__c);
+            // expiry: the lot's own date, else its batch record's
+            Date expires = l.compliancequest__Expiration_Date__c != null ? l.compliancequest__Expiration_Date__c : bt?.cqext__Expiration_Date__c;
+            Say ex = expirySay(expires, Date.today());
+            if (ex != null) { add(out, l.Name, ex); }
             if (bt == null) { continue; }
             Say s = batchSay(bt.Name, bt.cqext__Status__c, bt.cqext__Released_Date__c);
             s.ref = bt.Id;
             add(out, l.Name, s);
         }
         return out;
+    }
+
+    /** An expired lot is held: Expired, from its expiry date (the day after it is the first day it is expired). */
+    @TestVisible
+    static Say expirySay(Date expires, Date today) {
+        if (expires == null || expires >= today) { return null; }
+        String dt = Datetime.newInstance(expires.year(), expires.month(), expires.day()).format('d MMM yyyy');
+        Say s = new Say('Expired', 'Expiry', 'Expired ' + dt);
+        s.detail = 'expired ' + dt;
+        return s;
     }
 
     /** What a lot's batch record says: Released lets the lot go and names it; Void rejects; anything else is Pending QA. */
@@ -477,8 +534,8 @@ public without sharing class CqLotStatus {
         m.get(lot).add(s);
     }
     static String byWhom(String person) { return person == null ? '' : ' by ' + person; }
-    static String datedD(Date d) { return d == null ? '' : ' \u00b7 ' + Datetime.newInstance(d.year(), d.month(), d.day()).format('d MMM yyyy'); }
-    static String dated(Datetime d) { return d == null ? '' : ' \u00b7 ' + d.format('d MMM yyyy'); }
+    static String datedD(Date d) { return d == null ? '' : ' · ' + Datetime.newInstance(d.year(), d.month(), d.day()).format('d MMM yyyy'); }
+    static String dated(Datetime d) { return d == null ? '' : ' · ' + d.format('d MMM yyyy'); }
     public static Integer rank(String s) { return s == null || !RANK.containsKey(s) ? 1 : RANK.get(s); }
     static String qty(Decimal d) { return d == null ? '' : d.stripTrailingZeros().toPlainString(); }
 }
