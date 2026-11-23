@@ -23,17 +23,14 @@
 .b { font-weight: 600; }
 .what { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .addrow { display: flex; align-items: center; gap: 8px; }
-/* On Hand opens the split by location, the same card as on Scope */
-.pos { position: relative; }
-.ohbtn { padding: 0; border: none; background: none; font: inherit; font-weight: 600; color: var(--cq-link); font-variant-numeric: tabular-nums; cursor: pointer; text-decoration: underline dotted; }
-.pop { position: absolute; right: 0; top: 30px; z-index: 5; width: 280px; box-sizing: border-box; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); box-shadow: 0 8px 24px rgba(26, 29, 33, .14); text-align: left; white-space: normal; }
-.pophead { display: flex; align-items: baseline; gap: 8px; }
-.poprow { display: flex; gap: 8px; padding-top: 6px; border-top: 1px solid var(--cq-line); font-variant-numeric: tabular-nums; }
+/* the On Hand card (split by location) is the shared .cq-ohpop in cqStyles, as on Scope */
 
 .cards { display: grid; gap: 10px; }
 .cards.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .cards.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .cards.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+/* the check-level cards are narrow, so CQ.AI Suggests takes its own line under the title */
+.cards.c5 .cq-optcard > c-cq-ai-why { flex-basis: 100%; }
 @media (max-width: 1100px) { .cards.c3, .cards.c5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 900px; }
 /* fields, buttons, pills, messages, option cards and the CQ.AI suggestion card come from cqStyles */

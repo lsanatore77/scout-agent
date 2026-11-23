@@ -41,6 +41,8 @@ const LEVEL_HINT = {
     'Level E': 'No check. The regulator must agree.'
 };
 const METHODS = ['Signed response form, then phone', 'Phone call', 'Site visit'];
+// a nonconformance is stored as 'NC NC-000077 · in lot ...'; it is shown once: 'NC-000077 · in lot ...'
+const ncOnce = (s) => (s || '').replace(/NC NC-/g, 'NC-');
 
 /** Field Action step 3, Strategy: action and depth, what we tell customers, holds, and the effectiveness check. */
 export default class CqFieldActionStrategy extends LightningElement {
@@ -202,7 +204,7 @@ export default class CqFieldActionStrategy extends LightningElement {
             list.forEach((h) => {
                 const state = h.hold && h.held ? ['Held', 'cq-pill soft pos'] : h.hold ? ['Not confirmed', 'cq-pill soft warn'] : h.held ? ['Releasing', 'cq-pill soft crit'] : ['', ''];
                 rows.push({ key: h.id, isGroup: false, rowCls: '', id: h.id, lot: h.lot, hold: h.hold, item: h.item || '',
-                    part: h.part ? h.part : '', why: h.kind === 'Component Lot' ? h.reason || '' : '', ai: h.suggested && h.kind === 'Component Lot',
+                    part: h.part ? h.part : '', why: h.kind === 'Component Lot' ? ncOnce(h.reason) : '', ai: h.suggested && h.kind === 'Component Lot',
                     onHand: h.onHand === undefined || h.onHand === null ? '—' : String(h.onHand),
                     stateText: h.outOfScope ? 'No longer in scope' : state[0], stateCls: h.outOfScope ? 'cq-pill soft crit' : state[1],
                     hasState: h.outOfScope || !!state[0], label: (h.hold ? 'Release ' : 'Hold ') + h.lot,
@@ -218,6 +220,24 @@ export default class CqFieldActionStrategy extends LightningElement {
         add('Component Lot', 'Component lots in these lots');
         return rows;
     }
+    /** What CQ.AI suggests holding, and why: every finished lot in scope, and each component lot with a nonconformance. */
+    get holdAi() {
+        const hs = (this.v.holds || []).filter((h) => h.suggested && !h.outOfScope);
+        const fin = hs.filter((h) => h.kind === 'Finished Lot');
+        const comps = hs.filter((h) => h.kind === 'Component Lot');
+        if (!hs.length) { return null; }
+        const parts = [];
+        if (fin.length) { parts.push(fin.length + ' Finished Lot' + (fin.length === 1 ? '' : 's') + ' in Scope'); }
+        if (comps.length === 1) { parts.push('Component Lot ' + comps[0].lot); }
+        else if (comps.length) { parts.push(comps.length + ' Component Lots'); }
+        const why = [];
+        if (fin.length) { why.push('Every finished lot in scope is held so none of its stock ships while the recall runs.'); }
+        comps.forEach((c) => {
+            const m = /(NC-\S+) \u00b7 in lot (\S+)/i.exec(ncOnce(c.reason));
+            why.push(m ? c.lot + ' has ' + m[1] + ' against it and went into ' + m[2] + '.' : c.lot + ': ' + ncOnce(c.reason));
+        });
+        return { headline: 'Hold ' + hs.length + ' Lot' + (hs.length === 1 ? '' : 's') + ': ' + parts.join(' and '), why: why.join(' ') };
+    }
     get holdLine() {
         const hs = this.v.holds || [];
         const n = hs.filter((h) => h.hold).length;
@@ -228,7 +248,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     get compOptions() {
         return [{ value: '', label: 'Add a Component Lot…', selected: !this.addLot }].concat((this.v.components || []).map((c) => ({
             value: c.lot, selected: c.lot === this.addLot,
-            label: c.lot + ' · ' + (c.item || c.part || '') + ' · ' + (c.inLot || '').toLowerCase().replace(/^nc/, 'NC')
+            label: c.lot + ' · ' + (c.item || c.part || '') + ' · ' + ncOnce(c.inLot).replace(/^In lot/, 'in lot')
         })));
     }
     get hasComps() { return (this.v.components || []).length > 0; }

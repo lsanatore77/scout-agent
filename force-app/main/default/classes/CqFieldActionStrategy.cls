@@ -47,7 +47,8 @@ public with sharing class CqFieldActionStrategy {
         @AuraEnabled public String sAction; @AuraEnabled public String sDepth; @AuraEnabled public String sInstruction; @AuraEnabled public String sMessage;
         @AuraEnabled public String sLevel; @AuraEnabled public String sMethod; @AuraEnabled public Date sCheckBy;
         @AuraEnabled public String whyAction; @AuraEnabled public String whyLevel;
-        @AuraEnabled public String sHeadline;   // what CQ.AI suggests, said first: 'Removal, to hospital level'
+        @AuraEnabled public String sHeadline;   // what CQ.AI suggests, said first: 'Removal, to Hospital Level'
+        @AuraEnabled public String sLevelHeadline;   // the check level CQ.AI suggests, said first: 'Level A, 100% Check'
         @AuraEnabled public List<HoldRow> holds = new List<HoldRow>();
         @AuraEnabled public List<Comp> components = new List<Comp>();   // component lots that can be added as holds
     }
@@ -165,22 +166,24 @@ public with sharing class CqFieldActionStrategy {
         if (cls.contains('III')) {
             v.sAction = NOTICE; v.sDepth = 'Distributor'; v.sLevel = 'Level C'; v.sHeadline = 'Advisory Notice, to Distributor Level';
             v.whyAction = 'Class III: the product is unlikely to cause harm, so customers get the information and keep using it.';
-            v.whyLevel = 'Level C: a 10% check is usual for a Class III action.';
+            v.whyLevel = 'A 10% check is usual for a Class III action.';
         } else if (cls.contains('II')) {
             v.sAction = REMOVAL; v.sDepth = 'Hospital'; v.sHeadline = 'Removal, to Hospital Level';
             v.whyAction = 'Class II: the product could cause temporary or reversible harm, so it comes back. It is used in procedures, so units sit on hospital shelves, not with patients.';
             Boolean small = units != null && units <= 500;
             v.sLevel = small ? 'Level A' : 'Level B';
-            v.whyLevel = small ? 'Level A: ' + unitText + ' went out, so every customer can be reached.' : 'Level B: too many customers to check them all, so set a share.';
+            v.whyLevel = small ? unitText.capitalize() + ' went out, so every customer can be reached.' : 'Too many customers to check them all, so set a share.';
         } else if (cls.contains('I')) {
             v.sAction = REMOVAL; v.sDepth = 'Patient'; v.sLevel = 'Level A'; v.sHeadline = 'Removal, to Patient Level';
             v.whyAction = 'Class I: the product could cause serious harm, so it comes back from everyone who has it, patients included.';
-            v.whyLevel = 'Level A: every customer must confirm for a Class I action.';
+            v.whyLevel = 'Every customer must confirm for a Class I action.';
         } else {
             v.sAction = fa.Action_Type__c; v.sDepth = 'Hospital'; v.sLevel = 'Level B';
             v.whyAction = 'No recall class is set, so this follows the action decided at review.';
-            v.whyLevel = 'Level B: set the share once the recall class is known.';
+            v.whyLevel = 'Set the share once the recall class is known.';
         }
+        v.sLevelHeadline = v.sLevel == 'Level A' ? 'Level A, 100% Check' : v.sLevel == 'Level B' ? 'Level B, a Share of Customers Checked'
+            : v.sLevel == 'Level C' ? 'Level C, 10% Check' : v.sLevel == 'Level D' ? 'Level D, 2% Check' : v.sLevel == 'Level E' ? 'No Check' : null;
         String act = v.action != null ? v.action : v.sAction;
         v.sInstruction = act == CORRECTION ? FIX : act == NOTICE ? WARN : RETURN_IT;
         v.sMethod = 'Signed response form, then phone';

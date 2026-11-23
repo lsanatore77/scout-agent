@@ -65,6 +65,9 @@
                     </label>
                     </template>
                     <template if:true={isHolds}>
+                    <template if:true={holdAi}>
+                        <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest these holds?"></c-cq-ai-why></div><div class="cq-ai-verdict">{holdAi.headline}</div><div class="cq-ai-text">{holdAi.why}</div></div>
+                    </template>
                     <div class="cq-tblwrap">
                         <table class="cq-tbl compact">
                             <thead><tr><th class="hc">Hold</th><th>Lot</th><th>What</th><th class="num">On Hand</th><th>Held Since</th><th>Status</th></tr></thead>
@@ -75,15 +78,15 @@
                                         <template if:false={h.isGroup}>
                                             <td class="hc"><input class="cq-tick" type="checkbox" data-id={h.id} checked={h.hold} disabled={locked} onchange={handleHold} aria-label={h.label} /></td>
                                             <td class="cq-nowrap b">{h.lot}</td>
-                                            <td><span class="what">{h.item} <template if:true={h.ai}><c-cq-ai-why variant="tag" text="Suggested" lead="Why does CQ.AI suggest holding " subject={h.item}></c-cq-ai-why></template></span><span class="cq-sub block">{h.why}</span></td>
-                                            <td class="num pos">
-                                                <template if:true={h.canOpen}><button class="ohbtn" data-key={h.key} onclick={handleStock} aria-expanded={h.stockExpanded} aria-label={h.popLabel}>{h.onHand}</button></template>
+                                            <td><span class="what">{h.item} <template if:true={h.ai}><c-cq-ai-why variant="tag" lead="Why does CQ.AI suggest holding " subject={h.item}></c-cq-ai-why></template></span><span class="cq-sub block">{h.why}</span></td>
+                                            <td class="num cq-ohcell">
+                                                <template if:true={h.canOpen}><button class="cq-ohbtn" data-key={h.key} onclick={handleStock} aria-expanded={h.stockExpanded} aria-label={h.popLabel}>{h.onHand}</button></template>
                                                 <template if:false={h.canOpen}>{h.onHand}</template>
                                                 <template if:true={h.stockOpen}>
-                                                    <div class="pop" role="dialog" aria-label={h.popLabel} onclick={handlePopClick}>
-                                                        <div class="pophead"><span class="b">Lot {h.lot}</span><span class="cq-grow"></span><span class="cq-sub">{h.onHand} on hand</span></div>
+                                                    <div class="cq-ohpop" role="dialog" aria-label={h.popLabel} onclick={handlePopClick}>
+                                                        <div class="cq-ohpop-head"><span class="b">Lot {h.lot}</span><span class="cq-grow"></span><span class="cq-sub">{h.onHand} on hand</span></div>
                                                         <template for:each={h.places} for:item="k">
-                                                            <div key={k.key} class="poprow"><a class="cq-ploc" href={k.href} target="_blank">{k.location}</a><span class="cq-grow"></span><span>{k.units}</span></div>
+                                                            <div key={k.key} class="cq-ohpop-row"><a class="cq-ploc" href={k.href} target="_blank">{k.location}</a><span class="cq-grow"></span><span>{k.units}</span></div>
                                                         </template>
                                                         <template if:true={h.asOfText}><span class="cq-sub">{h.asOfText}</span></template>
                                                     </div>
@@ -111,14 +114,14 @@
                     </template>
                     <template if:true={isCheck}>
                     <template if:true={v.whyLevel}>
-                        <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this effectiveness check level?"></c-cq-ai-why></div><div class="cq-ai-text">{v.whyLevel}</div></div>
+                        <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this effectiveness check level?"></c-cq-ai-why></div><template if:true={v.sLevelHeadline}><div class="cq-ai-verdict">{v.sLevelHeadline}</div></template><div class="cq-ai-text">{v.whyLevel}</div></div>
                     </template>
                     <div class="cq-field">
                         <span class="cq-label">Check Level<span class="cq-req">*</span></span>
                         <div class="cards c5" role="group" aria-label="Check Level">
                             <template for:each={levelCards} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="star" lead="Why does CQ.AI suggest check level " subject={o.title}></c-cq-ai-why></template>
+                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" lead="Why does CQ.AI suggest check level " subject={o.title}></c-cq-ai-why></template>
                                     <span class="cq-optcard-desc">{o.desc}</span>
                                 </button>
                             </template>
