@@ -14,12 +14,13 @@
  *     status -> Pending QA. A lot with no batch record is not held by this (purchased lots follow receiving inspection)
  *   - receiving inspection on the lot: Rejected -> Rejected; Pending -> Quarantined
  *   - recall field actions (Action Type Removal (Recall)) through their scope (Field_Action_Lot__c): a lot in the scope
- *     -> Recall Pending; in the approved scope (Confirmed In Scope) -> Recalled. A Full scope covers every lot of the part,
+ *     -> Recall Pending; in the approved scope (Confirmed In Scope) -> Recalled. A withdrawal (Action Type Withdrawal) works
+ *     the same way with its own statuses, Withdrawal Pending and Withdrawn. A Full scope covers every lot of the part,
  *     a new lot included, before its scope row is added. Once that field action confirms its own decision on the lot in
  *     Recovery (Release, Rework, Scrap...), that decision replaces the recall.
  *   - expiry: the lot's Expiration Date, else its batch record's, before today -> Expired (a daily job, CqLotExpiry, finds
  *     lots that expired overnight)
- * Strictness: Rejected > Recalled > Recall Pending > Expired > On Hold > Quarantined > Pending QA > Released. The lot is free only when every
+ * Strictness: Rejected > Recalled > Recall Pending > Withdrawn > Withdrawal Pending > Expired > On Hold > Quarantined > Pending QA > Released. The lot is free only when every
  * control has let go. Hold Reason names every active control; Status Set By names the one that set the status.
  * When final decisions disagree (one releases the lot, another scraps it), the stricter applies and Status Conflict
  * says so, for a person to settle.
@@ -32,10 +33,12 @@ public without sharing class CqLotStatus {
     public static Boolean syncing = false;
 
     static final Map<String, Integer> RANK = new Map<String, Integer>{
-        'Released' => 1, 'Pending QA' => 2, 'Quarantined' => 3, 'On Hold' => 4, 'Expired' => 5, 'Recall Pending' => 6,
-        'Recalled' => 7, 'Rejected' => 8 };
+        'Released' => 1, 'Pending QA' => 2, 'Quarantined' => 3, 'On Hold' => 4, 'Expired' => 5, 'Withdrawal Pending' => 6,
+        'Withdrawn' => 7, 'Recall Pending' => 8, 'Recalled' => 9, 'Rejected' => 10 };
     static final String FULL = 'Full';
     static final String RECALL = 'Removal (Recall)';
+    static final String WITHDRAWAL = 'Withdrawal';
+    static final Set<String> PULLING = new Set<String>{ RECALL, WITHDRAWAL };   // field action types that take lots out of the market
 
     /** One control's say on a lot. */
     public class Say {
@@ -48,7 +51,7 @@ public without sharing class CqLotStatus {
         public Boolean basis = false;    // the release the lot rests on (its batch record): names Status Set By when nothing holds it
         public Id ref;                   // the record behind it (field action, NC, batch record), to link to
         public Id faId;                  // the field action, for a field action's hold or recall
-        public Boolean isRecall = false; // a recall field action's scope (not a hold)
+        public Boolean isRecall = false; // a recall or withdrawal field action's scope (not a hold)
         Say(String status, String who, String why) { this.status = status; this.who = who; this.why = why; }
     }
 
@@ -356,12 +359,13 @@ public without sharing class CqLotStatus {
             add(out, h.Lot_Number__c, s);
         }
 
-        // recall field actions: in the scope -> Recall Pending; in the approved scope -> Recalled
+        // recall field actions: in the scope -> Recall Pending; in the approved scope -> Recalled (a withdrawal: Withdrawal Pending, Withdrawn)
         Set<String> covered = new Set<String>();   // field action + lot with a scope row
         for (Field_Action_Lot__c r : [SELECT Lot_Number__c, Field_Action__c, Field_Action__r.Name, Field_Action__r.Part__r.compliancequest__Part_Number__c,
+                                             Field_Action__r.Action_Type__c,
                                              In_Scope__c, Approved_In_Scope__c, Field_Action__r.Scope_Confirmed_On__c, Field_Action__r.Scope_Confirmed_By__r.Name
                                       FROM Field_Action_Lot__c
-                                      WHERE Lot_Number__c IN :names AND Field_Action__r.Action_Type__c = :RECALL
+                                      WHERE Lot_Number__c IN :names AND Field_Action__r.Action_Type__c IN :PULLING
                                         AND (In_Scope__c = true OR Approved_In_Scope__c = true)]) {
             covered.add(String.valueOf(r.Field_Action__c) + '|' + r.Lot_Number__c);
             if (decided.contains(String.valueOf(r.Field_Action__c) + '|' + r.Lot_Number__c)) { continue; }   // its own decision replaces the recall
@@ -370,32 +374,35 @@ public without sharing class CqLotStatus {
             if (fpn != null && pn != null && fpn != pn) { continue; }
             String fa = r.Field_Action__r?.Name == null ? 'Field action' : r.Field_Action__r.Name;
             Datetime approvedOn = r.Field_Action__r?.Scope_Confirmed_On__c;
+            Boolean wd = r.Field_Action__r?.Action_Type__c == WITHDRAWAL;
+            String word = wd ? 'withdrawal' : 'recall';
             Say s = r.Approved_In_Scope__c == true
-                ? new Say('Recalled', fa, fa + ': recall' + (approvedOn == null ? '' : ', scope approved ' + approvedOn.format('d MMM yyyy')))
-                : new Say('Recall Pending', fa, fa + ': recall, scope not yet approved');
+                ? new Say(wd ? 'Withdrawn' : 'Recalled', fa, fa + ': ' + word + (approvedOn == null ? '' : ', scope approved ' + approvedOn.format('d MMM yyyy')))
+                : new Say(wd ? 'Withdrawal Pending' : 'Recall Pending', fa, fa + ': ' + word + ', scope not yet approved');
             s.ref = r.Field_Action__c;
             s.faId = r.Field_Action__c;
             s.isRecall = true;
             s.detail = r.Approved_In_Scope__c == true
-                ? 'Recall · scope approved' + byWhom(r.Field_Action__r?.Scope_Confirmed_By__r?.Name) + dated(approvedOn)
-                : 'Recall · lot in scope, not yet approved';
+                ? (wd ? 'Withdrawal' : 'Recall') + ' · scope approved' + byWhom(r.Field_Action__r?.Scope_Confirmed_By__r?.Name) + dated(approvedOn)
+                : (wd ? 'Withdrawal' : 'Recall') + ' · lot in scope, not yet approved';
             add(out, r.Lot_Number__c, s);
         }
         // a Full scope covers every lot of the part, a new lot included, before its scope row is added
         Set<String> parts = new Set<String>(partOf.values());
         parts.remove(null);
         if (!parts.isEmpty()) {
-            for (Field_Action__c f : [SELECT Id, Name, Part__r.compliancequest__Part_Number__c FROM Field_Action__c
-                                      WHERE Action_Type__c = :RECALL AND Scope__c = :FULL AND Status__c != 'Closed'
+            for (Field_Action__c f : [SELECT Id, Name, Action_Type__c, Part__r.compliancequest__Part_Number__c FROM Field_Action__c
+                                      WHERE Action_Type__c IN :PULLING AND Scope__c = :FULL AND Status__c != 'Closed'
                                         AND Part__r.compliancequest__Part_Number__c IN :parts LIMIT 50]) {
                 for (compliancequest__SQX_Lot_Info__c l : lots) {
                     String k = String.valueOf(f.Id) + '|' + l.Name;
                     if (partOf.get(l.Name) != f.Part__r.compliancequest__Part_Number__c || covered.contains(k) || decided.contains(k)) { continue; }
-                    Say s = new Say('Recalled', f.Name, f.Name + ': recall, full scope');
+                    Boolean wd = f.Action_Type__c == WITHDRAWAL;
+                    Say s = new Say(wd ? 'Withdrawn' : 'Recalled', f.Name, f.Name + (wd ? ': withdrawal, full scope' : ': recall, full scope'));
                     s.ref = f.Id;
                     s.faId = f.Id;
                     s.isRecall = true;
-                    s.detail = 'Recall · full scope covers every lot of ' + f.Part__r.compliancequest__Part_Number__c;
+                    s.detail = (wd ? 'Withdrawal' : 'Recall') + ' · full scope covers every lot of ' + f.Part__r.compliancequest__Part_Number__c;
                     add(out, l.Name, s);
                 }
             }

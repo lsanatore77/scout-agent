@@ -2,7 +2,7 @@
  * CqFieldActionStrategy: data and saves for step 3 of the Field Action workspace, Strategy.
  *
  * Four parts, decided once the scope is confirmed:
- *  1. Action and Depth: Removal, Correction or Advisory Notice (the Action Type on the field action), and how far it
+ *  1. Action and Depth: Removal, Withdrawal, Correction or Advisory Notice (the Action Type on the field action), and how far it
  *     goes: distributors, hospitals or patients.
  *  2. What We Tell Customers: the instruction, and the key message the Notifications step builds the letter from.
  *  3. Holds on Our Stock and Components: one Field Action Hold row per finished lot in scope, plus component lots
@@ -15,6 +15,7 @@
  */
 public with sharing class CqFieldActionStrategy {
     public static final String REMOVAL = 'Removal (Recall)';
+    public static final String WITHDRAWAL = 'Withdrawal';   // a market withdrawal: product comes back for a minor issue; no recall class, not reported
     public static final String CORRECTION = 'Correction';
     public static final String NOTICE = 'Advisory Notice';
     public static final String RETURN_IT = 'Stop use, quarantine and return';
@@ -167,7 +168,11 @@ public with sharing class CqFieldActionStrategy {
         String cls = fa.Recall_Class__c == null ? '' : fa.Recall_Class__c;
         Decimal units = v.shipped != null && v.shipped > 0 ? v.shipped : v.built;
         String unitText = units == null ? 'the units' : 'only ' + units.intValue() + ' units';
-        if (cls.contains('III')) {
+        if (fa.Action_Type__c == WITHDRAWAL) {
+            v.sAction = WITHDRAWAL; v.sDepth = 'Distributor'; v.sLevel = 'Level C'; v.sHeadline = 'Withdrawal, to Distributor Level';
+            v.whyAction = 'Decided at review as a market withdrawal: a minor issue with no health risk, so the product comes back without a recall.';
+            v.whyLevel = 'A 10% check is usual for a withdrawal.';
+        } else if (cls.contains('III')) {
             v.sAction = NOTICE; v.sDepth = 'Distributor'; v.sLevel = 'Level C'; v.sHeadline = 'Advisory Notice, to Distributor Level';
             v.whyAction = 'Class III: the product is unlikely to cause harm, so customers get the information and keep using it.';
             v.whyLevel = 'A 10% check is usual for a Class III action.';
@@ -248,7 +253,7 @@ public with sharing class CqFieldActionStrategy {
         Field_Action__c up = new Field_Action__c(Id = recordId, Strategy_Status__c = 'Being Defined');
         String val = String.isBlank(value) ? null : value;
         switch on field {
-            when 'action' { up.Action_Type__c = val; }
+            when 'action' { up.Action_Type__c = val; if (val == WITHDRAWAL) { up.Recall_Class__c = null; } }   // a withdrawal has no recall class
             when 'depth' { up.Depth__c = val; }
             when 'instruction' { up.Customer_Instruction__c = val; }
             when 'message' { up.Key_Message__c = val; }
@@ -290,7 +295,7 @@ public with sharing class CqFieldActionStrategy {
 
     /** The instruction must fit the action: a removal brings product back or destroys it, a correction fixes it, a notice warns. */
     public static Boolean fits(String action, String instruction) {
-        if (action == REMOVAL) { return instruction == RETURN_IT || instruction == DESTROY; }
+        if (action == REMOVAL || action == WITHDRAWAL) { return instruction == RETURN_IT || instruction == DESTROY; }
         if (action == CORRECTION) { return instruction == FIX; }
         if (action == NOTICE) { return instruction == WARN; }
         return false;
@@ -329,6 +334,7 @@ public with sharing class CqFieldActionStrategy {
             Key_Message__c = message, Check_Level__c = level, Check_Percent__c = p,
             Check_Method__c = level == 'Level E' ? null : method, Check_By__c = level == 'Level E' || String.isBlank(dueOn) ? null : Date.valueOf(dueOn),
             Strategy_Status__c = 'Confirmed', Strategy_Confirmed_By__c = UserInfo.getUserId(), Strategy_Confirmed_On__c = now);
+        if (action == WITHDRAWAL && fa.Recall_Class__c != null) { update new Field_Action__c(Id = recordId, Recall_Class__c = null); }
         return getView(recordId);
     }
 }

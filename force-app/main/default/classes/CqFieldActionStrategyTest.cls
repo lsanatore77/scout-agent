@@ -34,6 +34,24 @@ private class CqFieldActionStrategyTest {
         System.assertEquals(true, CqFieldActionStrategy.fits(CqFieldActionStrategy.CORRECTION, CqFieldActionStrategy.FIX));
         System.assertEquals(true, CqFieldActionStrategy.fits(CqFieldActionStrategy.NOTICE, CqFieldActionStrategy.WARN));
         System.assertEquals(false, CqFieldActionStrategy.fits(null, CqFieldActionStrategy.WARN));
+        System.assertEquals(true, CqFieldActionStrategy.fits(CqFieldActionStrategy.WITHDRAWAL, CqFieldActionStrategy.RETURN_IT));
+        System.assertEquals(true, CqFieldActionStrategy.fits(CqFieldActionStrategy.WITHDRAWAL, CqFieldActionStrategy.DESTROY));
+        System.assertEquals(false, CqFieldActionStrategy.fits(CqFieldActionStrategy.WITHDRAWAL, CqFieldActionStrategy.FIX));
+    }
+
+    @IsTest
+    static void aWithdrawalIsSuggestedAndHasNoRecallClass() {
+        Field_Action__c fa = makeFa('Class II', 100);
+        update new Field_Action__c(Id = fa.Id, Action_Type__c = CqFieldActionStrategy.WITHDRAWAL);
+        Test.startTest();
+        CqFieldActionStrategy.View v = CqFieldActionStrategy.getView(fa.Id);
+        System.assertEquals(CqFieldActionStrategy.WITHDRAWAL, v.sAction, 'the review decided a withdrawal');
+        System.assertEquals('Distributor', v.sDepth);
+        System.assertEquals('Level C', v.sLevel);
+        System.assertEquals(CqFieldActionStrategy.RETURN_IT, v.sInstruction);
+        CqFieldActionStrategy.saveField(fa.Id, 'action', CqFieldActionStrategy.WITHDRAWAL);
+        Test.stopTest();
+        System.assertEquals(null, [SELECT Recall_Class__c FROM Field_Action__c WHERE Id = :fa.Id].Recall_Class__c, 'a withdrawal has no recall class');
     }
 
     @IsTest

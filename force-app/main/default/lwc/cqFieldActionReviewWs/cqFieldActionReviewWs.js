@@ -60,13 +60,14 @@ const QUESTIONS = [
     { id: 'detect', text: 'Would the user detect the problem before use?' },
     { id: 'cause', text: 'Is the root cause understood?' }
 ];
-const TYPES = ['Correction', 'Removal (Recall)', 'Advisory Notice'];
+const TYPES = ['Correction', 'Removal (Recall)', 'Withdrawal', 'Advisory Notice'];
+const WITHDRAWAL = 'Withdrawal';   // a market withdrawal: no recall class, and only for an issue with no health risk
 const CLASSES = ['Class I', 'Class II', 'Class III'];
 const SCOPES = ['Full', 'Partial'];
 const DRAFT = {
     version: 3,
     keep: ['hazard', 'level', 'checks', 'outcome', 'rationale', 'faChoice', 'faTitle', 'actionType', 'recallClass', 'scope',
-        'team', 'emergency', 'emergencyReason', 'emergencyUser', 'whyLevel', 'whyOutcome', 'whyFa', 'whyScope'],
+        'team', 'emergency', 'emergencyReason', 'emergencyUser', 'whyLevel', 'whyOutcome', 'whyFa', 'whyScope', 'whyType'],
     maps: { 1: [0, ASSESS, ASSESS, ASSESS, REC, COMMITTEE], 2: [0, ASSESS, ASSESS, REC, COMMITTEE] }
 };
 
@@ -105,6 +106,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     whyOutcome = '';
     whyFa = '';
     whyScope = '';
+    whyType = '';
     team = {};           // committee seat (job function id) -> the person chosen for it
     emergency = false;
     emergencyReason = '';
@@ -138,10 +140,10 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         if (first || this.waiting !== wasWaiting) { this.loadSign(); }
         if (!first) { return; }
         const d = this.done ? null : readDraft(v.draft, DRAFT);
-        this.whyLevel = ''; this.whyOutcome = ''; this.whyFa = ''; this.whyScope = '';
+        this.whyLevel = ''; this.whyOutcome = ''; this.whyFa = ''; this.whyScope = ''; this.whyType = '';
         if (d) {
             Object.assign(this, d.values);
-            ['whyLevel', 'whyOutcome', 'whyFa', 'whyScope'].forEach((k) => { if (typeof this[k] !== 'string') { this[k] = ''; } });
+            ['whyLevel', 'whyOutcome', 'whyFa', 'whyScope', 'whyType'].forEach((k) => { if (typeof this[k] !== 'string') { this[k] = ''; } });
             this.step = d.step; this.maxStep = d.maxStep; this.seen = d.seen;
             this.resumed = this.maxStep > 0 && !this.waiting;
             if (this.waiting) { this.step = COMMITTEE; this.maxStep = COMMITTEE; this.seen = upTo(COMMITTEE); }
@@ -507,6 +509,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         if (this.outcomeDiffers) { reasons.Outcome = this.whyOutcome.trim(); }
         if (this.faDiffers) { reasons['Field Action'] = this.whyFa.trim(); }
         if (this.scopeDiffers) { reasons.Scope = this.whyScope.trim(); }
+        if (this.withdrawalRisk) { reasons['Action Type'] = this.whyType.trim(); }
         return JSON.stringify({ faChoice: this.needed ? this.faChoice : '', reasons });
     }
     get assessDone() { return !!this.hazard.trim() && !!this.level && this.checksDone && !(this.levelDiffers && !this.whyLevel.trim()); }
@@ -536,6 +539,16 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         return list.map((o) => ({ ...o, cls: 'act' + (this.faChoice === o.id ? ' on' : o.cq ? ' sug' : ''), tick: this.faChoice === o.id ? '✓' : '' }));
     }
     get isNew() { return this.needed && this.faChoice === 'new'; }
+    get isWithdrawal() { return this.isNew && this.actionType === WITHDRAWAL; }
+    /** A withdrawal is for an issue with no health risk: where the assessment found one, the reviewer says why it is still a withdrawal. */
+    get withdrawalRisk() {
+        return this.isWithdrawal && (this.level === 'High' || this.checks.injury === 'Yes' || this.checks.couldHarm === 'Yes');
+    }
+    get withdrawalRiskLine() {
+        const found = [this.level === 'High' ? 'a High risk level' : '', this.checks.injury === 'Yes' ? 'a reported injury' : '',
+            this.checks.couldHarm === 'Yes' ? 'possible injury if it happens again' : ''].filter(Boolean);
+        return 'This review found ' + found.join(' and ') + '. A withdrawal is for an issue with no health risk; consider a recall.';
+    }
     get typeOpts() { return TYPES.map((t) => ({ value: t, selected: this.actionType === t })); }
     get classOpts() { return CLASSES.map((t) => ({ value: t, selected: this.recallClass === t })); }
     // scope of a new field action: Full is every lot of the part; Partial starts with this review's lot and the
@@ -578,6 +591,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         const f = event.target.dataset.f;
         if (this.waiting && f !== 'comment') { return; }      // with the committee only a member's comment can be typed
         this[f] = event.target.value;
+        if (f === 'actionType' && this.actionType === WITHDRAWAL) { this.recallClass = ''; }   // a withdrawal has no recall class
     }
 
     // ---- step 6: committee approval, on CQ Approvals
@@ -705,6 +719,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             if (this.faDiffers && !this.whyFa.trim()) { return 'Give the reason for a different field action than CQ.AI suggests'; }
             if (this.isNew && !this.scope) { return 'Choose Full or Partial'; }
             if (this.scopeDiffers && !this.whyScope.trim()) { return 'Give the reason for a different scope than CQ.AI suggests'; }
+            if (this.withdrawalRisk && !this.whyType.trim()) { return 'Give the reason this is a withdrawal, not a recall'; }
         }
         if (i === COMMITTEE) {
             if (this.emergency) {
@@ -755,7 +770,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     handleRestart() {
         this.step = 0; this.maxStep = 0; this.seen = { 0: true }; this.resumed = false; this.error = undefined;
         this.outcome = ''; this.rationale = ''; this.actionType = ''; this.recallClass = '';
-        this.whyLevel = ''; this.whyOutcome = ''; this.whyFa = ''; this.whyScope = '';
+        this.whyLevel = ''; this.whyOutcome = ''; this.whyFa = ''; this.whyScope = ''; this.whyType = '';
         const v = { ...this.v, draft: null };
         this.apply(v, true);
         saveDraft({ recordId: this.recordId, draft: null }).catch(() => {});

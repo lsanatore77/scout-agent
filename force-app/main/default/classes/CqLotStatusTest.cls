@@ -144,6 +144,22 @@ private class CqLotStatusTest {
     }
 
     @IsTest
+    static void aWithdrawalHasItsOwnStatuses() {
+        compliancequest__SQX_Part__c p = part();
+        insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-W', compliancequest__Part_Number__c = 'LST-1', Release_Status__c = 'Released');
+        Field_Action__c f = new Field_Action__c(Title__c = 'Withdrawal test', Part__c = p.Id, Action_Type__c = 'Withdrawal');
+        insert f;
+        Field_Action_Lot__c r = new Field_Action_Lot__c(Field_Action__c = f.Id, Lot_Number__c = 'LST-W', In_Scope__c = true);
+        insert r;
+        System.assertEquals('Withdrawal Pending', lot('LST-W').Release_Status__c, 'in the scope, not yet approved');
+        update new Field_Action_Lot__c(Id = r.Id, Approved_In_Scope__c = true);
+        System.assertEquals('Withdrawn', lot('LST-W').Release_Status__c, 'the scope is approved');
+        update new Field_Action__c(Id = f.Id, Action_Type__c = 'Removal (Recall)');
+        System.assertEquals('Recalled', lot('LST-W').Release_Status__c, 'it became a recall');
+        System.assert(CqLotStatus.rank('Recall Pending') > CqLotStatus.rank('Withdrawn'), 'a recall is stricter than a withdrawal');
+    }
+
+    @IsTest
     static void aCorrectionIsNotARecallAndTheTypeCanChange() {
         compliancequest__SQX_Part__c p = part();
         insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-G', compliancequest__Part_Number__c = 'LST-1');

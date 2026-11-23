@@ -108,7 +108,8 @@ export default class CqFieldActionRecovery extends LightningElement {
 
     // ---- 1. recovery by lot: the columns follow the action. A removal brings units back or has them destroyed on site;
     // a correction fixes them where they are (some may still come back); an advisory notice leaves them in use.
-    get isRemoval() { return this.v.action === 'Removal (Recall)'; }
+    get isRemoval() { return this.v.action === 'Removal (Recall)' || this.isWithdrawal; }
+    get isWithdrawal() { return this.v.action === 'Withdrawal'; }
     get isCorrection() { return this.v.action === 'Correction'; }
     get isNotice() { return this.v.action === 'Advisory Notice'; }
     get showRecovery() { return !this.isNotice; }
@@ -284,7 +285,9 @@ export default class CqFieldActionRecovery extends LightningElement {
             ? this.t.lotsByCustomer[f.customerId] : this.v.lots.map((l) => l.lot);
         return [{ value: '', label: 'No Lot', selected: !f.lot }].concat(lots.map((l) => ({ value: l, label: l, selected: f.lot === l })));
     }
-    get typeOpts() { return TYPES.map((x) => ({ value: x, label: x, selected: this.form.type === x })); }
+    get typeOpts() { return TYPES.map((x) => ({ value: x, label: this.typeLabel(x), selected: this.form.type === x })); }
+    /** A withdrawal is never called a recall: its notice task reads Send withdrawal notice (the task type stays the same). */
+    typeLabel(x) { return this.isWithdrawal && x === 'Send recall notice' ? 'Send withdrawal notice' : x; }
     get ownerOpts() { return this.t.people.map((p) => ({ value: p.id, label: p.name, selected: this.form.ownerId === p.id })); }
     get formHasUnits() { return UNIT_TYPES.includes(this.form.type); }
     get subjectHint() { return this.defaultSubject() || 'What needs doing'; }
@@ -293,7 +296,7 @@ export default class CqFieldActionRecovery extends LightningElement {
         const c = this.v.customers.find((x) => x.id === f.customerId);
         const who = c ? c.name : this.isNewCustomer ? f.newCustomer : '';
         if (f.type === 'Other') { return ''; }
-        return f.type + (f.lot ? ' of lot ' + f.lot : '') + (who ? (f.type === 'Send recall notice' ? ' to ' : f.type === 'Collect response' ? ' from ' : ' for ') + who : '');
+        return this.typeLabel(f.type) + (f.lot ? ' of lot ' + f.lot : '') + (who ? (f.type === 'Send recall notice' ? ' to ' : f.type === 'Collect response' ? ' from ' : ' for ') + who : '');
     }
     get cantAdd() {
         const f = this.form;

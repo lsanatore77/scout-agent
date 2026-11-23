@@ -8,9 +8,11 @@ import confirmStrategy from '@salesforce/apex/CqFieldActionStrategy.confirmStrat
 const REMOVAL = 'Removal (Recall)';
 const CORRECTION = 'Correction';
 const NOTICE = 'Advisory Notice';
-const ACTIONS = [[REMOVAL, 'Removal'], [CORRECTION, 'Correction'], [NOTICE, 'Advisory Notice']];
+const WITHDRAWAL = 'Withdrawal';
+const ACTIONS = [[REMOVAL, 'Removal'], [WITHDRAWAL, 'Withdrawal'], [CORRECTION, 'Correction'], [NOTICE, 'Advisory Notice']];
 const ACTION_HINT = {
     [REMOVAL]: 'Product comes back to us.',
+    [WITHDRAWAL]: 'Product comes back for a minor issue. Not a recall, not reported.',
     [CORRECTION]: 'Product is fixed where it is, for example relabelled or reworked on site.',
     [NOTICE]: 'Product stays in use with new information or a warning.'
 };
@@ -21,10 +23,10 @@ const DEPTH_HINT = {
     Patient: 'Hospitals also contact patients who have the device.'
 };
 const INSTRUCTIONS = [
-    ['Stop use, quarantine and return', REMOVAL],
-    ['Stop use and destroy on site', REMOVAL],
-    ['Hold for our technician to correct on site', CORRECTION],
-    ['Continue use with the added warning', NOTICE]
+    ['Stop use, quarantine and return', [REMOVAL, WITHDRAWAL]],
+    ['Stop use and destroy on site', [REMOVAL, WITHDRAWAL]],
+    ['Hold for our technician to correct on site', [CORRECTION]],
+    ['Continue use with the added warning', [NOTICE]]
 ];
 const INSTRUCTION_HINT = {
     'Stop use, quarantine and return': 'Customers set the units aside and send them back to us.',
@@ -168,9 +170,9 @@ export default class CqFieldActionStrategy extends LightningElement {
     get instructions() {
         return INSTRUCTIONS.map(([value, forAction], i) => {
             const on = this.instruction === value;
-            const fits = forAction === this.action;
+            const fits = forAction.includes(this.action);
             return { key: 'i' + i, value, field: 'instruction', title: value, ai: value === this.v.sInstruction,
-                desc: INSTRUCTION_HINT[value] + (fits ? '' : ' Only for ' + (forAction === REMOVAL ? 'a removal.' : forAction === CORRECTION ? 'a correction.' : 'an advisory notice.')),
+                desc: INSTRUCTION_HINT[value] + (fits ? '' : ' Only for ' + (forAction[0] === REMOVAL ? 'a removal or withdrawal.' : forAction[0] === CORRECTION ? 'a correction.' : 'an advisory notice.')),
                 pressed: on ? 'true' : 'false', cls: 'cq-optcard' + (value === this.v.sInstruction ? ' ai' : '') + (fits ? '' : ' off') };
         });
     }
@@ -281,7 +283,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     // ---- confirm
     get fits() {
         const a = this.action; const i = this.instruction;
-        const list = INSTRUCTIONS.filter(([, forAction]) => forAction === a).map(([value]) => value);
+        const list = INSTRUCTIONS.filter(([, forAction]) => forAction.includes(a)).map(([value]) => value);
         return list.includes(i);
     }
     get blocker() {

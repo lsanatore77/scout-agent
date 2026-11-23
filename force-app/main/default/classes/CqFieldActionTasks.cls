@@ -138,8 +138,9 @@ public with sharing class CqFieldActionTasks {
             Date returnBy = checkBy.addDays(-7) > today ? checkBy.addDays(-7) : checkBy;
             Boolean isNotice = fa.Action_Type__c == CqFieldActionStrategy.NOTICE;
             Boolean isCorrection = fa.Action_Type__c == CqFieldActionStrategy.CORRECTION;
+            String noticeWord = fa.Action_Type__c == CqFieldActionStrategy.WITHDRAWAL ? 'withdrawal notice' : 'recall notice';   // a withdrawal is never called a recall
             for (Field_Action_Customer__c c : custs) {
-                addSuggestion(b, have, NOTICE, c, null, 'Send recall notice to ' + c.Customer_Name__c, noticeBy);
+                addSuggestion(b, have, NOTICE, c, null, 'Send ' + noticeWord + ' to ' + c.Customer_Name__c, noticeBy);
                 if (fa.Check_Level__c != 'Level E') { addSuggestion(b, have, RESPONSE, c, null, 'Collect response form from ' + c.Customer_Name__c, responseBy); }
                 if (isNotice) { continue; }
                 for (String lot : b.lotsByCustomer.get(c.Id)) {
@@ -156,7 +157,7 @@ public with sharing class CqFieldActionTasks {
                 for (String k : new List<String>{ NOTICE, RESPONSE, RETURN_IT, CORRECT }) {
                     if (!byType.containsKey(k)) { continue; }
                     Integer n = byType.get(k);
-                    parts.add(n + ' ' + (k == NOTICE ? 'recall notice' : k == RESPONSE ? 'response' : k == RETURN_IT ? 'return' : 'correction') + (n == 1 ? '' : 's'));
+                    parts.add(n + ' ' + (k == NOTICE ? noticeWord : k == RESPONSE ? 'response' : k == RETURN_IT ? 'return' : 'correction') + (n == 1 ? '' : 's'));
                 }
                 Integer total = b.suggestions.size();
                 b.suggestLine = total + ' task' + (total == 1 ? '' : 's') + ' for ' + (fa.Check_Level__c == null ? 'this' : 'a ' + fa.Check_Level__c) + ' '

@@ -262,7 +262,8 @@ public with sharing class CqFieldActionRecovery {
 
         // CQ.AI's draft of the closing summary
         String part = fa.Part__r == null ? 'the product' : fa.Part__r.compliancequest__Part_Number__c;
-        String act = fa.Action_Type__c == CqFieldActionStrategy.REMOVAL ? 'removed' : fa.Action_Type__c == CqFieldActionStrategy.CORRECTION ? 'corrected' : 'issued an advisory notice for';
+        String act = fa.Action_Type__c == CqFieldActionStrategy.REMOVAL ? 'removed' : fa.Action_Type__c == CqFieldActionStrategy.WITHDRAWAL ? 'withdrew'
+            : fa.Action_Type__c == CqFieldActionStrategy.CORRECTION ? 'corrected' : 'issued an advisory notice for';
         List<String> s = new List<String>();
         s.add(fa.Name + ' ' + act + ' ' + part + ' from ' + (lotNames.size() == 1 ? 'lot ' : 'lots ') + String.join(lotNames, ', ')
             + (fa.Depth__c == null ? '' : ' at ' + fa.Depth__c.toLowerCase() + ' level') + (fa.Recall_Class__c == null ? '' : ' (' + fa.Recall_Class__c + ')') + '.');

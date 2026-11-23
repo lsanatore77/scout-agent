@@ -25,7 +25,7 @@
                     </template>
                     <div class="cq-field">
                         <span class="cq-label">Action<span class="cq-req">*</span></span>
-                        <div class="cards c3" role="group" aria-label="Action">
+                        <div class="cards c4" role="group" aria-label="Action">
                             <template for:each={actionCards} for:item="o">
                                 <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
                                     <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template>

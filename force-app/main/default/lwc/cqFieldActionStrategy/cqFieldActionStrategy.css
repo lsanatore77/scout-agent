@@ -28,10 +28,11 @@
 .cards { display: grid; gap: 10px; }
 .cards.c2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .cards.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cards.c4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .cards.c5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 /* the check-level cards are narrow, so CQ.AI Suggests takes its own line under the title */
 .cards.c5 .cq-optcard > c-cq-ai-why { flex-basis: 100%; }
-@media (max-width: 1100px) { .cards.c3, .cards.c5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1100px) { .cards.c3, .cards.c4, .cards.c5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; max-width: 900px; }
 /* fields, buttons, pills, messages, option cards and the CQ.AI suggestion card come from cqStyles */
 .cq-optcard.off { opacity: .5; }

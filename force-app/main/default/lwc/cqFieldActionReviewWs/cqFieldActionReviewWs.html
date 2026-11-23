@@ -260,13 +260,22 @@
                                                         <template for:each={typeOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
                                                     </select>
                                                 </label>
+                                                <template if:false={isWithdrawal}>
                                                 <label class="cq-field"><span class="cq-label">Recall Class</span>
                                                     <select data-f="recallClass" onchange={handleInput}>
                                                         <option value="">Not Yet Determined</option>
                                                         <template for:each={classOpts} for:item="t"><option key={t.value} value={t.value} selected={t.selected}>{t.value}</option></template>
                                                     </select>
                                                 </label>
+                                                </template>
                                             </div>
+                                            <template if:true={withdrawalRisk}>
+                                                <label class="cq-field why"><span class="cq-label">Why a withdrawal, not a recall?<span class="cq-req">*</span></span>
+                                                    <span class="whynote">{withdrawalRiskLine}</span>
+                                                    <textarea rows="2" data-f="whyType" value={whyType} oninput={handleInput} placeholder={whyHint}></textarea>
+                                                    <span class="whynote">Saved in the audit trail with the assessment behind it.</span>
+                                                </label>
+                                            </template>
                                             <div class="recsec">
                                                 <span class="cq-label">Scope<span class="cq-req">*</span></span>
                                                 <div class="cq-chips">

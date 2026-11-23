@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Action_Type__c</fullName>
+    <description>What the field action does to the product: Removal (Recall), Withdrawal (pulled for a minor issue, not a recall, not reported), Correction or Advisory Notice.</description>
     <label>Action Type</label>
     <type>Picklist</type>
     <valueSet>
@@ -16,6 +17,11 @@
                 <fullName>Removal (Recall)</fullName>
                 <default>false</default>
                 <label>Removal (Recall)</label>
+            </value>
+            <value>
+                <fullName>Withdrawal</fullName>
+                <default>false</default>
+                <label>Withdrawal</label>
             </value>
             <value>
                 <fullName>Advisory Notice</fullName>
