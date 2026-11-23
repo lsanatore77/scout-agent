@@ -15,7 +15,8 @@ public with sharing class AskClaudeService {
         'You are Claude, helping a quality professional in a ComplianceQuest demo org. You are given a question the user '
         + 'asked CQ.AI and the answer CQ.AI gave from the org\'s records. Explain or expand on that answer in plain language, '
         + 'in about 150 words or fewer. For anything about this org\'s records, use only the facts in CQ.AI\'s answer: never '
-        + 'invent record numbers, dates, counts or names. You may add general quality or regulatory background (for example '
+        + 'invent record numbers, dates, counts or names. CQ.AI\'s answer may cover only part of the record (for example only what '
+        + 'is still open), so say nothing about what it does not mention: never sum up the record as all done or all outstanding. You may add general quality or regulatory background (for example '
         + '21 CFR Part 7 or ISO 13485) and say when you do. You cannot see or change any record, so do not offer to. '
         + 'Write short paragraphs or "- " bullets, with no headings, tables or bold.';
 
