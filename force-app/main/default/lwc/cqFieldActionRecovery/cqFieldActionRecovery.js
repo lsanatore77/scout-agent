@@ -211,7 +211,8 @@ export default class CqFieldActionRecovery extends LightningElement {
                 const known = shipped !== undefined && shipped !== null;
                 const back = backOf(lot);
                 const out = outOf(lot);
-                rows.push({ key: 'l' + c.id + lot, isLot: true, rowCls: 'cq-row-child', title: lot, inRecall: this.v.lots.some((l) => l.lot === lot),
+                rows.push({ key: 'l' + c.id + lot, isLot: true, rowCls: '', title: lot,   // nested under the customer by its indent, not a band
+                    inRecall: this.v.lots.some((l) => l.lot === lot),
                     sub: '',   // shipped, back and still out are in the Units column
                     unitsBack: known ? back + ' of ' + shipped + ' back' : back + ' back',
                     outText: out === null ? '' : out ? out + ' out' : 'all back', outCls: out ? 'warnc' : 'okc' });
@@ -221,7 +222,7 @@ export default class CqFieldActionRecovery extends LightningElement {
         return rows;
     }
     taskRow(x, indent, shipped) {
-        return { key: 't' + x.id, isTask: true, rowCls: '', id: x.id, title: x.subject, indentCls: indent === 'i2' ? 'cq-ind l2' : 'cq-ind', href: '/lightning/r/Task/' + x.id + '/view',
+        return { key: 't' + x.id, isTask: true, rowCls: '', id: x.id, title: x.subject, indentCls: indent === 'i2' ? 'ind2' : 'ind1', href: '/lightning/r/Task/' + x.id + '/view',
             done: x.done, checkLabel: (x.done ? 'Reopen ' : 'Complete ') + x.subject,
             hasUnits: x.hasUnits, unitsVal: x.units === undefined || x.units === null ? '' : x.units,
             ofText: shipped === undefined || shipped === null ? '' : 'of ' + shipped,

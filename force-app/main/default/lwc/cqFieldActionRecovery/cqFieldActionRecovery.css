@@ -34,6 +34,9 @@
 .chsp { flex: none; display: inline-block; width: 22px; }
 .lotn { font-weight: 600; }
 .lotline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+/* nesting: a lot sits in from its customer's name (past the chevron), its tasks further in */
+.ind1 { flex: none; display: inline-block; width: 48px; }
+.ind2 { flex: none; display: inline-block; width: 72px; }
 /* a task's title: a plain link that can wrap (the shared link is bold and stays on one line) */
 .tlink { color: var(--cq-link); text-decoration: none; }
 .tlink:hover { text-decoration: underline; }
