@@ -1,0 +1,31 @@
+@import 'c/cqStyles';
+
+:host { display: block; color: var(--cq-ink); font-size: 13px; }
+.cq-step-intro { margin-top: 10px; }
+.b { font-weight: 600; }
+.nw { white-space: nowrap; }
+.warnc { color: var(--cq-warn-fg); }
+.okc { color: var(--cq-pos-fg); }
+.badc { color: var(--cq-crit-fg); }
+.cq-stepcard + .cq-stepcard, .tcards + .cq-stepcard { margin-top: 16px; }
+.tcards { margin-top: 16px; }
+.cq-stepcard-head.mid { align-items: center; }
+
+/* the notice: the key message as the customer reads it, then who it went to and when */
+.letter { padding: 10px 12px; border-radius: 6px; background: var(--cq-neu-bg); line-height: 1.5; white-space: pre-line; }
+.meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--cq-muted); }
+.cq-ai-card.row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px; }
+
+/* the responses table: a customer, then its tasks and lots one step in */
+.hcell, .cell2 { display: flex; align-items: center; gap: 6px; }
+.chsp { flex: none; display: inline-block; width: 22px; }
+.ind1 { flex: none; display: inline-block; width: 48px; }
+.lotn { font-weight: 600; }
+.fig { width: 90px; }
+.stcol { width: 130px; }
+.stk { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.cq-link.sm { font-size: 12px; }
+.tlink { color: var(--cq-link); text-decoration: none; }
+.tlink:hover { text-decoration: underline; }
+.cq-field.ni { width: 70px; display: inline-block; }
+.cq-field.ni input { min-height: 28px; padding: 2px 8px; text-align: right; }

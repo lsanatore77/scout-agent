@@ -8,8 +8,9 @@ import confirmScope from '@salesforce/apex/CqFieldActionScope.confirmScope';
 import discardChanges from '@salesforce/apex/CqFieldActionScope.discardChanges';
 import forScope from '@salesforce/apex/CqLotStock.forScope';
 import railStatus from '@salesforce/apex/CqFieldActionRecovery.railStatus';
+import notifyCounts from '@salesforce/apex/CqFieldActionNotify.counts';
 
-// The seven steps of a field action. Notifications and Regulatory Report are set aside for later and do not block.
+// The seven steps of a field action. Regulatory Report is set aside for later and does not block.
 const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'on', 'in', 'to', 'at', 'for', 'is', 'by', 'per', 'with']);
 /**
  * Title Case for short label lines that are not sentences (styling guide): every word capitalised except the small
@@ -29,7 +30,7 @@ const STEPS = [
     { label: 'Field Action at a Glance', ready: true },
     { label: 'Scope', ready: true },
     { label: 'Strategy', ready: true, needsScope: true },
-    { label: 'Notifications', ready: false, later: true },
+    { label: 'Notifications', ready: true },
     { label: 'Regulatory Report', ready: false, later: true },
     { label: 'Recovery and Effectiveness', ready: true },
     { label: 'Closure', ready: true }
@@ -38,15 +39,17 @@ const ASK = {
     0: 'Summarize this field action,Where does this field action stand?,What is left on this field action?',
     1: 'Which lots are in scope?,Why does CQ.AI suggest these lots?,How much stock is on hand?',
     2: 'Why does CQ.AI suggest this action type?,Which lots are on hold?,What does the effectiveness level mean?',
+    3: 'Which customers have not replied?,Who has not been sent the notice?,Which lots have units nobody can account for?',
     5: 'Which customers have not responded?,Are we on track for the effectiveness target?,How many units are still in the field?',
     6: 'What is blocking closure?,Summarize this field action,What is left on this field action?'
 };
 const SCOPE = 1;
 const STRATEGY = 2;
+const NOTIFY = 3;
 const RECOVERY = 5;
 const CLOSURE = 6;
 /** A step's "Go to" link (Closure's checklist) names the step it opens. */
-const STEP_KEYS = { scope: SCOPE, strategy: STRATEGY, recovery: RECOVERY, closure: CLOSURE };
+const STEP_KEYS = { scope: SCOPE, strategy: STRATEGY, notifications: NOTIFY, recovery: RECOVERY, closure: CLOSURE };
 const PAGE = 10;   // lots per page in the scope table
 const SIG_PAGE = 5; // signals per page on the glance, as on Field Action Review
 /** Page links: all of them up to 7 pages, otherwise the first, the last and two either side of the current one, with … for gaps. */
@@ -89,6 +92,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     stockOpen = '';      // the row whose on-hand split is showing
 
     rail = {};           // strategy, recovery, verdict and status for the later steps
+    notify = {};         // customers, notified and responded, for the Notifications step's line in the rail
 
     async connectedCallback() {
         // the On Hand card closes on any click outside it, or on Escape
@@ -115,6 +119,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     }
     async loadRail() {
         try { this.rail = await railStatus({ recordId: this.recordId }); } catch (e) { /* the rail falls back to what is known */ }
+        try { this.notify = await notifyCounts({ recordId: this.recordId }); } catch (e) { /* the rail falls back to what is known */ }
     }
     /** Every lot starts closed; the header chevron opens the lots in scope. */
     openInScope() {
@@ -195,12 +200,19 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         if (i === 0) { return true; }
         if (i === SCOPE) { return this.scopeConfirmed; }
         if (i === STRATEGY) { return this.strategyDone; }
+        if (i === NOTIFY) { return this.strategyDone && this.notify.total > 0 && this.notify.notified === this.notify.total; }
         if (i === RECOVERY) { return this.recoveryDone; }
         if (i === CLOSURE) { return this.isClosed; }
         return false;
     }
     subOf(i) {
         if (i === STRATEGY) { return !this.scopeConfirmed ? 'Needs confirmed scope' : this.v.strategyStatus || 'Not started'; }
+        if (i === NOTIFY) {
+            if (!this.strategyDone) { return 'Needs confirmed strategy'; }
+            const t = this.notify.total || 0;
+            if (!t) { return 'No customers yet'; }
+            return this.notify.notified < t ? this.notify.notified + ' of ' + t + ' notified' : this.notify.responded + ' of ' + t + ' responded';
+        }
         if (i === RECOVERY) {
             if (!this.strategyDone) { return 'Needs confirmed strategy'; }
             const over = this.overdueTasks;
@@ -244,6 +256,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get is0() { return this.ready && this.step === 0; }
     get is1() { return this.ready && this.step === SCOPE; }
     get is2() { return this.ready && this.step === STRATEGY; }
+    get is3() { return this.ready && this.step === NOTIFY; }
     get is5() { return this.ready && this.step === RECOVERY; }
     get is6() { return this.ready && this.step === CLOSURE; }
     get cantBack() { return this.near(-1) < 0; }
@@ -269,6 +282,8 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             this.v = { ...this.v, strategyStatus: status, actionType: action || this.v.actionType };
         }
     }
+    /** Notifications reports how many customers were notified and responded, for its line in the rail. */
+    handleNotifyChange(event) { this.notify = { ...event.detail }; }
     /** Recovery and Closure report the verdict and the field action's status for the rail and the header. */
     handleRailChange(event) {
         const { recovery, verdict, status, overdue } = event.detail;

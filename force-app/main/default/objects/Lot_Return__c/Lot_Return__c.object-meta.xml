@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The Lot Return object records units of a lot received back from a customer, one record per RMA receipt line, loaded from the ERP or entered by hand. The Recovery step adds them up per customer and lot against the units the customer said it would return.</description>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <label>Lot Return</label>
+    <nameField>
+        <displayFormat>RET-{0000}</displayFormat>
+        <label>Lot Return Number</label>
+        <startingNumber>1</startingNumber>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Lot Returns</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+    <visibility>Public</visibility>
+</CustomObject>

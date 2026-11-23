@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Action_Customer__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The customer whose response this is.</description>
+    <label>Field Action Customer</label>
+    <referenceTo>Field_Action_Customer__c</referenceTo>
+    <relationshipLabel>Response Lines</relationshipLabel>
+    <relationshipName>Response_Lines</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>

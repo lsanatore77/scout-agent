@@ -1,0 +1,91 @@
+<template>
+    <template if:false={ready}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
+    <template if:true={ready}>
+        <div class="cq-sechead">
+            <h3 class="cq-step-title nom">Notifications</h3>
+            <span class={statePill}>{stateText}</span>
+        </div>
+        <template if:true={needsStrategy}><p class="cq-note">Confirm the strategy first: the notice is built from its key message.</p></template>
+
+        <template if:true={showStep}>
+            <p class="cq-step-intro">Tell every customer who received the lots, and record what each one tells us back.</p>
+
+            <section class="cq-stepcard">
+                <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">1</span><span class="cq-stepcard-title">Customer Notice</span><span class="cq-grow"></span>
+                    <span class="cq-sub">From the key message in Strategy</span>
+                    <button class="cq-btn-primary" onclick={handleMarkSent} disabled={cantMarkSent}>{markLabel}</button>
+                </div>
+                <template if:true={hasMessage}><div class="letter">{v.message}</div></template>
+                <template if:false={hasMessage}><p class="cq-note">No key message yet: write it in Strategy, under What We Tell Customers.</p></template>
+                <div class="meta"><span>{sentLine}</span><template if:true={dueLine}><span>{dueLine}</span></template></div>
+            </section>
+
+            <div class="cq-statcards tcards" role="group" aria-label="Filter customers">
+                <template for:each={cards} for:item="c">
+                    <button key={c.key} class={c.cls} data-key={c.key} aria-pressed={c.pressed} onclick={handleCard}>
+                        <span class="cq-statcard-k">{c.label}</span><span class={c.numCls}>{c.n}</span>
+                    </button>
+                </template>
+            </div>
+
+            <section class="cq-stepcard">
+                <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">Customer Responses</span><span class="cq-grow"></span>
+                    <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
+                    <span class="cq-sub">What each customer reported, by lot</span>
+                </div>
+                <template if:true={v.aiLine}>
+                    <div class="cq-ai-card row">
+                        <span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which customers should we follow up with, and when?"></c-cq-ai-why></span>
+                        <span class="cq-ai-text">{v.aiLine}</span>
+                    </div>
+                </template>
+                <template if:true={hasRows}>
+                    <div class="cq-tblwrap">
+                        <table class="cq-tbl compact">
+                            <thead><tr>
+                                <th><span class="hcell"><span class="chsp"></span>Customer / Lot / Task</span></th>
+                                <th class="num fig">Shipped</th><th class="num fig">Used</th><th class="num fig">Returning</th><th class="num fig">Destroyed</th>
+                                <th class="num fig">Unknown</th><th class="num stcol">Status</th>
+                            </tr></thead>
+                            <tbody>
+                                <template for:each={rows} for:item="r">
+                                    <tr key={r.key} class={r.rowCls}>
+                                        <template if:true={r.isCust}>
+                                            <td><span class="cell2">
+                                                <button class="cq-rchev-btn" data-id={r.id} onclick={handleToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button>
+                                                <span class="cq-stack"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
+                                            <td class="num">{r.shipped}</td><td class="num">{r.used}</td><td class="num">{r.returning}</td><td class="num">{r.destroyed}</td>
+                                            <td class={r.unknownCls}>{r.unknown}</td>
+                                            <td class="num"><span class="stk"><span class={r.pillCls}>{r.pill}</span>
+                                                <button class="cq-link sm" data-id={r.id} data-acked={r.acked} onclick={handleRespond} disabled={locked} aria-label={r.actAria}>{r.actLabel}</button></span></td>
+                                        </template>
+                                        <template if:true={r.isTask}>
+                                            <td><span class="cell2"><span class="ind1"></span>
+                                                <input class="cq-tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
+                                                <span class="cq-stack"><a class="tlink" href={r.href} target="_blank">{r.title}</a><span class="cq-sub block">{r.owner} &middot; <span class={r.dueCls}>due {r.due}</span></span></span></span></td>
+                                            <td></td><td></td><td></td><td></td><td></td>
+                                            <td class="num"><span class={r.pillCls}>{r.pill}</span></td>
+                                        </template>
+                                        <template if:true={r.isLot}>
+                                            <td><span class="cell2"><span class="ind1"></span><span class="lotn">{r.lot}</span></span></td>
+                                            <td class="num">{r.shipped}</td>
+                                            <td class="num"><span class="cq-field ni"><input type="number" min="0" data-cust={r.cust} data-lot={r.lot} data-f="used" value={r.used} onchange={handleFigure} onkeydown={handleFigureKey} disabled={locked} aria-label={r.usedLabel} /></span></td>
+                                            <td class="num"><span class="cq-field ni"><input type="number" min="0" data-cust={r.cust} data-lot={r.lot} data-f="returning" value={r.returning} onchange={handleFigure} onkeydown={handleFigureKey} disabled={locked} aria-label={r.retLabel} /></span></td>
+                                            <td class="num"><span class="cq-field ni"><input type="number" min="0" data-cust={r.cust} data-lot={r.lot} data-f="destroyed" value={r.destroyed} onchange={handleFigure} onkeydown={handleFigureKey} disabled={locked} aria-label={r.desLabel} /></span></td>
+                                            <td class={r.unknownCls}>{r.unknown}</td>
+                                            <td></td>
+                                        </template>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </template>
+                <template if:false={hasRows}><p class="cq-note">{emptyLine}</p></template>
+                <span class="cq-hint">Open a customer to see its notice and response tasks and enter what it reported for each lot. Unknown is shipped less used, returning and destroyed: units nobody can account for. Recovery expects back the units returning.</span>
+            </section>
+
+            <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
+        </template>
+    </template>
+</template>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Action__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The open field action this return counts toward, matched by customer and lot.</description>
+    <label>Field Action</label>
+    <referenceTo>Field_Action__c</referenceTo>
+    <relationshipLabel>Lot Returns</relationshipLabel>
+    <relationshipName>Lot_Returns</relationshipName>
+    <required>false</required>
+    <type>Lookup</type>
+</CustomField>
