@@ -9,7 +9,10 @@
  *     when it covers the whole lot (all its stock, or always when Field Action Settings > NC Quarantines Whole Lot is on);
  *     a smaller quantity is shown on the lot's Quality list, not as a status
  *   - receiving inspection on the lot: Rejected -> Rejected; Pending -> Quarantined
- * Strictness: Rejected > Recalled > On Hold > Quarantined > Pending QA > Released. The lot is free only when every
+ *   - recall field actions (Action Type Removal (Recall)) through their scope (Field_Action_Lot__c): a lot in the scope
+ *     -> Recall Pending; in the approved scope (Confirmed In Scope) -> Recalled. Once that field action confirms its own
+ *     decision on the lot in Recovery (Release, Rework, Scrap...), that decision replaces the recall.
+ * Strictness: Rejected > Recalled > Recall Pending > On Hold > Quarantined > Pending QA > Released. The lot is free only when every
  * control has let go. Hold Reason names every active control; Status Set By names the one that set the status.
  * When final decisions disagree (one releases the lot, another scraps it), the stricter applies and Status Conflict
  * says so, for a person to settle.
@@ -22,7 +25,8 @@ public without sharing class CqLotStatus {
     public static Boolean syncing = false;
 
     static final Map<String, Integer> RANK = new Map<String, Integer>{
-        'Released' => 1, 'Pending QA' => 2, 'Quarantined' => 3, 'On Hold' => 4, 'Recalled' => 5, 'Rejected' => 6 };
+        'Released' => 1, 'Pending QA' => 2, 'Quarantined' => 3, 'On Hold' => 4, 'Recall Pending' => 5, 'Recalled' => 6, 'Rejected' => 7 };
+    static final String RECALL = 'Removal (Recall)';
 
     /** One control's say on a lot. */
     public class Say {
@@ -78,6 +82,29 @@ public without sharing class CqLotStatus {
         Set<String> lots = new Set<String>();
         if (rows != null) { for (Field_Action_Hold__c h : rows) { lots.add(h.Lot_Number__c); } }
         if (before != null) { for (Field_Action_Hold__c h : before.values()) { lots.add(h.Lot_Number__c); } }
+        sourceChanged(lots);
+    }
+
+    /** A lot added to, removed from or confirmed in a field action's scope. */
+    public static void scopeChanged(List<Field_Action_Lot__c> rows, Map<Id, Field_Action_Lot__c> before) {
+        Set<String> lots = new Set<String>();
+        if (rows != null) { for (Field_Action_Lot__c r : rows) { lots.add(r.Lot_Number__c); } }
+        if (before != null) { for (Field_Action_Lot__c r : before.values()) { lots.add(r.Lot_Number__c); } }
+        sourceChanged(lots);
+    }
+
+    /** A field action that becomes, or stops being, a recall: every lot in its scope. */
+    public static void actionTypeChanged(List<Field_Action__c> rows, Map<Id, Field_Action__c> before) {
+        Set<Id> ids = new Set<Id>();
+        for (Field_Action__c f : rows) {
+            Field_Action__c b = before == null ? null : before.get(f.Id);
+            if (b != null) {
+                if (b.Action_Type__c != f.Action_Type__c) { ids.add(f.Id); }
+            }
+        }
+        if (ids.isEmpty()) { return; }
+        Set<String> lots = new Set<String>();
+        for (Field_Action_Lot__c r : [SELECT Lot_Number__c FROM Field_Action_Lot__c WHERE Field_Action__c IN :ids]) { lots.add(r.Lot_Number__c); }
         sourceChanged(lots);
     }
 
@@ -160,11 +187,13 @@ public without sharing class CqLotStatus {
         Field_Action_Settings__c fs = Field_Action_Settings__c.getOrgDefaults();
         Boolean wholeLot = fs != null && fs.NC_Quarantines_Whole_Lot__c == true;
 
-        for (Field_Action_Hold__c h : [SELECT Lot_Number__c, Part_Number__c, Field_Action__r.Name, Held_On__c, Disposition__c, Disposition_On__c
+        Set<String> decided = new Set<String>();   // field action + lot whose own decision is confirmed
+        for (Field_Action_Hold__c h : [SELECT Lot_Number__c, Part_Number__c, Field_Action__c, Field_Action__r.Name, Held_On__c, Disposition__c, Disposition_On__c
                                        FROM Field_Action_Hold__c WHERE Lot_Number__c IN :names AND Held__c = true ORDER BY Held_On__c]) {
             String pn = partOf.get(h.Lot_Number__c);
             if (h.Part_Number__c != null && pn != null && h.Part_Number__c != pn) { continue; }
             String fa = h.Field_Action__r?.Name == null ? 'Field action' : h.Field_Action__r.Name;
+            if (h.Disposition_On__c != null) { decided.add(String.valueOf(h.Field_Action__c) + '|' + h.Lot_Number__c); }
             Say s;
             if (h.Disposition_On__c == null) {
                 s = new Say('On Hold', fa, fa + ' hold' + (h.Held_On__c == null ? '' : ', ' + h.Held_On__c.format('d MMM yyyy')));
@@ -178,6 +207,23 @@ public without sharing class CqLotStatus {
                 s.finalRelease = true;
             }
             add(out, h.Lot_Number__c, s);
+        }
+
+        // recall field actions: in the scope -> Recall Pending; in the approved scope -> Recalled
+        for (Field_Action_Lot__c r : [SELECT Lot_Number__c, Field_Action__c, Field_Action__r.Name, Field_Action__r.Part__r.compliancequest__Part_Number__c,
+                                             In_Scope__c, Approved_In_Scope__c, Field_Action__r.Scope_Confirmed_On__c
+                                      FROM Field_Action_Lot__c
+                                      WHERE Lot_Number__c IN :names AND Field_Action__r.Action_Type__c = :RECALL
+                                        AND (In_Scope__c = true OR Approved_In_Scope__c = true)]) {
+            if (decided.contains(String.valueOf(r.Field_Action__c) + '|' + r.Lot_Number__c)) { continue; }   // its own decision replaces the recall
+            String pn = partOf.get(r.Lot_Number__c);
+            String fpn = r.Field_Action__r?.Part__r?.compliancequest__Part_Number__c;
+            if (fpn != null && pn != null && fpn != pn) { continue; }
+            String fa = r.Field_Action__r?.Name == null ? 'Field action' : r.Field_Action__r.Name;
+            Datetime approvedOn = r.Field_Action__r?.Scope_Confirmed_On__c;
+            add(out, r.Lot_Number__c, r.Approved_In_Scope__c == true
+                ? new Say('Recalled', fa, fa + ': recall' + (approvedOn == null ? '' : ', scope approved ' + approvedOn.format('d MMM yyyy')))
+                : new Say('Recall Pending', fa, fa + ': recall, scope not yet approved'));
         }
 
         for (compliancequest__SQX_NC_Impacted_Product__c ip : [

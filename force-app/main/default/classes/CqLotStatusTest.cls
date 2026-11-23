@@ -84,6 +84,37 @@ private class CqLotStatusTest {
     }
 
     @IsTest
+    static void aRecallScopeMakesTheLotRecallPendingThenRecalled() {
+        compliancequest__SQX_Part__c p = part();
+        insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-F', compliancequest__Part_Number__c = 'LST-1', Release_Status__c = 'Released');
+        Field_Action__c f = new Field_Action__c(Title__c = 'Recall test', Part__c = p.Id, Action_Type__c = 'Removal (Recall)');
+        insert f;
+        Field_Action_Lot__c r = new Field_Action_Lot__c(Field_Action__c = f.Id, Lot_Number__c = 'LST-F', In_Scope__c = true);
+        insert r;
+        System.assertEquals('Recall Pending', lot('LST-F').Release_Status__c, 'in the scope, not yet approved');
+        update new Field_Action_Lot__c(Id = r.Id, Approved_In_Scope__c = true);
+        System.assertEquals('Recalled', lot('LST-F').Release_Status__c, 'the scope is approved');
+        System.assertEquals([SELECT Name FROM Field_Action__c WHERE Id = :f.Id].Name, lot('LST-F').Status_Set_By__c);
+
+        // the recall's own decision on the lot replaces the recall
+        insert new Field_Action_Hold__c(Field_Action__c = f.Id, Lot_Number__c = 'LST-F', Hold__c = true, Held__c = true,
+            Disposition__c = 'Release', Disposition_On__c = Datetime.now());
+        System.assertEquals('Released', lot('LST-F').Release_Status__c, 'checked and found fine');
+    }
+
+    @IsTest
+    static void aCorrectionIsNotARecallAndTheTypeCanChange() {
+        compliancequest__SQX_Part__c p = part();
+        insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-G', compliancequest__Part_Number__c = 'LST-1');
+        Field_Action__c f = new Field_Action__c(Title__c = 'Correction test', Part__c = p.Id, Action_Type__c = 'Correction');
+        insert f;
+        insert new Field_Action_Lot__c(Field_Action__c = f.Id, Lot_Number__c = 'LST-G', In_Scope__c = true, Approved_In_Scope__c = true);
+        System.assertEquals('Released', lot('LST-G').Release_Status__c);
+        update new Field_Action__c(Id = f.Id, Action_Type__c = 'Removal (Recall)');
+        System.assertEquals('Recalled', lot('LST-G').Release_Status__c, 'it became a recall');
+    }
+
+    @IsTest
     static void receivingRejectionRejectsTheLot() {
         insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-E', Lot_Type__c = 'Purchased', Receiving_Inspection__c = 'Rejected');
         System.assertEquals('Rejected', lot('LST-E').Release_Status__c);
