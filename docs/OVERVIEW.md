@@ -17,6 +17,22 @@ a reviewer triage and dispose it, and helps investigators and quality engineers 
 downstream processes (investigation, CAPA, field action/recall, complaint reports), with
 "CQ.AI Suggests" assistance throughout. The AI **drafts and suggests; people decide.**
 
+### Design principle: works as is, flexible if wanted
+
+The core system must work **out of the box, with little to no customization or configuration**.
+Flexibility is welcome, but only as an optional layer on top of good defaults (Lou, 2026-11-22):
+
+- **Defaults first.** Every workspace works as soon as it is on the page: steps, CQ.AI suggestions
+  and rules are built in. Nothing has to be set up before it is usable.
+- **Settings are optional.** An empty setting means the standard behaviour (CQ.AI Workspace Settings
+  blank = standard look, steps on the left; Demo Mode off = the strict rules).
+- **Themes are optional.** Without one, everything falls back to the standard cqStyles colours.
+- **Never require configuration to fix a gap.** If something only works after an admin configures
+  it, the default is wrong; fix the default.
+- **Future builders stay optional.** Anything that lets customers rearrange workspaces (for example the
+  parked drag-and-drop workspace builder) changes the standard workspaces; it never replaces them or
+  becomes a setup step.
+
 ## The pieces (each is one area; the key classes/LWCs and its deeper doc are noted)
 
 **1. Report a Problem (intake)** — the reporter's front door, mobile-first.
