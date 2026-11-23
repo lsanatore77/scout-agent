@@ -67,20 +67,26 @@
                     <template if:true={isHolds}>
                     <div class="cq-tblwrap">
                         <table class="cq-tbl compact">
-                            <thead><tr><th class="hc">Hold</th><th>Lot</th><th>What</th><th class="num">On Hand</th><th>Location</th><th>Held Since</th><th>Status</th></tr></thead>
+                            <thead><tr><th class="hc">Hold</th><th>Lot</th><th>What</th><th class="num">On Hand</th><th>Held Since</th><th>Status</th></tr></thead>
                             <tbody>
                                 <template for:each={holdRows} for:item="h">
                                     <tr key={h.key} class={h.rowCls}>
-                                        <template if:true={h.isGroup}><td colspan="7" class="grptitle">{h.title}</td></template>
+                                        <template if:true={h.isGroup}><td colspan="6" class="grptitle">{h.title}</td></template>
                                         <template if:false={h.isGroup}>
                                             <td class="hc"><input class="cq-tick" type="checkbox" data-id={h.id} checked={h.hold} disabled={locked} onchange={handleHold} aria-label={h.label} /></td>
                                             <td class="cq-nowrap b">{h.lot}</td>
                                             <td><span class="what">{h.item} <template if:true={h.ai}><c-cq-ai-why variant="tag" text="Suggested" lead="Why does CQ.AI suggest holding " subject={h.item}></c-cq-ai-why></template></span><span class="cq-sub block">{h.why}</span></td>
-                                            <td class="num">{h.onHand}</td>
-                                            <td class="cq-nowrap">
-                                                <template if:true={h.noPlaces}><span class="cq-muted">{h.locText}</span></template>
-                                                <template for:each={h.places} for:item="k">
-                                                    <span key={k.key}><a class="cq-ploc" href={k.href} target="_blank">{k.location}</a> {k.units}<template if:true={k.sep}><span class="cq-dotsep"> &middot; </span></template></span>
+                                            <td class="num pos">
+                                                <template if:true={h.canOpen}><button class="ohbtn" data-key={h.key} onclick={handleStock} aria-expanded={h.stockExpanded} aria-label={h.popLabel}>{h.onHand}</button></template>
+                                                <template if:false={h.canOpen}>{h.onHand}</template>
+                                                <template if:true={h.stockOpen}>
+                                                    <div class="pop" role="dialog" aria-label={h.popLabel} onclick={handlePopClick}>
+                                                        <div class="pophead"><span class="b">Lot {h.lot}</span><span class="cq-grow"></span><span class="cq-sub">{h.onHand} on hand</span></div>
+                                                        <template for:each={h.places} for:item="k">
+                                                            <div key={k.key} class="poprow"><a class="cq-ploc" href={k.href} target="_blank">{k.location}</a><span class="cq-grow"></span><span>{k.units}</span></div>
+                                                        </template>
+                                                        <template if:true={h.asOfText}><span class="cq-sub">{h.asOfText}</span></template>
+                                                    </div>
                                                 </template>
                                             </td>
                                             <td class="cq-nowrap">{h.heldText}</td>

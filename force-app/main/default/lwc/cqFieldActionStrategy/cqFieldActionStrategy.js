@@ -51,10 +51,20 @@ export default class CqFieldActionStrategy extends LightningElement {
     addLot = '';
     footSig;
     tab = 'action';      // action | tell | holds | check
+    stockOpen = '';      // the hold row whose on-hand split is showing
 
     async connectedCallback() {
+        // a click anywhere else, or Escape, closes the On Hand card (as on Scope)
+        this.closePop = () => { if (this.keepPop) { this.keepPop = false; } else if (this.stockOpen) { this.stockOpen = ''; } };
+        this.escPop = (e) => { if (e.key === 'Escape' && this.stockOpen) { this.stockOpen = ''; } };
+        document.addEventListener('click', this.closePop);
+        document.addEventListener('keydown', this.escPop);
         try { this.apply(await getView({ recordId: this.recordId })); }
         catch (e) { this.error = this.msg(e, 'Could not read the strategy.'); }
+    }
+    disconnectedCallback() {
+        document.removeEventListener('click', this.closePop);
+        document.removeEventListener('keydown', this.escPop);
     }
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     apply(v) {
@@ -196,9 +206,11 @@ export default class CqFieldActionStrategy extends LightningElement {
                     onHand: h.onHand === undefined || h.onHand === null ? '—' : String(h.onHand),
                     stateText: h.outOfScope ? 'No longer in scope' : state[0], stateCls: h.outOfScope ? 'cq-pill soft crit' : state[1],
                     hasState: h.outOfScope || !!state[0], label: (h.hold ? 'Release ' : 'Hold ') + h.lot,
-                    places: (h.places || []).map((k, i, all) => ({ key: h.id + '|' + i, location: k.location, units: String(Number(k.units)),
-                        href: k.locationId ? '/lightning/r/compliancequest__SQX_Location__c/' + k.locationId + '/view' : null, sep: i < all.length - 1 })),
-                    noPlaces: !(h.places || []).length, locText: Number(h.onHand) === 0 && h.onHand !== null && h.onHand !== undefined ? 'None in stock' : '—',
+                    places: (h.places || []).map((k, i) => ({ key: h.id + '|' + i, location: k.location, units: String(Number(k.units)),
+                        href: k.locationId ? '/lightning/r/compliancequest__SQX_Location__c/' + k.locationId + '/view' : null })),
+                    canOpen: (h.places || []).length > 0, stockOpen: this.stockOpen === h.id && (h.places || []).length > 0,
+                    stockExpanded: this.stockOpen === h.id ? 'true' : 'false', popLabel: 'On hand for lot ' + h.lot,
+                    asOfText: [h.source, h.asOf ? 'as of ' + new Date(h.asOf).toLocaleString() : ''].filter(Boolean).join(' · '),
                     heldText: h.heldOn ? new Date(h.heldOn).toLocaleDateString() : '—' });
             });
         };
@@ -221,6 +233,14 @@ export default class CqFieldActionStrategy extends LightningElement {
     }
     get hasComps() { return (this.v.components || []).length > 0; }
     get cantAdd() { return this.locked || !this.addLot || this.busy; }
+    /** On hand opens a small card with the split by CQ Location and how fresh the figures are (as on Scope). */
+    handleStock(event) {
+        const key = event.currentTarget.dataset.key;
+        this.stockOpen = this.stockOpen === key ? '' : key;
+        this.keepPop = true;
+    }
+    /** A click inside the On Hand card (a location link, say) keeps it open. */
+    handlePopClick() { this.keepPop = true; }
     handleAddPick(event) { this.addLot = event.target.value; }
     async handleAdd() {
         if (this.cantAdd) { return; }

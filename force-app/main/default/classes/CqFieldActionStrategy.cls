@@ -30,6 +30,7 @@ public with sharing class CqFieldActionStrategy {
         @AuraEnabled public Datetime heldOn; @AuraEnabled public Boolean suggested = false; @AuraEnabled public String reason;
         @AuraEnabled public Decimal onHand; @AuraEnabled public Boolean outOfScope = false;
         @AuraEnabled public List<CqLotStock.Place> places = new List<CqLotStock.Place>();   // where the stock is, from Lot Stock
+        @AuraEnabled public Datetime asOf; @AuraEnabled public String source;                // how fresh the stock figures are
     }
     public class Comp {
         @AuraEnabled public String lot; @AuraEnabled public String part; @AuraEnabled public String item; @AuraEnabled public String inLot;
@@ -138,7 +139,7 @@ public with sharing class CqFieldActionStrategy {
         for (HoldRow x : v.holds) {
             CqLotStock.Stock st = stock.get(x.lot);
             if (st == null || st.hasRecord != true) { continue; }
-            x.places = st.places;
+            x.places = st.places; x.asOf = st.asOf; x.source = st.source;
             if (x.kind != FINISHED) { x.onHand = st.total; }
         }
         List<String> keys = new List<String>(comps.keySet()); keys.sort();
