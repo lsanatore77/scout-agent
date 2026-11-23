@@ -39,6 +39,27 @@
                         <span class="cq-ai-text">{v.aiLine}</span>
                     </div>
                 </template>
+                <template if:true={hasSuggestions}>
+                    <div class="cq-ai-card row">
+                        <span class="cq-grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which notice and response tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{v.suggestLine}</span></span>
+                        <button class="cq-btn-outline cq-btn-sm ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
+                    </div>
+                    <template if:true={reviewing}>
+                        <div class="sugg">
+                            <template for:each={suggestRows} for:item="s">
+                                <label key={s.key} class="srow">
+                                    <input type="checkbox" data-key={s.key} checked={s.checked} onchange={handleKeep} aria-label={s.label} />
+                                    <span class="cq-grow">{s.subject}</span><span class="cq-sub nw">{s.due}</span>
+                                </label>
+                            </template>
+                            <div class="formbtns">
+                                <button class="cq-btn-primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
+                                <button class="cq-btn-outline" onclick={handleReview}>Cancel</button>
+                                <span class="cq-hint">Assigned to you; reassign any task on the Task record.</span>
+                            </div>
+                        </div>
+                    </template>
+                </template>
                 <template if:true={hasRows}>
                     <div class="cq-tblwrap">
                         <table class="cq-tbl compact">

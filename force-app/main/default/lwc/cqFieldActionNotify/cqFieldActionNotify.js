@@ -5,6 +5,7 @@ import markSent from '@salesforce/apex/CqFieldActionNotify.markSent';
 import saveLine from '@salesforce/apex/CqFieldActionNotify.saveLine';
 import setResponded from '@salesforce/apex/CqFieldActionNotify.setResponded';
 import setTask from '@salesforce/apex/CqFieldActionNotify.setTask';
+import createTasks from '@salesforce/apex/CqFieldActionNotify.createTasks';
 
 const FIGURES = ['used', 'returning', 'destroyed'];
 
@@ -21,6 +22,8 @@ export default class CqFieldActionNotify extends LightningElement {
     footSig;
     filter = 'all';          // all | notified | responded | waiting | overdue
     openCust = {};           // customer rows opened (all start closed)
+    reviewing = false;       // CQ.AI's suggested notice and response tasks open for review
+    kept = {};               // suggestion key -> false when unticked
 
     async connectedCallback() {
         try { this.apply(await getView({ recordId: this.recordId })); }
@@ -167,5 +170,22 @@ export default class CqFieldActionNotify extends LightningElement {
     async handleCheck(event) {
         const id = event.target.dataset.id;
         await this.call(() => setTask({ recordId: this.recordId, taskId: id, done: event.target.checked }), 'Could not change that task.');
+    }
+
+    // ---- CQ.AI's suggested notice and response tasks
+    get suggestions() { return this.v.suggestions || []; }
+    get hasSuggestions() { return !this.locked && this.suggestions.length > 0; }
+    get suggestRows() {
+        return this.suggestions.map((s) => ({ ...s, checked: this.kept[s.key] !== false, due: this.day(s.due), label: 'Create: ' + s.subject }));
+    }
+    get keptCount() { return this.suggestions.filter((s) => this.kept[s.key] !== false).length; }
+    get createLabel() { return 'Create ' + this.keptCount + ' Task' + (this.keptCount === 1 ? '' : 's'); }
+    get cantCreate() { return this.busy || this.keptCount === 0; }
+    handleReview() { this.reviewing = !this.reviewing; this.kept = {}; }
+    handleKeep(event) { this.kept = { ...this.kept, [event.target.dataset.key]: event.target.checked }; }
+    async handleCreate() {
+        const keys = this.suggestions.filter((s) => this.kept[s.key] !== false).map((s) => s.key);
+        await this.call(() => createTasks({ recordId: this.recordId, keys }), 'Could not create those tasks.');
+        if (!this.error) { this.reviewing = false; this.kept = {}; }
     }
 }

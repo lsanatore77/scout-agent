@@ -80,6 +80,27 @@ private class CqFieldActionNotifyTest {
     }
 
     @IsTest
+    static void cqAiSuggestsTheNoticeAndResponseTasksStillMissing() {
+        Field_Action__c fa = makeFa();
+        Test.startTest();
+        CqFieldActionNotify.View v = CqFieldActionNotify.getView(fa.Id);
+        System.assertEquals(4, v.suggestions.size(), 'a notice and a response for each of the two customers');
+        System.assert(v.suggestLine.contains('2 withdrawal notices'), v.suggestLine);
+        for (CqFieldActionTasks.Suggestion s : v.suggestions) {
+            System.assert(s.type == CqFieldActionTasks.NOTICE || s.type == CqFieldActionTasks.RESPONSE, 'returns are suggested on Recovery, not here');
+        }
+        v = CqFieldActionNotify.markSent(fa.Id, null);
+        System.assertEquals(2, v.suggestions.size(), 'once the notice is sent only the responses are left');
+        List<String> keys = new List<String>();
+        for (CqFieldActionTasks.Suggestion s : v.suggestions) { keys.add(s.key); }
+        v = CqFieldActionNotify.createTasks(fa.Id, keys);
+        Test.stopTest();
+        System.assertEquals(0, v.suggestions.size());
+        System.assertEquals(2, [SELECT COUNT() FROM Task WHERE WhatId = :fa.Id AND Recall_Task_Type__c = :CqFieldActionTasks.RESPONSE]);
+        System.assertEquals(1, cust(v, 'FNT Hospital A').tasks.size(), 'the new response task shows under its customer');
+    }
+
+    @IsTest
     static void aClosedFieldActionTakesNoChanges() {
         Field_Action__c fa = makeFa();
         update new Field_Action__c(Id = fa.Id, Status__c = 'Closed');

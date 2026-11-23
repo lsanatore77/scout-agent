@@ -20,6 +20,7 @@ public with sharing class CqFieldActionRecovery {
     public class LotRec {
         @AuraEnabled public Id id; @AuraEnabled public String lot; @AuraEnabled public Decimal shipped; @AuraEnabled public Decimal returned;
         @AuraEnabled public Decimal destroyed; @AuraEnabled public Decimal corrected; @AuraEnabled public Decimal field; @AuraEnabled public Integer pct;
+        @AuraEnabled public Decimal used;   // used on patients, as the customers reported (Notifications): accounted for, never coming back
     }
     public class Cust {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public Decimal units; @AuraEnabled public String lots;
@@ -66,6 +67,7 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public List<HoldDisp> holds = new List<HoldDisp>();
         @AuraEnabled public Decimal shipped = 0; @AuraEnabled public Decimal recovered = 0; @AuraEnabled public Boolean shippedKnown = false;
         @AuraEnabled public Integer acked = 0; @AuraEnabled public Integer total = 0; @AuraEnabled public Boolean targetMet = false;
+        @AuraEnabled public Integer notified = 0;   // customers sent the notice (Notifications step)
         @AuraEnabled public Boolean ackRequired = ACK_REQUIRED;
         @AuraEnabled public Integer decided = 0;
         @AuraEnabled public String aiVerdict; @AuraEnabled public String aiLine;
@@ -138,18 +140,23 @@ public with sharing class CqFieldActionRecovery {
         v.closedBy = fa.Closed_By__r?.Name; v.closedOn = fa.Closed_On__c;
         if (!v.closed && v.strategyConfirmed) {
             CqLotShipments.fillShipped(recordId);
-            if (fa.Recovery_Status__c != 'Confirmed') { syncCustomers(recordId); CqFieldActionTasks.sync(recordId); }
+            if (fa.Recovery_Status__c != 'Confirmed') { syncCustomers(recordId); CqLotReturns.toTasks(recordId); CqFieldActionTasks.sync(recordId); }
         }
         v.tasks = CqFieldActionTasks.board(recordId, fa, v.closed);
 
-        // 1. recovery by lot
+        // 1. recovery by lot: units back (returned, destroyed, corrected) and units the customers report as used are accounted for
         List<String> lotNames = new List<String>();
+        Map<String, Decimal> usedOf = new Map<String, Decimal>();   // per lot, from the board's customer|lot figures
+        for (String k : v.tasks.usedByLine.keySet()) {
+            String lot = k.substringAfter('|');
+            usedOf.put(lot, (usedOf.containsKey(lot) ? usedOf.get(lot) : 0) + v.tasks.usedByLine.get(k));
+        }
         for (Field_Action_Lot__c l : [SELECT Id, Lot_Number__c, Units_Shipped__c, Units_Returned__c, Units_Destroyed__c, Units_Corrected__c
                                       FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId AND Approved_In_Scope__c = true ORDER BY Lot_Number__c]) {
             LotRec x = new LotRec();
             x.id = l.Id; x.lot = l.Lot_Number__c; x.shipped = l.Units_Shipped__c; x.returned = l.Units_Returned__c;
-            x.destroyed = l.Units_Destroyed__c; x.corrected = l.Units_Corrected__c;
-            Decimal back = n(x.returned) + n(x.destroyed) + n(x.corrected);
+            x.destroyed = l.Units_Destroyed__c; x.corrected = l.Units_Corrected__c; x.used = usedOf.get(l.Lot_Number__c);
+            Decimal back = n(x.returned) + n(x.destroyed) + n(x.corrected) + n(x.used);
             if (x.shipped != null) {
                 v.shippedKnown = true;
                 x.field = x.shipped - back > 0 ? x.shipped - back : 0;
@@ -161,13 +168,14 @@ public with sharing class CqFieldActionRecovery {
         }
 
         // 2. customers
-        for (Field_Action_Customer__c c : [SELECT Id, Customer_Name__c, Units__c, Lots__c, Status__c, Follow_Ups__c, Responded_On__c, Source__c
+        for (Field_Action_Customer__c c : [SELECT Id, Customer_Name__c, Units__c, Lots__c, Status__c, Follow_Ups__c, Responded_On__c, Source__c, Notice_Sent_On__c
                                            FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY Source__c DESC NULLS LAST, Customer_Name__c]) {
             Cust x = new Cust();
             x.id = c.Id; x.name = c.Customer_Name__c; x.units = c.Units__c; x.lots = c.Lots__c; x.status = c.Status__c == null ? 'Sent' : c.Status__c;
             x.followUps = c.Follow_Ups__c; x.respondedOn = c.Responded_On__c; x.source = c.Source__c;
             v.customers.add(x); v.total++;
             if (x.status == 'Acknowledged') { v.acked++; }
+            if (c.Notice_Sent_On__c != null) { v.notified++; }
         }
         v.targetMet = v.target == 0 || (v.total > 0 && v.acked * 100 >= v.target * v.total);
 
@@ -238,12 +246,13 @@ public with sharing class CqFieldActionRecovery {
         add(v, 'strategy', 'Strategy confirmed', stratOk ? (fa.Action_Type__c + (fa.Depth__c == null ? '' : ' to ' + fa.Depth__c.toLowerCase() + ' level')
             + (fa.Check_Level__c == null ? '' : ' · ' + fa.Check_Level__c + (fa.Check_By__c == null ? '' : ' by ' + day(fa.Check_By__c))))
             : 'The strategy is not confirmed', stratOk ? 'ok' : 'open', true);
-        add(v, 'notifications', 'Notifications', 'Not Applicable: step not in use yet', 'na', false);
+        add(v, 'notifications', 'Notifications', v.total == 0 ? 'No customers listed' : v.notified + ' of ' + v.total + ' customers notified · ' + v.acked + ' responded',
+            v.total > 0 && v.notified == v.total ? 'ok' : 'open', false);
         add(v, 'report', 'Regulatory Report', 'Not Applicable: reported in a separate system', 'na', false);
         String unitsDetail = !v.shippedKnown ? 'Units shipped are not recorded on the Scope step'
             : inField == 0 ? v.recovered.intValue() + ' of ' + v.shipped.intValue() + ' shipped units accounted for'
             : inField.intValue() + ' of ' + v.shipped.intValue() + ' shipped units still in the field';
-        add(v, 'units', 'Units recovered', unitsDetail, v.shippedKnown && inField == 0 ? 'ok' : 'open', strict);
+        add(v, 'units', 'Units accounted for', unitsDetail, v.shippedKnown && inField == 0 ? 'ok' : 'open', strict);
         add(v, 'customers', 'Customers confirmed', v.total == 0 ? 'No customers listed'
             : v.acked + ' of ' + v.total + ' acknowledged' + (v.targetMet ? ' · ' + (v.level == null ? 'target' : v.level) + ' met' : ' · ' + (v.level == null ? 'target' : v.level) + ' needs ' + v.target.intValue() + '%'),
             v.targetMet ? 'ok' : 'open', ACK_REQUIRED || strict);
@@ -268,12 +277,13 @@ public with sharing class CqFieldActionRecovery {
         s.add(fa.Name + ' ' + act + ' ' + part + ' from ' + (lotNames.size() == 1 ? 'lot ' : 'lots ') + String.join(lotNames, ', ')
             + (fa.Depth__c == null ? '' : ' at ' + fa.Depth__c.toLowerCase() + ' level') + (fa.Recall_Class__c == null ? '' : ' (' + fa.Recall_Class__c + ')') + '.');
         if (v.shippedKnown) {
-            Decimal r = 0, d = 0, c = 0;
-            for (LotRec x : v.lots) { r += n(x.returned); d += n(x.destroyed); c += n(x.corrected); }
+            Decimal r = 0, d = 0, c = 0, u = 0;
+            for (LotRec x : v.lots) { r += n(x.returned); d += n(x.destroyed); c += n(x.corrected); u += n(x.used); }
             List<String> how = new List<String>();
             if (r > 0) { how.add(r.intValue() + ' returned'); }
             if (d > 0) { how.add(d.intValue() + ' destroyed on site'); }
             if (c > 0) { how.add(c.intValue() + ' corrected'); }
+            if (u > 0) { how.add(u.intValue() + ' used, as customers reported'); }
             s.add(v.recovered.intValue() + ' of ' + v.shipped.intValue() + ' shipped units are accounted for' + (how.isEmpty() ? '' : ': ' + String.join(how, ', ')) + '.');
         }
         if (v.total > 0) {

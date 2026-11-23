@@ -6,7 +6,8 @@
  *     Line: units used, returning, destroyed). Unknown is the units shipped less those three. Recording the response marks
  *     the customer Acknowledged; Recovery expects back the units returning.
  * The Send notice and Collect response tasks (CqFieldActionTasks) show here: completing a notice task records the date
- * sent, completing a response task records the response.
+ * sent, completing a response task records the response. CQ.AI suggests the ones still missing (not for a customer
+ * already notified, or already responded); the coordinator reviews and creates them here.
  */
 public with sharing class CqFieldActionNotify {
     public static final String ACK = 'Acknowledged';
@@ -35,10 +36,12 @@ public with sharing class CqFieldActionNotify {
         @AuraEnabled public Integer total = 0; @AuraEnabled public Integer notified = 0; @AuraEnabled public Integer responded = 0;
         @AuraEnabled public Integer waiting = 0; @AuraEnabled public Integer overdue = 0;
         @AuraEnabled public String aiLine;
+        @AuraEnabled public List<CqFieldActionTasks.Suggestion> suggestions = new List<CqFieldActionTasks.Suggestion>();
+        @AuraEnabled public String suggestLine;
     }
 
     private static Field_Action__c load(Id recordId) {
-        return [SELECT Id, Status__c, Strategy_Status__c, Action_Type__c, Key_Message__c FROM Field_Action__c WHERE Id = :recordId];
+        return [SELECT Id, Status__c, Strategy_Status__c, Action_Type__c, Key_Message__c, Check_By__c, Check_Level__c FROM Field_Action__c WHERE Id = :recordId];
     }
     private static void openForChange(Field_Action__c fa) {
         if (fa.Status__c == 'Closed') { throw new AuraHandledException('This field action is closed.'); }
@@ -144,8 +147,36 @@ public with sharing class CqFieldActionNotify {
                     + (v.dueOn != null && v.dueOn > today.addDays(3) ? 'Send a follow-up 3 days before the ' + v.dueOn.format() + ' due date.'
                        : 'Follow up now: the response is due' + (v.dueOn == null ? '.' : ' ' + v.dueOn.format() + '.'));
             }
+            suggest(v, fa);
         }
         return v;
+    }
+
+    /** CQ.AI's notice and response tasks still missing, leaving out a notice already sent and a response already in. */
+    private static void suggest(View v, Field_Action__c fa) {
+        Map<Id, Cust> byId = new Map<Id, Cust>();
+        for (Cust c : v.customers) { byId.put(c.id, c); }
+        Integer notices = 0, responses = 0;
+        for (CqFieldActionTasks.Suggestion s : CqFieldActionTasks.board(fa.Id, fa, false).suggestions) {
+            Cust c = byId.get(s.customerId);
+            if (c == null) { continue; }
+            if (s.type == CqFieldActionTasks.NOTICE && c.sentOn == null && c.status != ACK) { v.suggestions.add(s); notices++; }
+            if (s.type == CqFieldActionTasks.RESPONSE && c.status != ACK) { v.suggestions.add(s); responses++; }
+        }
+        if (v.suggestions.isEmpty()) { return; }
+        String word = fa.Action_Type__c == CqFieldActionStrategy.WITHDRAWAL ? 'withdrawal notice' : 'recall notice';
+        List<String> parts = new List<String>();
+        if (notices > 0) { parts.add(notices + ' ' + word + (notices == 1 ? '' : 's')); }
+        if (responses > 0) { parts.add(responses + ' response' + (responses == 1 ? '' : 's') + ' to collect'); }
+        v.suggestLine = String.join(parts, ' and ') + (fa.Check_Level__c == null ? '' : ' for a ' + fa.Check_Level__c + ' check') + '.';
+    }
+
+    /** Creates the suggested notice and response tasks the coordinator kept, owned by the coordinator. */
+    @AuraEnabled
+    public static View createTasks(Id recordId, List<String> keys) {
+        openForChange(load(recordId));
+        CqFieldActionTasks.createSuggested(recordId, keys);
+        return getView(recordId);
     }
 
     // ---------------------------------------------------------------- saves

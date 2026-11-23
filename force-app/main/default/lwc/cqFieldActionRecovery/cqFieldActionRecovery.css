@@ -41,11 +41,13 @@
 .tlink { color: var(--cq-link); text-decoration: none; }
 .tlink:hover { text-decoration: underline; }
 /* the Units column: a number box on return, destruction and correction tasks, with what was shipped beside it */
-.ucol { width: 170px; }
+.ucol { width: 190px; }
 .uin { display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
 
 .cq-field.full { flex: none; width: 200px; }   /* fits \2726 Return to Supplier */
 .cq-field.ni { width: 76px; }
+/* units from the RMAs received: shown, not typed over */
+.ulock { display: inline-block; min-width: 76px; padding: 4px 8px; border-radius: 4px; background: var(--cq-neu-bg); text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cq-field.ni input { min-height: 28px; padding: 2px 8px; text-align: right; }
 .cq-ai-card { padding: 10px 12px; }
 .cq-ai-card.row { display: flex; align-items: center; gap: 10px; min-width: 0; }

@@ -22,7 +22,8 @@
                             <template if:true={showCorrected}><th class="num">Corrected</th></template>
                             <th class="num">Returned</th>
                             <template if:true={showDestroyed}><th class="num">Destroyed</th></template>
-                            <th class="num">Still in Field</th><th class="barcol">Recovered</th>
+                            <th class="num">Used</th>
+                            <th class="num">Still in Field</th><th class="barcol">Accounted For</th>
                         </tr></thead>
                         <tbody>
                             <template for:each={lotRows} for:item="l">
@@ -32,6 +33,7 @@
                                     <template if:true={showCorrected}><td class="num">{l.correctedText}</td></template>
                                     <td class="num">{l.returnedText}</td>
                                     <template if:true={showDestroyed}><td class="num">{l.destroyedText}</td></template>
+                                    <td class="num">{l.usedText}</td>
                                     <td class={l.fieldCls}>{l.fieldText}</td>
                                     <td class="barcol"><template if:true={l.hasPct}><span class="cq-bar"><span class="cq-bar-track"><span class={l.fillCls} style={l.barStyle}></span></span><span class="cq-bar-pct">{l.pctText}</span></span></template></td>
                                 </tr>
@@ -107,7 +109,7 @@
 
                 <template if:true={hasSuggestions}>
                     <div class="cq-ai-card row">
-                        <span class="cq-grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{t.suggestLine}</span></span>
+                        <span class="cq-grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{suggestLine}</span></span>
                         <button class="cq-btn-outline cq-btn-sm ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
                     </div>
                     <template if:true={reviewing}>
@@ -156,10 +158,10 @@
                                         <template if:true={r.isTask}>
                                             <td><span class="cell2"><span class={r.indentCls}></span>
                                                 <input class="cq-tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
-                                                <a class="tlink" href={r.href} target="_blank">{r.title}</a></span></td>
+                                                <span class="cq-stack"><a class="tlink" href={r.href} target="_blank">{r.title}</a><template if:true={r.rmas}><span class="cq-sub block">{r.rmas}</span></template></span></span></td>
                                             <td class="nw">{r.owner}</td>
                                             <td class={r.dueCls}>{r.due}</td>
-                                            <td class="num"><template if:true={r.hasUnits}><span class="uin"><span class="cq-field ni"><input type="number" min="0" data-id={r.id} value={r.unitsVal} onchange={handleUnits} onkeydown={handleUnitsKey} disabled={locked} aria-label={r.unitsLabel} /></span><span class="cq-sub nw">{r.ofText}</span></span></template></td>
+                                            <td class="num"><template if:true={r.hasUnits}><span class="uin"><template if:true={r.locked}><span class="ulock" title="From the returns received (RMAs)">{r.lockedText}</span></template><template if:false={r.locked}><span class="cq-field ni"><input type="number" min="0" data-id={r.id} value={r.unitsVal} onchange={handleUnits} onkeydown={handleUnitsKey} disabled={locked} aria-label={r.unitsLabel} /></span></template><span class="cq-sub nw">{r.ofText}</span></span></template></td>
                                             <td class="num"><span class={r.pillCls}>{r.pill}</span></td>
                                         </template>
                                     </tr>
@@ -180,7 +182,7 @@
                     </template>
                 </template>
                 <template if:false={hasRows}><p class="cq-note">{emptyLine}</p></template>
-                <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Tick a task to complete it: a completed Collect response marks the customer Acknowledged, and units on a task add up in the lot table.</span>
+                <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Units on a return come from the RMAs received; it is ready to complete once they reach what the customer said is coming back. Notices and responses are on the Notifications step.</span>
             </section>
 
             <div class="grid">

@@ -11,8 +11,10 @@ import setTask from '@salesforce/apex/CqFieldActionTasks.setTask';
 
 const DISPOSITIONS = ['Scrap', 'Rework', 'Return to Supplier', 'Release'];
 const NEXT_STEPS = ['Widen the scope', 'A further action to customers', 'Extend the check by 30 days'];
-const TYPES = ['Send recall notice', 'Collect response', 'Track return', 'Confirm destruction', 'Confirm correction', 'Other'];
+const TYPES = ['Track return', 'Confirm destruction', 'Confirm correction', 'Other'];   // notices and responses are added on Notifications
 const UNIT_TYPES = ['Track return', 'Confirm destruction', 'Confirm correction'];
+/** Notice and response tasks live on the Notifications step; Recovery shows the units coming back. */
+const NOTIFY_TYPES = ['Send recall notice', 'Collect response'];
 const NEW_CUSTOMER = '__new';
 const NO_CUSTOMER = '__none';
 const CUST_PAGE = 5;     // customers a page in the Customers and Tasks table; a customer's open rows stay with it
@@ -73,7 +75,10 @@ export default class CqFieldActionRecovery extends LightningElement {
     get locked() { return !this.v.strategyConfirmed || this.v.closed; }
     get needsStrategy() { return this.ready && !this.v.strategyConfirmed; }
     get showStep() { return this.ready && this.v.strategyConfirmed; }
-    get t() { return (this.v && this.v.tasks) || { tasks: [], suggestions: [], people: [], lotsByCustomer: {}, shippedByLine: {}, open: 0, completed: 0, overdue: 0, dueWeek: 0 }; }
+    get t() { return (this.v && this.v.tasks) || { tasks: [], suggestions: [], people: [], lotsByCustomer: {}, shippedByLine: {}, usedByLine: {}, expectedByLine: {}, open: 0, completed: 0, overdue: 0, dueWeek: 0 }; }
+    /** The tasks this step shows: returns, destructions, corrections and any other task, not the notices and responses. */
+    get myTasks() { return this.t.tasks.filter((x) => !NOTIFY_TYPES.includes(x.type)); }
+    get mySuggestions() { return this.t.suggestions.filter((s) => !NOTIFY_TYPES.includes(s.type)); }
     num(x) { return x === undefined || x === null ? '—' : String(Number(x)); }
     bar(pct) { return 'width:' + pct + '%'; }
     day(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString() : ''; }
@@ -115,13 +120,13 @@ export default class CqFieldActionRecovery extends LightningElement {
     get showCorrected() { return this.isCorrection; }
     get tableHint() {
         return 'Shipped comes from the lot shipments. ' + (this.isCorrection ? 'Corrected and Returned add' : 'Returned and Destroyed add')
-            + ' up from the units on the tasks below.';
+            + ' up from the units on the tasks below; returns come from the RMAs received. Used is what the customers reported on Notifications.';
     }
     get lotRows() {
         return this.v.lots.map((l) => {
             const pct = l.pct === undefined || l.pct === null ? 0 : l.pct;
             return { ...l, shippedText: this.num(l.shipped), returnedText: this.num(l.returned), destroyedText: this.num(l.destroyed),
-                correctedText: this.num(l.corrected), fieldText: this.num(l.field),
+                correctedText: this.num(l.corrected), usedText: this.num(l.used), fieldText: this.num(l.field),
                 fieldCls: 'num b ' + (l.field ? 'warnc' : l.field === 0 ? 'okc' : ''),
                 hasPct: l.shipped !== undefined && l.shipped !== null, pctText: pct + '%', barStyle: this.bar(pct),
                 fillCls: 'cq-bar-fill' + (pct >= 100 ? ' done' : '') };
@@ -130,13 +135,15 @@ export default class CqFieldActionRecovery extends LightningElement {
     get recoveryLine() {
         if (!this.v.shippedKnown) { return 'Units shipped are not recorded on the Scope step'; }
         const pct = this.v.shipped ? Math.floor(100 * this.v.recovered / this.v.shipped) : 100;
-        return this.v.recovered + ' of ' + this.v.shipped + ' units recovered · ' + pct + '%';
+        return this.v.recovered + ' of ' + this.v.shipped + ' units accounted for · ' + pct + '%';
     }
 
     // ---- task cards: click one to filter the table, click it again to show everything
     get cards() {
-        const t = this.t;
-        return [['open', 'Open Tasks', t.open], ['done', 'Completed Tasks', t.completed], ['over', 'Overdue Tasks', t.overdue], ['week', 'Due This Week', t.dueWeek]]
+        const ts = this.myTasks;
+        const count = (f) => ts.filter(f).length;
+        return [['open', 'Open Tasks', count((x) => !x.done)], ['done', 'Completed Tasks', count((x) => x.done)],
+            ['over', 'Overdue Tasks', count((x) => x.overdue)], ['week', 'Due This Week', count((x) => x.dueWeek)]]
             .map(([key, label, n]) => ({ key, label, n, pressed: this.filter === key ? 'true' : 'false',
                 cls: 'cq-statcard' + (this.filter === key ? ' on' : ''),
                 numCls: 'cq-statcard-v' + (key === 'done' && n ? ' ok' : key === 'over' && n ? ' bad' : '') }));
@@ -160,13 +167,13 @@ export default class CqFieldActionRecovery extends LightningElement {
     // ---- 2. customers and tasks: customer, then the lots shipped to them, then the tasks on each
     /** The customers the table lists: those with tasks matching the card filter, whose name matches the search. */
     get custList() {
-        const t = this.t;
+        const tasks = this.myTasks;
         const custs = this.v.customers.map((c) => ({ ...c }));
-        const loose = t.tasks.filter((x) => !x.customerId || !custs.some((c) => c.id === x.customerId));
+        const loose = tasks.filter((x) => !x.customerId || !custs.some((c) => c.id === x.customerId));
         if (loose.length) { custs.push({ id: NO_CUSTOMER, name: 'Other tasks', other: true }); }
         const q = this.search.trim().toLowerCase();
         return custs.map((c) => {
-            const mine = c.other ? loose : t.tasks.filter((x) => x.customerId === c.id);
+            const mine = c.other ? loose : tasks.filter((x) => x.customerId === c.id);
             return { c, mine, shown: mine.filter((x) => this.keepTask(x)) };
         }).filter((e) => (this.filter === 'all' || e.shown.length > 0) && (!q || (e.c.name || '').toLowerCase().includes(q)));
     }
@@ -190,9 +197,11 @@ export default class CqFieldActionRecovery extends LightningElement {
             const openCount = mine.filter((x) => !x.done).length;
             const lots = c.other ? [] : (t.lotsByCustomer[c.id] || []).slice();
             mine.forEach((x) => { if (x.lot && !lots.includes(x.lot)) { lots.push(x.lot); } });
-            // units still with this customer: shipped to them, less the units on their return, destruction and correction tasks
-            const backOf = (lot) => mine.filter((x) => x.lot === lot && x.hasUnits).reduce((s, x) => s + Number(x.units || 0), 0);
-            const outOf = (lot) => { const n = t.shippedByLine[c.id + '|' + lot]; return n === undefined || n === null ? null : Math.max(0, n - backOf(lot)); };
+            // units still out with this customer: shipped to them, less the units back on their return, destruction and
+            // correction tasks, and less what they reported as used (Notifications), which is accounted for and never comes back
+            const sumOf = (lot, type) => mine.filter((x) => x.lot === lot && x.hasUnits && (!type || x.type === type)).reduce((s, x) => s + Number(x.units || 0), 0);
+            const usedOf = (lot) => Number((t.usedByLine || {})[c.id + '|' + lot] || 0);
+            const outOf = (lot) => { const n = t.shippedByLine[c.id + '|' + lot]; return n === undefined || n === null ? null : Math.max(0, n - sumOf(lot) - usedOf(lot)); };
             const outs = c.other ? [] : lots.map(outOf).filter((n) => n !== null);
             const custOut = outs.length ? outs.reduce((a, b) => a + b, 0) : null;
             rows.push({ key: 'c' + c.id, isCust: true, rowCls: 'cq-row-parent', id: c.id, title: c.name, chevCls: 'cq-rchev' + (open ? ' open' : ''),
@@ -200,7 +209,7 @@ export default class CqFieldActionRecovery extends LightningElement {
                 sub: c.other ? openCount + ' open' : [c.units !== undefined && c.units !== null ? c.units + ' units' : '',
                     lots.length + ' lot' + (lots.length === 1 ? '' : 's'), openCount + ' open task' + (openCount === 1 ? '' : 's'),
                     c.source === 'Shipment' ? '' : 'added by hand'].filter(Boolean).join(' · '),
-                unitsLine: custOut === null ? '' : custOut ? custOut + ' still out' : 'All back', unitsCls: 'num ' + (custOut ? 'warnc' : 'okc'),
+                unitsLine: custOut === null ? '' : custOut ? custOut + ' still out' : 'All accounted for', unitsCls: 'num ' + (custOut ? 'warnc' : 'okc'),
                 hasPill: !c.other, pill: c.status, pillCls: 'cq-pill soft ' + (c.status === 'Acknowledged' ? 'pos' : c.status === 'No reply' ? 'crit' : 'neu') });
             if (!open) { return; }
             shown.filter((x) => !x.lot).forEach((x) => rows.push(this.taskRow(x, 'i1')));
@@ -209,26 +218,38 @@ export default class CqFieldActionRecovery extends LightningElement {
                 if (this.filter !== 'all' && !lt.length) { return; }
                 const shipped = t.shippedByLine[c.id + '|' + lot];
                 const known = shipped !== undefined && shipped !== null;
-                const back = backOf(lot);
                 const out = outOf(lot);
+                const returned = sumOf(lot, 'Track return'), destroyed = sumOf(lot, 'Confirm destruction'), corrected = sumOf(lot, 'Confirm correction');
+                const used = usedOf(lot);
+                const parts = [returned || !(destroyed || corrected) ? returned + ' returned' : '', destroyed ? destroyed + ' destroyed' : '',
+                    corrected ? corrected + ' corrected' : '', used ? used + ' used' : ''].filter(Boolean);
                 rows.push({ key: 'l' + c.id + lot, isLot: true, rowCls: '', title: lot,   // nested under the customer by its indent, not a band
                     inRecall: this.v.lots.some((l) => l.lot === lot),
                     sub: '',   // shipped, back and still out are in the Units column
-                    unitsBack: known ? back + ' of ' + shipped + ' back' : back + ' back',
-                    outText: out === null ? '' : out ? out + ' out' : 'all back', outCls: out ? 'warnc' : 'okc' });
-                lt.forEach((x) => rows.push(this.taskRow(x, 'i2', known ? shipped : null)));
+                    unitsBack: parts.join(' · '),
+                    outText: out === null ? '' : out + ' out', outCls: out ? 'warnc' : 'okc' });
+                // a return expects what the customer said is coming back (Notifications), or else everything shipped
+                const said = (t.expectedByLine || {})[c.id + '|' + lot];
+                const expected = said !== undefined && said !== null ? said : known ? shipped : null;
+                lt.forEach((x) => rows.push(this.taskRow(x, 'i2', expected)));
             });
         });
         return rows;
     }
-    taskRow(x, indent, shipped) {
+    taskRow(x, indent, expected) {
+        const hasExp = expected !== undefined && expected !== null;
+        const got = x.units === undefined || x.units === null ? null : Number(x.units);
+        // units from the RMAs received are not typed over; once they reach what is expected, the task is ready to complete
+        const ready = !x.done && x.fromReturns && hasExp && got !== null && got >= expected;
         return { key: 't' + x.id, isTask: true, rowCls: '', id: x.id, title: x.subject, indentCls: indent === 'i2' ? 'ind2' : 'ind1', href: '/lightning/r/Task/' + x.id + '/view',
             done: x.done, checkLabel: (x.done ? 'Reopen ' : 'Complete ') + x.subject,
             hasUnits: x.hasUnits, unitsVal: x.units === undefined || x.units === null ? '' : x.units,
-            ofText: shipped === undefined || shipped === null ? '' : 'of ' + shipped,
+            ofText: hasExp ? 'of ' + expected + (x.type === 'Track return' ? ' expected' : '') : '',
+            locked: !!x.fromReturns, lockedText: got === null ? '0' : String(got), rmas: x.rmas || '', ready,
             unitsLabel: (x.type === 'Confirm correction' ? 'Units corrected' : x.type === 'Confirm destruction' ? 'Units destroyed' : 'Units back') + ': ' + x.subject,
             owner: x.owner, due: this.day(x.due), dueCls: 'nw' + (x.overdue ? ' badc b' : ''),
-            pill: x.done ? 'Done' : x.overdue ? 'Overdue' : 'Open', pillCls: 'cq-pill soft ' + (x.done ? 'pos' : x.overdue ? 'crit' : 'neu') };
+            pill: x.done ? 'Done' : ready ? 'Ready to Complete' : x.overdue ? 'Overdue' : 'Open',
+            pillCls: 'cq-pill soft ' + (x.done ? 'pos' : ready ? 'pos' : x.overdue ? 'crit' : 'neu') };
     }
     get hasRows() { return this.rows.length > 0; }
     get emptyLine() {
@@ -258,18 +279,24 @@ export default class CqFieldActionRecovery extends LightningElement {
     handleUnitsKey(event) { if (event.key === 'Enter') { event.target.blur(); } }
 
     // ---- CQ.AI's suggested tasks
-    get hasSuggestions() { return !this.locked && this.t.suggestions.length > 0; }
+    get hasSuggestions() { return !this.locked && this.mySuggestions.length > 0; }
+    /** CQ.AI's line for the return, destruction and correction tasks it suggests (notices and responses are on Notifications). */
+    get suggestLine() {
+        const n = this.mySuggestions.length;
+        const w = this.isCorrection ? 'correction' : 'return';
+        return n + ' ' + w + ' task' + (n === 1 ? '' : 's') + ' for the lots each customer received.';
+    }
     get suggestRows() {
-        return this.t.suggestions.map((s) => ({ ...s, checked: this.keep[s.key] !== false, due: this.day(s.due),
+        return this.mySuggestions.map((s) => ({ ...s, checked: this.keep[s.key] !== false, due: this.day(s.due),
             label: 'Create: ' + s.subject }));
     }
-    get keptCount() { return this.t.suggestions.filter((s) => this.keep[s.key] !== false).length; }
+    get keptCount() { return this.mySuggestions.filter((s) => this.keep[s.key] !== false).length; }
     get createLabel() { return 'Create ' + this.keptCount + ' Task' + (this.keptCount === 1 ? '' : 's'); }
     get cantCreate() { return this.busy || this.keptCount === 0; }
     handleReview() { this.reviewing = !this.reviewing; this.keep = {}; }
     handleKeep(event) { this.keep = { ...this.keep, [event.target.dataset.key]: event.target.checked }; }
     async handleCreate() {
-        const keys = this.t.suggestions.filter((s) => this.keep[s.key] !== false).map((s) => s.key);
+        const keys = this.mySuggestions.filter((s) => this.keep[s.key] !== false).map((s) => s.key);
         await this.call(() => createSuggested({ recordId: this.recordId, keys }), 'Could not create those tasks.', () => { this.reviewing = false; this.keep = {}; });
     }
 
@@ -368,7 +395,7 @@ export default class CqFieldActionRecovery extends LightningElement {
             v.targetMet, v.ackRequired));
         if (!this.isNotice) {
             const inField = v.shipped - v.recovered;
-            out.push(this.check('units', 'Units recovered', !v.shippedKnown ? 'Units shipped are not recorded on the Scope step'
+            out.push(this.check('units', 'Units accounted for', !v.shippedKnown ? 'Units shipped are not recorded on the Scope step'
                 : inField > 0 ? inField + ' of ' + v.shipped + ' shipped still in the field' : 'All ' + v.shipped + ' shipped units accounted for',
                 v.shippedKnown && inField <= 0, false));
         }
