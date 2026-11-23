@@ -10,20 +10,41 @@
                         <h3 class="cq-step-title">Disposition at a Glance</h3>
                         <div class="cq-cols wide">
                             <div class="cq-pcard">
-                                <div class="cq-card-title">The Problem</div>
-                                <p class="cq-prob">{problemText}</p>
-                                <div class="cq-tiles">
-                                    <div class="cq-tile"><div class="cq-tile-k">Left to Dispose</div><div class="cq-tile-v">{leftText}</div></div>
-                                    <div class="cq-tile"><div class="cq-tile-k">Lots</div><div class="cq-tile-v">{lotCount}</div></div>
-                                    <div class="cq-tile"><div class="cq-tile-k">Approval</div><div class="cq-tile-v">{approvalText}</div></div>
-                                    <div class="cq-tile"><div class="cq-tile-k">Due</div><div class="cq-tile-v">{dueText}</div></div>
+                                <div class="cq-card-title">What's Wrong</div>
+                                <div class="ww">
+                                    <template if:true={photoUrl}><a class="wphoto" href={photoUrl} target="_blank" title="Open the photo"><img src={photoUrl} alt="Photo of the problem" /></a></template>
+                                    <dl class="wkv">
+                                        <dt>Failure Code</dt><dd>{failureText}<template if:true={v.failureCategory}> <span class="cq-pill soft neu">{v.failureCategory}</span></template></dd>
+                                        <dt>Severity</dt><dd>{severityText}</dd>
+                                        <template if:true={v.spec}><dt>Specification</dt><dd>{v.spec}</dd></template>
+                                        <template if:true={v.actual}><dt>Actual</dt><dd class="bad">{v.actual}</dd></template>
+                                        <dt>Units</dt><dd>{unitsText}</dd>
+                                    </dl>
                                 </div>
+                                <p class="cq-prob">{problemText}</p>
+                                <template if:true={v.investigationId}>
+                                    <div class="winv">
+                                        <span class="cq-strong">Investigation</span>
+                                        <a class="cq-link" href={invHref} target="_blank">{v.investigationName}</a>
+                                        <span class={invPillCls}>{invStatusText}</span>
+                                        <span class="cq-muted">{causeLine}</span>
+                                    </div>
+                                </template>
                             </div>
                             <div class="cq-ai-card">
-                                <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why></div>
+                                <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why><template if:true={v.confidence}> <span class="conf">{confidenceText}</span></template></div>
                                 <div class="cq-ai-verdict">{suggestHeadline}</div>
                                 <div class="cq-ai-text">{v.suggestWhy}</div>
+                                <template if:true={hasFactors}>
+                                    <ul class="factors"><template for:each={factorRows} for:item="f"><li key={f.key}>{f.text}</li></template></ul>
+                                </template>
                             </div>
+                        </div>
+                        <div class="cq-tiles cq-mt16">
+                            <div class="cq-tile"><div class="cq-tile-k">Left to Dispose</div><div class="cq-tile-v">{leftText}</div></div>
+                            <div class="cq-tile"><div class="cq-tile-k">Lots</div><div class="cq-tile-v">{lotCount}</div></div>
+                            <div class="cq-tile"><div class="cq-tile-k">Approval</div><div class="cq-tile-v">{approvalText}</div></div>
+                            <div class="cq-tile"><div class="cq-tile-k">Due</div><div class="cq-tile-v">{dueText}</div></div>
                         </div>
 
                         <div class="cq-card-title cq-mt16">Parts and Lots to Dispose</div>
@@ -76,7 +97,7 @@
 
                     <template if:true={showDispose}>
                         <h3 class="cq-step-title">Dispose by Lot</h3>
-                        <p class="cq-step-intro">Record what was done with each lot. CQ.AI's suggestion starts selected; click another type to change it. Complete Disposition saves the dispositions and completes them in CQ in one step.</p>
+                        <p class="cq-step-intro">{disposeIntro}</p>
                         <template if:true={v.needsApproval}>
                             <div class="cq-msg warn">This NC needs disposition approval, which this workspace does not do yet. Use the Disposition tab to send it for approval.</div>
                         </template>
@@ -88,7 +109,7 @@
                                     <template if:true={l.doneText}><span class="count green">{l.doneText}</span></template>
                                 </div>
                                 <template if:true={l.open}>
-                                    <div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why> <strong>{l.suggestText}.</strong></div>
+                                    <template if:true={l.suggestText}><div class="cq-ai-card fsug"><c-cq-ai-why variant="label" text="CQ.AI Suggests:" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why> <strong>{l.suggestText}.</strong></div></template>
                                     <template for:each={l.rows} for:item="r">
                                         <div key={r.key} class="drow">
                                             <div class="cq-field"><span class="cq-label">Type<span class="cq-req">*</span></span>
@@ -110,10 +131,12 @@
                                                 </label>
                                                 <template if:true={r.canRemove}><button class="cq-btn-outline" data-lot={l.idx} data-row={r.idx} onclick={handleRemove}>Remove</button></template>
                                             </div>
+                                            <template if:true={r.nowOk}><p class="okline">&#10003; {r.nowOk}</p></template>
+                                            <template if:true={r.waitText}><div class="cq-msg warn waitbox"><strong>The root cause is not known yet.</strong> {r.waitText}</div></template>
                                             <template if:true={r.needsWhy}>
-                                                <label class="cq-field"><span class="cq-label">Justification<span class="cq-req">*</span></span>
-                                                    <textarea rows="2" value={r.justification} data-lot={l.idx} data-row={r.idx} data-f="justification" onchange={handleField}></textarea>
-                                                    <span class="cq-hint">Use As Is releases nonconforming units, so it needs a reason on the record.</span>
+                                                <label class="cq-field"><span class="cq-label">{r.whyLabel}<span class="cq-req">*</span></span>
+                                                    <textarea rows="2" value={r.justification} placeholder={r.whyHint} data-lot={l.idx} data-row={r.idx} data-f="justification" onchange={handleField} oninput={handleField}></textarea>
+                                                    <span class="cq-hint">{r.whyNote}</span>
                                                 </label>
                                             </template>
                                         </div>
@@ -127,9 +150,14 @@
                                 </template>
                             </section>
                         </template>
-                        <div class="cq-infobox">
-                            <strong>On Complete Disposition:</strong> each row is saved as a CQ disposition and marked Complete by {userText}. CQ updates each lot's disposed quantity, and when nothing is left the NC's disposition is complete. Anything left on a lot gets a new draft for later.
-                        </div>
+                        <section class="signsec">
+                            <div class="signhead"><span class="cq-card-title nom">Sign the Disposition</span></div>
+                            <c-cq-sign-seat record-id={recordId} policy-key="compliancequest__SQX_Nonconformance__c" actions={seatActions}
+                                seat="Dispositioned By" person="You" sub={signFor} status="Your Signature" tone="you" mine
+                                meaning={signMeaning} comment-hint="Optional, for example scrapped per SOP-QA-021." submit={seatSubmit} disabled={cantComplete}>
+                            </c-cq-sign-seat>
+                            <p class="snote">On Complete Disposition each row is saved as a CQ disposition and marked Complete by you, signed for every lot and split above. CQ updates each lot's disposed quantity, and when nothing is left the NC's disposition is complete. Anything left on a lot gets a new draft for later.</p>
+                        </section>
                     </template>
 
                     <template if:true={showDone}>
@@ -142,7 +170,6 @@
                         <div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div>
                     </template>
 
-                    <template if:true={showDispose}><button slot="foot" class="cq-btn-primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
         </c-cq-ws-shell>
     </template>
 </template>

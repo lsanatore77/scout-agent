@@ -9,7 +9,8 @@ public with sharing class CqEsigBridge implements CqEsigGateway {
     /** The class that keeps each signable object's signatures (CqSignable). A new signable object is added here. */
     private static final Map<String, String> SIGNABLE = new Map<String, String>{
         'Field_Action_Review__c' => 'CqFarSignable',
-        'Field_Action__c' => 'CqFaSignable'
+        'Field_Action__c' => 'CqFaSignable',
+        'compliancequest__SQX_Nonconformance__c' => 'CqNcSignable'
     };
     public static CqSignable signable(Id recordId) {
         String n = recordId == null ? null : SIGNABLE.get(String.valueOf(recordId.getSObjectType()));

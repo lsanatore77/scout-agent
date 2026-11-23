@@ -56,3 +56,4 @@ Setup > Custom Settings > **Field Action Settings** > Manage > the org default >
 |---|---|---|---|
 | Field Action Review | Committee Approve (`approve`), Committee Send Back (`reject`) | each committee seat | Field_Action_Review_Record_Activity__c (FRA-…) |
 | Field Action | Close Field Action (`close`) | the Field Action owner (Recall Coordinator) | Field_Action_Record_Activity__c (FAA-…) |
+| Nonconformance | Completing Disposition (`completedisposition`, CQ's own NC action) | the dispositioner, once for every lot and split (Disposition workspace, Dispose by Lot) | CQ's NC Record Activity (`compliancequest__SQX_NC_Record_Activity__c`), written by `CqNcSignable` with what was signed for |

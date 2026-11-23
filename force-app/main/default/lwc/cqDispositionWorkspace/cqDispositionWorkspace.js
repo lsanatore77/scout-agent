@@ -7,17 +7,23 @@ import completeDispositions from '@salesforce/apex/CqDispositionWorkspace.comple
 // Ask CQ.AI ready questions for each step (no commas: the popover splits on them)
 const ASK = {
     'Disposition at a Glance': 'Why does CQ.AI suggest this disposition?,What was done with this part before?,What is still open on this NC?',
-    'Dispose by Lot': 'Why does CQ.AI suggest this disposition?,When is Use As Is acceptable?,What happens when I complete the disposition?',
+    'Dispose by Lot': 'Why does CQ.AI suggest this disposition?,When is Rework safe before the root cause is known?,What does my signature confirm?',
     'Disposition Complete': 'What is still open on this NC?,Summarize this nonconformance'
 };
 const STEPS = ['Disposition at a Glance', 'Dispose by Lot'];
 const USE_AS_IS = 'Use As Is';
+const REWORK = 'Rework';
+const HOLD = 'Hold';      // CQ.AI suggests waiting for the root cause: not a disposition type, so no type starts selected
 
 /**
  * CQ.AI Disposition workspace: the nonconformance's record header, then two steps in the page.
  * Disposition at a Glance shows the problem, CQ.AI's suggestion, the lots and what was done on this part before.
  * Dispose by Lot records what was done with each lot (a lot can be split across types) and Complete Disposition
  * saves and completes the dispositions in CQ in one step. Steps can be opened in any order.
+ *
+ * Evidence-led (option B): What's Wrong shows the failure code, severity, specification against actual, the photo and the
+ * investigation. Scrap and Return To Vendor can be done at any time; Rework and Use As Is need the root cause, or a reason.
+ * The dispositioner signs once (c-cq-sign-seat, CQ's Nonconformance > Completing Disposition policy) for every lot and split.
  */
 export default class CqDispositionWorkspace extends NavigationMixin(LightningElement) {
     @api recordId;
@@ -29,8 +35,10 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     forms = [];         // per open lot: { impactedId, rows: [{ key, draftId, type, qty, completedOn, comment, justification }] }
     result;             // what Complete Disposition did
     suggestedAtSave;
+    signedNow = false;
     saving = false;
     keySeq = 0;
+    seatActions = [{ action: 'completedisposition', label: 'Complete Disposition', doing: 'Completing', signing: 'completing the disposition' }];
 
     connectedCallback() { this.load(); }
 
@@ -48,11 +56,14 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
         const today = this.todayIso();
         this.forms = (this.v.lots || []).filter((l) => l.left > 0).map((l) => ({
             impactedId: l.impactedId,
-            rows: [{ key: 'r' + (this.keySeq++), draftId: l.draftId, type: this.v.suggestType, qty: this.num(l.left), completedOn: today, comment: '', justification: '' }]
+            rows: [{ key: 'r' + (this.keySeq++), draftId: l.draftId, type: this.startType, qty: this.num(l.left), completedOn: today, comment: '', justification: '' }]
         }));
     }
 
     get ready() { return !!this.v; }
+    /** The type a lot starts with: CQ.AI's suggestion, none when it says to hold the lot. */
+    get startType() { return this.v.suggestType && this.v.suggestType !== HOLD ? this.v.suggestType : null; }
+    get isHold() { return this.v.suggestType === HOLD; }
     msg(e, fallback) { return (e && e.body && e.body.message) || (e && e.message) || fallback; }
     num(x) { return x === undefined || x === null ? 0 : Number(x); }
     fmt(x) { const n = this.num(x); return Number.isInteger(n) ? String(n) : String(+n.toFixed(2)); }
@@ -141,9 +152,31 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get lotCount() { return (this.v.lots || []).length; }
     get noLots() { return this.lotCount === 0; }
     get approvalText() { return this.v.needsApproval ? 'Required' : 'Not Required'; }
+    // What's Wrong
+    get photoUrl() { return this.v.photoId ? '/sfc/servlet.shepherd/version/download/' + this.v.photoId : null; }
+    get failureText() { return this.v.failureCode || 'Not set'; }
+    get severityText() { return this.v.severity ? this.v.severity.replace(/^(\d+)\s*-\s*/, '$1 · ') : '—'; }
+    get unitsText() {
+        const bits = [this.units(this.totalLeft) + ' left to dispose'];
+        if (this.v.defective) { bits.push(this.fmt(this.v.defective) + ' defective'); }
+        return bits.join(' · ');
+    }
+    get invStatusText() { return this.v.causeKnown ? 'Root Cause Found' : this.v.investigationOpen ? 'Open' : this.dash(this.v.investigationStatus); }
+    get invPillCls() { return 'cq-pill soft ' + (this.v.causeKnown ? 'pos' : this.v.investigationOpen ? 'warn' : 'neu'); }
+    get causeLine() {
+        if (this.v.causeKnown) { return this.v.causeText; }
+        return 'Root cause not found yet' + (this.v.investigationDue ? ' · due ' + this.dateText(this.v.investigationDue) : '');
+    }
+    get confidenceText() { return this.v.confidence + ' Confidence'; }
+    get hasFactors() { return (this.v.suggestFactors || []).length > 0; }
+    get factorRows() { return (this.v.suggestFactors || []).map((t, i) => ({ key: 'f' + i, text: t })); }
     get suggestHeadline() {
         if (!this.v.suggestType || this.totalLeft === 0) { return 'Nothing to Dispose'; }
         const open = (this.v.lots || []).filter((l) => l.left > 0);
+        if (this.isHold) {
+            const lots = open.map((l) => l.lot).join(', ');
+            return 'Keep ' + (open.length === 1 ? 'Lot ' : 'Lots ') + lots + ' on Hold Until ' + (this.v.investigationName || 'the Investigation') + ' Finds the Cause';
+        }
         if (open.length === 1) { return this.v.suggestType + ' ' + this.units(open[0].left) + ' of Lot ' + open[0].lot; }
         return this.v.suggestType + ' ' + this.units(this.totalLeft);
     }
@@ -173,6 +206,31 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     }
 
     // ---- step 2: Dispose by Lot
+    get disposeIntro() {
+        const start = this.isHold ? 'CQ.AI suggests holding these lots, so no type starts selected; Scrap now is reasonable if you cannot hold the stock.'
+            : 'CQ.AI\'s suggestion starts selected; click another type to change it.';
+        return 'Record what was done with each lot. ' + start + ' Scrap and Return To Vendor can be completed at any time; '
+            + (this.v.reasonNeeded ? 'Rework and Use As Is need a reason while the root cause is not known.' : 'Use As Is needs a justification.');
+    }
+    /** What a row needs besides its type and quantity: a reason for Rework before the cause is known, and for Use As Is always. */
+    rowRules(type) {
+        const early = !!this.v.reasonNeeded;
+        const inv = this.v.investigationName ? this.v.investigationName + ' is still open, so' : 'No root cause is recorded, so';
+        if (type === REWORK && early) {
+            return { needsWhy: true, whyLabel: 'Why Rework Now',
+                waitText: inv + ' it is not yet clear that rework fixes what went wrong. Wait for the investigation, or say why rework is safe now.',
+                whyHint: 'For example, the leak is at the hub bond only; re-bonding to the work instruction and a 100% pressure test bring each unit back to spec',
+                whyNote: 'Saved on the disposition as its justification.' };
+        }
+        if (type === USE_AS_IS) {
+            return { needsWhy: true, whyLabel: early ? 'Why Use As Is Now' : 'Justification',
+                waitText: early ? inv + ' it is not yet clear the units are safe to release. Wait for the investigation, or say why they can be used as is.' : null,
+                whyHint: 'For example, engineering assessment EA-0042 shows no effect on performance',
+                whyNote: 'Use As Is releases nonconforming units, so it needs a reason on the record.' };
+        }
+        if (type && type !== REWORK && early) { return { nowOk: type + ' does not depend on the root cause, so it can be completed now.' }; }
+        return {};
+    }
     get lotForms() {
         const types = this.v.types || [];
         return (this.v.lots || []).map((l) => {
@@ -182,7 +240,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
             const over = f && planned > this.num(l.left);
             return {
                 impactedId: l.impactedId, lot: l.lot, partName: l.partName, idx: fi, open: !!f, draftName: l.draftName,
-                suggestText: this.v.suggestType + ' ' + this.fmt(l.left),
+                suggestText: !this.v.suggestType ? null : this.isHold ? 'Hold until the root cause is known (Scrap if the stock cannot be held)' : this.v.suggestType + ' ' + this.fmt(l.left),
                 doneText: !f ? 'All ' + this.fmt(l.impacted) + ' Disposed' : null,
                 // too many is an error; fewer is allowed today and the rest stays on the lot
                 qtyMsg: !f ? null
@@ -190,7 +248,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
                     : planned > 0 && planned < this.num(l.left) ? 'You\'ve entered ' + this.fmt(planned) + ', there are ' + this.fmt(this.num(l.left) - planned) + ' remaining items left to Disposition.'
                     : null,
                 rows: f ? f.rows.map((r, ri) => ({
-                    ...r, idx: ri, canRemove: f.rows.length > 1, needsWhy: r.type === USE_AS_IS,
+                    ...r, idx: ri, canRemove: f.rows.length > 1, needsWhy: false, nowOk: null, waitText: null, ...this.rowRules(r.type),
                     typeOpts: types.map((t) => ({ label: t, pressed: String(r.type === t),
                         cls: 'cq-chip' + (t === this.v.suggestType ? ' ai' : '') }))
                 })) : []
@@ -254,6 +312,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
                 if (!(this.num(r.qty) > 0)) { return name + 'enter a quantity'; }
                 if (!r.completedOn) { return name + 'enter the completed date'; }
                 if (r.type === USE_AS_IS && !(r.justification || '').trim()) { return name + 'Use As Is needs a justification'; }
+                if (r.type === REWORK && this.v.reasonNeeded && !(r.justification || '').trim()) { return name + 'say why Rework is safe before the cause is known'; }
             }
         }
         return null;
@@ -264,7 +323,18 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     }
     get blocker() { return this.showDispose ? this.stepBlocker() : null; }
     get cantComplete() { return this.saving || !!this.stepBlocker(); }
-    get completeLabel() { return this.saving ? 'Completing…' : 'Complete Disposition'; }
+    /** What the signature covers: every lot and split, as the server records it with the signature. */
+    get signFor() {
+        const out = [];
+        this.forms.forEach((f) => {
+            const lot = this.v.lots.find((l) => l.impactedId === f.impactedId);
+            const parts = f.rows.filter((r) => r.type && this.num(r.qty) > 0).map((r) => this.fmt(r.qty) + ' ' + r.type);
+            const total = f.rows.reduce((a, r) => a + this.num(r.qty), 0);
+            if (parts.length) { out.push('Lot ' + lot.lot + ': ' + parts.join(', ') + ' (' + this.fmt(total) + (total === 1 ? ' unit)' : ' units)')); }
+        });
+        return out.length ? 'Signs for ' + out.join('; ') : 'Choose a type for each lot';
+    }
+    get signMeaning() { return 'confirm the dispositions recorded above for every lot and split are what was done'; }
     get cantBack() { return this.step === 0; }
     get cantNext() { return this.step >= STEPS.length - 1; }
     get nextCls() { return this.cantNext ? 'cq-btn-outline' : 'cq-btn-primary'; }
@@ -278,20 +348,27 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     handleBack() { if (this.step > 0) { this.go(this.step - 1); } }
     handleNext() { if (this.step < STEPS.length - 1) { this.go(this.step + 1); } }
 
-    async handleComplete() {
-        if (this.cantComplete || this.anyOver) { return; }
+    /** The seat's one button signs and completes in one request; a refusal is thrown back so the seat shows it. */
+    seatSubmit = async ({ comment, password }) => {
+        if (this.anyOver) { throw new Error('A lot has more entered than it has left to dispose.'); }
+        await this.complete(comment, password);
+    };
+
+    async complete(comment, password) {
+        if (this.cantComplete) { return; }
         this.saving = true;
         this.error = undefined;
         const rows = [];
         this.forms.forEach((f) => f.rows.forEach((r) => rows.push({ impactedId: f.impactedId, draftId: r.draftId, type: r.type, qty: this.num(r.qty),
             completedOn: r.completedOn, comment: r.comment, justification: r.justification })));
         try {
-            this.result = await completeDispositions({ recordId: this.recordId, payload: JSON.stringify(rows) });
+            this.result = await completeDispositions({ recordId: this.recordId, payload: JSON.stringify(rows), comment: comment || null, password: password || null });
             this.suggestedAtSave = this.v.suggestType;
+            this.signedNow = !!password;
             try { await notifyRecordUpdateAvailable([{ recordId: this.recordId }]); } catch (e) { /* the page refreshes on its own later */ }
             this.dispatchEvent(new CustomEvent('changed'));
         } catch (e) {
-            this.error = this.msg(e, 'The disposition was not completed.');
+            throw new Error(this.msg(e, 'The disposition was not completed.'));
         } finally {
             this.saving = false;
         }
@@ -313,6 +390,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
                 : chosen.length ? ' · You Chose ' + (chosen.length > 1 ? chosen.slice(0, -1).join(', ') + ' and ' + chosen[chosen.length - 1] : chosen[0]) : '';
             rows.push({ key: 'sug', k: 'CQ.AI Suggests', v: sug + ' ' + this.fmt(total) + said });
         }
+        if (this.result) { rows.push({ key: 'sig', k: this.signedNow ? 'Signed By' : 'Completed By', v: 'You · for every lot and split above' }); }
         if (this.v.investigationId) {
             rows.push({ key: 'next', k: 'Next', v: 'Investigation ' + this.v.investigationName + ' carries on; the NC closes after it.' });
         }
