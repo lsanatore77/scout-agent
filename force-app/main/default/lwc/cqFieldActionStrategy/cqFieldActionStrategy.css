@@ -37,3 +37,5 @@
 .cq-optcard.off { opacity: .5; }
 .cq-optcard:disabled { cursor: default; }
 .addrow .addsel { flex: 0 1 480px; }
+/* the lot stays held by something else without this field action's hold */
+.stillheld { display: block; margin-top: 4px; font-size: 12px; line-height: 1.4; color: var(--cq-warn-fg); }

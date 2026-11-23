@@ -78,7 +78,7 @@
                                         <template if:false={h.isGroup}>
                                             <td class="hc"><input class="cq-tick" type="checkbox" data-id={h.id} checked={h.hold} disabled={locked} onchange={handleHold} aria-label={h.label} /></td>
                                             <td class="cq-nowrap b">{h.lot}</td>
-                                            <td><span class="what">{h.item} <template if:true={h.ai}><c-cq-ai-why variant="tag" lead="Why does CQ.AI suggest holding " subject={h.item}></c-cq-ai-why></template></span><span class="cq-sub block">{h.why}</span></td>
+                                            <td><span class="what">{h.item} <template if:true={h.ai}><c-cq-ai-why variant="tag" lead="Why does CQ.AI suggest holding " subject={h.item}></c-cq-ai-why></template></span><span class="cq-sub block">{h.why}</span><template if:true={h.stays}><span class="stillheld" role="note">Not held by this field action, but the lot stays <span class="b">{h.stays.status}</span><template if:true={h.stays.who}> by <a href={h.stays.href} target="_blank">{h.stays.who}</a></template><template if:true={h.stays.manual}>, set by hand</template>{h.stays.whyText}.</span></template></td>
                                             <td class="num cq-ohcell">
                                                 <template if:true={h.canOpen}><button class="cq-ohbtn" data-key={h.key} onclick={handleStock} aria-expanded={h.stockExpanded} aria-label={h.popLabel}>{h.onHand}</button></template>
                                                 <template if:false={h.canOpen}>{h.onHand}</template>

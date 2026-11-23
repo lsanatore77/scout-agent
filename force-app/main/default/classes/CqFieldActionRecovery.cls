@@ -29,6 +29,7 @@ public with sharing class CqFieldActionRecovery {
     public class HoldDisp {
         @AuraEnabled public Id id; @AuraEnabled public String lot; @AuraEnabled public String kind; @AuraEnabled public String item;
         @AuraEnabled public Decimal onHand; @AuraEnabled public String disposition; @AuraEnabled public String suggested; @AuraEnabled public String reason;
+        @AuraEnabled public CqLotStatus.Outlook stays;   // what still holds the lot once this field action releases it (CqLotStatus)
     }
     public class Check {
         @AuraEnabled public String key; @AuraEnabled public String text; @AuraEnabled public String detail;
@@ -182,6 +183,11 @@ public with sharing class CqFieldActionRecovery {
             onHand.put(l.Lot_Number__c, l.Units_On_Hand__c);
         }
         for (HoldDisp x : v.holds) { x.onHand = onHand.get(x.lot); }
+        // releasing this field action's hold doesn't release the lot when something else holds it: say what, on the row
+        Set<String> heldLots = new Set<String>();
+        for (HoldDisp x : v.holds) { heldLots.add(x.lot); }
+        Map<String, CqLotStatus.Outlook> stays = CqLotStatus.outlook(heldLots, recordId, true);
+        for (HoldDisp x : v.holds) { if (x.disposition == null || x.disposition == 'Release') { x.stays = stays.get(x.lot); } }
 
         // 4. CQ.AI on the verdict
         Decimal inField = v.shipped - v.recovered;

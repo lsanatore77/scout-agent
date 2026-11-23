@@ -213,7 +213,7 @@ export default class CqFieldActionStrategy extends LightningElement {
                     canOpen: (h.places || []).length > 0, stockOpen: this.stockOpen === h.id && (h.places || []).length > 0,
                     stockExpanded: this.stockOpen === h.id ? 'true' : 'false', popLabel: 'On hand for lot ' + h.lot,
                     asOfText: [h.source, h.asOf ? 'as of ' + new Date(h.asOf).toLocaleString() : ''].filter(Boolean).join(' · '),
-                    heldText: h.heldOn ? new Date(h.heldOn).toLocaleDateString() : '—' });
+                    heldText: h.heldOn ? new Date(h.heldOn).toLocaleDateString() : '—', stays: h.stays });
             });
         };
         add('Finished Lot', 'Finished lots in scope');

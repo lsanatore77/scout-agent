@@ -41,6 +41,9 @@ public without sharing class CqLotStatus {
         public Boolean finalRelease = false;
         public Boolean finalReject = false;
         public Boolean basis = false;    // the release the lot rests on (its batch record): names Status Set By when nothing holds it
+        public Id ref;                   // the record behind it (field action, NC, batch record), to link to
+        public Id faId;                  // the field action, for a field action's hold or recall
+        public Boolean isRecall = false; // a recall field action's scope (not a hold)
         Say(String status, String who, String why) { this.status = status; this.who = who; this.why = why; }
     }
 
@@ -167,6 +170,80 @@ public without sharing class CqLotStatus {
         sourceChanged(lots);
     }
 
+    /** What would hold a lot once one field action lets go of it: shown where that field action releases the lot. */
+    public class Outlook {
+        @AuraEnabled public String status;     // the lot's status without that field action
+        @AuraEnabled public String heldBy;     // what holds it then, e.g. NC-000180, BR-PTCA-2609-05, Manual
+        @AuraEnabled public Id heldById;
+        @AuraEnabled public String why;        // e.g. 5 of 5 units left to dispose
+        // for the screen: the record to link to (none when set by hand on the lot)
+        @AuraEnabled public String who;
+        @AuraEnabled public Boolean manual = false;
+        @AuraEnabled public String href;
+        @AuraEnabled public String whyText;    // ' · 5 of 5 units left to dispose'
+    }
+
+    /**
+     * For each lot: its status if this field action let go. dropRecall leaves out the field action's recall too (its own
+     * decision in Recovery replaces the recall); otherwise only its hold. Only lots something else still holds are returned.
+     */
+    public static Map<String, Outlook> outlook(Set<String> lotNumbers, Id faId, Boolean dropRecall) {
+        Map<String, Outlook> out = new Map<String, Outlook>();
+        lotNumbers.remove(null);
+        if (lotNumbers.isEmpty()) { return out; }
+        List<compliancequest__SQX_Lot_Info__c> lots = [SELECT Id, Name, compliancequest__Part_Number__c, Part__r.compliancequest__Part_Number__c,
+                Manual_Status__c, Receiving_Inspection__c, Batch__c, Batch__r.cqext__Quantity__c
+                FROM compliancequest__SQX_Lot_Info__c WHERE Name IN :lotNumbers];
+        Set<String> names = new Set<String>();
+        for (compliancequest__SQX_Lot_Info__c l : lots) { names.add(l.Name); }
+        Map<String, List<Say>> says = gather(lots, names);
+        for (compliancequest__SQX_Lot_Info__c l : lots) {
+            Say top = null;
+            for (Say s : controls(l, says.get(l.Name))) {
+                if (s.faId != null) {
+                    if (s.faId == faId) {
+                        if (!s.isRecall) { continue; }
+                        if (dropRecall) { continue; }
+                    }
+                }
+                if (s.status == null) { continue; }
+                if (top == null || rank(s.status) > rank(top.status)) { top = s; }
+            }
+            if (top == null) { continue; }
+            Outlook o = new Outlook();
+            o.status = top.status;
+            o.heldBy = top.who;
+            o.heldById = top.ref;
+            o.why = top.detail;
+            o.manual = top.who == 'Manual';
+            o.who = o.manual ? null : top.who;
+            o.href = top.ref == null ? null : '/lightning/r/' + top.ref + '/view';
+            o.whyText = o.manual || top.detail == null ? '' : ' \u00b7 ' + top.detail;
+            out.put(l.Name, o);
+        }
+        return out;
+    }
+
+    /** A lot's own controls (set by hand, receiving inspection) and those from its sources. */
+    static List<Say> controls(compliancequest__SQX_Lot_Info__c l, List<Say> fromSources) {
+        List<Say> all = new List<Say>();
+        String manual = l.Manual_Status__c == null ? 'Released' : l.Manual_Status__c;
+        if (rank(manual) > 1) {
+            Say m = new Say(manual, 'Manual', 'Set by hand: ' + manual);
+            m.detail = 'set by hand on the lot';
+            all.add(m);
+        }
+        if (l.Receiving_Inspection__c == 'Rejected') {
+            Say s = new Say('Rejected', 'Receiving inspection', 'Rejected at receiving inspection');
+            s.finalReject = true;
+            all.add(s);
+        } else if (l.Receiving_Inspection__c == 'Pending') {
+            all.add(new Say('Quarantined', 'Receiving inspection', 'Receiving inspection pending'));
+        }
+        if (fromSources != null) { all.addAll(fromSources); }
+        return all;
+    }
+
     /** Every control's say on one lot, for the lot record's Quality list (the lot needs Name, part and batch quantity). */
     public static List<Say> explain(compliancequest__SQX_Lot_Info__c lot) {
         Map<String, List<Say>> m = gather(new List<compliancequest__SQX_Lot_Info__c>{ lot }, new Set<String>{ lot.Name });
@@ -181,17 +258,8 @@ public without sharing class CqLotStatus {
         for (compliancequest__SQX_Lot_Info__c l : lots) { if (l.Name != null) { names.add(l.Name); } }
         Map<String, List<Say>> says = gather(lots, names);
         for (compliancequest__SQX_Lot_Info__c l : lots) {
-            List<Say> all = new List<Say>();
             String manual = l.Manual_Status__c == null ? 'Released' : l.Manual_Status__c;
-            if (rank(manual) > 1) { all.add(new Say(manual, 'Manual', 'Set by hand: ' + manual)); }
-            if (l.Receiving_Inspection__c == 'Rejected') {
-                Say s = new Say('Rejected', 'Receiving inspection', 'Rejected at receiving inspection');
-                s.finalReject = true;
-                all.add(s);
-            } else if (l.Receiving_Inspection__c == 'Pending') {
-                all.add(new Say('Quarantined', 'Receiving inspection', 'Receiving inspection pending'));
-            }
-            if (says.containsKey(l.Name)) { all.addAll(says.get(l.Name)); }
+            List<Say> all = controls(l, says.get(l.Name));
 
             Say top = null, basis = null;
             List<String> reasons = new List<String>();
@@ -258,6 +326,8 @@ public without sharing class CqLotStatus {
                 s = new Say(null, fa, null);
                 s.finalRelease = true;
             }
+            s.ref = h.Field_Action__c;
+            s.faId = h.Field_Action__c;
             s.detail = h.Disposition_On__c == null
                 ? 'Held at Confirm Strategy' + byWhom(h.Field_Action__r?.Strategy_Confirmed_By__r?.Name) + dated(h.Held_On__c)
                 : h.Disposition__c + ' confirmed' + byWhom(h.Field_Action__r?.Verdict_By__r?.Name) + dated(h.Disposition_On__c)
@@ -280,6 +350,9 @@ public without sharing class CqLotStatus {
             Say s = r.Approved_In_Scope__c == true
                 ? new Say('Recalled', fa, fa + ': recall' + (approvedOn == null ? '' : ', scope approved ' + approvedOn.format('d MMM yyyy')))
                 : new Say('Recall Pending', fa, fa + ': recall, scope not yet approved');
+            s.ref = r.Field_Action__c;
+            s.faId = r.Field_Action__c;
+            s.isRecall = true;
             s.detail = r.Approved_In_Scope__c == true
                 ? 'Recall \u00b7 scope approved' + byWhom(r.Field_Action__r?.Scope_Confirmed_By__r?.Name) + dated(approvedOn)
                 : 'Recall \u00b7 lot in scope, not yet approved';
@@ -288,7 +361,7 @@ public without sharing class CqLotStatus {
 
         for (compliancequest__SQX_NC_Impacted_Product__c ip : [
                 SELECT compliancequest__Lot_Number__c, compliancequest__Part_Number__c, compliancequest__Lot_Quantity__c,
-                       compliancequest__Quantity_Left_To_Dispose__c, compliancequest__SQX_Nonconformance__r.Name,
+                       compliancequest__Quantity_Left_To_Dispose__c, compliancequest__SQX_Nonconformance__c, compliancequest__SQX_Nonconformance__r.Name,
                        compliancequest__SQX_Nonconformance__r.compliancequest__Status__c
                 FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__Lot_Number__c IN :names]) {
             String lot = ip.compliancequest__Lot_Number__c;
@@ -304,6 +377,7 @@ public without sharing class CqLotStatus {
             String units = qty(left) + (size == null ? ' units' : ' of ' + qty(size) + ' units') + ' left to dispose';
             // a part of the lot: on the Quality list, not a status
             Say s = whole ? new Say('Quarantined', nc, nc + ': ' + qty(left) + (size == null ? ' units' : ' of ' + qty(size) + ' units')) : new Say(null, nc, null);
+            s.ref = ip.compliancequest__SQX_Nonconformance__c;
             s.detail = whole ? units : units + ' \u00b7 not the whole lot';
             add(out, lot, s);
         }
@@ -318,7 +392,7 @@ public without sharing class CqLotStatus {
         for (compliancequest__SQX_Disposition__c d : [
                 SELECT compliancequest__Lot_Number__c, compliancequest__Disposition_Type__c, compliancequest__Actual_Quantity_Disposed__c,
                        compliancequest__Disposition_Quantity__c, compliancequest__Completed_By__c, compliancequest__Completed_On__c,
-                       compliancequest__SQX_Nonconformance__r.Name, compliancequest__SQX_Nonconformance__r.compliancequest__Status__c,
+                       compliancequest__SQX_Nonconformance__c, compliancequest__SQX_Nonconformance__r.Name, compliancequest__SQX_Nonconformance__r.compliancequest__Status__c,
                        compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Lot_Number__c,
                        compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Part_Number__c,
                        compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Lot_Quantity__c
@@ -346,6 +420,7 @@ public without sharing class CqLotStatus {
                 lastOf.put(k, d);
             } else {
                 Say s = new Say(null, nc, null);
+                s.ref = d.compliancequest__SQX_Nonconformance__c;
                 s.detail = dtype + ' ' + qty(units) + ' units complete' + byWhom(d.compliancequest__Completed_By__c) + datedD(d.compliancequest__Completed_On__c);
                 add(out, lot, s);
             }
@@ -358,6 +433,7 @@ public without sharing class CqLotStatus {
             String what = d.compliancequest__Disposition_Type__c == 'Scrap' ? 'Scrap' : 'Returned to vendor';
             Say s = whole ? new Say('Rejected', nc, nc + ': ' + what) : new Say(null, nc, null);
             s.finalReject = whole;
+            s.ref = d.compliancequest__SQX_Nonconformance__c;
             s.detail = what + ' ' + qty(gone.get(k)) + (size == null ? ' units' : ' of ' + qty(size) + ' units') + ' complete'
                 + byWhom(d.compliancequest__Completed_By__c) + datedD(d.compliancequest__Completed_On__c);
             add(out, lot, s);
@@ -371,7 +447,9 @@ public without sharing class CqLotStatus {
         for (compliancequest__SQX_Lot_Info__c l : lots) {
             cqext__CQEBR_Batch__c bt = l.Batch__c == null ? null : batches.get(l.Batch__c);
             if (bt == null) { continue; }
-            add(out, l.Name, batchSay(bt.Name, bt.cqext__Status__c, bt.cqext__Released_Date__c));
+            Say s = batchSay(bt.Name, bt.cqext__Status__c, bt.cqext__Released_Date__c);
+            s.ref = bt.Id;
+            add(out, l.Name, s);
         }
         return out;
     }
@@ -389,6 +467,7 @@ public without sharing class CqLotStatus {
             s.finalReject = true;
         } else {
             s = new Say('Pending QA', br, br + ': batch ' + (st == null ? 'not released' : st.toLowerCase()) + ', not yet released');
+            s.detail = 'batch record ' + (st == null ? 'not released' : st.toLowerCase()) + ', not yet released';
         }
         return s;
     }

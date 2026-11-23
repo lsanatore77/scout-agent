@@ -31,6 +31,7 @@ public with sharing class CqFieldActionStrategy {
         @AuraEnabled public Decimal onHand; @AuraEnabled public Boolean outOfScope = false;
         @AuraEnabled public List<CqLotStock.Place> places = new List<CqLotStock.Place>();   // where the stock is, from Lot Stock
         @AuraEnabled public Datetime asOf; @AuraEnabled public String source;                // how fresh the stock figures are
+        @AuraEnabled public CqLotStatus.Outlook stays;   // what holds the lot without this field action's hold (CqLotStatus)
     }
     public class Comp {
         @AuraEnabled public String lot; @AuraEnabled public String part; @AuraEnabled public String item; @AuraEnabled public String inLot;
@@ -143,6 +144,9 @@ public with sharing class CqFieldActionStrategy {
             x.places = st.places; x.asOf = st.asOf; x.source = st.source;
             if (x.kind != FINISHED) { x.onHand = st.total; }
         }
+        // an unticked hold doesn't free the lot when something else holds it: say what, on the row
+        Map<String, CqLotStatus.Outlook> stays = CqLotStatus.outlook(holdLots.clone(), recordId, false);
+        for (HoldRow x : v.holds) { if (!x.hold) { x.stays = stays.get(x.lot); } }
         List<String> keys = new List<String>(comps.keySet()); keys.sort();
         for (String k : keys) { if (!heldComps.contains(k)) { v.components.add(comps.get(k)); } }
         return v;

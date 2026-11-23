@@ -126,6 +126,31 @@ private class CqLotStatusTest {
     }
 
     @IsTest
+    static void releasingAHoldSaysWhatStillHoldsTheLot() {
+        compliancequest__SQX_Part__c p = part();
+        insert new List<compliancequest__SQX_Lot_Info__c>{
+            new compliancequest__SQX_Lot_Info__c(Name = 'LST-H', compliancequest__Part_Number__c = 'LST-1', Release_Status__c = 'Quarantined'),
+            new compliancequest__SQX_Lot_Info__c(Name = 'LST-I', compliancequest__Part_Number__c = 'LST-1') };
+        Field_Action__c f = new Field_Action__c(Title__c = 'Outlook test', Part__c = p.Id, Action_Type__c = 'Removal (Recall)');
+        insert f;
+        insert new List<Field_Action_Hold__c>{
+            new Field_Action_Hold__c(Field_Action__c = f.Id, Lot_Number__c = 'LST-H', Hold__c = true, Held__c = true),
+            new Field_Action_Hold__c(Field_Action__c = f.Id, Lot_Number__c = 'LST-I', Hold__c = true, Held__c = true) };
+        insert new Field_Action_Lot__c(Field_Action__c = f.Id, Lot_Number__c = 'LST-I', In_Scope__c = true, Approved_In_Scope__c = true);
+
+        // Recovery: the field action's own decision replaces its hold and its recall
+        Map<String, CqLotStatus.Outlook> rec = CqLotStatus.outlook(new Set<String>{ 'LST-H', 'LST-I' }, f.Id, true);
+        System.assertEquals('Quarantined', rec.get('LST-H').status, 'set by hand, so releasing the hold does not release the lot');
+        System.assertEquals('Manual', rec.get('LST-H').heldBy);
+        System.assert(!rec.containsKey('LST-I'), 'nothing else holds it: releasing it frees the lot');
+
+        // Strategy: unticking the hold leaves the field action's recall in place
+        Map<String, CqLotStatus.Outlook> strat = CqLotStatus.outlook(new Set<String>{ 'LST-I' }, f.Id, false);
+        System.assertEquals('Recalled', strat.get('LST-I').status);
+        System.assertEquals(f.Id, strat.get('LST-I').heldById);
+    }
+
+    @IsTest
     static void receivingRejectionRejectsTheLot() {
         insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-E', Lot_Type__c = 'Purchased', Receiving_Inspection__c = 'Rejected');
         System.assertEquals('Rejected', lot('LST-E').Release_Status__c);
