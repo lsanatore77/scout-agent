@@ -12,6 +12,12 @@
 .triaged { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--cq-pos-bg); color: var(--cq-pos-fg); font-weight: 600; margin-bottom: 8px; }
 .flist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; line-height: 1.5; }
 .plainlist { padding-left: 0; list-style: none; }
+/* Dispositions on This Part: a card per type with its record count */
+.hcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.hcard { padding: 8px 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); min-width: 0; }
+.hcard .hk { font-size: 12px; color: var(--cq-muted); }
+.hcard .hv { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.hcard.none .hv { color: var(--cq-faint); font-weight: 600; }
 /* Dispose by Lot */
 .lot { padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
 .lothead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }

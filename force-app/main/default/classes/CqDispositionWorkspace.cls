@@ -20,7 +20,7 @@ public with sharing class CqDispositionWorkspace {
     public static final String COMPLETE = 'complete';
     public static final String USE_AS_IS = 'Use As Is';
     public static final List<String> DISPOSITION_TYPES = new List<String>{ 'Scrap', 'Rework', 'Return To Vendor (RTV)', USE_AS_IS };
-    public static final Integer HISTORY = 10;         // past dispositions listed on the glance
+    public static final Integer HISTORY = 50;         // past dispositions counted on the glance, by type
     public static final Integer EVIDENCE = 50;        // past dispositions weighed for the suggestion
     public static final String REWORK = 'Rework';
     public static final String SCRAP = 'Scrap';

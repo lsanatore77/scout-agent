@@ -84,11 +84,11 @@
                             <div class="yours">
                                 <div class="cq-card-title">Dispositions on This Part</div>
                                 <template if:true={hasHistory}>
-                                    <ul class="flist plainlist">
-                                        <template for:each={historyRows} for:item="h">
-                                            <li key={h.key}><a class="cq-link" href={h.href} target="_blank">{h.ncName}</a><span class="cq-muted">&nbsp;&middot; {h.meta}</span></li>
+                                    <div class="hcards">
+                                        <template for:each={historyByType} for:item="h">
+                                            <div key={h.type} class={h.cls}><div class="hk">{h.type}</div><div class="hv">{h.text}</div></div>
                                         </template>
-                                    </ul>
+                                    </div>
                                 </template>
                                 <template if:false={hasHistory}><p class="cq-note">No other dispositions have been completed on this part.</p></template>
                             </div>

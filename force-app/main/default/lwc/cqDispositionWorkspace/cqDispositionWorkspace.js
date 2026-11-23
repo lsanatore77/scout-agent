@@ -200,9 +200,16 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
         return 'Disposition Required, due ' + this.dueText + (this.v.needsApproval ? ', needs approval' : ', no approval');
     }
     get hasHistory() { return (this.v.history || []).length > 0; }
-    get historyRows() {
-        return (this.v.history || []).map((h, i) => ({ key: 'h' + i, ncName: h.ncName, href: this.href(h.ncId),
-            meta: h.type + ' ' + this.fmt(h.qty) + (h.lot ? ' · Lot ' + h.lot : '') }));
+    /** Dispositions on This Part: one card per disposition type with how many records it has (none shows 0). */
+    get historyByType() {
+        const count = {};
+        (this.v.history || []).forEach((h) => { count[h.type] = (count[h.type] || 0) + 1; });
+        const types = [...(this.v.types || [])];
+        Object.keys(count).forEach((t) => { if (!types.includes(t)) { types.push(t); } });
+        return types.map((t) => {
+            const n = count[t] || 0;
+            return { type: t, text: n + (n === 1 ? ' Record' : ' Records'), cls: 'hcard' + (n ? '' : ' none') };
+        });
     }
 
     // ---- step 2: Dispose by Lot
