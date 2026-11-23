@@ -49,6 +49,9 @@
 /* Review is a CQ.AI action: the small button in purple */
 .cq-btn-outline.ghost { border-color: var(--cq-accent); color: var(--cq-accent); }
 /* the lot stays held by something else after this field action releases it */
+/* what else holds a lot: one line above the table, a short tag per row */
+.alsonote { margin: 0 0 10px; padding: 8px 12px; border-radius: 6px; background: var(--cq-neu-bg); font-size: 13px; color: var(--cq-muted); }
+td.also .cq-pill a { color: inherit; text-decoration: underline; }
 .stillheld { display: block; margin-top: 6px; font-size: 12px; line-height: 1.4; color: var(--cq-warn-fg); }
 /* a confirmed Rework: the lot stays On Hold until someone marks the rework done */
 .rework { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }

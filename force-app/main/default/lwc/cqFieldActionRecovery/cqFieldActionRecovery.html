@@ -197,15 +197,17 @@
                 <section class="cq-stepcard">
                     <div class="cq-stepcard-head"><span class="cq-stepcard-n">3</span><span class="cq-stepcard-title">Held Stock</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{dispLine}</span></div>
                     <template if:true={hasHolds}>
+                        <template if:true={alsoHeldCount}><p class="alsonote" role="note">{alsoHeldLine}</p></template>
                         <div class="cq-tblwrap">
                             <table class="cq-tbl compact">
-                                <thead><tr><th>Lot</th><th>Item</th><th class="num">On Hand</th><th>Disposition</th></tr></thead>
+                                <thead><tr><th>Lot</th><th>Item</th><th class="num">On Hand</th><th>Also Held By</th><th>Disposition</th></tr></thead>
                                 <tbody>
                                     <template for:each={holdRows} for:item="h">
                                         <tr key={h.id}>
                                             <td class="b nw">{h.lot}</td>
                                             <td><span class="cq-stack"><span>{h.kindText}</span><template if:true={h.item}><span class="cq-sub block">{h.item}</span></template></span></td>
                                             <td class="num">{h.onHandText}</td>
+                                            <td class="also"><template if:true={h.stays}><span class={h.alsoCls}>{h.stays.status}<template if:true={h.alsoBy}> &middot; <template if:true={h.stays.href}><a href={h.stays.href} target="_blank">{h.alsoBy}</a></template><template if:false={h.stays.href}>{h.alsoBy}</template></template></span></template><template if:false={h.stays}><span class="cq-sub">Nothing else</span></template></td>
                                             <td class="dcol"><span class="cq-field full"><select data-id={h.id} onchange={handleDisposition} disabled={locked} aria-label={h.label}>
                                                 <template for:each={h.opts} for:item="o">
                                                     <option key={o.value} value={o.value} selected={o.selected}>{o.label}</option>
@@ -213,7 +215,7 @@
                                             </select></span>
                                                 <template if:true={h.canMarkRework}><span class="rework"><span class="cq-sub">The lot stays On Hold until the rework is done.</span><button class="cq-btn-outline" data-id={h.id} onclick={handleReworkDone}>Rework Done</button></span></template>
                                                 <template if:true={h.reworkDone}><span class="reworked">&#10003; {h.reworkDone}</span></template>
-                                                <template if:true={h.stays}><span class="stillheld" role="note">Releasing this hold won't release the lot. It stays <span class="b">{h.stays.status}</span><template if:true={h.stays.who}> by <a href={h.stays.href} target="_blank">{h.stays.who}</a></template><template if:true={h.stays.manual}>, set by hand</template>{h.stays.whyText}.</span></template>
+                                                <template if:true={h.releaseNote}><span class="stillheld" role="note">Releasing this hold won't release the lot. It stays <span class="b">{h.stays.status}</span><template if:true={h.stays.who}> by <a href={h.stays.href} target="_blank">{h.stays.who}</a></template><template if:true={h.stays.manual}>, set by hand</template>{h.stays.whyText}.</span></template>
                                             </td>
                                         </tr>
                                     </template>

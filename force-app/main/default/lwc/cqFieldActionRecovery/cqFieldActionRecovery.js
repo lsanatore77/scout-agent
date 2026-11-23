@@ -325,9 +325,19 @@ export default class CqFieldActionRecovery extends LightningElement {
             onHandText: this.num(h.onHand),
             opts: [{ value: '', label: 'Choose…', selected: !h.disposition }].concat(DISPOSITIONS.map((d) => ({
                 value: d, label: (d === h.suggested ? '✦ ' : '') + d, selected: d === h.disposition }))),
-            label: 'Disposition for ' + h.lot }));
+            label: 'Disposition for ' + h.lot,
+            // what else holds the lot (CqLotStatus): a short tag in its own column; the full note only when it is released
+            alsoCls: 'cq-pill soft ' + (h.stays && h.stays.status === 'Rejected' ? 'crit' : 'warn'),
+            alsoBy: h.stays ? (h.stays.manual ? 'Set by hand' : h.stays.who || '') : '',
+            releaseNote: !!h.stays && (h.disposition === 'Release' || !!h.reworkDone) }));
     }
     get hasHolds() { return this.v.holds.length > 0; }
+    get alsoHeldCount() { return this.v.holds.filter((h) => !!h.stays).length; }
+    get alsoHeldLine() {
+        const n = this.alsoHeldCount; const all = this.v.holds.length;
+        return n + ' of ' + all + ' lot' + (all === 1 ? ' is' : 's are') + ' also held by something else. Releasing ' + (n === 1 ? 'it' : 'them')
+            + ' here won\'t release the lot.';
+    }
     get dispLine() { return this.v.decided + ' of ' + this.v.holds.length + ' decided'; }
     async handleDisposition(event) {
         await this.call(() => setDisposition({ recordId: this.recordId, holdId: event.target.dataset.id, disposition: event.target.value }), 'Could not save that disposition.');

@@ -195,7 +195,7 @@ public with sharing class CqFieldActionRecovery {
         Set<String> heldLots = new Set<String>();
         for (HoldDisp x : v.holds) { heldLots.add(x.lot); }
         Map<String, CqLotStatus.Outlook> stays = CqLotStatus.outlook(heldLots, recordId, true);
-        for (HoldDisp x : v.holds) { if (x.disposition == null || x.disposition == 'Release' || x.reworkDone != null) { x.stays = stays.get(x.lot); } }
+        for (HoldDisp x : v.holds) { x.stays = stays.get(x.lot); }   // shown as Also Held By on every row; the full note only for a release
 
         // 4. CQ.AI on the verdict
         Decimal inField = v.shipped - v.recovered;
