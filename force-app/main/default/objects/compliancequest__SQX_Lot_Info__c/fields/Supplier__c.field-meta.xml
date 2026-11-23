@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Supplier__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The supplier of a purchased lot. An Account, as on CQ nonconformances, so a lot and its supplier NCs name the same supplier.</description>
+    <label>Supplier</label>
+    <referenceTo>Account</referenceTo>
+    <relationshipLabel>Supplied Lots</relationshipLabel>
+    <relationshipName>Supplied_Lots</relationshipName>
+    <type>Lookup</type>
+</CustomField>

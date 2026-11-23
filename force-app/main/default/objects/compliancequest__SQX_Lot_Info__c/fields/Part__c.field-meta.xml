@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Part__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The part this lot is of. For a lot with a batch record the batch names the part too; a purchased lot has no batch, so this is where its part is.</description>
+    <label>Part</label>
+    <referenceTo>compliancequest__SQX_Part__c</referenceTo>
+    <relationshipLabel>Lots (Lot Info)</relationshipLabel>
+    <relationshipName>Lot_Info_Lots</relationshipName>
+    <type>Lookup</type>
+</CustomField>

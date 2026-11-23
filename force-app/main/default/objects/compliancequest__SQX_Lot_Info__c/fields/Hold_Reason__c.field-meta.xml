@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Hold_Reason__c</fullName>
+    <description>Why the lot is on hold, quarantined or rejected, for example the field action or NC that placed the hold.</description>
+    <label>Hold Reason</label>
+    <length>255</length>
+    <type>Text</type>
+</CustomField>

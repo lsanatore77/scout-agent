@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Sterilization_Lot__c</fullName>
+    <description>The sterilization load the lot went through, for example an EO cycle number.</description>
+    <label>Sterilization Lot</label>
+    <length>80</length>
+    <type>Text</type>
+</CustomField>
