@@ -46,8 +46,6 @@ export default class CqFieldActionRecovery extends LightningElement {
     keep = {};               // suggestion key -> false when unticked
     adding = false;          // the Add Task form
     form = {};
-    unitsFor = '';           // task whose units are being edited
-    unitsVal = '';
     search = '';             // customer name search
     custPage = 0;
     custMin = 0;             // the table keeps the height of its first page, so the page numbers do not jump
@@ -192,11 +190,17 @@ export default class CqFieldActionRecovery extends LightningElement {
             const openCount = mine.filter((x) => !x.done).length;
             const lots = c.other ? [] : (t.lotsByCustomer[c.id] || []).slice();
             mine.forEach((x) => { if (x.lot && !lots.includes(x.lot)) { lots.push(x.lot); } });
+            // units still with this customer: shipped to them, less the units on their return, destruction and correction tasks
+            const backOf = (lot) => mine.filter((x) => x.lot === lot && x.hasUnits).reduce((s, x) => s + Number(x.units || 0), 0);
+            const outOf = (lot) => { const n = t.shippedByLine[c.id + '|' + lot]; return n === undefined || n === null ? null : Math.max(0, n - backOf(lot)); };
+            const outs = c.other ? [] : lots.map(outOf).filter((n) => n !== null);
+            const custOut = outs.length ? outs.reduce((a, b) => a + b, 0) : null;
             rows.push({ key: 'c' + c.id, isCust: true, rowCls: 'cq-row-parent', id: c.id, title: c.name, chevCls: 'cq-rchev' + (open ? ' open' : ''),
                 expanded: open ? 'true' : 'false', toggleLabel: (open ? 'Fold ' : 'Show ') + c.name,
                 sub: c.other ? openCount + ' open' : [c.units !== undefined && c.units !== null ? c.units + ' units' : '',
                     lots.length + ' lot' + (lots.length === 1 ? '' : 's'), openCount + ' open task' + (openCount === 1 ? '' : 's'),
                     c.source === 'Shipment' ? '' : 'added by hand'].filter(Boolean).join(' · '),
+                unitsLine: custOut === null ? '' : custOut ? custOut + ' still out' : 'All back', unitsCls: 'num ' + (custOut ? 'warnc' : 'okc'),
                 hasPill: !c.other, pill: c.status, pillCls: 'cq-pill soft ' + (c.status === 'Acknowledged' ? 'pos' : c.status === 'No reply' ? 'crit' : 'neu') });
             if (!open) { return; }
             shown.filter((x) => !x.lot).forEach((x) => rows.push(this.taskRow(x, 'i1')));
@@ -204,21 +208,24 @@ export default class CqFieldActionRecovery extends LightningElement {
                 const lt = shown.filter((x) => x.lot === lot);
                 if (this.filter !== 'all' && !lt.length) { return; }
                 const shipped = t.shippedByLine[c.id + '|' + lot];
-                const back = mine.filter((x) => x.lot === lot && x.hasUnits).reduce((s, x) => s + Number(x.units || 0), 0);
+                const known = shipped !== undefined && shipped !== null;
+                const back = backOf(lot);
+                const out = outOf(lot);
                 rows.push({ key: 'l' + c.id + lot, isLot: true, rowCls: 'cq-row-child', title: lot, inRecall: this.v.lots.some((l) => l.lot === lot),
-                    sub: [shipped !== undefined && shipped !== null ? shipped + ' shipped' : '', back + ' back'].filter(Boolean).join(' · ') });
-                lt.forEach((x) => rows.push(this.taskRow(x, 'i2')));
+                    sub: '',   // shipped, back and still out are in the Units column
+                    unitsBack: known ? back + ' of ' + shipped + ' back' : back + ' back',
+                    outText: out === null ? '' : out ? out + ' out' : 'all back', outCls: out ? 'warnc' : 'okc' });
+                lt.forEach((x) => rows.push(this.taskRow(x, 'i2', known ? shipped : null)));
             });
         });
         return rows;
     }
-    taskRow(x, indent) {
-        const editing = this.unitsFor === x.id;
+    taskRow(x, indent, shipped) {
         return { key: 't' + x.id, isTask: true, rowCls: '', id: x.id, title: x.subject, indentCls: indent === 'i2' ? 'cq-ind l2' : 'cq-ind', href: '/lightning/r/Task/' + x.id + '/view',
             done: x.done, checkLabel: (x.done ? 'Reopen ' : 'Complete ') + x.subject,
-            hasUnits: x.hasUnits, editingUnits: editing, notEditingUnits: !editing, unitsVal: editing ? this.unitsVal : x.units,
-            unitsText: (x.units === undefined || x.units === null ? 'No' : Number(x.units)) + ' unit' + (Number(x.units) === 1 ? '' : 's')
-                + (x.type === 'Confirm correction' ? ' corrected' : x.type === 'Confirm destruction' ? ' destroyed' : ' back'),
+            hasUnits: x.hasUnits, unitsVal: x.units === undefined || x.units === null ? '' : x.units,
+            ofText: shipped === undefined || shipped === null ? '' : 'of ' + shipped,
+            unitsLabel: (x.type === 'Confirm correction' ? 'Units corrected' : x.type === 'Confirm destruction' ? 'Units destroyed' : 'Units back') + ': ' + x.subject,
             owner: x.owner, due: this.day(x.due), dueCls: 'nw' + (x.overdue ? ' badc b' : ''),
             pill: x.done ? 'Done' : x.overdue ? 'Overdue' : 'Open', pillCls: 'cq-pill soft ' + (x.done ? 'pos' : x.overdue ? 'crit' : 'neu') };
     }
@@ -236,19 +243,18 @@ export default class CqFieldActionRecovery extends LightningElement {
         const change = event.target.checked ? 'done' : 'open';
         await this.call(() => setTask({ recordId: this.recordId, taskId: id, change, units: null }), 'Could not change that task.');
     }
-    handleEditUnits(event) {
-        if (this.locked) { return; }
-        const id = event.currentTarget.dataset.id;
+    /** The Units column: typed straight into the row, saved when the box is left (or Enter is pressed). */
+    async handleUnits(event) {
+        const id = event.target.dataset.id;
+        const raw = event.target.value;
         const x = this.t.tasks.find((k) => k.id === id);
-        this.unitsFor = id; this.unitsVal = x.units === undefined || x.units === null ? '' : x.units;
+        const was = x && x.units !== undefined && x.units !== null ? Number(x.units) : null;
+        const now = raw === '' ? null : Number(raw);
+        if (now === was) { return; }
+        if (now !== null && (isNaN(now) || now < 0)) { this.error = 'Units cannot be negative.'; event.target.value = was === null ? '' : was; return; }
+        await this.call(() => setTask({ recordId: this.recordId, taskId: id, change: 'units', units: now }), 'Could not save those units.');
     }
-    handleUnitsInput(event) { this.unitsVal = event.target.value; }
-    handleUnitsCancel() { this.unitsFor = ''; }
-    async handleUnitsSave() {
-        const id = this.unitsFor;
-        await this.call(() => setTask({ recordId: this.recordId, taskId: id, change: 'units', units: this.unitsVal === '' ? null : Number(this.unitsVal) }),
-            'Could not save those units.', () => { this.unitsFor = ''; });
-    }
+    handleUnitsKey(event) { if (event.key === 'Enter') { event.target.blur(); } }
 
     // ---- CQ.AI's suggested tasks
     get hasSuggestions() { return !this.locked && this.t.suggestions.length > 0; }

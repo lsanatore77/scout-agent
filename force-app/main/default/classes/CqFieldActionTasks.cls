@@ -144,10 +144,9 @@ public with sharing class CqFieldActionTasks {
                 if (fa.Check_Level__c != 'Level E') { addSuggestion(b, have, RESPONSE, c, null, 'Collect response form from ' + c.Customer_Name__c, responseBy); }
                 if (isNotice) { continue; }
                 for (String lot : b.lotsByCustomer.get(c.Id)) {
-                    Decimal n = b.shippedByLine.get(c.Id + '|' + lot);
-                    String units = n == null ? '' : ' of ' + n.intValue() + ' units';
+                    // the units shipped show beside the task's Units box, worked out fresh, so the title carries no figure that can go stale
                     addSuggestion(b, have, isCorrection ? CORRECT : RETURN_IT, c, lot,
-                        (isCorrection ? 'Confirm correction' : 'Track return') + units + ' of lot ' + lot, returnBy);
+                        (isCorrection ? 'Confirm correction' : 'Track return') + ' of lot ' + lot, returnBy);
                 }
             }
             if (!b.suggestions.isEmpty()) {

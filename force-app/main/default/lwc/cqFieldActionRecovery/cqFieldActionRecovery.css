@@ -37,9 +37,9 @@
 /* a task's title: a plain link that can wrap (the shared link is bold and stays on one line) */
 .tlink { color: var(--cq-link); text-decoration: none; }
 .tlink:hover { text-decoration: underline; }
-/* units on a task: click to edit */
-.ulink { align-self: flex-start; padding: 0; border: none; background: none; font: inherit; font-size: 13px; color: var(--cq-muted); cursor: pointer; text-decoration: underline dotted; }
-.ulink:disabled { cursor: default; text-decoration: none; }
+/* the Units column: a number box on return, destruction and correction tasks, with what was shipped beside it */
+.ucol { width: 170px; }
+.uin { display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; }
 
 .cq-field.full { flex: none; width: 200px; }   /* fits \2726 Return to Supplier */
 .cq-field.ni { width: 76px; }

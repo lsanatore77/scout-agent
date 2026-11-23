@@ -133,7 +133,7 @@
                         <table class="cq-tbl compact">
                             <thead><tr>
                                 <th><span class="hcell"><span class="chsp"></span>Customer / Lot / Task</span></th>
-                                <th>Owner</th><th>Due</th><th class="num">Status</th>
+                                <th>Owner</th><th>Due</th><th class="num ucol">Units</th><th class="num">Status</th>
                             </tr></thead>
                             <tbody>
                                 <template for:each={rows} for:item="r">
@@ -143,33 +143,23 @@
                                                 <button class="cq-rchev-btn" data-id={r.id} onclick={handleToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button>
                                                 <span class="cq-stack"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
                                             <td></td><td></td>
+                                            <td class={r.unitsCls}>{r.unitsLine}</td>
                                             <td class="num"><template if:true={r.hasPill}><span class={r.pillCls}>{r.pill}</span></template></td>
                                         </template>
                                         <template if:true={r.isLot}>
                                             <td><span class="cell2"><span class="cq-ind"></span>
-                                                <span class="cq-stack"><span class="lotline"><span class="lotn">{r.title}</span><template if:true={r.inRecall}><span class="cq-pill soft neu">In this recall</span></template></span><span class="cq-sub block">{r.sub}</span></span></span></td>
-                                            <td></td><td></td><td></td>
+                                                <span class="cq-stack"><span class="lotline"><span class="lotn">{r.title}</span><template if:true={r.inRecall}><span class="cq-pill soft neu">In this recall</span></template></span><template if:true={r.sub}><span class="cq-sub block">{r.sub}</span></template></span></span></td>
+                                            <td></td><td></td>
+                                            <td class="num"><span class="cq-sub">{r.unitsBack}</span><template if:true={r.outText}><span class="cq-sub"> &middot; </span><span class={r.outCls}>{r.outText}</span></template></td>
+                                            <td></td>
                                         </template>
                                         <template if:true={r.isTask}>
                                             <td><span class="cell2"><span class={r.indentCls}></span>
                                                 <input class="cq-tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
-                                                <span class="cq-stack">
-                                                    <a class="tlink" href={r.href} target="_blank">{r.title}</a>
-                                                    <template if:true={r.hasUnits}>
-                                                        <template if:true={r.notEditingUnits}>
-                                                            <button class="ulink" data-id={r.id} onclick={handleEditUnits} disabled={locked} title="Click to edit">{r.unitsText}</button>
-                                                        </template>
-                                                        <template if:true={r.editingUnits}>
-                                                            <span class="locwrap">
-                                                                <span class="cq-field ni"><input type="number" min="0" value={r.unitsVal} oninput={handleUnitsInput} aria-label="Units" /></span>
-                                                                <button class="cq-btn-primary cq-btn-sm" onclick={handleUnitsSave} disabled={busy}>Save</button>
-                                                                <button class="cq-btn-outline cq-btn-sm" onclick={handleUnitsCancel}>Cancel</button>
-                                                            </span>
-                                                        </template>
-                                                    </template>
-                                                </span></span></td>
+                                                <a class="tlink" href={r.href} target="_blank">{r.title}</a></span></td>
                                             <td class="nw">{r.owner}</td>
                                             <td class={r.dueCls}>{r.due}</td>
+                                            <td class="num"><template if:true={r.hasUnits}><span class="uin"><span class="cq-field ni"><input type="number" min="0" data-id={r.id} value={r.unitsVal} onchange={handleUnits} onkeydown={handleUnitsKey} disabled={locked} aria-label={r.unitsLabel} /></span><span class="cq-sub nw">{r.ofText}</span></span></template></td>
                                             <td class="num"><span class={r.pillCls}>{r.pill}</span></td>
                                         </template>
                                     </tr>
