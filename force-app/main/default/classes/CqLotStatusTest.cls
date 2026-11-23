@@ -115,6 +115,17 @@ private class CqLotStatusTest {
     }
 
     @IsTest
+    static void theBatchRecordReleasesTheLot() {
+        CqLotStatus.Say s = CqLotStatus.batchSay('BR-1', 'Released', Date.newInstance(2026, 9, 8));
+        System.assertEquals(null, s.status, 'a released batch lets the lot go');
+        System.assert(s.basis, 'and names Status Set By when nothing holds the lot');
+        System.assertEquals(false, s.finalRelease, 'a batch release is no final decision, so a later scrap is no conflict');
+        System.assertEquals('Pending QA', CqLotStatus.batchSay('BR-1', 'Draft', null).status);
+        System.assertEquals('Pending QA', CqLotStatus.batchSay('BR-1', 'Approved', null).status, 'approved is not yet released');
+        System.assertEquals('Rejected', CqLotStatus.batchSay('BR-1', 'Void', null).status);
+    }
+
+    @IsTest
     static void receivingRejectionRejectsTheLot() {
         insert new compliancequest__SQX_Lot_Info__c(Name = 'LST-E', Lot_Type__c = 'Purchased', Receiving_Inspection__c = 'Rejected');
         System.assertEquals('Rejected', lot('LST-E').Release_Status__c);

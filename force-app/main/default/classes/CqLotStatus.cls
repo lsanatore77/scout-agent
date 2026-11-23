@@ -8,6 +8,10 @@
  *   - CQ nonconformances (Impacted Part / Lot), matched on part and lot together: quantity left to dispose -> Quarantined
  *     when it covers the whole lot (all its stock, or always when Field Action Settings > NC Quarantines Whole Lot is on);
  *     a smaller quantity is shown on the lot's Quality list, not as a status
+ *   - CQ NC dispositions, once Complete: Scrap or Return To Vendor of the whole lot -> Rejected; a part of the lot, Rework
+ *     or Use As Is is shown on the lot's Quality list, not as a status
+ *   - the lot's batch record (CQ EBR, Lot Info.Batch__c): Released -> the lot may be released; Void -> Rejected; any other
+ *     status -> Pending QA. A lot with no batch record is not held by this (purchased lots follow receiving inspection)
  *   - receiving inspection on the lot: Rejected -> Rejected; Pending -> Quarantined
  *   - recall field actions (Action Type Removal (Recall)) through their scope (Field_Action_Lot__c): a lot in the scope
  *     -> Recall Pending; in the approved scope (Confirmed In Scope) -> Recalled. Once that field action confirms its own
@@ -36,6 +40,7 @@ public without sharing class CqLotStatus {
         public String detail;      // for the lot's Quality list: the step, who and when, e.g. 'Scope approved by J. Rivera · 23 Nov 2026'
         public Boolean finalRelease = false;
         public Boolean finalReject = false;
+        public Boolean basis = false;    // the release the lot rests on (its batch record): names Status Set By when nothing holds it
         Say(String status, String who, String why) { this.status = status; this.who = who; this.why = why; }
     }
 
@@ -61,7 +66,8 @@ public without sharing class CqLotStatus {
         if (lotNumbers.isEmpty()) { return; }
         List<compliancequest__SQX_Lot_Info__c> lots = [SELECT Id, Name, compliancequest__Part_Number__c, Part__r.compliancequest__Part_Number__c,
                 Release_Status__c, Manual_Status__c, Hold_Reason__c, Receiving_Inspection__c, Status_Set_By__c, Status_Set_On__c,
-                Status_Conflict__c, Batch__r.cqext__Quantity__c FROM compliancequest__SQX_Lot_Info__c WHERE Name IN :lotNumbers];
+                Status_Conflict__c, Batch__c, Batch__r.Name, Batch__r.cqext__Status__c, Batch__r.cqext__Released_Date__c,
+                Batch__r.cqext__Quantity__c FROM compliancequest__SQX_Lot_Info__c WHERE Name IN :lotNumbers];
         Map<Id, compliancequest__SQX_Lot_Info__c> was = new Map<Id, compliancequest__SQX_Lot_Info__c>();
         for (compliancequest__SQX_Lot_Info__c l : lots) { was.put(l.Id, l.clone(true, true, false, false)); }
         apply(lots, was);
@@ -109,6 +115,43 @@ public without sharing class CqLotStatus {
         sourceChanged(lots);
     }
 
+    /** A batch record released, voided or reopened: the lots made from it. A batch save belongs to CQ and is never blocked. */
+    public static void batchChanged(List<cqext__CQEBR_Batch__c> rows, Map<Id, cqext__CQEBR_Batch__c> before) {
+        try {
+            Set<Id> ids = new Set<Id>();
+            for (cqext__CQEBR_Batch__c b : rows) {
+                cqext__CQEBR_Batch__c was = before == null ? null : before.get(b.Id);
+                if (was == null) { ids.add(b.Id); continue; }
+                if (was.cqext__Status__c != b.cqext__Status__c) { ids.add(b.Id); }
+            }
+            if (ids.isEmpty()) { return; }
+            Set<String> lots = new Set<String>();
+            for (compliancequest__SQX_Lot_Info__c l : [SELECT Name FROM compliancequest__SQX_Lot_Info__c WHERE Batch__c IN :ids]) { lots.add(l.Name); }
+            sourceChanged(lots);
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'CqLotStatus: lot status not updated from a batch record: ' + e.getMessage());
+        }
+    }
+
+    /** An NC disposition saved or completed: its lot. An NC save belongs to CQ and is never blocked. */
+    public static void dispositionChanged(List<compliancequest__SQX_Disposition__c> rows, Map<Id, compliancequest__SQX_Disposition__c> before) {
+        try {
+            Set<Id> ids = new Set<Id>();
+            if (rows != null) { for (compliancequest__SQX_Disposition__c d : rows) { if (d.Id != null) { ids.add(d.Id); } } }
+            if (before != null) { ids.addAll(before.keySet()); }
+            Set<String> lots = new Set<String>();
+            if (rows != null) { for (compliancequest__SQX_Disposition__c d : rows) { lots.add(d.compliancequest__Lot_Number__c); } }
+            if (before != null) { for (compliancequest__SQX_Disposition__c d : before.values()) { lots.add(d.compliancequest__Lot_Number__c); } }
+            for (compliancequest__SQX_Disposition__c d : [SELECT compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Lot_Number__c
+                                                           FROM compliancequest__SQX_Disposition__c WHERE Id IN :ids ALL ROWS]) {
+                lots.add(d.compliancequest__SQX_NC_Impacted_Product__r?.compliancequest__Lot_Number__c);
+            }
+            sourceChanged(lots);
+        } catch (Exception e) {
+            System.debug(LoggingLevel.ERROR, 'CqLotStatus: lot status not updated from a disposition: ' + e.getMessage());
+        }
+    }
+
     /** An NC save belongs to CQ: a problem working out the lot's status is logged and never blocks it. */
     public static void impactedChanged(List<compliancequest__SQX_NC_Impacted_Product__c> rows, Map<Id, compliancequest__SQX_NC_Impacted_Product__c> before) {
         try {
@@ -150,13 +193,14 @@ public without sharing class CqLotStatus {
             }
             if (says.containsKey(l.Name)) { all.addAll(says.get(l.Name)); }
 
-            Say top = null;
+            Say top = null, basis = null;
             List<String> reasons = new List<String>();
             Boolean rel = false, rej = false;
             List<String> relWho = new List<String>(), rejWho = new List<String>();
             for (Say s : all) {
                 if (s.finalRelease) { rel = true; relWho.add(s.who); }
                 if (s.finalReject) { rej = true; rejWho.add(s.who); }
+                if (s.basis) { basis = s; }
                 if (s.status == null) { continue; }
                 if (s.why != null && !reasons.contains(s.why)) { reasons.add(s.why); }
                 if (top == null || rank(s.status) > rank(top.status)) { top = s; }
@@ -167,7 +211,7 @@ public without sharing class CqLotStatus {
             Boolean changed = b == null || b.Release_Status__c != status;
             l.Release_Status__c = status;
             l.Hold_Reason__c = reasons.isEmpty() ? null : String.join(reasons, '; ').left(255);
-            String setBy = top == null || rank(manual) >= rank(top.status) ? (rank(manual) > 1 ? 'Manual' : null) : top.who;
+            String setBy = top == null || rank(manual) >= rank(top.status) ? (rank(manual) > 1 ? 'Manual' : basis?.who) : top.who;
             if (changed || l.Status_Set_By__c != setBy) { l.Status_Set_On__c = Datetime.now(); }
             l.Status_Set_By__c = setBy;
             l.Status_Conflict__c = rel && rej
@@ -263,7 +307,90 @@ public without sharing class CqLotStatus {
             s.detail = whole ? units : units + ' \u00b7 not the whole lot';
             add(out, lot, s);
         }
+
+        // NC dispositions, once Complete: scrapping or returning the whole lot rejects it
+        Map<String, Decimal> builtOf = new Map<String, Decimal>();
+        for (compliancequest__SQX_Lot_Info__c l : lots) {
+            if (l.Batch__r?.cqext__Quantity__c != null) { builtOf.put(l.Name, l.Batch__r.cqext__Quantity__c); }
+        }
+        Map<String, Decimal> gone = new Map<String, Decimal>();        // NC|lot -> units scrapped or returned
+        Map<String, compliancequest__SQX_Disposition__c> lastOf = new Map<String, compliancequest__SQX_Disposition__c>();
+        for (compliancequest__SQX_Disposition__c d : [
+                SELECT compliancequest__Lot_Number__c, compliancequest__Disposition_Type__c, compliancequest__Actual_Quantity_Disposed__c,
+                       compliancequest__Disposition_Quantity__c, compliancequest__Completed_By__c, compliancequest__Completed_On__c,
+                       compliancequest__SQX_Nonconformance__r.Name, compliancequest__SQX_Nonconformance__r.compliancequest__Status__c,
+                       compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Lot_Number__c,
+                       compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Part_Number__c,
+                       compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Lot_Quantity__c
+                FROM compliancequest__SQX_Disposition__c
+                WHERE compliancequest__Status__c = 'Complete'
+                  AND (compliancequest__Lot_Number__c IN :names OR compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Lot_Number__c IN :names)
+                ORDER BY compliancequest__Completed_On__c]) {
+            String lot = d.compliancequest__Lot_Number__c != null && names.contains(d.compliancequest__Lot_Number__c)
+                ? d.compliancequest__Lot_Number__c : d.compliancequest__SQX_NC_Impacted_Product__r?.compliancequest__Lot_Number__c;
+            if (lot == null || !names.contains(lot)) { continue; }
+            String pn = partOf.get(lot);
+            String ipn = d.compliancequest__SQX_NC_Impacted_Product__r?.compliancequest__Part_Number__c;
+            if (pn != null && ipn != null && ipn != pn) { continue; }
+            if (d.compliancequest__SQX_Nonconformance__r?.compliancequest__Status__c == 'Void') { continue; }
+            if (!builtOf.containsKey(lot) && d.compliancequest__SQX_NC_Impacted_Product__r?.compliancequest__Lot_Quantity__c != null) {
+                builtOf.put(lot, d.compliancequest__SQX_NC_Impacted_Product__r.compliancequest__Lot_Quantity__c);
+            }
+            String nc = d.compliancequest__SQX_Nonconformance__r?.Name == null ? 'NC' : d.compliancequest__SQX_Nonconformance__r.Name;
+            String dtype = d.compliancequest__Disposition_Type__c;
+            Decimal units = d.compliancequest__Actual_Quantity_Disposed__c != null && d.compliancequest__Actual_Quantity_Disposed__c > 0
+                ? d.compliancequest__Actual_Quantity_Disposed__c : d.compliancequest__Disposition_Quantity__c;
+            if (dtype == 'Scrap' || dtype == 'Return To Vendor (RTV)') {
+                String k = nc + '|' + lot;
+                gone.put(k, (gone.containsKey(k) ? gone.get(k) : 0) + (units == null ? 0 : units));
+                lastOf.put(k, d);
+            } else {
+                Say s = new Say(null, nc, null);
+                s.detail = dtype + ' ' + qty(units) + ' units complete' + byWhom(d.compliancequest__Completed_By__c) + datedD(d.compliancequest__Completed_On__c);
+                add(out, lot, s);
+            }
+        }
+        for (String k : gone.keySet()) {
+            String nc = k.substringBefore('|'), lot = k.substringAfter('|');
+            compliancequest__SQX_Disposition__c d = lastOf.get(k);
+            Decimal size = builtOf.get(lot);
+            Boolean whole = size == null || gone.get(k) >= size;
+            String what = d.compliancequest__Disposition_Type__c == 'Scrap' ? 'Scrap' : 'Returned to vendor';
+            Say s = whole ? new Say('Rejected', nc, nc + ': ' + what) : new Say(null, nc, null);
+            s.finalReject = whole;
+            s.detail = what + ' ' + qty(gone.get(k)) + (size == null ? ' units' : ' of ' + qty(size) + ' units') + ' complete'
+                + byWhom(d.compliancequest__Completed_By__c) + datedD(d.compliancequest__Completed_On__c);
+            add(out, lot, s);
+        }
+
+        // the batch record: the lot may be released once its batch is (read by Id: a trigger's lots carry no Batch__r)
+        Set<Id> batchIds = new Set<Id>();
+        for (compliancequest__SQX_Lot_Info__c l : lots) { if (l.Batch__c != null) { batchIds.add(l.Batch__c); } }
+        Map<Id, cqext__CQEBR_Batch__c> batches = batchIds.isEmpty() ? new Map<Id, cqext__CQEBR_Batch__c>()
+            : new Map<Id, cqext__CQEBR_Batch__c>([SELECT Id, Name, cqext__Status__c, cqext__Released_Date__c FROM cqext__CQEBR_Batch__c WHERE Id IN :batchIds]);
+        for (compliancequest__SQX_Lot_Info__c l : lots) {
+            cqext__CQEBR_Batch__c bt = l.Batch__c == null ? null : batches.get(l.Batch__c);
+            if (bt == null) { continue; }
+            add(out, l.Name, batchSay(bt.Name, bt.cqext__Status__c, bt.cqext__Released_Date__c));
+        }
         return out;
+    }
+
+    /** What a lot's batch record says: Released lets the lot go and names it; Void rejects; anything else is Pending QA. */
+    @TestVisible
+    static Say batchSay(String br, String st, Date releasedOn) {
+        Say s;
+        if (st == 'Released') {
+            s = new Say(null, br, null);
+            s.basis = true;
+            s.detail = 'Batch released' + datedD(releasedOn);
+        } else if (st == 'Void') {
+            s = new Say('Rejected', br, br + ': batch void');
+            s.finalReject = true;
+        } else {
+            s = new Say('Pending QA', br, br + ': batch ' + (st == null ? 'not released' : st.toLowerCase()) + ', not yet released');
+        }
+        return s;
     }
 
     static void add(Map<String, List<Say>> m, String lot, Say s) {
@@ -271,6 +398,7 @@ public without sharing class CqLotStatus {
         m.get(lot).add(s);
     }
     static String byWhom(String person) { return person == null ? '' : ' by ' + person; }
+    static String datedD(Date d) { return d == null ? '' : ' \u00b7 ' + Datetime.newInstance(d.year(), d.month(), d.day()).format('d MMM yyyy'); }
     static String dated(Datetime d) { return d == null ? '' : ' \u00b7 ' + d.format('d MMM yyyy'); }
     public static Integer rank(String s) { return s == null || !RANK.containsKey(s) ? 1 : RANK.get(s); }
     static String qty(Decimal d) { return d == null ? '' : d.stripTrailingZeros().toPlainString(); }
