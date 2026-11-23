@@ -9,8 +9,8 @@
                     <section class="card">
                         <div class="head"><span class="cq-card-title">Made</span><span class="cq-sub">{madeSource}</span></div>
                         <div class="kvgrid">
-                            <template for:each={v.made} for:item="m">
-                                <div key={m.key} class="kv"><span class="kv-k">{m.label}</span><span class="kv-v">{m.value}</span></div>
+                            <template for:each={madeRows} for:item="m">
+                                <div key={m.key} class={m.cls}><span class="kv-k">{m.label}</span><span class="kv-v">{m.value}</span></div>
                             </template>
                         </div>
                     </section>
@@ -21,7 +21,7 @@
                         <div class="head"><span class="cq-card-title">What Went Into It</span><span class="cq-sub">{componentSub}</span></div>
                         <div class="cq-tblwrap">
                             <table class="cq-tbl compact">
-                                <thead><tr><th>Lot</th><th>Part</th><th>Supplier</th><th>Against This Lot</th></tr></thead>
+                                <thead><tr><th>Lot</th><th>Part</th><th>Source</th><th>Against This Lot</th></tr></thead>
                                 <tbody>
                                     <template if:true={hasSubs}>
                                         <tr class="grp"><td colspan="4">{subTitle}</td></tr>
@@ -29,7 +29,7 @@
                                             <tr key={c.key}>
                                                 <td class="cq-nowrap"><template if:true={c.hasLot}><button class="cq-link lotlink" data-id={c.lotId} onclick={handleOpen}>{c.lot}</button></template><template if:false={c.hasLot}><span class="b">{c.lot}</span></template></td>
                                                 <td>{c.part}</td>
-                                                <td>{c.supplier}</td>
+                                                <td>{c.source}</td>
                                                 <td>
                                                     <span class="flags"><template for:each={c.flags} for:item="f"><span key={f.key} class={f.cls}>{f.text}</span></template></span>
                                                     <template if:true={c.hasAi}><span class="ainote"><c-cq-ai-why variant="tag" text="CQ.AI" subject={c.lot} lead="Why does CQ.AI link a complaint to " tip="Ask CQ.AI why"></c-cq-ai-why><span>{c.aiNote}</span></span></template>
@@ -43,7 +43,7 @@
                                             <tr key={c.key}>
                                                 <td class="cq-nowrap"><template if:true={c.hasLot}><button class="cq-link lotlink" data-id={c.lotId} onclick={handleOpen}>{c.lot}</button></template><template if:false={c.hasLot}><span class="b">{c.lot}</span></template></td>
                                                 <td>{c.part}</td>
-                                                <td>{c.supplier}</td>
+                                                <td>{c.source}</td>
                                                 <td>
                                                     <span class="flags"><template for:each={c.flags} for:item="f"><span key={f.key} class={f.cls}>{f.text}</span></template></span>
                                                     <template if:true={c.hasAi}><span class="ainote"><c-cq-ai-why variant="tag" text="CQ.AI" subject={c.lot} lead="Why does CQ.AI link a complaint to " tip="Ask CQ.AI why"></c-cq-ai-why><span>{c.aiNote}</span></span></template>

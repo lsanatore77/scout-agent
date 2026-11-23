@@ -8,6 +8,7 @@
 /* Made: label over value, as many columns as fit */
 .kvgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 20px; }
 .kv { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kv.wide { grid-column: span 2; }
 .kv-k { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); }
 .kv-v { font-size: var(--cq-fs-body); color: var(--cq-ink); }
 .kv-v.tone-pos { color: var(--cq-pos-fg); font-weight: 700; }

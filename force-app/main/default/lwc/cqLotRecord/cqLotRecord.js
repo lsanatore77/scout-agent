@@ -36,25 +36,28 @@ export default class CqLotRecord extends NavigationMixin(LightningElement) {
     }
 
     get hasMade() { return this.v && this.v.made.length > 0; }
+    /** Made: a long value (the master batch's name) takes two columns so it doesn't wrap onto three lines. */
+    get madeRows() { return this.v ? this.v.made.map((m) => ({ ...m, cls: 'kv' + (m.key === 'master' ? ' wide' : '') })) : []; }
     get madeSource() { return this.v && this.v.batchName ? 'From batch record ' + this.v.batchName : 'From the lot record'; }
 
     tag(f) {
         const tone = f.tone === 'crit' ? 'crit' : f.tone === 'warn' ? 'warn' : f.tone === 'pos' ? 'pos' : 'neu';
         return { key: f.key, text: f.label, id: f.id, cls: 'cq-pill soft ' + tone, isLink: !!f.id };
     }
-    row(c) {
+    /** Source: the supplier of a purchased lot, or Made in house for a lot made here (a sub-assembly). */
+    row(c, inHouse) {
         return {
             key: c.key, lot: c.lot, lotId: c.lotId, hasLot: !!c.lotId,
             part: [c.partNumber, c.partName].filter(Boolean).join(' · '),
-            supplier: c.supplier,
+            source: c.supplier || (inHouse || c.lotType === 'Sub-assembly' ? 'Made in house' : ''),
             flags: c.flags.map((f) => this.tag(f)),
             aiNote: c.aiNote, hasAi: !!c.aiNote
         };
     }
-    get subRows() { return this.v ? this.v.subAssemblies.map((c) => this.row(c)) : []; }
+    get subRows() { return this.v ? this.v.subAssemblies.map((c) => this.row(c, true)) : []; }
     get materialRows() {
         if (!this.v) { return []; }
-        const all = this.v.materials.map((c) => this.row(c));
+        const all = this.v.materials.map((c) => this.row(c, false));
         return this.showAll ? all : all.slice(0, SHOW_MATERIALS);
     }
     get hasComponents() { return this.v && (this.v.subAssemblies.length + this.v.materials.length) > 0; }
