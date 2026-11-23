@@ -15,6 +15,10 @@ public with sharing class CqLotRecord {
         @AuraEnabled public String value;
         @AuraEnabled public Id id;
         @AuraEnabled public String tone;
+        @AuraEnabled public String effect;      // what this record does to the lot's status (CqLotStatus), e.g. Recalled
+        @AuraEnabled public String effectTone;
+        @AuraEnabled public String detail;      // the step, who and when, e.g. 'Recall · scope approved by J. Rivera · 23 Nov 2026'
+        @AuraEnabled public Boolean sets = false;   // this record set the lot's status
     }
     public class Component {
         @AuraEnabled public String key;
@@ -151,18 +155,15 @@ public with sharing class CqLotRecord {
                                        WHERE Lot__c = :l.Id OR Lot_Number__c = :l.Name WITH USER_MODE LIMIT 50]) {
             fas.put(fl.Field_Action__c, fl.Field_Action__r);
         }
-        // what each field action decided for this lot: held, or the confirmed disposition
-        Map<Id, String> said = new Map<Id, String>();
-        for (Field_Action_Hold__c h : [SELECT Field_Action__c, Field_Action__r.Name, Disposition__c, Disposition_On__c
-                                       FROM Field_Action_Hold__c
+        for (Field_Action_Hold__c h : [SELECT Field_Action__c, Field_Action__r.Name FROM Field_Action_Hold__c
                                        WHERE Lot_Number__c = :l.Name AND Held__c = true WITH USER_MODE LIMIT 50]) {
             fas.put(h.Field_Action__c, h.Field_Action__r);
-            said.put(h.Field_Action__c, holdText(h));
         }
         for (Field_Action__c fa : fas.values()) {
             if (fa == null) { continue; }
-            rec(v.fieldActions, fa.Id, fa.Name, said.containsKey(fa.Id) ? said.get(fa.Id) : 'Lot in scope', fa.Id, null);
+            rec(v.fieldActions, fa.Id, fa.Name, 'Lot in scope', fa.Id, null);
         }
+        effects(v, l);
 
         // What went into it: the component lots recorded in the batch steps
         if (l.Batch__c != null) {
@@ -312,13 +313,33 @@ public with sharing class CqLotRecord {
         if (status == 'On Hold' || status == 'Pending QA') { return 'warn'; }
         return 'crit';   // Quarantined, Rejected, Recalled
     }
-    /** A field action hold in words: still held, or the disposition confirmed in Recovery and when. */
-    @TestVisible static String holdText(Field_Action_Hold__c h) {
-        if (h.Disposition_On__c == null) {
-            return h.Disposition__c == null ? 'Holds this lot' : 'Holds this lot · ' + h.Disposition__c + ' proposed';
+    /**
+     * What each NC and field action on the Quality list does to the lot, from CqLotStatus (the same reasoning that set the
+     * status): the strictest status it gives, the step with who and when, and whether it is the one that set the status.
+     */
+    static void effects(View v, compliancequest__SQX_Lot_Info__c l) {
+        Map<String, List<CqLotStatus.Say>> byWho = new Map<String, List<CqLotStatus.Say>>();
+        for (CqLotStatus.Say s : CqLotStatus.explain(l)) {
+            if (!byWho.containsKey(s.who)) { byWho.put(s.who, new List<CqLotStatus.Say>()); }
+            byWho.get(s.who).add(s);
         }
-        String s = h.Disposition__c + ' · confirmed ' + h.Disposition_On__c.format('d MMM yyyy');
-        return h.Disposition__c == 'Rework' ? s + ' · held until rework is done' : s;
+        List<Item> rows = new List<Item>(v.ncs);
+        rows.addAll(v.fieldActions);
+        for (Item x : rows) {
+            List<CqLotStatus.Say> says = byWho.get(x.label);
+            if (says == null) { continue; }
+            List<String> details = new List<String>();
+            for (CqLotStatus.Say s : says) {
+                if (s.detail != null) { details.add(s.detail); }
+                if (s.status != null) {
+                    if (x.effect == null || CqLotStatus.rank(s.status) > CqLotStatus.rank(x.effect)) { x.effect = s.status; }
+                }
+            }
+            x.effectTone = toneOf(x.effect);
+            x.detail = details.isEmpty() ? null : String.join(details, '; ');
+            x.sets = x.label == l.Status_Set_By__c;
+            if (x.value == 'Lot in scope') { x.value = null; }
+        }
     }
 
     /** A field: left out when it has no value, so blank batch or lot fields don't show. */

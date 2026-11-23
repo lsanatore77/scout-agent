@@ -35,3 +35,4 @@
 .numv { font-variant-numeric: tabular-nums; font-weight: 600; }
 .qline { display: flex; flex-direction: column; gap: 2px; padding-top: 8px; border-top: 1px solid var(--cq-line); }
 .qhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sets { font-size: 11px; font-weight: 600; color: var(--cq-accent, #0176d3); }

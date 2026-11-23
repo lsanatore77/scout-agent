@@ -33,6 +33,7 @@ public without sharing class CqLotStatus {
         public String status;      // null: lets go
         public String who;         // e.g. FA-0001, NC-000077, Receiving inspection, Manual
         public String why;         // for Hold Reason
+        public String detail;      // for the lot's Quality list: the step, who and when, e.g. 'Scope approved by J. Rivera · 23 Nov 2026'
         public Boolean finalRelease = false;
         public Boolean finalReject = false;
         Say(String status, String who, String why) { this.status = status; this.who = who; this.why = why; }
@@ -123,6 +124,12 @@ public without sharing class CqLotStatus {
         sourceChanged(lots);
     }
 
+    /** Every control's say on one lot, for the lot record's Quality list (the lot needs Name, part and batch quantity). */
+    public static List<Say> explain(compliancequest__SQX_Lot_Info__c lot) {
+        Map<String, List<Say>> m = gather(new List<compliancequest__SQX_Lot_Info__c>{ lot }, new Set<String>{ lot.Name });
+        return m.containsKey(lot.Name) ? m.get(lot.Name) : new List<Say>();
+    }
+
     // ------------------------------------------------------------------ working it out
 
     /** Sets Release Status, Hold Reason, Status Set By / On and Status Conflict on these lots (not saved). */
@@ -188,7 +195,8 @@ public without sharing class CqLotStatus {
         Boolean wholeLot = fs != null && fs.NC_Quarantines_Whole_Lot__c == true;
 
         Set<String> decided = new Set<String>();   // field action + lot whose own decision is confirmed
-        for (Field_Action_Hold__c h : [SELECT Lot_Number__c, Part_Number__c, Field_Action__c, Field_Action__r.Name, Held_On__c, Disposition__c, Disposition_On__c
+        for (Field_Action_Hold__c h : [SELECT Lot_Number__c, Part_Number__c, Field_Action__c, Field_Action__r.Name, Held_On__c, Disposition__c, Disposition_On__c,
+                                              Field_Action__r.Strategy_Confirmed_By__r.Name, Field_Action__r.Verdict_By__r.Name
                                        FROM Field_Action_Hold__c WHERE Lot_Number__c IN :names AND Held__c = true ORDER BY Held_On__c]) {
             String pn = partOf.get(h.Lot_Number__c);
             if (h.Part_Number__c != null && pn != null && h.Part_Number__c != pn) { continue; }
@@ -206,12 +214,16 @@ public without sharing class CqLotStatus {
                 s = new Say(null, fa, null);
                 s.finalRelease = true;
             }
+            s.detail = h.Disposition_On__c == null
+                ? 'Held at Confirm Strategy' + byWhom(h.Field_Action__r?.Strategy_Confirmed_By__r?.Name) + dated(h.Held_On__c)
+                : h.Disposition__c + ' confirmed' + byWhom(h.Field_Action__r?.Verdict_By__r?.Name) + dated(h.Disposition_On__c)
+                    + (h.Disposition__c == 'Rework' ? ' \u00b7 held until rework is done' : '');
             add(out, h.Lot_Number__c, s);
         }
 
         // recall field actions: in the scope -> Recall Pending; in the approved scope -> Recalled
         for (Field_Action_Lot__c r : [SELECT Lot_Number__c, Field_Action__c, Field_Action__r.Name, Field_Action__r.Part__r.compliancequest__Part_Number__c,
-                                             In_Scope__c, Approved_In_Scope__c, Field_Action__r.Scope_Confirmed_On__c
+                                             In_Scope__c, Approved_In_Scope__c, Field_Action__r.Scope_Confirmed_On__c, Field_Action__r.Scope_Confirmed_By__r.Name
                                       FROM Field_Action_Lot__c
                                       WHERE Lot_Number__c IN :names AND Field_Action__r.Action_Type__c = :RECALL
                                         AND (In_Scope__c = true OR Approved_In_Scope__c = true)]) {
@@ -221,9 +233,13 @@ public without sharing class CqLotStatus {
             if (fpn != null && pn != null && fpn != pn) { continue; }
             String fa = r.Field_Action__r?.Name == null ? 'Field action' : r.Field_Action__r.Name;
             Datetime approvedOn = r.Field_Action__r?.Scope_Confirmed_On__c;
-            add(out, r.Lot_Number__c, r.Approved_In_Scope__c == true
+            Say s = r.Approved_In_Scope__c == true
                 ? new Say('Recalled', fa, fa + ': recall' + (approvedOn == null ? '' : ', scope approved ' + approvedOn.format('d MMM yyyy')))
-                : new Say('Recall Pending', fa, fa + ': recall, scope not yet approved'));
+                : new Say('Recall Pending', fa, fa + ': recall, scope not yet approved');
+            s.detail = r.Approved_In_Scope__c == true
+                ? 'Recall \u00b7 scope approved' + byWhom(r.Field_Action__r?.Scope_Confirmed_By__r?.Name) + dated(approvedOn)
+                : 'Recall \u00b7 lot in scope, not yet approved';
+            add(out, r.Lot_Number__c, s);
         }
 
         for (compliancequest__SQX_NC_Impacted_Product__c ip : [
@@ -240,9 +256,12 @@ public without sharing class CqLotStatus {
             if (left <= 0) { continue; }
             Decimal size = sizeOf.get(lot);
             Boolean whole = wholeLot || size == null || left >= size;
-            if (!whole) { continue; }   // a part of the lot: on the Quality list, not a status
             String nc = ip.compliancequest__SQX_Nonconformance__r?.Name == null ? 'NC' : ip.compliancequest__SQX_Nonconformance__r.Name;
-            add(out, lot, new Say('Quarantined', nc, nc + ': ' + qty(left) + (size == null ? ' units' : ' of ' + qty(size) + ' units')));
+            String units = qty(left) + (size == null ? ' units' : ' of ' + qty(size) + ' units') + ' left to dispose';
+            // a part of the lot: on the Quality list, not a status
+            Say s = whole ? new Say('Quarantined', nc, nc + ': ' + qty(left) + (size == null ? ' units' : ' of ' + qty(size) + ' units')) : new Say(null, nc, null);
+            s.detail = whole ? units : units + ' \u00b7 not the whole lot';
+            add(out, lot, s);
         }
         return out;
     }
@@ -251,6 +270,8 @@ public without sharing class CqLotStatus {
         if (!m.containsKey(lot)) { m.put(lot, new List<Say>()); }
         m.get(lot).add(s);
     }
-    static Integer rank(String s) { return s == null || !RANK.containsKey(s) ? 1 : RANK.get(s); }
+    static String byWhom(String person) { return person == null ? '' : ' by ' + person; }
+    static String dated(Datetime d) { return d == null ? '' : ' \u00b7 ' + d.format('d MMM yyyy'); }
+    public static Integer rank(String s) { return s == null || !RANK.containsKey(s) ? 1 : RANK.get(s); }
     static String qty(Decimal d) { return d == null ? '' : d.stripTrailingZeros().toPlainString(); }
 }

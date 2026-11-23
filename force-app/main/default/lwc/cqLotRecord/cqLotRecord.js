@@ -82,7 +82,10 @@ export default class CqLotRecord extends NavigationMixin(LightningElement) {
     }
 
     quality(list, kind) {
-        return list.map((q) => ({ key: q.key, name: q.label, text: q.value, id: q.id, open: q.tone === 'open', kind }));
+        return list.map((q) => ({
+            key: q.key, name: q.label, text: q.value, id: q.id, open: q.tone === 'open', kind,
+            effect: q.effect, effectCls: 'cq-pill soft ' + (q.effectTone || ''), sets: q.sets === true, detail: q.detail
+        }));
     }
     get qualityRows() {
         if (!this.v) { return []; }

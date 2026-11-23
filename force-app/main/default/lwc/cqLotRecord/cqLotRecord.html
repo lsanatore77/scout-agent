@@ -108,8 +108,9 @@
                     <template if:true={hasQuality}>
                         <template for:each={qualityRows} for:item="q">
                             <div key={q.key} class="qline">
-                                <span class="qhead"><button class="cq-link" data-id={q.id} onclick={handleOpen}>{q.name}</button><span class="cq-sub">{q.kind}</span><template if:true={q.open}><span class="cq-pill soft warn">Open</span></template></span>
-                                <span class="cq-sub block">{q.text}</span>
+                                <span class="qhead"><button class="cq-link" data-id={q.id} onclick={handleOpen}>{q.name}</button><span class="cq-sub">{q.kind}</span><template if:true={q.open}><span class="cq-pill soft warn">Open</span></template><template if:true={q.effect}><span class={q.effectCls}>{q.effect}</span></template><template if:true={q.sets}><span class="sets">Sets the status</span></template></span>
+                                <template if:true={q.text}><span class="cq-sub block">{q.text}</span></template>
+                                <template if:true={q.detail}><span class="cq-sub block">{q.detail}</span></template>
                             </div>
                         </template>
                     </template>
