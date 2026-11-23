@@ -99,7 +99,16 @@ public with sharing class CqFieldActionTasks {
         Date today = Date.today();
         Set<String> have = new Set<String>();
         Map<String, List<String>> rmaOf = CqLotReturns.rmas(recordId);
+        // the customers How Far It Goes reaches (CqFieldActionDepth); the others' tasks and suggestions are left off the board
+        List<Field_Action_Customer__c> custs = new List<Field_Action_Customer__c>();
+        Set<Id> leftOut = new Set<Id>();
+        for (Field_Action_Customer__c c : [SELECT Id, Customer__c, Customer_Name__c, Lots__c, Customer__r.Customer_Type__c, Field_Action__r.Depth__c
+                                           FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY Customer_Name__c]) {
+            if (CqFieldActionDepth.includes(c.Field_Action__r.Depth__c, c.Customer__r?.Customer_Type__c, c.Customer__c)) { custs.add(c); }
+            else { leftOut.add(c.Id); }
+        }
         for (Task t : tasksOf(recordId)) {
+            if (t.Field_Action_Customer__c != null && leftOut.contains(t.Field_Action_Customer__c)) { continue; }
             TaskRow x = new TaskRow();
             x.id = t.Id; x.subject = t.Subject; x.type = t.Recall_Task_Type__c; x.owner = t.Owner?.Name; x.due = t.ActivityDate;
             x.done = t.IsClosed; x.units = t.Units__c; x.lot = t.Lot_Number__c; x.customerId = t.Field_Action_Customer__c;
@@ -121,8 +130,6 @@ public with sharing class CqFieldActionTasks {
             lots.add(l.Lot_Number__c);
         }
         Map<Id, Id> custByAccount = new Map<Id, Id>();
-        List<Field_Action_Customer__c> custs = [SELECT Id, Customer__c, Customer_Name__c, Lots__c FROM Field_Action_Customer__c
-                                               WHERE Field_Action__c = :recordId ORDER BY Customer_Name__c];
         for (Field_Action_Customer__c c : custs) {
             if (c.Customer__c != null) { custByAccount.put(c.Customer__c, c.Id); }
             List<String> ls = new List<String>();

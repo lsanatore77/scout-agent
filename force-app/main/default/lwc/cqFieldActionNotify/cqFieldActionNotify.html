@@ -33,6 +33,12 @@
                     <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
                     <span class="cq-sub">What each customer reported, by lot</span>
                 </div>
+                <template if:true={v.leftOut}>
+                    <div class="cq-ai-card row">
+                        <span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI" question="Who does How Far It Goes leave out of this field action, and why?"></c-cq-ai-why></span>
+                        <span class="cq-ai-text">{v.leftOut}</span>
+                    </div>
+                </template>
                 <template if:true={v.aiLine}>
                     <div class="cq-ai-card row">
                         <span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which customers should we follow up with, and when?"></c-cq-ai-why></span>

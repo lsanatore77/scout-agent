@@ -1211,6 +1211,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
+        <field>Account.Customer_Type__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Lot_Return__c.Customer__c</field>
         <readable>true</readable>
     </fieldPermissions>

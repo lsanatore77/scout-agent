@@ -26,6 +26,7 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public Decimal units; @AuraEnabled public String lots;
         @AuraEnabled public String status; @AuraEnabled public Decimal followUps; @AuraEnabled public Date respondedOn;
         @AuraEnabled public String source;
+        @AuraEnabled public String type;   // Customer Type on the Account
     }
     public class HoldDisp {
         @AuraEnabled public Id id; @AuraEnabled public String lot; @AuraEnabled public String kind; @AuraEnabled public String item;
@@ -168,9 +169,12 @@ public with sharing class CqFieldActionRecovery {
         }
 
         // 2. customers
-        for (Field_Action_Customer__c c : [SELECT Id, Customer_Name__c, Units__c, Lots__c, Status__c, Follow_Ups__c, Responded_On__c, Source__c, Notice_Sent_On__c
+        for (Field_Action_Customer__c c : [SELECT Id, Customer_Name__c, Units__c, Lots__c, Status__c, Follow_Ups__c, Responded_On__c, Source__c, Notice_Sent_On__c,
+                                                  Customer__c, Customer__r.Customer_Type__c
                                            FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY Source__c DESC NULLS LAST, Customer_Name__c]) {
+            if (!CqFieldActionDepth.includes(fa.Depth__c, c.Customer__r?.Customer_Type__c, c.Customer__c)) { continue; }   // not reached at this depth
             Cust x = new Cust();
+            x.type = c.Customer__r?.Customer_Type__c;
             x.id = c.Id; x.name = c.Customer_Name__c; x.units = c.Units__c; x.lots = c.Lots__c; x.status = c.Status__c == null ? 'Sent' : c.Status__c;
             x.followUps = c.Follow_Ups__c; x.respondedOn = c.Responded_On__c; x.source = c.Source__c;
             v.customers.add(x); v.total++;
@@ -327,7 +331,7 @@ public with sharing class CqFieldActionRecovery {
     }
 
     /** Adds the customers that received the lots in scope, from the Lot Shipment records, and keeps their units and lots current. */
-    private static void syncCustomers(Id recordId) {
+    public static void syncCustomers(Id recordId) {
         Set<String> lots = new Set<String>();
         for (Field_Action_Lot__c l : [SELECT Lot_Number__c FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId AND Approved_In_Scope__c = true]) {
             lots.add(l.Lot_Number__c);

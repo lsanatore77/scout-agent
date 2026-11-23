@@ -206,7 +206,7 @@ export default class CqFieldActionRecovery extends LightningElement {
             const custOut = outs.length ? outs.reduce((a, b) => a + b, 0) : null;
             rows.push({ key: 'c' + c.id, isCust: true, rowCls: 'cq-row-parent', id: c.id, title: c.name, chevCls: 'cq-rchev' + (open ? ' open' : ''),
                 expanded: open ? 'true' : 'false', toggleLabel: (open ? 'Fold ' : 'Show ') + c.name,
-                sub: c.other ? openCount + ' open' : [c.units !== undefined && c.units !== null ? c.units + ' units' : '',
+                sub: c.other ? openCount + ' open' : [c.type || '', c.units !== undefined && c.units !== null ? c.units + ' units' : '',
                     lots.length + ' lot' + (lots.length === 1 ? '' : 's'), openCount + ' open task' + (openCount === 1 ? '' : 's'),
                     c.source === 'Shipment' ? '' : 'added by hand'].filter(Boolean).join(' · '),
                 unitsLine: custOut === null ? '' : custOut ? custOut + ' still out' : 'All accounted for', unitsCls: 'num ' + (custOut ? 'warnc' : 'okc'),

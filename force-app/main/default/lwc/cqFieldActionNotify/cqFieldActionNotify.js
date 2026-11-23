@@ -121,7 +121,7 @@ export default class CqFieldActionNotify extends LightningElement {
             const unknown = c.lines.reduce((s, l) => s + (l.unknown === undefined || l.unknown === null ? 0 : Number(l.unknown)), 0);
             rows.push({ key: 'c' + c.id, isCust: true, rowCls: 'cq-row-parent', id: c.id, title: c.name,
                 chevCls: 'cq-rchev' + (open ? ' open' : ''), expanded: open ? 'true' : 'false', toggleLabel: (open ? 'Fold ' : 'Show ') + c.name,
-                sub: [acked && c.respondedOn ? 'Responded ' + this.day(c.respondedOn) : '', c.sentOn ? 'Notice sent ' + this.day(c.sentOn) : 'Notice not sent',
+                sub: [c.type || '', acked && c.respondedOn ? 'Responded ' + this.day(c.respondedOn) : '', c.sentOn ? 'Notice sent ' + this.day(c.sentOn) : 'Notice not sent',
                     c.lines.length + ' lot' + (c.lines.length === 1 ? '' : 's')].filter(Boolean).join(' · '),
                 shipped: shippedKnown ? String(sum('shipped')) : '—',
                 used: has('used') ? String(sum('used')) : '—', returning: has('returning') ? String(sum('returning')) : '—',

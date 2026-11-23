@@ -8,6 +8,7 @@
  * The Send notice and Collect response tasks (CqFieldActionTasks) show here: completing a notice task records the date
  * sent, completing a response task records the response. CQ.AI suggests the ones still missing (not for a customer
  * already notified, or already responded); the coordinator reviews and creates them here.
+ * Who is listed follows How Far It Goes (CqFieldActionDepth): at distributor level, only the distributors.
  */
 public with sharing class CqFieldActionNotify {
     public static final String ACK = 'Acknowledged';
@@ -25,6 +26,7 @@ public with sharing class CqFieldActionNotify {
     }
     public class Cust {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String status; @AuraEnabled public Decimal units;
+        @AuraEnabled public String type;   // Customer Type on the Account: Distributor, Hospital, Clinic
         @AuraEnabled public Date sentOn; @AuraEnabled public Date respondedOn; @AuraEnabled public Boolean overdue = false;
         @AuraEnabled public List<Line> lines = new List<Line>();
         @AuraEnabled public List<Step> tasks = new List<Step>();
@@ -38,10 +40,11 @@ public with sharing class CqFieldActionNotify {
         @AuraEnabled public String aiLine;
         @AuraEnabled public List<CqFieldActionTasks.Suggestion> suggestions = new List<CqFieldActionTasks.Suggestion>();
         @AuraEnabled public String suggestLine;
+        @AuraEnabled public String depth; @AuraEnabled public String leftOut;   // who How Far It Goes leaves out (CQ.AI)
     }
 
     private static Field_Action__c load(Id recordId) {
-        return [SELECT Id, Status__c, Strategy_Status__c, Action_Type__c, Key_Message__c, Check_By__c, Check_Level__c FROM Field_Action__c WHERE Id = :recordId];
+        return [SELECT Id, Status__c, Strategy_Status__c, Action_Type__c, Key_Message__c, Check_By__c, Check_Level__c, Depth__c FROM Field_Action__c WHERE Id = :recordId];
     }
     private static void openForChange(Field_Action__c fa) {
         if (fa.Status__c == 'Closed') { throw new AuraHandledException('This field action is closed.'); }
@@ -53,7 +56,9 @@ public with sharing class CqFieldActionNotify {
     @AuraEnabled
     public static Map<String, Integer> counts(Id recordId) {
         Integer total = 0, notified = 0, responded = 0;
-        for (Field_Action_Customer__c c : [SELECT Status__c, Notice_Sent_On__c FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId]) {
+        for (Field_Action_Customer__c c : [SELECT Status__c, Notice_Sent_On__c, Customer__c, Customer__r.Customer_Type__c, Field_Action__r.Depth__c
+                                           FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId]) {
+            if (!CqFieldActionDepth.includes(c.Field_Action__r.Depth__c, c.Customer__r?.Customer_Type__c, c.Customer__c)) { continue; }
             total++;
             if (c.Notice_Sent_On__c != null || c.Status__c == ACK) { notified++; }
             if (c.Status__c == ACK) { responded++; }
@@ -66,12 +71,26 @@ public with sharing class CqFieldActionNotify {
         Field_Action__c fa = load(recordId);
         View v = new View();
         v.id = fa.Id; v.closed = fa.Status__c == 'Closed'; v.strategyConfirmed = fa.Strategy_Status__c == 'Confirmed';
-        v.action = fa.Action_Type__c; v.message = fa.Key_Message__c;
-        if (!v.closed && v.strategyConfirmed) { CqFieldActionTasks.sync(recordId); }   // a response task done elsewhere marks the customer
+        v.action = fa.Action_Type__c; v.message = fa.Key_Message__c; v.depth = fa.Depth__c;
+        if (!v.closed && v.strategyConfirmed) {
+            CqFieldActionRecovery.syncCustomers(recordId);   // the customers that received the lots in scope, from the lot shipments
+            CqFieldActionTasks.sync(recordId);               // a response task done elsewhere marks the customer
+        }
         Date today = Date.today();
 
-        List<Field_Action_Customer__c> custs = [SELECT Id, Customer__c, Customer_Name__c, Units__c, Lots__c, Status__c, Notice_Sent_On__c, Responded_On__c
-                                                FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY Customer_Name__c];
+        // who How Far It Goes reaches: at distributor level, hospitals and clinics that bought direct are left out
+        List<Field_Action_Customer__c> custs = new List<Field_Action_Customer__c>();
+        Map<String, Integer> outByType = new Map<String, Integer>();
+        Integer untyped = 0;
+        for (Field_Action_Customer__c c : [SELECT Id, Customer__c, Customer__r.Customer_Type__c, Customer_Name__c, Units__c, Lots__c, Status__c,
+                                                  Notice_Sent_On__c, Responded_On__c
+                                           FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY Customer_Name__c]) {
+            String t = c.Customer__r?.Customer_Type__c;
+            if (!CqFieldActionDepth.includes(fa.Depth__c, t, c.Customer__c)) { outByType.put(t, (outByType.containsKey(t) ? outByType.get(t) : 0) + 1); continue; }
+            if (CqFieldActionDepth.untyped(fa.Depth__c, t, c.Customer__c)) { untyped++; }
+            custs.add(c);
+        }
+        if (fa.Depth__c != null) { v.leftOut = CqFieldActionDepth.leftOutLine(fa.Depth__c, outByType, untyped); }
         // what each customer received, from the lot shipments of the lots in scope
         Set<String> lots = new Set<String>();
         for (Field_Action_Lot__c l : [SELECT Lot_Number__c FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId AND Approved_In_Scope__c = true]) {
@@ -107,6 +126,7 @@ public with sharing class CqFieldActionNotify {
         for (Field_Action_Customer__c c : custs) {
             Cust x = new Cust();
             x.id = c.Id; x.name = c.Customer_Name__c; x.units = c.Units__c; x.status = c.Status__c == null ? SENT : c.Status__c;
+            x.type = c.Customer__r?.Customer_Type__c;
             x.sentOn = c.Notice_Sent_On__c; x.respondedOn = c.Responded_On__c;
             List<String> ls = new List<String>();
             if (String.isNotBlank(c.Lots__c)) { for (String s : c.Lots__c.split(',\\s*')) { if (String.isNotBlank(s)) { ls.add(s.trim()); } } }
@@ -184,12 +204,16 @@ public with sharing class CqFieldActionNotify {
     /** Mark Sent: today's date on the given customers (all not yet notified when none are given), and their notice tasks done. */
     @AuraEnabled
     public static View markSent(Id recordId, List<Id> customerIds) {
-        openForChange(load(recordId));
+        Field_Action__c fa = load(recordId);
+        openForChange(fa);
         Date today = Date.today();
         List<Field_Action_Customer__c> ups = new List<Field_Action_Customer__c>();
         Set<Id> ids = new Set<Id>();
-        for (Field_Action_Customer__c c : [SELECT Id, Notice_Sent_On__c FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId]) {
-            Boolean want = customerIds == null || customerIds.isEmpty() ? c.Notice_Sent_On__c == null : customerIds.contains(c.Id);
+        for (Field_Action_Customer__c c : [SELECT Id, Notice_Sent_On__c, Customer__c, Customer__r.Customer_Type__c FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId]) {
+            // with no customers given: everyone this depth reaches who has not been sent the notice
+            Boolean want = customerIds == null || customerIds.isEmpty()
+                ? c.Notice_Sent_On__c == null && CqFieldActionDepth.includes(fa.Depth__c, c.Customer__r?.Customer_Type__c, c.Customer__c)
+                : customerIds.contains(c.Id);
             if (want) { ups.add(new Field_Action_Customer__c(Id = c.Id, Notice_Sent_On__c = today)); ids.add(c.Id); }
         }
         if (ups.isEmpty()) { throw new AuraHandledException('Every customer has already been sent the notice.'); }

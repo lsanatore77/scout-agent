@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Customer_Type__c</fullName>
+    <description>What kind of customer this is, for field actions: How Far It Goes (Strategy) decides which types are notified.</description>
+    <inlineHelpText>Distributor, Hospital or Clinic. A Distributor-level field action notifies only the distributors that received the lots.</inlineHelpText>
+    <label>Customer Type</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Distributor</fullName><default>false</default><label>Distributor</label></value>
+            <value><fullName>Hospital</fullName><default>false</default><label>Hospital</label></value>
+            <value><fullName>Clinic</fullName><default>false</default><label>Clinic</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>
