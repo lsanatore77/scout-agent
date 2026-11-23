@@ -147,6 +147,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             this.step = d.step; this.maxStep = d.maxStep; this.seen = d.seen;
             this.resumed = this.maxStep > 0 && !this.waiting;
             if (this.waiting) { this.step = COMMITTEE; this.maxStep = COMMITTEE; this.seen = upTo(COMMITTEE); }
+            else { this.fillSuggested(); }   // a draft saved before a choice was made starts from CQ.AI's suggestion
             this.fillTeam();
             return;
         }
@@ -159,9 +160,21 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         this.faTitle = (v.title || '').replace(/^Review:\s*/i, '');
         const sug = (v.fieldActions || []).find((f) => f.suggested);
         this.faChoice = sug ? sug.id : (v.fieldActions || []).length ? '' : 'new';
-        this.scope = '';
+        this.outcome = ''; this.scope = '';
+        if (!this.waiting) { this.fillSuggested(); }
         this.team = {}; this.emergency = false; this.emergencyReason = ''; this.emergencyUser = '';
         this.fillTeam();
+    }
+    /**
+     * Every choice CQ.AI suggests starts selected (risk level, outcome, field action, scope); the reviewer can change any
+     * of it, and a different choice needs a reason. The audit trail records each as Accepted or Changed at submit.
+     */
+    fillSuggested() {
+        if (!this.level && this.v.band) { this.level = this.v.band; }
+        if (!this.outcome && this.v.suggestedOutcome) { this.outcome = this.v.suggestedOutcome; }
+        if (!this.faChoice && this.faSuggested) { this.faChoice = this.faSuggested; }
+        const sug = this.sc && this.sc.suggested;
+        if (!this.scope && sug) { this.scope = sug; }
     }
     /** A seat with one person who holds the function is filled for the coordinator; they can change any of it. */
     fillTeam() {
