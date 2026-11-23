@@ -1,6 +1,6 @@
 /**
  * CqLotRecord: everything the Lot record screen (cqLotRecord) shows about one CQ Lot Info record, gathered in one call.
- * The lot's own fields (Lot Type, Release Status, Hold Reason, Sterilization Lot, supply data) come from Lot Info.
+ * The lot's own fields (Lot Type, Release Status, Status Reason, Sterilization Lot, supply data) come from Lot Info.
  * How it was made comes from CQ's batch record (cqext__CQEBR_Batch__c), read live and never copied onto the lot,
  * and what went into it from the component lot numbers recorded in the batch steps. A component lot shows where it was used.
  * Quality lists only records against this exact lot (complaints, NCs, field actions). A link that is only a guess, such
@@ -99,7 +99,7 @@ public with sharing class CqLotRecord {
         field(v.header, 'part', 'Part', partNumber, l.Part__c, null);
         field(v.header, 'type', 'Lot Type', l.Lot_Type__c, null, null);
         field(v.header, 'status', 'Release Status', l.Release_Status__c, null, v.statusTone);
-        field(v.header, 'hold', 'Hold Reason', l.Hold_Reason__c, null, null);
+        field(v.header, 'hold', 'Status Reason', l.Hold_Reason__c, null, null);
         // what set the status, and when (Manual, a field action, an NC, receiving inspection)
         field(v.header, 'setby', 'Status Set By', l.Status_Set_By__c == null ? null
             : l.Status_Set_By__c + (l.Status_Set_On__c == null ? '' : ' \u00b7 ' + l.Status_Set_On__c.format('d MMM yyyy')), null, null);
@@ -151,15 +151,17 @@ public with sharing class CqLotRecord {
                                        WHERE Lot__c = :l.Id OR Lot_Number__c = :l.Name WITH USER_MODE LIMIT 50]) {
             fas.put(fl.Field_Action__c, fl.Field_Action__r);
         }
-        Set<Id> heldBy = new Set<Id>();
-        for (Field_Action_Hold__c h : [SELECT Field_Action__c, Field_Action__r.Name FROM Field_Action_Hold__c
+        // what each field action decided for this lot: held, or the confirmed disposition
+        Map<Id, String> said = new Map<Id, String>();
+        for (Field_Action_Hold__c h : [SELECT Field_Action__c, Field_Action__r.Name, Disposition__c, Disposition_On__c
+                                       FROM Field_Action_Hold__c
                                        WHERE Lot_Number__c = :l.Name AND Held__c = true WITH USER_MODE LIMIT 50]) {
             fas.put(h.Field_Action__c, h.Field_Action__r);
-            heldBy.add(h.Field_Action__c);
+            said.put(h.Field_Action__c, holdText(h));
         }
         for (Field_Action__c fa : fas.values()) {
             if (fa == null) { continue; }
-            rec(v.fieldActions, fa.Id, fa.Name, heldBy.contains(fa.Id) ? 'Holds this lot' : 'Lot in scope', fa.Id, null);
+            rec(v.fieldActions, fa.Id, fa.Name, said.containsKey(fa.Id) ? said.get(fa.Id) : 'Lot in scope', fa.Id, null);
         }
 
         // What went into it: the component lots recorded in the batch steps
@@ -310,6 +312,15 @@ public with sharing class CqLotRecord {
         if (status == 'On Hold' || status == 'Pending QA') { return 'warn'; }
         return 'crit';   // Quarantined, Rejected, Recalled
     }
+    /** A field action hold in words: still held, or the disposition confirmed in Recovery and when. */
+    @TestVisible static String holdText(Field_Action_Hold__c h) {
+        if (h.Disposition_On__c == null) {
+            return h.Disposition__c == null ? 'Holds this lot' : 'Holds this lot · ' + h.Disposition__c + ' proposed';
+        }
+        String s = h.Disposition__c + ' · confirmed ' + h.Disposition_On__c.format('d MMM yyyy');
+        return h.Disposition__c == 'Rework' ? s + ' · held until rework is done' : s;
+    }
+
     /** A field: left out when it has no value, so blank batch or lot fields don't show. */
     static void field(List<Item> target, String key, String label, String value, Id id, String tone) {
         if (String.isBlank(value)) { return; }
