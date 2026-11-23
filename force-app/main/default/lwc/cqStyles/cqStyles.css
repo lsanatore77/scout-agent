@@ -51,6 +51,15 @@
   --cq-hl-ink:  var(--cqt-hl-ink, var(--cq-ink));     /* header title and values */
   --cq-hl-muted: var(--cqt-hl-muted, var(--cq-muted)); /* header object name and field labels */
   --cq-hl-link: var(--cqt-hl-link, var(--cq-link));    /* header links: record links in the fields, Audit Trail */
+  --cq-hl-bar:  var(--cqt-hl-bar, var(--cq-hl-bg));        /* the record header's band (a theme can colour it without touching hl-bg's other uses) */
+  --cq-hl-bar-line: var(--cqt-hl-bar-line, var(--cq-hl-line));
+  --cq-hl-pos:  var(--cqt-hl-pos, var(--cq-pos-fg));       /* header values with a tone (a risk level), readable on the band */
+  --cq-hl-warn: var(--cqt-hl-warn, var(--cq-warn-fg));
+  --cq-hl-crit: var(--cqt-hl-crit, var(--cq-crit-fg));
+  --cq-ask:     var(--cqt-ask, #7c5cc4);                   /* Ask CQ.AI: the popover's colour */
+  --cq-ask-soft: var(--cqt-ask-soft, #f5f2fb);
+  --cq-hl-ask:  var(--cqt-hl-ask, var(--cq-ask));          /* the Ask CQ.AI button on the header band */
+  --cq-hl-ask-hover: var(--cqt-hl-ask-hover, var(--cq-accent-soft));
 
   /* ---- radius ---- */
   --cq-r-field: var(--cqt-r-field, 0.25rem);   /* 4: text boxes and buttons (standard 2026-11-22, Lou: square corners in every workspace) */
@@ -77,13 +86,21 @@
    Settings > Theme names one, and everything inside it (the steps, the signature seat, popups) picks the theme up,
    because --cqt-* is never set again further down. To add a theme, add a :host(.cq-theme-<name>) block below. */
 :host(.cq-theme-harbor) {
-  /* Harbor: warm grey surfaces, teal for links and selected controls, square corners (the backup style, 2026-11-22) */
-  --cqt-ink: #16202b; --cqt-muted: #5d6b7a; --cqt-faint: #8a96a3;
-  --cqt-bg: #ffffff; --cqt-surface: #f4f2ee; --cqt-line: #dfe4ea; --cqt-line-field: #c9d1d9;
-  --cqt-link: #0f7b6c; --cqt-link-soft: #e3f2ef;
+  /* Harbor: ComplianceQuest colours (compliancequest.com, 2026-11-22): a navy header band, CQ blue for links and buttons,
+     a soft blue-white for surfaces, orange for everything CQ.AI, square corners */
+  --cqt-ink: #13233a; --cqt-muted: #51627a; --cqt-faint: #8796ab;
+  --cqt-bg: #ffffff; --cqt-surface: #f3f7fc; --cqt-line: #dbe5f1; --cqt-line-field: #c3d1e2;
+  --cqt-link: #0f6cbd; --cqt-link-soft: #e6f0fa;
+  --cqt-accent: #b84a17; --cqt-accent-soft: #fff1e8; --cqt-accent-line: #fbd3bd; --cqt-accent-fill: #f9b892;
+  --cqt-ask: #b84a17; --cqt-ask-soft: #fff1e8;
+  --cqt-info-solid: #0b5394; --cqt-info-bg: #e6f0fa; --cqt-info-fg: #0b4f8a;   /* orange is kept for CQ.AI */
   --cqt-warn-solid: #a35c00; --cqt-warn-bg: #fdf1e0; --cqt-warn-fg: #8f5100; --cqt-warn-line: #f0d3a6;
   --cqt-pos-solid: #1d7a3a; --cqt-pos-bg: #e4f3e8; --cqt-pos-fg: #1d7a3a;
-  --cqt-hl-bg: #f4f2ee; --cqt-hl-line: #dfe4ea; --cqt-hl-ink: #14283d; --cqt-hl-muted: #5d6b7a;
+  --cqt-hl-bg: #eef3f9; --cqt-hl-line: #dbe5f1;
+  --cqt-hl-bar: #0b2a5b; --cqt-hl-bar-line: #0b2a5b;
+  --cqt-hl-ink: #ffffff; --cqt-hl-muted: #b9c8dd; --cqt-hl-link: #8cc4ff;
+  --cqt-hl-pos: #7fd99b; --cqt-hl-warn: #ffc27a; --cqt-hl-crit: #ff9a8f;
+  --cqt-hl-ask: #ffb48a; --cqt-hl-ask-hover: rgba(255, 255, 255, 0.12);
   --cqt-r-card: 2px; --cqt-r-field: 3px;
 }
 
@@ -345,7 +362,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 /* ============================ WORKSPACE HEADER ========================= */
 /* every record workspace opens with this: .cq-box > header.cq-hl > .cq-hl-top (+ optional .cq-hl-fields) */
 .cq-box { display: flex; flex-direction: column; border: 1px solid var(--cq-hl-line); border-radius: var(--cq-r-card); background: var(--cq-bg); }
-.cq-hl { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.875rem 1.25rem 0.75rem; background: var(--cq-hl-bg); border-bottom: 1px solid var(--cq-hl-line); border-radius: var(--cq-r-card) var(--cq-r-card) 0 0; }
+.cq-hl { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.875rem 1.25rem 0.75rem; background: var(--cq-hl-bar); border-bottom: 1px solid var(--cq-hl-bar-line); border-radius: var(--cq-r-card) var(--cq-r-card) 0 0; }
 .cq-hl-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .cq-hl-who { display: flex; align-items: center; gap: 0.75rem; }
 .cq-hl-icon { display: inline-flex; }

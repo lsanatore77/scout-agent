@@ -15,6 +15,6 @@
 /* the side column shows only when a step puts something in it */
 .cq-ws-side.none { display: none; }
 /* a header value with a tone (a risk level, say): bold, in the status colour */
-.cq-hl-v.tone-pos { color: var(--cq-pos-fg); font-weight: 700; }
-.cq-hl-v.tone-warn { color: var(--cq-warn-fg); font-weight: 700; }
-.cq-hl-v.tone-crit { color: var(--cq-crit-fg); font-weight: 700; }
+.cq-hl-v.tone-pos { color: var(--cq-hl-pos); font-weight: 700; }
+.cq-hl-v.tone-warn { color: var(--cq-hl-warn); font-weight: 700; }
+.cq-hl-v.tone-crit { color: var(--cq-hl-crit); font-weight: 700; }
