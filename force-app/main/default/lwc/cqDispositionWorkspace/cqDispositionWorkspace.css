@@ -8,23 +8,21 @@
 .lvl.low { color: var(--cq-pos-fg); }
 .lvl.medium { color: var(--cq-warn-fg); }
 .lvl.high { color: var(--cq-crit-fg); }
-.yours { padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); min-width: 0; }
-.triaged { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 8px; background: var(--cq-pos-bg); color: var(--cq-pos-fg); font-weight: 600; margin-bottom: 8px; }
+/* a bordered card inside the step: Decided at Triage, Dispositions on This Part, Parts and Lots to Dispose, the investigation line */
+.yours, .lotscard, .winv { border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); min-width: 0; }
+.yours, .lotscard { padding: 12px 14px; }
+.triaged { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--cq-r-card); background: var(--cq-pos-bg); color: var(--cq-pos-fg); font-weight: 600; margin-bottom: 8px; }
 .flist { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; line-height: 1.5; }
 .plainlist { padding-left: 0; list-style: none; }
-/* Dispositions on This Part: a card per type with its record count */
-.hcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
-.hcard { padding: 8px 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); min-width: 0; }
-.hcard .hk { font-size: 12px; color: var(--cq-muted); }
-.hcard .hv { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.hcard.none .hv { color: var(--cq-faint); font-weight: 600; }
+/* Dispositions on This Part: the shared tiles, a type with no records greyed */
+.cq-tile.none .cq-tile-v { color: var(--cq-faint); font-weight: 600; }
 /* Dispose by Lot */
-.lot { padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
+.lot { padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px; }
 .lothead { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
-.lotname { font-size: 15px; font-weight: 700; }
+.lotname { font-size: var(--cq-fs-body); font-weight: 700; }
 .count { font-weight: 700; font-variant-numeric: tabular-nums; }
 .qtymsg { margin: 0; color: var(--cq-crit-fg); }
-.drow { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 8px; background: var(--cq-surface); border: 1px solid var(--cq-line); }
+.drow { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); }
 /* shared pieces keep this screen's spacing */
 .cq-card-title { margin-bottom: 6px; }
 .cq-pcard .cq-card-title { margin-bottom: 0; }
@@ -35,7 +33,6 @@
 .cq-field input.date { width: 170px; }
 /* Disposition at a Glance: the suggestion with Parts and Lots to Dispose under it */
 .rcol { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.lotscard { padding: 12px 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); min-width: 0; }
 .lotscard .cq-note { margin: 8px 0 0; }
 .lotscard td.cq-strong { white-space: nowrap; }
 /* What's Wrong */
@@ -46,13 +43,11 @@
 .wkv dt { color: var(--cq-muted); }
 .wkv dd { margin: 0; font-weight: 600; min-width: 0; }
 .wkv dd.bad { color: var(--cq-crit-fg); font-weight: 700; }
-.winv { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; border-radius: var(--cq-r-card); background: var(--cq-bg); border: 1px solid var(--cq-line); }
-.conf { margin-left: 6px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--cq-accent-line); background: var(--cq-bg); color: var(--cq-accent); font-size: 12px; font-weight: 600; }
+.winv { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; }
 .factors { margin: 8px 0 0; padding-left: 18px; color: var(--cq-muted); line-height: 1.5; }
 /* Dispose by Lot: what a row needs */
 .okline { margin: 0; color: var(--cq-pos-fg); font-weight: 600; }
 .cq-msg.warn.waitbox { margin: 0; }
-/* the dispositioner's signature */
 /* Dispose by Lot: the decision takes three quarters, the signature one quarter and stays in view */
 .dispgrid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 .dispmain { min-width: 0; }

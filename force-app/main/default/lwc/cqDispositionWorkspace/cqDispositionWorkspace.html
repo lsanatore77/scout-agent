@@ -39,7 +39,7 @@
                             </div>
                             <div class="rcol">
                             <div class="cq-ai-card">
-                                <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why><template if:true={v.confidence}> <span class="conf">{confidenceText}</span></template></div>
+                                <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why><template if:true={v.confidence}> <span class="cq-pill soft ai">{confidenceText}</span></template></div>
                                 <div class="cq-ai-verdict">{suggestHeadline}</div>
                                 <div class="cq-ai-text">{v.suggestWhy}</div>
                                 <template if:true={hasFactors}>
@@ -88,9 +88,9 @@
                             <div class="yours">
                                 <div class="cq-card-title">Dispositions on This Part</div>
                                 <template if:true={hasHistory}>
-                                    <div class="hcards">
+                                    <div class="cq-tiles">
                                         <template for:each={historyByType} for:item="h">
-                                            <div key={h.type} class={h.cls}><div class="hk">{h.type}</div><div class="hv">{h.text}</div></div>
+                                            <div key={h.type} class={h.cls}><div class="cq-tile-k">{h.type}</div><div class="cq-tile-v">{h.text}</div></div>
                                         </template>
                                     </div>
                                 </template>

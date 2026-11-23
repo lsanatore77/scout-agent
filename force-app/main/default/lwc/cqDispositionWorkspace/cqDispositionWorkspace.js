@@ -209,7 +209,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
         Object.keys(count).forEach((t) => { if (!types.includes(t)) { types.push(t); } });
         return types.map((t) => {
             const n = count[t] || 0;
-            return { type: t, text: n + (n === 1 ? ' Record' : ' Records'), cls: 'hcard' + (n ? '' : ' none') };
+            return { type: t, text: n + (n === 1 ? ' Record' : ' Records'), cls: 'cq-tile' + (n ? '' : ' none') };
         });
     }
 
