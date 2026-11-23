@@ -26,6 +26,7 @@ public with sharing class CqLotRecord {
         @AuraEnabled public String supplier;
         @AuraEnabled public List<Item> flags = new List<Item>();   // records against this exact component lot
         @AuraEnabled public String aiNote;                          // a CQ.AI suggestion, never a status
+        public String partType;                                     // CQ's Part Type, e.g. Sub Assembly, Raw Material
     }
     public class Place {
         @AuraEnabled public String key;
@@ -187,7 +188,8 @@ public with sharing class CqLotRecord {
     static void components(View v, Id batchId, List<compliancequest__SQX_Complaint__c> comps) {
         Map<String, Component> byLot = new Map<String, Component>();
         for (cqext__CQEBR_Batch_Sub_Step_Measurement__c m : [
-                SELECT cqext__Lot_Number__c, cqext__CQEBR_Operator_Product__r.Name, cqext__CQEBR_Operator_Product__r.compliancequest__Part_Number__c
+                SELECT cqext__Lot_Number__c, cqext__CQEBR_Operator_Product__r.Name, cqext__CQEBR_Operator_Product__r.compliancequest__Part_Number__c,
+                       cqext__CQEBR_Operator_Product__r.compliancequest__Part_Type__c
                 FROM cqext__CQEBR_Batch_Sub_Step_Measurement__c
                 WHERE cqext__Lot_Number__c != null AND cqext__CQEBR_Batch_Sub_Step__r.cqext__CQEBR_Batch_Step__r.cqext__CQEBR_Batch__c = :batchId
                 WITH USER_MODE ORDER BY Name LIMIT 2000]) {
@@ -198,6 +200,7 @@ public with sharing class CqLotRecord {
             c.lot = lot;
             c.partNumber = m.cqext__CQEBR_Operator_Product__r?.compliancequest__Part_Number__c;
             c.partName = m.cqext__CQEBR_Operator_Product__r?.Name;
+            c.partType = m.cqext__CQEBR_Operator_Product__r?.compliancequest__Part_Type__c;
             byLot.put(lot, c);
         }
         if (byLot.isEmpty()) { return; }
@@ -247,7 +250,8 @@ public with sharing class CqLotRecord {
             }
         }
         for (Component c : byLot.values()) {
-            Boolean sub = c.lotType == 'Sub-assembly' || (c.lotType == null && c.partName != null && c.partName.containsIgnoreCase('sub-assembly'));
+            // the lot's own Lot Type when it has one, otherwise CQ's Part Type for the part
+            Boolean sub = c.lotType != null ? c.lotType == 'Sub-assembly' : c.partType == 'Sub Assembly';
             if (sub) { v.subAssemblies.add(c); } else { v.materials.add(c); }
         }
         v.materials.sort(new FlaggedFirst());
