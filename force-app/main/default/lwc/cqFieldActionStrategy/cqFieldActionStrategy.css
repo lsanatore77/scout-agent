@@ -16,7 +16,9 @@
 
 
 /* the hold table is the shared compact table; a group row names the kind of stock under it */
-.cq-tbl tr.grp td { padding: 8px 8px 4px; font-size: 11px; font-weight: 700; color: var(--cq-muted); }
+.cq-tbl tr.grp td { padding: 10px 8px 6px; font-size: var(--cq-fs-meta); font-weight: 700; color: var(--cq-ink); }
+/* the headings over each choice and field in the tabs (Action, How Far It Goes, Instruction, Check Level...): card-heading size */
+.panel .cq-field > .cq-label { font-size: var(--cq-fs-body); font-weight: 700; }
 .hc { width: 40px; }
 .b { font-weight: 600; }
 .what { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

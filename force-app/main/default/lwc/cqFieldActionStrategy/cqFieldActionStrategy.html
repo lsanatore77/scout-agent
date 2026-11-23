@@ -21,7 +21,7 @@
                 <div class="panel" role="tabpanel">
                     <template if:true={isAction}>
                     <template if:true={v.whyAction}>
-                        <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this action and how far it goes?"></c-cq-ai-why></div><div class="cq-ai-text">{v.whyAction}</div></div>
+                        <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this action and how far it goes?"></c-cq-ai-why></div><template if:true={v.sHeadline}><div class="cq-ai-verdict">{v.sHeadline}</div></template><div class="cq-ai-text">{v.whyAction}</div></div>
                     </template>
                     <div class="cq-field">
                         <span class="cq-label">Action<span class="cq-req">*</span></span>
@@ -71,7 +71,7 @@
                             <tbody>
                                 <template for:each={holdRows} for:item="h">
                                     <tr key={h.key} class={h.rowCls}>
-                                        <template if:true={h.isGroup}><td colspan="7">{h.title}</td></template>
+                                        <template if:true={h.isGroup}><td colspan="7" class="grptitle">{h.title}</td></template>
                                         <template if:false={h.isGroup}>
                                             <td class="hc"><input class="cq-tick" type="checkbox" data-id={h.id} checked={h.hold} disabled={locked} onchange={handleHold} aria-label={h.label} /></td>
                                             <td class="cq-nowrap b">{h.lot}</td>

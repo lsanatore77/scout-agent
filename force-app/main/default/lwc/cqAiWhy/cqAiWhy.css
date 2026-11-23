@@ -12,6 +12,8 @@
 .cq-pill:focus-visible { border-radius: 999px; }
 .tag { font-size: 12px; white-space: nowrap; }
 .label { margin-right: 6px; }
+/* every "CQ.AI Suggests" label and tag is the same size and weight wherever it sits (an eyebrow is 11px capitals, a card title 16px) */
+.b.tag:not(.cq-pill), .b.label:not(.cq-pill) { font-size: 12px; font-weight: 600; text-transform: none; letter-spacing: normal; }
 /* the star in a fixed space, so a line under a label can start exactly where the words do */
 .label .st { display: inline-block; width: 14px; }
 .star { font-weight: 400; }
