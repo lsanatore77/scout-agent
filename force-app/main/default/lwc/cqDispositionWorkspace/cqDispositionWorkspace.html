@@ -101,6 +101,8 @@
                         <template if:true={v.needsApproval}>
                             <div class="cq-msg warn">This NC needs disposition approval, which this workspace does not do yet. Use the Disposition tab to send it for approval.</div>
                         </template>
+                        <div class="dispgrid">
+                        <div class="dispmain">
                         <template for:each={lotForms} for:item="l">
                             <section key={l.impactedId} class="lot">
                                 <div class="lothead">
@@ -150,14 +152,16 @@
                                 </template>
                             </section>
                         </template>
-                        <section class="signsec">
+                        </div>
+                        <aside class="signsec">
                             <div class="signhead"><span class="cq-card-title nom">Sign the Disposition</span></div>
                             <c-cq-sign-seat record-id={recordId} policy-key="compliancequest__SQX_Nonconformance__c" actions={seatActions}
                                 seat="Dispositioned By" person="You" sub={signFor} status="Your Signature" tone="you" mine
                                 meaning={signMeaning} comment-hint="Optional, for example scrapped per SOP-QA-021." submit={seatSubmit} disabled={cantComplete}>
                             </c-cq-sign-seat>
-                            <p class="snote">On Complete Disposition each row is saved as a CQ disposition and marked Complete by you, signed for every lot and split above. CQ updates each lot's disposed quantity, and when nothing is left the NC's disposition is complete. Anything left on a lot gets a new draft for later.</p>
-                        </section>
+                            <p class="snote">On Complete Disposition each row is saved as a CQ disposition and marked Complete by you, signed for every lot and split on the left. CQ updates each lot's disposed quantity, and when nothing is left the NC's disposition is complete. Anything left on a lot gets a new draft for later.</p>
+                        </aside>
+                        </div>
                     </template>
 
                     <template if:true={showDone}>

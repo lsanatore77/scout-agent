@@ -42,7 +42,12 @@
 .okline { margin: 0; color: var(--cq-pos-fg); font-weight: 600; }
 .cq-msg.warn.waitbox { margin: 0; }
 /* the dispositioner's signature */
-.signsec { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+/* Dispose by Lot: the decision takes three quarters, the signature one quarter and stays in view */
+.dispgrid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.dispmain { min-width: 0; }
+.dispmain .lot:last-child { margin-bottom: 0; }
+.signsec { display: flex; flex-direction: column; gap: 8px; min-width: 0; position: sticky; top: 12px; }
+@media (max-width: 900px) { .dispgrid { grid-template-columns: minmax(0, 1fr); } .signsec { position: static; } }
 .signhead { display: flex; align-items: center; gap: 10px; }
 .nom { margin: 0; }
 .snote { margin: 0; color: var(--cq-muted); line-height: 1.5; }
