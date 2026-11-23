@@ -18,10 +18,16 @@
                                         <dt>Severity</dt><dd>{severityText}</dd>
                                         <template if:true={v.spec}><dt>Specification</dt><dd>{v.spec}</dd></template>
                                         <template if:true={v.actual}><dt>Actual</dt><dd class="bad">{v.actual}</dd></template>
-                                        <dt>Units</dt><dd>{unitsText}</dd>
+                                        <template if:true={v.defective}><dt>Defective</dt><dd>{defectiveText}</dd></template>
                                     </dl>
                                 </div>
                                 <p class="cq-prob">{problemText}</p>
+                                <div class="cq-tiles">
+                                    <div class="cq-tile"><div class="cq-tile-k">Left to Dispose</div><div class="cq-tile-v">{leftText}</div></div>
+                                    <div class="cq-tile"><div class="cq-tile-k">Lots</div><div class="cq-tile-v">{lotCount}</div></div>
+                                    <div class="cq-tile"><div class="cq-tile-k">Approval</div><div class="cq-tile-v">{approvalText}</div></div>
+                                    <div class="cq-tile"><div class="cq-tile-k">Due</div><div class="cq-tile-v">{dueText}</div></div>
+                                </div>
                                 <template if:true={v.investigationId}>
                                     <div class="winv">
                                         <span class="cq-strong">Investigation</span>
@@ -31,6 +37,7 @@
                                     </div>
                                 </template>
                             </div>
+                            <div class="rcol">
                             <div class="cq-ai-card">
                                 <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this disposition?"></c-cq-ai-why><template if:true={v.confidence}> <span class="conf">{confidenceText}</span></template></div>
                                 <div class="cq-ai-verdict">{suggestHeadline}</div>
@@ -39,38 +46,35 @@
                                     <ul class="factors"><template for:each={factorRows} for:item="f"><li key={f.key}>{f.text}</li></template></ul>
                                 </template>
                             </div>
-                        </div>
-                        <div class="cq-tiles cq-mt16">
-                            <div class="cq-tile"><div class="cq-tile-k">Left to Dispose</div><div class="cq-tile-v">{leftText}</div></div>
-                            <div class="cq-tile"><div class="cq-tile-k">Lots</div><div class="cq-tile-v">{lotCount}</div></div>
-                            <div class="cq-tile"><div class="cq-tile-k">Approval</div><div class="cq-tile-v">{approvalText}</div></div>
-                            <div class="cq-tile"><div class="cq-tile-k">Due</div><div class="cq-tile-v">{dueText}</div></div>
+                            <section class="lotscard">
+                                <div class="cq-card-title">Parts and Lots to Dispose</div>
+                                <div class="cq-tblwrap">
+                                    <table class="cq-tbl">
+                                        <thead><tr><th>Part</th><th>Lot</th><th class="num">Impacted</th><th class="num">Disposed</th><th class="num">Left</th><th>Disposition Records</th></tr></thead>
+                                        <tbody>
+                                            <template for:each={lotRows} for:item="l">
+                                                <tr key={l.impactedId}>
+                                                    <td>{l.partName}</td>
+                                                    <td class="cq-strong">{l.lot}</td>
+                                                    <td class="num">{l.impactedText}</td>
+                                                    <td class="num">{l.disposedText}</td>
+                                                    <td class={l.leftCls}>{l.leftText}</td>
+                                                    <td>
+                                                        <template for:each={l.recs} for:item="r">
+                                                            <div key={r.id}><a class="cq-link" href={r.href} target="_blank">{r.name}</a><span class="cq-muted">&nbsp;{r.meta}</span></div>
+                                                        </template>
+                                                        <template if:true={l.noRecs}><span class="cq-muted">None Yet</span></template>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <template if:true={noLots}><p class="cq-note">This NC has no impacted parts or lots, so there is nothing to dispose.</p></template>
+                            </section>
+                            </div>
                         </div>
 
-                        <div class="cq-card-title cq-mt16">Parts and Lots to Dispose</div>
-                        <div class="cq-tblwrap">
-                            <table class="cq-tbl">
-                                <thead><tr><th>Part</th><th>Lot</th><th class="num">Impacted</th><th class="num">Disposed</th><th class="num">Left</th><th>Disposition Records</th></tr></thead>
-                                <tbody>
-                                    <template for:each={lotRows} for:item="l">
-                                        <tr key={l.impactedId}>
-                                            <td>{l.partName}</td>
-                                            <td class="cq-strong">{l.lot}</td>
-                                            <td class="num">{l.impactedText}</td>
-                                            <td class="num">{l.disposedText}</td>
-                                            <td class={l.leftCls}>{l.leftText}</td>
-                                            <td>
-                                                <template for:each={l.recs} for:item="r">
-                                                    <div key={r.id}><a class="cq-link" href={r.href} target="_blank">{r.name}</a><span class="cq-muted">&nbsp;{r.meta}</span></div>
-                                                </template>
-                                                <template if:true={l.noRecs}><span class="cq-muted">None Yet</span></template>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
-                        </div>
-                        <template if:true={noLots}><p class="cq-note">This NC has no impacted parts or lots, so there is nothing to dispose.</p></template>
 
                         <div class="cq-cols cq-mt16">
                             <div class="yours">

@@ -156,6 +156,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get photoUrl() { return this.v.photoId ? '/sfc/servlet.shepherd/version/download/' + this.v.photoId : null; }
     get failureText() { return this.v.failureCode || 'Not set'; }
     get severityText() { return this.v.severity ? this.v.severity.replace(/^(\d+)\s*-\s*/, '$1 · ') : '—'; }
+    get defectiveText() { return this.units(this.v.defective); }
     get unitsText() {
         const bits = [this.units(this.totalLeft) + ' left to dispose'];
         if (this.v.defective) { bits.push(this.fmt(this.v.defective) + ' defective'); }

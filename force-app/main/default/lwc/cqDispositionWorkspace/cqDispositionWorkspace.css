@@ -33,6 +33,11 @@
 .cq-msg.warn { margin: 8px 0 14px; }
 .cq-field input.qty { width: 110px; }
 .cq-field input.date { width: 170px; }
+/* Disposition at a Glance: the suggestion with Parts and Lots to Dispose under it */
+.rcol { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.lotscard { padding: 12px 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); min-width: 0; }
+.lotscard .cq-note { margin: 8px 0 0; }
+.lotscard td.cq-strong { white-space: nowrap; }
 /* What's Wrong */
 .ww { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
 .wphoto { flex: none; display: block; width: 190px; max-width: 100%; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); overflow: hidden; background: var(--cq-bg); }
