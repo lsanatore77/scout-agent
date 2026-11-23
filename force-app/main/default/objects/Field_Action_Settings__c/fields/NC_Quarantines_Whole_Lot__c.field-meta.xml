@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>NC_Quarantines_Whole_Lot__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>On: any NC with quantity left to dispose quarantines the whole lot. Off (default): only an NC that covers all of the lot's stock does; a smaller quantity shows on the lot's Quality list.</description>
+    <label>NC Quarantines Whole Lot</label>
+    <type>Checkbox</type>
+</CustomField>

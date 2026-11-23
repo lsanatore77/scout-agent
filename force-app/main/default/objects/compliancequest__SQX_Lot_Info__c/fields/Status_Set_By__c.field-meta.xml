@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Status_Set_By__c</fullName>
+    <description>What set the lot's Release Status: Manual, a field action (e.g. FA-0001), an NC (e.g. NC-000077) or Receiving inspection.</description>
+    <label>Status Set By</label>
+    <length>80</length>
+    <type>Text</type>
+</CustomField>

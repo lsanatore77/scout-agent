@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Manual_Status__c</fullName>
+    <description>The release status a person last set on the lot by hand. Holds, NCs and receiving inspection can make the lot stricter than this, never looser; only a person clears it.</description>
+    <label>Manual Status</label>
+    <length>40</length>
+    <type>Text</type>
+</CustomField>
