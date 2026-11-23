@@ -5,6 +5,7 @@
             fields={headerFields} show-edit audit-trail error={error} onedit={handleEdit} onopen={handleShellOpen}>
 
             <div class="body">
+                <template if:true={v.conflict}><div class="cq-msg crit" role="alert"><span class="b">Decisions on this lot disagree.</span> {v.conflict}</div></template>
                 <template if:true={hasMade}>
                     <section class="card">
                         <div class="head"><span class="cq-card-title">Made</span><span class="cq-sub">{madeSource}</span></div>

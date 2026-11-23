@@ -41,6 +41,7 @@ public with sharing class CqLotRecord {
         @AuraEnabled public String lotType;
         @AuraEnabled public String status;
         @AuraEnabled public String statusTone;
+        @AuraEnabled public String conflict;           // final decisions on the lot disagree (CqLotStatus)
         @AuraEnabled public List<Item> header = new List<Item>();
         @AuraEnabled public Id batchId;
         @AuraEnabled public String batchName;
@@ -73,7 +74,7 @@ public with sharing class CqLotRecord {
     public static View build(Id lotId) {
         compliancequest__SQX_Lot_Info__c l = [
             SELECT Id, Name, compliancequest__Part_Number__c, compliancequest__Manufacturing_Date__c, compliancequest__Expiration_Date__c,
-                   Lot_Type__c, Release_Status__c, Hold_Reason__c, Sterilization_Lot__c, Supplier_Lot__c, Received_Date__c,
+                   Lot_Type__c, Release_Status__c, Hold_Reason__c, Status_Set_By__c, Status_Set_On__c, Status_Conflict__c, Sterilization_Lot__c, Supplier_Lot__c, Received_Date__c,
                    Receiving_Inspection__c, Supplier__c, Supplier__r.Name, Part__c, Part__r.Name, Part__r.compliancequest__Part_Number__c,
                    Batch__c, Batch__r.Name, Batch__r.cqext__Part_Product_Name__c, Batch__r.cqext__Part_Product_Number__c,
                    Batch__r.cqext__Part_Revision__c, Batch__r.cqext__Org_Site__c, Batch__r.cqext__Location_Name__c,
@@ -99,6 +100,10 @@ public with sharing class CqLotRecord {
         field(v.header, 'type', 'Lot Type', l.Lot_Type__c, null, null);
         field(v.header, 'status', 'Release Status', l.Release_Status__c, null, v.statusTone);
         field(v.header, 'hold', 'Hold Reason', l.Hold_Reason__c, null, null);
+        // what set the status, and when (Manual, a field action, an NC, receiving inspection)
+        field(v.header, 'setby', 'Status Set By', l.Status_Set_By__c == null ? null
+            : l.Status_Set_By__c + (l.Status_Set_On__c == null ? '' : ' \u00b7 ' + l.Status_Set_On__c.format('d MMM yyyy')), null, null);
+        v.conflict = l.Status_Conflict__c;
         field(v.header, 'batch', 'Batch Record', b?.Name, l.Batch__c, null);
         field(v.header, 'steril', 'Sterilization Lot', l.Sterilization_Lot__c, null, null);
 
