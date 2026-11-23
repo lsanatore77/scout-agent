@@ -12,6 +12,8 @@
 /* a step set aside for later is greyed; a step that needs attention shows its sub line in red */
 .cq-rail .step.later { opacity: .55; }
 .cq-rail .ssub.alert { color: var(--cq-crit-fg); font-weight: 600; }
+/* a screen with no steps has no rail */
+.cq-rail.none { display: none; }
 /* the side column shows only when a step puts something in it */
 .cq-ws-side.none { display: none; }
 /* a header value with a tone (a risk level, say): bold, in the status colour */

@@ -64,7 +64,8 @@ export default class CqWsShell extends LightningElement {
     }
     get atTop() { return (this.stepsAt || this.look.steps) === 'top'; }
     get bodyCls() { return 'cq-ws-body' + (this.atTop ? ' top' : ''); }
-    get railCls() { return 'cq-rail' + (this.atTop ? ' top' : ''); }
+    /** A screen with no steps (a record view such as the Lot record) has no rail. */
+    get railCls() { return 'cq-rail' + (this.atTop ? ' top' : '') + (this.steps && this.steps.length ? '' : ' none'); }
     get sideCls() { return 'cq-ws-side' + (this.hasSide ? '' : ' none'); }
     handleSideChange(event) { this.hasSide = event.target.assignedElements().length > 0; }
 

@@ -1,0 +1,132 @@
+<template>
+    <template if:false={ready}><template if:true={error}><div class="cq-msg crit">{error}</div></template></template>
+    <template if:true={ready}>
+        <c-cq-ws-shell record-id={recordId} icon="standard:product_item" object-label={objectLabel} record-name={recordName}
+            fields={headerFields} show-edit audit-trail error={error} onedit={handleEdit} onopen={handleShellOpen}>
+
+            <div class="body">
+                <template if:true={hasMade}>
+                    <section class="card">
+                        <div class="head"><span class="cq-card-title">Made</span><span class="cq-sub">{madeSource}</span></div>
+                        <div class="kvgrid">
+                            <template for:each={v.made} for:item="m">
+                                <div key={m.key} class="kv"><span class="kv-k">{m.label}</span><span class="kv-v">{m.value}</span></div>
+                            </template>
+                        </div>
+                    </section>
+                </template>
+
+                <template if:true={hasComponents}>
+                    <section class="card">
+                        <div class="head"><span class="cq-card-title">What Went Into It</span><span class="cq-sub">{componentSub}</span></div>
+                        <div class="cq-tblwrap">
+                            <table class="cq-tbl compact">
+                                <thead><tr><th>Lot</th><th>Part</th><th>Supplier</th><th>Against This Lot</th></tr></thead>
+                                <tbody>
+                                    <template if:true={hasSubs}>
+                                        <tr class="grp"><td colspan="4">{subTitle}</td></tr>
+                                        <template for:each={subRows} for:item="c">
+                                            <tr key={c.key}>
+                                                <td class="cq-nowrap"><template if:true={c.hasLot}><button class="cq-link lotlink" data-id={c.lotId} onclick={handleOpen}>{c.lot}</button></template><template if:false={c.hasLot}><span class="b">{c.lot}</span></template></td>
+                                                <td>{c.part}</td>
+                                                <td>{c.supplier}</td>
+                                                <td>
+                                                    <span class="flags"><template for:each={c.flags} for:item="f"><span key={f.key} class={f.cls}>{f.text}</span></template></span>
+                                                    <template if:true={c.hasAi}><span class="ainote"><c-cq-ai-why variant="tag" text="CQ.AI" subject={c.lot} lead="Why does CQ.AI link a complaint to " tip="Ask CQ.AI why"></c-cq-ai-why><span>{c.aiNote}</span></span></template>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                    </template>
+                                    <template if:true={hasMaterials}>
+                                        <tr class="grp"><td colspan="4">{materialTitle}</td></tr>
+                                        <template for:each={materialRows} for:item="c">
+                                            <tr key={c.key}>
+                                                <td class="cq-nowrap"><template if:true={c.hasLot}><button class="cq-link lotlink" data-id={c.lotId} onclick={handleOpen}>{c.lot}</button></template><template if:false={c.hasLot}><span class="b">{c.lot}</span></template></td>
+                                                <td>{c.part}</td>
+                                                <td>{c.supplier}</td>
+                                                <td>
+                                                    <span class="flags"><template for:each={c.flags} for:item="f"><span key={f.key} class={f.cls}>{f.text}</span></template></span>
+                                                    <template if:true={c.hasAi}><span class="ainote"><c-cq-ai-why variant="tag" text="CQ.AI" subject={c.lot} lead="Why does CQ.AI link a complaint to " tip="Ask CQ.AI why"></c-cq-ai-why><span>{c.aiNote}</span></span></template>
+                                                </td>
+                                            </tr>
+                                        </template>
+                                        <template if:true={hasMore}>
+                                            <tr class="more"><td colspan="4"><button class="cq-link" onclick={handleMore}>{moreLabel}</button></td></tr>
+                                        </template>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </template>
+
+                <template if:true={hasUsedIn}>
+                    <section class="card">
+                        <div class="head"><span class="cq-card-title">Used In</span><span class="cq-sub">Finished lots whose batch steps recorded this lot</span></div>
+                        <div class="cq-tblwrap">
+                            <table class="cq-tbl compact">
+                                <thead><tr><th>Lot</th><th>Release Status</th></tr></thead>
+                                <tbody>
+                                    <template for:each={usedInRows} for:item="u">
+                                        <tr key={u.key}>
+                                            <td class="cq-nowrap"><button class="cq-link lotlink" data-id={u.id} onclick={handleOpen}>{u.name}</button></td>
+                                            <td><template if:true={u.hasStatus}><span class={u.cls}>{u.status}</span></template></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </template>
+            </div>
+
+            <div slot="side" class="side">
+                <template if:true={hasAi}>
+                    <div class="cq-ai-card">
+                        <div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Notes" question="Why does CQ.AI link this complaint to a component lot?"></c-cq-ai-why></div>
+                        <template for:each={aiRows} for:item="a">
+                            <p key={a.key} class="cq-ai-text">{a.value}</p>
+                        </template>
+                    </div>
+                </template>
+
+                <template if:true={hasSupply}>
+                    <section class="card">
+                        <span class="cq-card-title">Supply</span>
+                        <template for:each={supplyRows} for:item="s">
+                            <div key={s.key} class="sline"><span class="kv-k">{s.label}</span>
+                                <template if:true={s.isLink}><button class="cq-link" data-id={s.id} onclick={handleOpen}>{s.value}</button></template>
+                                <template if:false={s.isLink}><span class={s.vcls}>{s.value}</span></template>
+                            </div>
+                        </template>
+                    </section>
+                </template>
+
+                <section class="card">
+                    <span class="cq-card-title">Quality on This Lot</span>
+                    <template if:true={hasQuality}>
+                        <template for:each={qualityRows} for:item="q">
+                            <div key={q.key} class="qline">
+                                <span class="qhead"><button class="cq-link" data-id={q.id} onclick={handleOpen}>{q.name}</button><span class="cq-sub">{q.kind}</span><template if:true={q.open}><span class="cq-pill soft warn">Open</span></template></span>
+                                <span class="cq-sub block">{q.text}</span>
+                            </div>
+                        </template>
+                    </template>
+                    <template if:false={hasQuality}><span class="cq-sub">No complaints, NCs or field actions against this lot.</span></template>
+                </section>
+
+                <template if:true={hasWhere}>
+                    <section class="card">
+                        <span class="cq-card-title">Where It Is</span>
+                        <template for:each={placeRows} for:item="p">
+                            <div key={p.key} class="sline"><a class="cq-ploc" href={p.href} target="_blank">{p.location}</a><span class="cq-grow"></span><span class="numv">{p.units}</span></div>
+                        </template>
+                        <template if:true={hasStock}><div class="sline tot"><span>On Hand</span><span class="cq-grow"></span><span class="numv">{onHandText}</span></div></template>
+                        <template if:true={hasShipped}><div class="sline"><span class="kv-k">Shipped</span><span class="cq-grow"></span><span class="numv">{shippedText}</span></div></template>
+                        <template if:true={asOfText}><span class="cq-sub">{asOfText}</span></template>
+                    </section>
+                </template>
+            </div>
+        </c-cq-ws-shell>
+    </template>
+</template>

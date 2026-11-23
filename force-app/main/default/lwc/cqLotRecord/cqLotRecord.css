@@ -1,0 +1,36 @@
+@import 'c/cqStyles';
+
+:host { display: block; color: var(--cq-ink); font-size: 13px; }
+/* the main column: Made, What Went Into It, Used In */
+.body { display: flex; flex-direction: column; gap: 14px; padding: 18px 20px; }
+.card { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+/* Made: label over value, as many columns as fit */
+.kvgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px 20px; }
+.kv { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kv-k { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); }
+.kv-v { font-size: var(--cq-fs-body); color: var(--cq-ink); }
+.kv-v.tone-pos { color: var(--cq-pos-fg); font-weight: 700; }
+.kv-v.tone-warn { color: var(--cq-warn-fg); font-weight: 700; }
+.kv-v.tone-crit { color: var(--cq-crit-fg); font-weight: 700; }
+/* the component table: a group row names sub-assemblies or materials */
+.cq-tbl tr.grp td { padding: 10px 12px 6px; font-size: var(--cq-fs-meta); font-weight: 700; color: var(--cq-ink); background: var(--cq-surface); }
+.cq-tbl tr.more td { padding: 8px 12px; }
+.lotlink { font-size: inherit; padding: 0; }
+.b { font-weight: 600; }
+.flags { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+/* a CQ.AI note is a suggestion, not a status: the CQ.AI tag and its line, under any tags */
+.ainote { display: flex; align-items: flex-start; gap: 6px; margin-top: 4px; color: var(--cq-muted); }
+.flags:empty + .ainote { margin-top: 0; }
+/* the side column */
+.side { display: flex; flex-direction: column; gap: 12px; padding: 18px 20px 18px 0; }
+.side .cq-ai-text + .cq-ai-text { margin-top: 8px; }
+.sline { display: flex; align-items: baseline; gap: 8px; padding-top: 6px; border-top: 1px solid var(--cq-line); }
+.sline .kv-k { flex: 0 0 auto; min-width: 120px; font-size: 13px; font-weight: 400; }
+/* a long value (a supplier's name) wraps inside the card rather than running past its edge */
+.sline > :last-child { min-width: 0; overflow-wrap: anywhere; }
+.sline .cq-link { white-space: normal; text-align: left; }
+.sline.tot { font-weight: 700; }
+.numv { font-variant-numeric: tabular-nums; font-weight: 600; }
+.qline { display: flex; flex-direction: column; gap: 2px; padding-top: 8px; border-top: 1px solid var(--cq-line); }
+.qhead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
