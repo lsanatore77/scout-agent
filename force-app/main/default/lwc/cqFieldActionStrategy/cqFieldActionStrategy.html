@@ -5,6 +5,7 @@
             <h3 class="cq-step-title nom">Strategy</h3>
             <span class={statePill}>{stateText}</span>
             <template if:true={confirmedLine}><span class="cq-sub">{confirmedLine}</span></template>
+            <template if:true={backToSummary}><button class="cq-link" onclick={handleSummary}>Show Summary</button></template>
         </div>
 
         <template if:true={needsScope}>
@@ -12,6 +13,19 @@
         </template>
 
         <template if:true={showStep}>
+            <template if:true={showSummary}>
+                <section class="sumbox" aria-label="Strategy">
+                    <template for:each={summaryRows} for:item="r">
+                        <div key={r.key} class="srow">
+                            <span class="sk">{r.k}</span>
+                            <span class="sv"><span class="svv">{r.v}</span><template if:true={r.d}><span class="cq-sub">{r.d}</span></template></span>
+                            <span class={r.aiCls}>{r.ai}</span>
+                        </div>
+                    </template>
+                    <div class="sfoot"><button class="cq-btn-outline" onclick={handleEdit}>{changeLabel}</button><template if:false={locked}><span class="cq-sub">Changing a confirmed strategy sends it back for confirming.</span></template></div>
+                </section>
+            </template>
+            <template if:true={showTabs}>
             <section class="tabbox">
                 <div class="tabs" role="tablist" aria-label="Strategy">
                     <template for:each={tabs} for:item="t">
@@ -23,46 +37,29 @@
                     <template if:true={v.whyAction}>
                         <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this action and how far it goes?"></c-cq-ai-why></div><template if:true={v.sHeadline}><div class="cq-ai-verdict">{v.sHeadline}</div></template><div class="cq-ai-text">{v.whyAction}</div></div>
                     </template>
-                    <div class="cq-field">
-                        <span class="cq-label">Action<span class="cq-req">*</span></span>
-                        <div class="cards c4" role="group" aria-label="Action">
-                            <template for:each={actionCards} for:item="o">
-                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template>
-                                    <span class="cq-optcard-desc">{o.desc}</span>
-                                </button>
-                            </template>
+                    <div class="two">
+                        <div class="cq-field">
+                            <span class="cq-label">Action<span class="cq-req">*</span></span>
+                            <c-cq-ws-choice variant="rows" name="Action" data-field="action" options={actionOptions} value={action} disabled={locked} onchoose={handleChoose}></c-cq-ws-choice>
                         </div>
-                    </div>
-                    <div class="cq-field">
-                        <span class="cq-label">How Far It Goes<span class="cq-req">*</span></span>
-                        <div class="cards c3" role="group" aria-label="How Far It Goes">
-                            <template for:each={depthCards} for:item="o">
-                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template>
-                                    <span class="cq-optcard-desc">{o.desc}</span>
-                                </button>
-                            </template>
+                        <div class="cq-field">
+                            <span class="cq-label">How Far It Goes<span class="cq-req">*</span></span>
+                            <c-cq-ws-choice variant="rows" name="How Far It Goes" data-field="depth" options={depthOptions} value={depth} disabled={locked} onchoose={handleChoose}></c-cq-ws-choice>
                         </div>
                     </div>
                     </template>
                     <template if:true={isTell}>
-                    <div class="cq-field">
-                        <span class="cq-label">Instruction<span class="cq-req">*</span></span>
-                        <div class="cards c2" role="group" aria-label="Instruction">
-                            <template for:each={instructions} for:item="o">
-                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" subject={o.title}></c-cq-ai-why></template>
-                                    <span class="cq-optcard-desc">{o.desc}</span>
-                                </button>
-                            </template>
+                    <div class="two">
+                        <div class="cq-field">
+                            <span class="cq-label">Instruction<span class="cq-req">*</span></span>
+                            <c-cq-ws-choice variant="rows" name="Instruction" data-field="instruction" options={instructionOptions} value={instruction} disabled={locked} onchoose={handleChoose}></c-cq-ws-choice>
                         </div>
+                        <label class="cq-field">
+                            <span class="cq-label">Key Message<span class="cq-req">*</span></span>
+                            <textarea rows="8" data-field="message" disabled={locked} onchange={handleText}></textarea>
+                            <span class="cq-hint">The Notifications step builds the customer letter from this.</span>
+                        </label>
                     </div>
-                    <label class="cq-field">
-                        <span class="cq-label">Key Message<span class="cq-req">*</span></span>
-                        <textarea rows="5" data-field="message" disabled={locked} onchange={handleText}></textarea>
-                        <span class="cq-hint">The Notifications step builds the customer letter from this.</span>
-                    </label>
                     </template>
                     <template if:true={isHolds}>
                     <template if:true={holdAi}>
@@ -116,19 +113,13 @@
                     <template if:true={v.whyLevel}>
                         <div class="cq-ai-card"><div class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Why does CQ.AI suggest this effectiveness check level?"></c-cq-ai-why></div><template if:true={v.sLevelHeadline}><div class="cq-ai-verdict">{v.sLevelHeadline}</div></template><div class="cq-ai-text">{v.whyLevel}</div></div>
                     </template>
+                    <div class="two">
                     <div class="cq-field">
                         <span class="cq-label">Check Level<span class="cq-req">*</span></span>
-                        <div class="cards c5" role="group" aria-label="Check Level">
-                            <template for:each={levelCards} for:item="o">
-                                <button key={o.key} class={o.cls} data-field={o.field} data-value={o.value} aria-pressed={o.pressed} disabled={locked} onclick={handlePick}>
-                                    <span class="cq-optcard-title">{o.title}</span><template if:true={o.ai}><c-cq-ai-why variant="tag" lead="Why does CQ.AI suggest check level " subject={o.title}></c-cq-ai-why></template>
-                                    <span class="cq-optcard-desc">{o.desc}</span>
-                                </button>
-                            </template>
-                        </div>
+                        <c-cq-ws-choice variant="rows" name="Check Level" data-field="level" options={levelOptions} value={level} disabled={locked} onchoose={handleChoose}></c-cq-ws-choice>
                     </div>
                     <template if:true={needsCheck}>
-                        <div class="row3">
+                        <div class="checkf">
                             <label class="cq-field">
                                 <span class="cq-label">How We Check<span class="cq-req">*</span></span>
                                 <select data-field="method" disabled={locked} onchange={handleText}>
@@ -149,9 +140,11 @@
                             </template>
                         </div>
                     </template>
+                    </div>
                     </template>
                 </div>
             </section>
+            </template>
 
             <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
         </template>

@@ -1,7 +1,7 @@
 <template>
     <div class="recsec">
         <template if:true={label}><div class="seclab">{label}</div></template>
-        <div class={listCls} role="radiogroup" aria-label={label}>
+        <div class={listCls} role="radiogroup" aria-label={groupLabel}>
             <template for:each={rows} for:item="o">
                 <button key={o.id} class={o.cls} role="radio" aria-checked={o.pressed} data-id={o.id} onclick={handleChoose} disabled={disabled}>
                     <span class="rd"></span>

@@ -21,3 +21,4 @@
 .row .ocd { font-size: 11px; color: var(--cq-muted); }
 .ailab { font-size: 12px; white-space: nowrap; }
 button:disabled { cursor: default; }
+.off .occ { opacity: .55; }

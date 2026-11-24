@@ -58,6 +58,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     tab = 'action';      // action | tell | holds | check
     stockOpen = '';      // the hold row whose on-hand split is showing
     holdSort = null;     // the Holds table's sort ({ key, dir }); rows sort inside their group (finished lots, component lots)
+    editing = false;     // a confirmed strategy shows as a summary; Change (or Show Details once closed) opens the tabs
 
     async connectedCallback() {
         // a click anywhere else, or Escape, closes the On Hand card (as on Scope)
@@ -143,47 +144,56 @@ export default class CqFieldActionStrategy extends LightningElement {
         return 'Confirmed' + (this.v.confirmedBy ? ' by ' + this.v.confirmedBy : '') + (this.v.confirmedOn ? ' · ' + new Date(this.v.confirmedOn).toLocaleString() : '');
     }
 
-    // ---- toggles
-    seg(list, cur, ai, field) {
-        return list.map(([value, label], i) => ({
-            key: field + i, value, field, label: (value === ai ? '✦ ' : '') + label,
-            pressed: cur === value ? 'true' : 'false',
-            cls: 'seg' + (cur === value ? ' on' : '') + (i ? ' sep' : '')
-        }));
-    }
-    /** Choices as option cards: title, CQ.AI marker on the suggested one, and what the choice means. */
-    cards(list, cur, ai, field, hints) {
-        return list.map(([value, title], i) => ({
-            key: field + i, value, field, title, desc: hints[value] || '', ai: value === ai,
-            pressed: cur === value ? 'true' : 'false', cls: 'cq-optcard' + (value === ai ? ' ai' : '')
-        }));
-    }
-    get actionCards() { return this.cards(ACTIONS, this.action, this.v.sAction, 'action', ACTION_HINT); }
-    get depthCards() { return this.cards(DEPTHS, this.depth, this.v.sDepth, 'depth', DEPTH_HINT); }
-    get levelCards() { return this.cards(LEVELS, this.level, this.v.sLevel, 'level', LEVEL_HINT); }
-    get actions() { return this.seg(ACTIONS, this.action, this.v.sAction, 'action'); }
-    get depths() { return this.seg(DEPTHS, this.depth, this.v.sDepth, 'depth'); }
-    get levels() { return this.seg(LEVELS, this.level, this.v.sLevel, 'level'); }
-    get actionHint() { return ACTION_HINT[this.action] || ''; }
-    get depthHint() { return DEPTH_HINT[this.depth] || ''; }
-    get levelHint() { return LEVEL_HINT[this.level] || ''; }
+    // ---- choices: the shared stacked list (c-cq-ws-choice, rows), two side by side per tab
+    options(list, ai, hints) { return list.map(([value, title]) => ({ id: value, title, desc: hints[value] || '', cq: value === ai })); }
+    get actionOptions() { return this.options(ACTIONS, this.v.sAction, ACTION_HINT); }
+    get depthOptions() { return this.options(DEPTHS, this.v.sDepth, DEPTH_HINT); }
+    get levelOptions() { return this.options(LEVELS, this.v.sLevel, LEVEL_HINT); }
     get isLevelB() { return this.level === 'Level B'; }
     get needsCheck() { return this.level !== 'Level E'; }
-    get instructions() {
-        return INSTRUCTIONS.map(([value, forAction], i) => {
-            const on = this.instruction === value;
+    get instructionOptions() {
+        return INSTRUCTIONS.map(([value, forAction]) => {
             const fits = forAction.includes(this.action);
-            return { key: 'i' + i, value, field: 'instruction', title: value, ai: value === this.v.sInstruction,
-                desc: INSTRUCTION_HINT[value] + (fits ? '' : ' Only for ' + (forAction[0] === REMOVAL ? 'a removal or withdrawal.' : forAction[0] === CORRECTION ? 'a correction.' : 'an advisory notice.')),
-                pressed: on ? 'true' : 'false', cls: 'cq-optcard' + (value === this.v.sInstruction ? ' ai' : '') + (fits ? '' : ' off') };
+            return { id: value, title: value, cq: value === this.v.sInstruction, off: !fits,
+                desc: INSTRUCTION_HINT[value] + (fits ? '' : ' Only for ' + (forAction[0] === REMOVAL ? 'a removal or withdrawal.' : forAction[0] === CORRECTION ? 'a correction.' : 'an advisory notice.')) };
         });
     }
     get methods() { return METHODS.map((m) => ({ value: m, label: m, selected: m === this.method })); }
 
-    async handlePick(event) {
-        const { field, value } = event.currentTarget.dataset;
+    async handleChoose(event) {
+        const field = event.currentTarget.dataset.field;
+        const value = event.detail;
         if (this.locked || this.val(field) === value && this.v[field] === value) { return; }
         await this.save(field, value);
+    }
+
+    // ---- once confirmed: what was chosen, against what CQ.AI suggested; Change opens the tabs again
+    get showSummary() { return this.confirmed && !this.editing; }
+    get showTabs() { return !this.showSummary; }
+    get backToSummary() { return this.confirmed && this.editing; }
+    get changeLabel() { return this.locked ? 'Show Details' : 'Change'; }
+    handleEdit() { this.editing = true; }
+    handleSummary() { this.editing = false; }
+    pick(list, value) { const f = list.find(([v]) => v === value); return f ? f[1] : value; }
+    vsAi(value, ai, list) {
+        if (!ai) { return ''; }
+        return value === ai ? 'As CQ.AI suggests' : 'CQ.AI suggested ' + (list ? this.pick(list, ai) : ai);
+    }
+    get summaryRows() {
+        const v = this.v;
+        const held = (v.holds || []).filter((h) => h.hold);
+        const lots = [...new Set(held.map((h) => h.lot))];
+        const check = this.level === 'Level E' ? 'No check'
+            : [this.pick(LEVELS, this.level) + (this.isLevelB && this.percent ? ' (' + this.percent + '%)' : ''), this.method,
+                this.checkBy ? 'by ' + new Date(this.checkBy + 'T00:00:00').toLocaleDateString() : ''].filter(Boolean).join(' · ');
+        return [
+            { key: 'a', k: 'Action', v: this.pick(ACTIONS, this.action), d: ACTION_HINT[this.action], ai: this.vsAi(this.action, v.sAction, ACTIONS) },
+            { key: 'd', k: 'How Far It Goes', v: this.depth, d: DEPTH_HINT[this.depth], ai: this.vsAi(this.depth, v.sDepth) },
+            { key: 'i', k: 'What We Tell Customers', v: this.instruction, d: this.message, ai: this.vsAi(this.instruction, v.sInstruction) },
+            { key: 'h', k: 'Holds', v: held.length ? held.length + (held.length === 1 ? ' hold' : ' holds') + ' on ' + lots.length + (lots.length === 1 ? ' lot' : ' lots') : 'No holds',
+                d: lots.join(', '), ai: '' },
+            { key: 'c', k: 'Effectiveness Check', v: check, d: LEVEL_HINT[this.level], ai: this.vsAi(this.level, v.sLevel, LEVELS) }
+        ].map((r) => ({ ...r, aiCls: 'sai' + (r.ai.startsWith('As') ? ' same' : '') }));
     }
     async handleText(event) {
         const field = event.target.dataset.field;
@@ -326,6 +336,7 @@ export default class CqFieldActionStrategy extends LightningElement {
             this.apply(await confirmStrategy({ recordId: this.recordId, values: {
                 action: this.action, depth: this.depth, instruction: this.instruction, message: this.message,
                 level: this.level, percent: this.percent, method: this.method, checkBy: this.checkBy } }));
+            this.editing = false;
             notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
         } catch (e) { this.error = this.msg(e, 'Could not confirm the strategy.'); }
         this.saving -= 1;
