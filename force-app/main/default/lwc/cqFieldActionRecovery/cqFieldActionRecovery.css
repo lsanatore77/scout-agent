@@ -12,6 +12,12 @@
 .cq-stepcard + .cq-stepcard, .tcards + .cq-stepcard { margin-top: 16px; }
 .grid > .cq-stepcard + .cq-stepcard { margin-top: 0; }
 .tcards { margin-top: 16px; }
+/* the recovery cards: a smaller grey tail on the figure (' · 28%', ' of 7'), amber while units are still out */
+.vx { font-size: 15px; font-weight: 600; color: var(--cq-muted); }
+.cq-statcard-v.warn { color: var(--cq-warn-fg); }
+/* the task filters under the Customers and Tasks heading: small chips; Overdue turns red when there are any */
+.cq-chip.tchip { min-height: 26px; padding: 0 12px 2px; font-size: 13px; }
+.cq-chip.tchip.bad:not([aria-pressed="true"]) { color: var(--cq-crit-fg); }
 
 /* tables, nested rows, marks, the checklist, chevron, tick, search, filter cards, bar, form grid and small buttons come from cqStyles */
 .barcol { width: 240px; }

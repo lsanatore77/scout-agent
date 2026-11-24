@@ -11,6 +11,16 @@
         <template if:true={showStep}>
             <p class="cq-step-intro">{intro}</p>
 
+            <div class="cq-statcards tcards">
+                <template for:each={cards} for:item="c">
+                    <div key={c.key} class="cq-statcard flat">
+                        <span class="cq-statcard-k">{c.label}</span>
+                        <span class={c.numCls}>{c.n}<template if:true={c.extra}><span class="vx">{c.extra}</span></template></span>
+                        <template if:true={c.sub}><span class="cq-sub">{c.sub}</span></template>
+                    </div>
+                </template>
+            </div>
+
             <template if:true={isNotice}><p class="cq-note">An advisory notice leaves the product in use, so there are no units to recover. Effectiveness rests on the customers acknowledging.</p></template>
             <template if:true={showRecovery}>
             <section class="cq-stepcard">
@@ -26,6 +36,8 @@
                             <template for:each={lotRows} for:item="l">
                                 <tr key={l.id}>
                                     <td class="b nw">{l.lot}</td>
+                                    <template if:true={l.notShipped}><td colspan={l.span} class="cq-muted">Nothing shipped from this lot</td></template>
+                                    <template if:true={l.shippedAny}>
                                     <td class="num">{l.shippedText}</td>
                                     <template if:true={showCorrected}><td class="num">{l.correctedText}</td></template>
                                     <td class="num">{l.returnedText}</td>
@@ -33,6 +45,7 @@
                                     <td class="num">{l.usedText}</td>
                                     <td class={l.fieldCls}>{l.fieldText}</td>
                                     <td class="barcol"><template if:true={l.hasPct}><span class="cq-bar"><span class="cq-bar-track"><span class={l.fillCls} style={l.barStyle}></span></span><span class="cq-bar-pct">{l.pctText}</span></span></template></td>
+                                    </template>
                                 </tr>
                             </template>
                         </tbody>
@@ -42,19 +55,15 @@
             </section>
             </template>
 
-            <div class="cq-statcards tcards" role="group" aria-label="Filter tasks">
-                <template for:each={cards} for:item="c">
-                    <button key={c.key} class={c.cls} data-key={c.key} aria-pressed={c.pressed} onclick={handleCard}>
-                        <span class="cq-statcard-k">{c.label}</span><span class={c.numCls}>{c.n}</span>
-                    </button>
-                </template>
-            </div>
-
             <section class="cq-stepcard">
                 <div class="cq-stepcard-head mid"><span class="cq-stepcard-title">Customers and Tasks</span><span class="cq-grow"></span>
-                    <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
-                    <span class="cq-sub">{progressLine}</span>
+                    <template if:true={progressLine}><span class="cq-sub">{progressLine}</span></template>
                     <button class="cq-btn-outline" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
+                </div>
+                <div class="cq-chips" role="group" aria-label="Show tasks">
+                    <template for:each={chips} for:item="c">
+                        <button key={c.key} class={c.cls} data-key={c.key} aria-pressed={c.pressed} onclick={handleChip}>{c.label}</button>
+                    </template>
                 </div>
 
                 <template if:true={adding}>

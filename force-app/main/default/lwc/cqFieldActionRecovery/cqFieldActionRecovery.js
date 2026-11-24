@@ -117,10 +117,15 @@ export default class CqFieldActionRecovery extends LightningElement {
     get isCorrection() { return this.v.action === 'Correction'; }
     get isNotice() { return this.v.action === 'Advisory Notice'; }
     get showRecovery() { return !this.isNotice; }
-    get showDestroyed() { return !this.isCorrection; }
+    /** Destroyed shows only when units are being destroyed: a lot has some, or a task or suggestion is to confirm destruction. */
+    get showDestroyed() {
+        if (this.isCorrection) { return false; }
+        const destroy = (x) => x.type === 'Confirm destruction';
+        return this.v.lots.some((l) => Number(l.destroyed || 0) > 0) || this.myTasks.some(destroy) || this.mySuggestions.some(destroy);
+    }
     get showCorrected() { return this.isCorrection; }
     get tableHint() {
-        return 'Shipped comes from the lot shipments. ' + (this.isCorrection ? 'Corrected and Returned add' : 'Returned and Destroyed add')
+        return 'Shipped comes from the lot shipments. ' + (this.isCorrection ? 'Corrected and Returned add' : this.showDestroyed ? 'Returned and Destroyed add' : 'Returned adds')
             + ' up from the units on the tasks below; returns come from the RMAs received. Used is what the customers reported on Notifications.';
     }
     // every table sorts on a heading click (c/cqSort); a customer's lots and tasks travel with the customer
@@ -145,12 +150,17 @@ export default class CqFieldActionRecovery extends LightningElement {
     handleLotSort(event) { this.lotSort = nextSort(this.lotSort, event.currentTarget.dataset.key); }
     handleCustSort(event) { this.custSort = nextSort(this.custSort, event.currentTarget.dataset.key); this.custPage = 0; }
     handleHoldSort(event) { this.holdSort = nextSort(this.holdSort, event.currentTarget.dataset.key); }
+    /** A lot that shipped shows 0 where nothing has come back yet; a lot that never shipped says so across the row. */
     get lotRows() {
+        const span = this.lotHeads.length - 1;
         return sortRows(this.v.lots, this.lotSort).map((l) => {
             const pct = l.pct === undefined || l.pct === null ? 0 : l.pct;
-            return { ...l, shippedText: this.num(l.shipped), returnedText: this.num(l.returned), destroyedText: this.num(l.destroyed),
-                correctedText: this.num(l.corrected), usedText: this.num(l.used), fieldText: this.num(l.field),
-                fieldCls: 'num b ' + (l.field ? 'warnc' : l.field === 0 ? 'okc' : ''),
+            const z = (x) => this.num(x === undefined || x === null ? 0 : x);
+            const shippedAny = Number(l.shipped || 0) > 0;
+            const field = l.field === undefined || l.field === null ? Number(l.shipped || 0) : Number(l.field);
+            return { ...l, shippedAny, notShipped: !shippedAny, span, shippedText: this.num(l.shipped), returnedText: z(l.returned), destroyedText: z(l.destroyed),
+                correctedText: z(l.corrected), usedText: z(l.used), fieldText: String(field),
+                fieldCls: 'num b ' + (field ? 'warnc' : 'okc'),
                 hasPct: l.shipped !== undefined && l.shipped !== null, pctText: pct + '%', barStyle: this.bar(pct),
                 fillCls: 'cq-bar-fill' + (pct >= 100 ? ' done' : '') };
         });
@@ -161,17 +171,43 @@ export default class CqFieldActionRecovery extends LightningElement {
         return this.v.recovered + ' of ' + this.v.shipped + ' units accounted for · ' + pct + '%';
     }
 
-    // ---- task cards: click one to filter the table, click it again to show everything
+    // ---- recovery cards over the lot table: units shipped, accounted for, still in the field, customers confirmed
     get cards() {
+        const lots = this.v.lots || [];
+        const sum = (k) => lots.reduce((s, l) => s + Number(l[k] || 0), 0);
+        const shipped = lots.filter((l) => Number(l.shipped || 0) > 0);
+        const unshipped = lots.length - shipped.length;
+        const field = shipped.reduce((s, l) => s + Number(l.field === undefined || l.field === null ? l.shipped : l.field), 0);
+        const fieldLots = shipped.filter((l) => Number(l.field === undefined || l.field === null ? l.shipped : l.field) > 0).length;
+        const pct = this.v.shipped ? Math.floor(100 * this.v.recovered / this.v.shipped) : 0;
+        const how = [this.isCorrection ? sum('corrected') + ' corrected' : '', sum('returned') + ' returned',
+            this.showDestroyed ? sum('destroyed') + ' destroyed' : '', sum('used') + ' used'].filter(Boolean).join(' · ');
+        const out = [];
+        if (this.showRecovery) {
+            const known = this.v.shippedKnown;
+            out.push({ key: 'shipped', label: 'Units Shipped', n: known ? String(this.v.shipped) : '—',
+                sub: known ? shipped.length + ' lot' + (shipped.length === 1 ? '' : 's') + ' shipped' + (unshipped ? ' · ' + unshipped + ' not shipped' : '') : 'Not recorded on Scope' });
+            out.push({ key: 'acc', label: 'Accounted For', n: known ? String(this.v.recovered) : '—', extra: known ? ' · ' + pct + '%' : '', sub: known ? how : '',
+                numCls: 'cq-statcard-v' + (known && this.v.shipped && this.v.recovered >= this.v.shipped ? ' ok' : '') });
+            out.push({ key: 'field', label: 'Still in Field', n: known ? String(field) : '—',
+                sub: known ? (field ? 'across ' + fieldLots + ' lot' + (fieldLots === 1 ? '' : 's') : 'Nothing left in the field') : '',
+                numCls: 'cq-statcard-v' + (known ? (field ? ' warn' : ' ok') : '') });
+        }
+        out.push({ key: 'cust', label: 'Customers Confirmed', n: String(this.v.acked), extra: ' of ' + this.v.total,
+            sub: this.targetText + (this.v.target !== 0 && this.v.targetMet ? ' · met' : ''),
+            numCls: 'cq-statcard-v' + (this.v.targetMet ? ' ok' : '') });
+        return out.map((c) => ({ numCls: 'cq-statcard-v', extra: '', ...c }));
+    }
+    // ---- task filters in the Customers and Tasks header: pick one to filter the table
+    get chips() {
         const ts = this.myTasks;
         const count = (f) => ts.filter(f).length;
-        return [['open', 'Open Tasks', count((x) => !x.done)], ['done', 'Completed Tasks', count((x) => x.done)],
-            ['over', 'Overdue Tasks', count((x) => x.overdue)], ['week', 'Due This Week', count((x) => x.dueWeek)]]
-            .map(([key, label, n]) => ({ key, label, n, pressed: this.filter === key ? 'true' : 'false',
-                cls: 'cq-statcard' + (this.filter === key ? ' on' : ''),
-                numCls: 'cq-statcard-v' + (key === 'done' && n ? ' ok' : key === 'over' && n ? ' bad' : '') }));
+        return [['open', 'Open', count((x) => !x.done)], ['over', 'Overdue', count((x) => x.overdue)],
+            ['week', 'Due This Week', count((x) => x.dueWeek)], ['done', 'Completed', count((x) => x.done)], ['all', 'All', ts.length]]
+            .map(([key, label, n]) => ({ key, label: label + ' ' + n, pressed: this.filter === key ? 'true' : 'false',
+                cls: 'cq-chip tchip' + (key === 'over' && n ? ' bad' : '') }));
     }
-    handleCard(event) { const k = event.currentTarget.dataset.key; this.filter = this.filter === k ? 'all' : k; this.custPage = 0; }
+    handleChip(event) { this.filter = event.currentTarget.dataset.key; this.custPage = 0; }
     keepTask(x) {
         switch (this.filter) {
             case 'open': return !x.done;
@@ -180,11 +216,6 @@ export default class CqFieldActionRecovery extends LightningElement {
             case 'week': return x.dueWeek;
             default: return true;
         }
-    }
-    get filterLine() {
-        if (this.filter === 'all') { return ''; }
-        const c = this.cards.find((x) => x.key === this.filter);
-        return 'Showing ' + c.label.toLowerCase();
     }
 
     // ---- 2. customers and tasks: customer, then the lots shipped to them, then the tasks on each
@@ -470,13 +501,10 @@ export default class CqFieldActionRecovery extends LightningElement {
         return { key, label, detail, mark: ok ? '✓' : blocks ? '✕' : '!', markCls: 'cq-mark ' + kind,
             state: ok ? 'Met' : blocks ? 'Open, needed before the verdict' : 'Open' };
     }
-    /** How many customers have acknowledged, against the check level's target: shown beside the Customers and Tasks heading. */
-    get progressLine() { return this.respLine + ' · ' + this.targetText; }
-    get respLine() {
-        if (!this.v.total) { return 'No customers yet'; }
-        // customers Notifications has not submitted yet: their returns are suggested once they are
+    /** Beside the Customers and Tasks heading: who is still open on Notifications (the counts and the target are on the cards). */
+    get progressLine() {
         const open = this.v.stragglers || 0;
-        return this.v.acked + ' of ' + this.v.total + ' customers acknowledged' + (open ? ' · ' + open + ' still open on Notifications' : '');
+        return open ? open + ' customer' + (open === 1 ? '' : 's') + ' still open on Notifications' : '';
     }
     get targetText() {
         if (this.v.target === 0) { return 'No check needed'; }
