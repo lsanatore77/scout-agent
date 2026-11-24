@@ -18,12 +18,9 @@
                 <div class="cq-tblwrap">
                     <table class="cq-tbl compact">
                         <thead><tr>
-                            <th>Lot</th><th class="num">Shipped</th>
-                            <template if:true={showCorrected}><th class="num">Corrected</th></template>
-                            <th class="num">Returned</th>
-                            <template if:true={showDestroyed}><th class="num">Destroyed</th></template>
-                            <th class="num">Used</th>
-                            <th class="num">Still in Field</th><th class="barcol">Accounted For</th>
+                            <template for:each={lotHeads} for:item="h">
+                                <th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-key={h.key} onclick={handleLotSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th>
+                            </template>
                         </tr></thead>
                         <tbody>
                             <template for:each={lotRows} for:item="l">
@@ -134,8 +131,9 @@
                     <div class="cq-tblwrap custwrap" style={custTableStyle}>
                         <table class="cq-tbl compact">
                             <thead><tr>
-                                <th><span class="hcell"><span class="chsp"></span>Customer / Lot / Task</span></th>
-                                <th>Owner</th><th>Due</th><th class="num ucol">Units</th><th class="num">Status</th>
+                                <template for:each={custHeads} for:item="h">
+                                <th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.first}><span class="chsp"></span></template><template if:true={h.sortable}><button class="cq-sortbtn" data-key={h.key} onclick={handleCustSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th>
+                            </template>
                             </tr></thead>
                             <tbody>
                                 <template for:each={rows} for:item="r">
@@ -192,7 +190,9 @@
                         <template if:true={alsoHeldCount}><p class="alsonote" role="note">{alsoHeldLine}</p></template>
                         <div class="cq-tblwrap">
                             <table class="cq-tbl compact">
-                                <thead><tr><th>Lot</th><th>Item</th><th class="num">On Hand</th><th>Also Held By</th><th>Disposition</th></tr></thead>
+                                <thead><tr><template for:each={holdHeads} for:item="h">
+                                <th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-key={h.key} onclick={handleHoldSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th>
+                            </template></tr></thead>
                                 <tbody>
                                     <template for:each={holdRows} for:item="h">
                                         <tr key={h.id}>

@@ -8,6 +8,7 @@ import confirmVerdict from '@salesforce/apex/CqFieldActionRecovery.confirmVerdic
 import createSuggested from '@salesforce/apex/CqFieldActionTasks.createSuggested';
 import addTask from '@salesforce/apex/CqFieldActionTasks.addTask';
 import setTask from '@salesforce/apex/CqFieldActionTasks.setTask';
+import { sortRows, nextSort, heads } from 'c/cqSort';
 
 const DISPOSITIONS = ['Scrap', 'Rework', 'Return to Supplier', 'Release'];
 const NEXT_STEPS = ['Widen the scope', 'A further action to customers', 'Extend the check by 30 days'];
@@ -122,8 +123,30 @@ export default class CqFieldActionRecovery extends LightningElement {
         return 'Shipped comes from the lot shipments. ' + (this.isCorrection ? 'Corrected and Returned add' : 'Returned and Destroyed add')
             + ' up from the units on the tasks below; returns come from the RMAs received. Used is what the customers reported on Notifications.';
     }
+    // every table sorts on a heading click (c/cqSort); a customer's lots and tasks travel with the customer
+    lotSort = { key: 'lot', dir: 'asc' };
+    custSort = {};
+    holdSort = {};
+    get lotHeads() {
+        return heads([{ key: 'lot', label: 'Lot' }, { key: 'shipped', label: 'Shipped', num: true },
+            this.showCorrected ? { key: 'corrected', label: 'Corrected', num: true } : null, { key: 'returned', label: 'Returned', num: true },
+            this.showDestroyed ? { key: 'destroyed', label: 'Destroyed', num: true } : null, { key: 'used', label: 'Used', num: true },
+            { key: 'field', label: 'Still in Field', num: true }, { key: 'pct', label: 'Accounted For', cls: 'barcol' }].filter(Boolean), this.lotSort);
+    }
+    get custHeads() {
+        return heads([{ key: 'name', label: 'Customer / Lot / Task', first: true }, { key: 'owner', label: 'Owner', sortable: false },
+            { key: 'due', label: 'Due', sortable: false }, { key: 'out', label: 'Units', num: true, cls: 'ucol' },
+            { key: 'status', label: 'Status', num: true }], this.custSort);
+    }
+    get holdHeads() {
+        return heads([{ key: 'lot', label: 'Lot' }, { key: 'kindText', label: 'Item' }, { key: 'onHand', label: 'On Hand', num: true },
+            { key: 'alsoBy', label: 'Also Held By' }, { key: 'disposition', label: 'Disposition' }], this.holdSort);
+    }
+    handleLotSort(event) { this.lotSort = nextSort(this.lotSort, event.currentTarget.dataset.key); }
+    handleCustSort(event) { this.custSort = nextSort(this.custSort, event.currentTarget.dataset.key); this.custPage = 0; }
+    handleHoldSort(event) { this.holdSort = nextSort(this.holdSort, event.currentTarget.dataset.key); }
     get lotRows() {
-        return this.v.lots.map((l) => {
+        return sortRows(this.v.lots, this.lotSort).map((l) => {
             const pct = l.pct === undefined || l.pct === null ? 0 : l.pct;
             return { ...l, shippedText: this.num(l.shipped), returnedText: this.num(l.returned), destroyedText: this.num(l.destroyed),
                 correctedText: this.num(l.corrected), usedText: this.num(l.used), fieldText: this.num(l.field),
@@ -172,10 +195,34 @@ export default class CqFieldActionRecovery extends LightningElement {
         const loose = tasks.filter((x) => !x.customerId || !custs.some((c) => c.id === x.customerId));
         if (loose.length) { custs.push({ id: NO_CUSTOMER, name: 'Other tasks', other: true }); }
         const q = this.search.trim().toLowerCase();
-        return custs.map((c) => {
+        const list = custs.map((c) => {
             const mine = c.other ? loose : tasks.filter((x) => x.customerId === c.id);
-            return { c, mine, shown: mine.filter((x) => this.keepTask(x)) };
+            return { c, mine, shown: mine.filter((x) => this.keepTask(x)), name: c.name, status: c.other ? '' : c.status, out: this.custOut(c, mine) };
         }).filter((e) => (this.filter === 'all' || e.shown.length > 0) && (!q || (e.c.name || '').toLowerCase().includes(q)));
+        return sortRows(list, this.custSort);
+    }
+    /** A customer's lots: those shipped to them, and any other lot one of their tasks names. */
+    custLots(c, mine) {
+        const lots = c.other ? [] : (this.t.lotsByCustomer[c.id] || []).slice();
+        mine.forEach((x) => { if (x.lot && !lots.includes(x.lot)) { lots.push(x.lot); } });
+        return lots;
+    }
+    /**
+     * Units still out with a customer for a lot (all their lots when none is given): shipped to them, less the units back on
+     * their return, destruction and correction tasks, and less what they reported as used, which never comes back. Null when unknown.
+     */
+    custOut(c, mine, lot) {
+        if (c.other) { return null; }
+        const t = this.t;
+        const one = (l) => {
+            const n = t.shippedByLine[c.id + '|' + l];
+            if (n === undefined || n === null) { return null; }
+            const back = mine.filter((x) => x.lot === l && x.hasUnits).reduce((s, x) => s + Number(x.units || 0), 0);
+            return Math.max(0, n - back - Number((t.usedByLine || {})[c.id + '|' + l] || 0));
+        };
+        if (lot) { return one(lot); }
+        const outs = this.custLots(c, mine).map(one).filter((n) => n !== null);
+        return outs.length ? outs.reduce((a, b) => a + b, 0) : null;
     }
     get custPageCount() { return Math.max(1, Math.ceil(this.custList.length / CUST_PAGE)); }
     get custPageNow() { return Math.min(this.custPage, this.custPageCount - 1); }
@@ -195,15 +242,11 @@ export default class CqFieldActionRecovery extends LightningElement {
         this.custList.slice(from, from + CUST_PAGE).forEach(({ c, mine, shown }) => {
             const open = this.filter !== 'all' || !!this.openCust[c.id];
             const openCount = mine.filter((x) => !x.done).length;
-            const lots = c.other ? [] : (t.lotsByCustomer[c.id] || []).slice();
-            mine.forEach((x) => { if (x.lot && !lots.includes(x.lot)) { lots.push(x.lot); } });
-            // units still out with this customer: shipped to them, less the units back on their return, destruction and
-            // correction tasks, and less what they reported as used (Notifications), which is accounted for and never comes back
+            const lots = this.custLots(c, mine);
             const sumOf = (lot, type) => mine.filter((x) => x.lot === lot && x.hasUnits && (!type || x.type === type)).reduce((s, x) => s + Number(x.units || 0), 0);
             const usedOf = (lot) => Number((t.usedByLine || {})[c.id + '|' + lot] || 0);
-            const outOf = (lot) => { const n = t.shippedByLine[c.id + '|' + lot]; return n === undefined || n === null ? null : Math.max(0, n - sumOf(lot) - usedOf(lot)); };
-            const outs = c.other ? [] : lots.map(outOf).filter((n) => n !== null);
-            const custOut = outs.length ? outs.reduce((a, b) => a + b, 0) : null;
+            const outOf = (lot) => this.custOut(c, mine, lot);
+            const custOut = this.custOut(c, mine);
             rows.push({ key: 'c' + c.id, isCust: true, rowCls: 'cq-row-parent', id: c.id, title: c.name, chevCls: 'cq-rchev' + (open ? ' open' : ''),
                 expanded: open ? 'true' : 'false', toggleLabel: (open ? 'Fold ' : 'Show ') + c.name,
                 sub: c.other ? openCount + ' open' : [c.type || '', c.units !== undefined && c.units !== null ? c.units + ' units' : '',
@@ -353,7 +396,7 @@ export default class CqFieldActionRecovery extends LightningElement {
 
     // ---- 3. held stock
     get holdRows() {
-        return this.v.holds.map((h) => ({ ...h,
+        return sortRows(this.v.holds.map((h) => ({ ...h,
             kindText: h.kind === 'Finished Lot' ? 'Finished lot'
                 : 'Component lot' + (h.reason && h.reason.startsWith('NC ') ? ' · ' + h.reason.split(' ')[1] : ''),
             onHandText: this.num(h.onHand),
@@ -363,7 +406,7 @@ export default class CqFieldActionRecovery extends LightningElement {
             // what else holds the lot (CqLotStatus): a short tag in its own column; the full note only when it is released
             alsoCls: 'cq-pill soft ' + (h.stays && h.stays.status === 'Rejected' ? 'crit' : 'warn'),
             alsoBy: h.stays ? (h.stays.manual ? 'Set by hand' : h.stays.who || '') : '',
-            releaseNote: !!h.stays && (h.disposition === 'Release' || !!h.reworkDone) }));
+            releaseNote: !!h.stays && (h.disposition === 'Release' || !!h.reworkDone) })), this.holdSort);
     }
     get hasHolds() { return this.v.holds.length > 0; }
     get alsoHeldCount() { return this.v.holds.filter((h) => !!h.stays).length; }
@@ -429,7 +472,12 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
     /** How many customers have acknowledged, against the check level's target: shown beside the Customers and Tasks heading. */
     get progressLine() { return this.respLine + ' · ' + this.targetText; }
-    get respLine() { return this.v.total ? this.v.acked + ' of ' + this.v.total + ' customers acknowledged' : 'No customers yet'; }
+    get respLine() {
+        if (!this.v.total) { return 'No customers yet'; }
+        // customers Notifications has not submitted yet: their returns are suggested once they are
+        const open = this.v.stragglers || 0;
+        return this.v.acked + ' of ' + this.v.total + ' customers acknowledged' + (open ? ' · ' + open + ' still open on Notifications' : '');
+    }
     get targetText() {
         if (this.v.target === 0) { return 'No check needed'; }
         return (this.v.level || 'Target') + ' target ' + this.v.target + '%' + (this.v.checkBy ? ' by ' + this.day(this.v.checkBy) : '');
