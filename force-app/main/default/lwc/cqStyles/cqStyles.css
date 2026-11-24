@@ -249,8 +249,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-optcard > :not(.cq-optcard-title):not(.cq-optcard-desc) { order: 2; }
 .cq-optcard-desc { order: 3; flex: 0 0 100%; font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-muted); }
 .cq-optcard[aria-pressed="true"] { border: 2px solid var(--cq-link); background: var(--cq-link-soft); padding: calc(0.875rem - 1px); }
-/* fill means chosen, the tag means suggested: CQ.AI's suggestion stays white with a purple border until it is the one picked */
-.cq-optcard.ai { border-color: var(--cq-accent); }
+/* fill means chosen, the tag means suggested: until it is picked, CQ.AI's suggestion looks like any other card and only carries its CQ.AI Suggests tag */
 .cq-optcard.ai[aria-pressed="true"] { border: 2px solid var(--cq-accent); background: var(--cq-accent-soft); }
 @media (max-width: 47.5rem) { .cq-optcards { grid-template-columns: 1fr; } }
 
