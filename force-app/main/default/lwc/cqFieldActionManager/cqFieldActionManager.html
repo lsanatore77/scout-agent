@@ -31,7 +31,7 @@
                                     <div class="cq-card-title">Reviews That Led Here</div>
                                     <template if:true={hasReviews}>
                                         <div class="cq-tblwrap">
-                                            <table class="cq-tbl">
+                                            <table class="cq-tbl compact">
                                                 <thead><tr><template for:each={revHeads} for:item="h"><th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-key={h.key} onclick={handleRevSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.shown}>{h.label}</template><template if:true={h.hidden}><span class="sr">{h.label}</span></template></th></template></tr></thead>
                                                 <tbody>
                                                     <template for:each={reviewRows} for:item="r">
