@@ -18,6 +18,23 @@
   --cq-fs-micro: 0.6875rem;   /* 11 - pill text, eyebrows */
   --cq-fs-btn:   0.875rem;    /* 14 - buttons */
   --cq-fs-input: 1rem;        /* 16 on a phone - typed text in boxes (an iPhone zooms the page into a box with smaller text); 13 on a desktop */
+  /* the rest of the scale: every font size in CQ components comes from a token here, never a number in a component */
+  --cq-fs-2xs:     0.625rem;  /* 10 - tiny counts in small marks */
+  --cq-fs-sm:      0.75rem;   /* 12 - small notes, captions under a line */
+  --cq-fs-para:    0.875rem;  /* 14 - paragraphs of running text (a problem description, a rationale) */
+  --cq-fs-lead:    1rem;      /* 16 - option-card titles, a line that leads a card */
+  --cq-fs-h4:      1.0625rem; /* 17 - a CQ.AI verdict, a strong card line */
+  --cq-fs-h3:      1.125rem;  /* 18 - small headings */
+  --cq-fs-h2:      1.25rem;   /* 20 - step titles, popup titles, a big value */
+  --cq-fs-h1:      1.375rem;  /* 22 - the record name in the header */
+  --cq-fs-stat:    1.75rem;   /* 28 - the number on a stat card */
+  --cq-fs-display: 4.25rem;   /* 68 - one headline number (the risk score) */
+  /* glyphs (marks and arrows drawn with a character, not words) */
+  --cq-fs-glyph-xs: 0.4375rem; /* 7 - the tick in a small done mark */
+  --cq-fs-glyph-sm: 0.5rem;    /* 8 - sort arrows, step numbers in a small mark */
+  --cq-fs-glyph-md: 1.125rem;  /* 18 - a stepper's + and - */
+  --cq-fs-glyph-lg: 1.375rem;  /* 22 - a popup's close x */
+  --cq-fs-glyph-xl: 1.5rem;    /* 24 - the row chevron */
 
   /* ---- neutral / records register ---- */
   --cq-ink:        var(--cqt-ink, #1b1f27);
@@ -203,7 +220,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-field input.cq-num { width: 9rem; }
 /* number stepper: one field-height box, minus | value | plus. Use where a count is tapped, not typed. */
 .cq-stepper { box-sizing: border-box; display: inline-flex; align-items: stretch; width: calc(var(--cq-field-h) * 2 + 3.5rem); min-height: var(--cq-field-h); border: 1px solid var(--cq-line-field); border-radius: var(--cq-r-field); background: var(--cq-bg); overflow: hidden; }
-.cq-stepper button { flex: 0 0 var(--cq-field-h); padding: 0 0 0.125rem; border: 0; background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: 1.125rem; font-weight: 600; line-height: 1; cursor: pointer; }
+.cq-stepper button { flex: 0 0 var(--cq-field-h); padding: 0 0 0.125rem; border: 0; background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: var(--cq-fs-glyph-md); font-weight: 600; line-height: 1; cursor: pointer; }
 .cq-stepper button:first-child { border-right: 1px solid var(--cq-line); }
 .cq-stepper button:last-child { border-left: 1px solid var(--cq-line); }
 .cq-stepper button:hover { background: var(--cq-surface); }
@@ -224,7 +241,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 /* what CQ.AI suggests and why: purple card > eyebrow > verdict > text > answer rows (the rows it flagged in purple) */
 .cq-ai-card { border: 1px solid var(--cq-accent-line); border-radius: var(--cq-r-card); padding: 1rem; background: var(--cq-accent-soft); }
 .cq-ai-eyebrow { display: flex; align-items: center; gap: 0.3rem; font-size: var(--cq-fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--cq-accent); }
-.cq-ai-verdict { font-size: 1.0625rem; font-weight: 700; color: var(--cq-ink); margin: 0.15rem 0 0.4rem; line-height: 1.25; }
+.cq-ai-verdict { font-size: var(--cq-fs-h4); font-weight: 700; color: var(--cq-ink); margin: 0.15rem 0 0.4rem; line-height: 1.25; }
 .cq-ai-text { margin: 0; font-size: var(--cq-fs-body); line-height: 1.5; color: var(--cq-ink); white-space: pre-line; }
 .cq-ai-rule { height: 1px; background: var(--cq-accent-line); margin: 0.85rem 0; }
 .cq-ai-sub { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); margin-bottom: 0.4rem; }
@@ -244,7 +261,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 /* a choice between a few outcomes, each with a title and a line of explanation: .cq-optcards > button.cq-optcard */
 .cq-optcards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.625rem; }
 .cq-optcard { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 0.375rem 0.625rem; min-height: 4.5rem; box-sizing: border-box; padding: 0.875rem; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); color: var(--cq-ink); font: inherit; text-align: left; cursor: pointer; }
-.cq-optcard-title { order: 1; font-size: 1rem; font-weight: 700; }
+.cq-optcard-title { order: 1; font-size: var(--cq-fs-lead); font-weight: 700; }
 /* anything else in the card (the CQ.AI Suggests tag) follows the title on its line; the description takes the next line */
 .cq-optcard > :not(.cq-optcard-title):not(.cq-optcard-desc) { order: 2; }
 .cq-optcard-desc { order: 3; flex: 0 0 100%; font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-muted); }
@@ -258,19 +275,19 @@ button.cq-link { padding: 0; font-family: inherit; }
    the step button (step, plus active / done from the component), its mark, txt, lbl, ssub and the progress line
    are styled from here. Title wording: "<star> CQ.AI <Name> Steps". */
 .cq-rail { width: 244px; flex: none; border-right: 1px solid var(--cq-line); padding: 12px 8px; display: flex; flex-direction: column; gap: 2px; }
-.cq-rail-title { font-size: 15px; font-weight: 700; padding: 2px 8px 10px; white-space: nowrap; }
+.cq-rail-title { font-size: var(--cq-fs-body); font-weight: 700; padding: 2px 8px 10px; white-space: nowrap; }
 .cq-rail-title .star { color: var(--cq-accent); margin-right: 5px; }
 .cq-rail .step { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; border: none; background: transparent; border-radius: 6px; padding: 8px; font: inherit; cursor: pointer; }
 .cq-rail .step:hover, .cq-rail .step.active { background: var(--cq-surface); }
 .cq-rail .step:disabled { cursor: default; }
 .cq-rail .step:disabled:hover { background: transparent; }
 .cq-rail .step.active:disabled:hover { background: var(--cq-surface); }
-.cq-rail .mark { flex: none; width: 14px; height: 14px; border-radius: 7px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-muted); font-size: 8px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 3px; }
-.cq-rail .step.done .mark { background: var(--cq-pos-solid); border-color: var(--cq-pos-fg); color: #fff; font-size: 7px; }
+.cq-rail .mark { flex: none; width: 14px; height: 14px; border-radius: 7px; border: 1px solid var(--cq-line-field); background: var(--cq-bg); color: var(--cq-muted); font-size: var(--cq-fs-glyph-sm); font-weight: 700; display: inline-flex; align-items: center; justify-content: center; margin-top: 3px; }
+.cq-rail .step.done .mark { background: var(--cq-pos-solid); border-color: var(--cq-pos-fg); color: #fff; font-size: var(--cq-fs-glyph-xs); }
 .cq-rail .txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.cq-rail .lbl { font-size: 13px; font-weight: 700; color: var(--cq-ink); }
-.cq-rail .ssub { font-size: 11px; color: var(--cq-muted); }
-.cq-rail .progress { margin-top: auto; padding: 10px 8px 2px; font-size: 11px; color: var(--cq-faint); }
+.cq-rail .lbl { font-size: var(--cq-fs-meta); font-weight: 700; color: var(--cq-ink); }
+.cq-rail .ssub { font-size: var(--cq-fs-micro); color: var(--cq-muted); }
+.cq-rail .progress { margin-top: auto; padding: 10px 8px 2px; font-size: var(--cq-fs-micro); color: var(--cq-faint); }
 @media (max-width: 760px) { .cq-rail { width: auto; border-right: none; border-bottom: 1px solid var(--cq-line); } }
 /* the steps across the top instead (CQ.AI Workspace Settings > Steps Position = Top): one row under the header */
 .cq-rail.top { width: auto; flex-direction: row; flex-wrap: wrap; align-items: stretch; gap: 4px; padding: 8px 12px; border-right: none; border-bottom: 1px solid var(--cq-line); }
@@ -285,7 +302,7 @@ button.cq-link { padding: 0; font-family: inherit; }
    which is always the last thing inside .cq-ws-main: blocker text, the step's own button, Back, Next, at the bottom right. */
 .cq-ws-body { display: flex; min-height: 460px; }
 .cq-ws-main { flex: 1; min-width: 0; padding: 20px; display: flex; flex-direction: column; }
-.cq-step-title { margin: 0 0 14px; font-size: 20px; font-weight: 700; }
+.cq-step-title { margin: 0 0 14px; font-size: var(--cq-fs-h2); font-weight: 700; }
 .cq-step-title.nom { margin: 0; }
 .cq-step-intro { margin: -6px 0 14px; color: var(--cq-muted); max-width: 72ch; }
 .cq-ws-foot { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: auto; padding-top: 20px; }
@@ -303,7 +320,7 @@ button.cq-link { padding: 0; font-family: inherit; }
    .cq-tblwrap > table.cq-tbl. The header is small and quiet (11px bold, muted, on the light surface): the one
    named exception to the 13px minimum. Cell helpers: num (right, tabular), center (narrow, centred), wide (takes the room). */
 .cq-tblwrap { overflow-x: auto; border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); }
-.cq-tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.cq-tbl { width: 100%; border-collapse: collapse; font-size: var(--cq-fs-meta); }
 .cq-tbl th { padding: 8px 12px; background: var(--cq-surface); text-align: left; font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); white-space: nowrap; }
 .cq-tbl td { padding: 10px 12px; border-top: 1px solid var(--cq-line); vertical-align: top; }
 .cq-tbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -314,7 +331,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-sortbtn { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; font-weight: inherit; color: inherit; cursor: pointer; white-space: nowrap; }
 .cq-sortbtn:hover { color: var(--cq-ink); }
 .cq-sortbtn:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; border-radius: 2px; }
-.cq-sortarrow { display: inline-block; width: 8px; font-size: 8px; line-height: 1; color: var(--cq-link); }
+.cq-sortarrow { display: inline-block; width: 8px; font-size: var(--cq-fs-glyph-sm); line-height: 1; color: var(--cq-link); }
 .cq-sortarrow.asc::before { content: '\25B2'; }
 .cq-sortarrow.desc::before { content: '\25BC'; }
 .cq-sortbtn:hover .cq-sortarrow:not(.asc):not(.desc)::before { content: '\25B2'; color: var(--cq-line-field); }
@@ -325,7 +342,7 @@ th[aria-sort="ascending"], th[aria-sort="descending"] { color: var(--cq-ink); }
 /* page numbers under a table: .cq-pager > nav.cq-pages > button.pg (on = current, gap = the dots) */
 .cq-pager { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 8px; }
 .cq-pages { display: inline-flex; align-items: center; gap: 2px; }
-.cq-pages .pg { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 22px; padding: 0 3px; box-sizing: border-box; border: none; background: none; color: var(--cq-faint); font: inherit; font-size: 13px; font-weight: 600; line-height: 1; cursor: pointer; }
+.cq-pages .pg { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 22px; padding: 0 3px; box-sizing: border-box; border: none; background: none; color: var(--cq-faint); font: inherit; font-size: var(--cq-fs-meta); font-weight: 600; line-height: 1; cursor: pointer; }
 .cq-pages .pg:hover { color: var(--cq-link); }
 .cq-pages .pg:disabled { color: var(--cq-line-field); cursor: default; }
 .cq-pages .pg.gap:disabled { color: var(--cq-faint); }
@@ -337,8 +354,8 @@ th[aria-sort="ascending"], th[aria-sort="descending"] { color: var(--cq-ink); }
 .cq-modal-back { position: fixed; inset: 0; z-index: 9100; background: rgba(8, 7, 7, .45); display: flex; align-items: flex-start; justify-content: center; padding: 10vh 16px 16px; }
 .cq-modal { width: 100%; max-width: 560px; background: var(--cq-bg); border-radius: var(--cq-r-card); box-shadow: 0 8px 24px rgba(0, 0, 0, .25); overflow: hidden; }
 .cq-modal-head { position: relative; padding: 16px 52px; border-bottom: 1px solid var(--cq-hl-line); text-align: center; }
-.cq-modal-title { margin: 0; font-size: 20px; font-weight: 700; }
-.cq-modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: 22px; color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
+.cq-modal-title { margin: 0; font-size: var(--cq-fs-h2); font-weight: 700; }
+.cq-modal-x { position: absolute; top: 10px; right: 10px; width: 36px; height: 36px; border: none; background: transparent; font-size: var(--cq-fs-glyph-lg); color: var(--cq-muted); cursor: pointer; border-radius: 4px; }
 .cq-modal-x:hover { background: var(--cq-hl-bg); }
 .cq-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; max-height: 60vh; overflow-y: auto; }
 .cq-modal-foot { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--cq-hl-line); background: var(--cq-hl-bg); }
@@ -349,12 +366,12 @@ th[aria-sort="ascending"], th[aria-sort="descending"] { color: var(--cq-ink); }
    Text helpers, key figures, result rows and the done mark that every workspace uses. */
 .cq-muted { color: var(--cq-muted); }
 .cq-strong { font-weight: 700; }
-.cq-note { margin: 8px 0 0; font-size: 13px; color: var(--cq-muted); }
+.cq-note { margin: 8px 0 0; font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 /* key figures in a row: .cq-tiles > .cq-tile > .cq-tile-k (what it is) + .cq-tile-v (the figure) */
 .cq-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
 .cq-tile { padding: 6px 10px; border-radius: var(--cq-r-card); background: var(--cq-bg); border: 1px solid var(--cq-line); }
 .cq-tile-k { font-size: var(--cq-fs-micro); color: var(--cq-muted); }
-.cq-tile-v { font-size: 13px; font-weight: 700; }
+.cq-tile-v { font-size: var(--cq-fs-meta); font-weight: 700; }
 /* a label and its value on one boxed line (what a completed step recorded) */
 .cq-kv { display: flex; align-items: center; gap: 12px; box-sizing: border-box; min-height: 44px; max-width: 760px; margin-bottom: 8px; padding: 8px 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .cq-kv-k { flex: 0 0 160px; color: var(--cq-muted); }
@@ -368,8 +385,8 @@ th[aria-sort="ascending"], th[aria-sort="descending"] { color: var(--cq-ink); }
 @media (max-width: 760px) { .cq-sum td.k { width: 110px; } }
 /* the green tick that heads a finished step; green is positive only */
 .cq-donehead { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-.cq-okdot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: 13px; font-weight: 700; }
-.cq-okdot.sm { width: 18px; height: 18px; font-size: 10px; }
+.cq-okdot { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 24px; height: 24px; border-radius: 999px; background: var(--cq-pos-solid); color: #fff; font-size: var(--cq-fs-meta); font-weight: 700; }
+.cq-okdot.sm { width: 18px; height: 18px; font-size: var(--cq-fs-2xs); }
 
 /* ============================ WORKSPACE HEADER ========================= */
 /* every record workspace opens with this: .cq-box > header.cq-hl > .cq-hl-top (+ optional .cq-hl-fields) */
@@ -379,8 +396,8 @@ th[aria-sort="ascending"], th[aria-sort="descending"] { color: var(--cq-ink); }
 .cq-hl-who { display: flex; align-items: center; gap: 0.75rem; }
 .cq-hl-icon { display: inline-flex; }
 .cq-hl-name { display: flex; flex-direction: column; gap: 1px; }
-.cq-hl-obj { font-size: 0.75rem; color: var(--cq-hl-muted); }
-.cq-hl-title { font-size: 1.375rem; font-weight: 700; line-height: 1.2; color: var(--cq-hl-ink); }
+.cq-hl-obj { font-size: var(--cq-fs-sm); color: var(--cq-hl-muted); }
+.cq-hl-title { font-size: var(--cq-fs-h1); font-weight: 700; line-height: 1.2; color: var(--cq-hl-ink); }
 .cq-hl-actions { display: flex; align-items: center; gap: 0.5rem; }
 .cq-hl .cq-btn-outline { min-height: 2.5rem; }
 /* optional sub-field band under the title (Event Review keeps its fields in the body instead) */
@@ -424,15 +441,15 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 /* a step heading in a row with its status pill */
 .cq-sechead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 /* a plain grey box that explains what a button will do, or that there is nothing here yet */
-.cq-infobox { padding: 10px 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-surface); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
+.cq-infobox { padding: 10px 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-surface); font-size: var(--cq-fs-meta); line-height: 1.45; color: var(--cq-muted); }
 .cq-infobox strong { color: var(--cq-ink); }
 /* the small grey detail line under a name; block = on its own line */
-.cq-sub { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
+.cq-sub { font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-muted); }
 .cq-sub.block { display: block; }
 /* "What Stands Out": the purple heading (with its icon) and the text CQ.AI worded from the records */
 .cq-ai-head { display: flex; align-items: center; gap: 6px; font-weight: 600; color: var(--cq-accent); }
 .cq-ai-icon { --slds-c-icon-color-foreground-default: var(--cq-accent); }
-.cq-ai-says { font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
+.cq-ai-says { font-size: var(--cq-fs-meta); line-height: 1.45; color: var(--cq-muted); }
 .cq-nowrap { white-space: nowrap; }
 .cq-mt16 { margin-top: 16px; }
 /* an error or confirmation at the foot of a step */
@@ -454,7 +471,7 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-pick-icon { position: absolute; right: 0.7rem; top: 50%; transform: translateY(-50%); --slds-c-icon-color-foreground-default: var(--cq-muted); }
 .cq-pick-picked { box-sizing: border-box; display: flex; align-items: center; gap: 0.5rem; min-height: var(--cq-field-h); padding: 0 0.25rem 0 var(--cq-field-pad-x); border-radius: var(--cq-r-field); border: 1px solid var(--cq-line-field); background: var(--cq-link-soft); }
 .cq-pick-label { flex: 1 1 auto; min-width: 0; font-size: var(--cq-fs-body); font-weight: 600; color: var(--cq-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cq-pick-x { width: 1.6rem; height: 1.6rem; border: none; border-radius: var(--cq-r-field); background: none; font-size: 1.1rem; line-height: 1; color: var(--cq-muted); cursor: pointer; }
+.cq-pick-x { width: 1.6rem; height: 1.6rem; border: none; border-radius: var(--cq-r-field); background: none; font-size: var(--cq-fs-glyph-md); line-height: 1; color: var(--cq-muted); cursor: pointer; }
 .cq-pick-x:hover { background: var(--cq-bg); color: var(--cq-link); }
 .cq-pick .list { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); max-height: 320px; overflow-y: auto; border-radius: var(--cq-r-field); border: 1px solid var(--cq-line); background: var(--cq-bg); box-shadow: 0 6px 18px rgba(26, 29, 33, .12); }
 .cq-pick .list.up { top: auto; bottom: calc(100% + 4px); }
@@ -470,13 +487,13 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
    .cq-panel holds the intro, an error or empty line, and one or more .cq-panel-card. Lists page with
    .cq-panel-pager > .cq-panel-pages > Previous, the page buttons (page, plus current, from the component), Next. */
 .cq-panel { display: flex; flex-direction: column; gap: 0.75rem; max-width: 100%; }
-.cq-panel-intro { font-size: 0.8125rem; line-height: 1.4; }
-.cq-panel-error { color: var(--cq-crit-fg); font-size: 0.8125rem; }
-.cq-panel-empty { color: var(--cq-muted); font-size: 0.8125rem; }
+.cq-panel-intro { font-size: var(--cq-fs-meta); line-height: 1.4; }
+.cq-panel-error { color: var(--cq-crit-fg); font-size: var(--cq-fs-meta); }
+.cq-panel-empty { color: var(--cq-muted); font-size: var(--cq-fs-meta); }
 .cq-panel-card { background: var(--cq-bg); border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); overflow: hidden; }
 .cq-panel-pager { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; flex-wrap: wrap; padding-top: 0.375rem; }
 .cq-panel-pages { display: flex; gap: 0.625rem; align-items: center; flex-wrap: wrap; }
-.cq-panel-pages .page { background: none; border: 0; padding: 0; color: var(--cq-link); cursor: pointer; font-size: 0.8125rem; }
+.cq-panel-pages .page { background: none; border: 0; padding: 0; color: var(--cq-link); cursor: pointer; font-size: var(--cq-fs-meta); }
 .cq-panel-pages .page:hover { text-decoration: underline; }
 .cq-panel-pages .page.current { color: var(--cq-ink); font-weight: 700; cursor: default; text-decoration: none; }
 
@@ -496,30 +513,30 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 /* a ruled row in a card: what it is on the left, its value or pill on the right */
 .cq-krow { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); }
 .cq-krow:last-child { border-bottom: none; padding-bottom: 0; }
-.cq-para { margin-top: 6px; font-size: 14px; line-height: 1.45; white-space: pre-line; }
-.cq-big { font-size: 20px; font-weight: 700; }
+.cq-para { margin-top: 6px; font-size: var(--cq-fs-para); line-height: 1.45; white-space: pre-line; }
+.cq-big { font-size: var(--cq-fs-h2); font-weight: 700; }
 .cq-mt14 { margin-top: 14px; }
 /* The Problem: the grey card that opens a glance, and its text */
 .cq-pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.cq-prob { margin: 0; font-size: 14px; line-height: 1.45; }
+.cq-prob { margin: 0; font-size: var(--cq-fs-para); line-height: 1.45; }
 /* a numbered card inside a step: .cq-stepcard > .cq-stepcard-head (.cq-stepcard-n + .cq-stepcard-title, then .cq-grow + .cq-stepcard-tot) */
 .cq-stepcard { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .cq-stepcard-head { display: flex; align-items: baseline; gap: 8px; }
-.cq-stepcard-n { font-size: 13px; font-weight: 700; color: var(--cq-muted); }
-.cq-stepcard-title { font-size: 15px; font-weight: 700; }
-.cq-stepcard-tot { font-size: 13px; font-weight: 600; }
+.cq-stepcard-n { font-size: var(--cq-fs-meta); font-weight: 700; color: var(--cq-muted); }
+.cq-stepcard-title { font-size: var(--cq-fs-body); font-weight: 700; }
+.cq-stepcard-tot { font-size: var(--cq-fs-meta); font-weight: 600; }
 /* a stock location link and the dot between two of them */
 .cq-ploc { color: var(--cq-link); font-weight: 600; text-decoration: none; }
 .cq-ploc:hover { text-decoration: underline; }
 .cq-dotsep { color: var(--cq-faint); }
 /* a decision card in Next Steps: its name, its state line, the suggestion, the choices */
-.cq-dcard-name { font-size: 14px; font-weight: 700; }
+.cq-dcard-name { font-size: var(--cq-fs-para); font-weight: 700; }
 .cq-dcard-state { margin-top: 2px; min-height: 19px; color: var(--cq-muted); }
 .cq-dcard-sug { flex: 1 1 auto; min-width: 0; line-height: 1.45; }
 .cq-dcard-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 /* "what we know" fold-out and the Start Over link */
-.cq-know summary { color: var(--cq-link); font-size: 13px; font-weight: 600; cursor: pointer; }
-.cq-restart { margin: 4px 8px 0; padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.cq-know summary { color: var(--cq-link); font-size: var(--cq-fs-meta); font-weight: 600; cursor: pointer; }
+.cq-restart { margin: 4px 8px 0; padding: 0; border: none; background: none; color: var(--cq-link); font: inherit; font-size: var(--cq-fs-meta); text-align: left; cursor: pointer; }
 /* the small "From" / "For" card at the top of a popup, and the loading line */
 .cq-fromcard { padding: 10px 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-hl-line); background: var(--cq-surface); display: flex; flex-direction: column; gap: 2px; line-height: 1.45; }
 .cq-spin { position: relative; display: inline-block; width: 24px; height: 24px; }
@@ -561,7 +578,7 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 /* expand chevron, the one every table uses: button.cq-rchev-btn[aria-expanded] > span.cq-rchev holding a single right angle quote; grey,
    it turns down when the row opens (aria-expanded="true" on the button, or .open on the span). span.cq-rchev-sp keeps its place on a row with nothing to open */
 .cq-rchev-btn { flex: none; width: 26px; padding: 0; border: none; background: none; cursor: pointer; vertical-align: middle; }
-.cq-rchev { display: inline-block; width: 16px; font-size: 24px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
+.cq-rchev { display: inline-block; width: 16px; font-size: var(--cq-fs-glyph-xl); line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
 .cq-rchev.open, .cq-rchev-btn[aria-expanded="true"] > .cq-rchev { transform: rotate(90deg); }
 .cq-rchev-btn:hover > .cq-rchev { color: var(--cq-ink); }
 .cq-rchev-sp { flex: none; display: inline-block; width: 26px; }
@@ -577,8 +594,8 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-statcard { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); font: inherit; text-align: left; cursor: pointer; }
 .cq-statcard:hover { border-color: var(--cq-line-field); }
 .cq-statcard.on { border: 2px solid var(--cq-link); background: var(--cq-surface); padding: 11px 13px; }
-.cq-statcard-k { font-size: 15px; font-weight: 600; color: var(--cq-muted); }
-.cq-statcard-v { font-size: 28px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
+.cq-statcard-k { font-size: var(--cq-fs-body); font-weight: 600; color: var(--cq-muted); }
+.cq-statcard-v { font-size: var(--cq-fs-stat); font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
 .cq-statcard-v.ok { color: var(--cq-pos-fg); }
 .cq-statcard-v.bad { color: var(--cq-crit-fg); }
 /* progress bar: .cq-bar > .cq-bar-track > .cq-bar-fill(.done when complete; width set on the element) + .cq-bar-pct */
@@ -586,13 +603,13 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-bar-track { flex: 1; height: 8px; border-radius: var(--cq-r-card); background: var(--cq-line); overflow: hidden; }
 .cq-bar-fill { display: block; height: 100%; background: var(--cq-link); }
 .cq-bar-fill.done { background: var(--cq-pos-solid); }
-.cq-bar-pct { width: 40px; text-align: right; font-size: 13px; color: var(--cq-muted); font-variant-numeric: tabular-nums; }
+.cq-bar-pct { width: 40px; text-align: right; font-size: var(--cq-fs-meta); color: var(--cq-muted); font-variant-numeric: tabular-nums; }
 /* fields in a popup or card, two columns (one on a phone): .cq-formgrid > .cq-field, and .cq-field.span2 runs across both */
 .cq-formgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
 .cq-formgrid .span2 { grid-column: 1 / -1; }
 @media (max-width: 560px) { .cq-formgrid { grid-template-columns: 1fr; } }
 /* small buttons inside a table row or a suggestion line: add .cq-btn-sm to a shared button */
-.cq-btn-outline.cq-btn-sm, .cq-btn-primary.cq-btn-sm, .cq-btn-ai.cq-btn-sm { flex: none; min-height: 24px; padding: 0 8px 1px; font-size: 13px; border-radius: var(--cq-r-pill); }
+.cq-btn-outline.cq-btn-sm, .cq-btn-primary.cq-btn-sm, .cq-btn-ai.cq-btn-sm { flex: none; min-height: 24px; padding: 0 8px 1px; font-size: var(--cq-fs-meta); border-radius: var(--cq-r-pill); }
 
 /* On Hand that opens a small card with the split by CQ Location (Scope, Strategy Holds):
    td.cq-ohcell > button.cq-ohbtn + div.cq-ohpop > .cq-ohpop-head + .cq-ohpop-row... */
