@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Kind__c</fullName><description>Distributor or Direct Customer: we shipped to them. Customer: a distributor shipped to them.</description><label>Kind</label><required>false</required><type>Picklist</type><valueSet><restricted>true</restricted><valueSetDefinition><sorted>false</sorted><value><fullName>Distributor</fullName><default>false</default><label>Distributor</label></value><value><fullName>Direct Customer</fullName><default>false</default><label>Direct Customer</label></value><value><fullName>Customer</fullName><default>false</default><label>Customer</label></value></valueSetDefinition></valueSet>
+</CustomField>

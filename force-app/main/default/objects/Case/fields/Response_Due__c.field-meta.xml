@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Response_Due__c</fullName><description>When the customer response is due. An open Case past this date is overdue on the field action.</description><label>Response Due</label><required>false</required><type>Date</type>
+</CustomField>

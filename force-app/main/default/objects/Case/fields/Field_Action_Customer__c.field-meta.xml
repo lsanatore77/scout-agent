@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Field_Action_Customer__c</fullName><deleteConstraint>SetNull</deleteConstraint><description>The customer row on the field action that this Case tracks.</description><label>Field Action Customer</label><referenceTo>Field_Action_Customer__c</referenceTo><relationshipLabel>Cases</relationshipLabel><relationshipName>Cases</relationshipName><required>false</required><type>Lookup</type>
+</CustomField>

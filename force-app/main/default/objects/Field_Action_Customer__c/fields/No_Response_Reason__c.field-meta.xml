@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>No_Response_Reason__c</fullName><description>Why this customer was closed without a response.</description><label>No Response Reason</label><required>false</required><length>255</length><type>Text</type>
+</CustomField>

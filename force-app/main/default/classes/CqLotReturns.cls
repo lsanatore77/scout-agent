@@ -5,6 +5,7 @@
  *    customer and whose lots in scope include its lot.
  *  - After save, the units received per customer and lot are written onto that customer's Track return task for the
  *    lot (CqFieldActionTasks), so the lot's Returned adds up as before. A task with returns behind it is not typed over.
+ *    A customer who has now returned every unit shipped is acknowledged on the returns alone (CqFieldActionCases).
  */
 public with sharing class CqLotReturns {
 
@@ -15,7 +16,7 @@ public with sharing class CqLotReturns {
         Set<Id> fas = new Set<Id>();
         if (rows != null) { for (Lot_Return__c r : rows) { if (r.Field_Action__c != null) { fas.add(r.Field_Action__c); } } }
         if (before != null) { for (Lot_Return__c r : before.values()) { if (r.Field_Action__c != null) { fas.add(r.Field_Action__c); } } }
-        for (Id fa : fas) { toTasks(fa); }
+        for (Id fa : fas) { toTasks(fa); CqFieldActionCases.fullReturns(fa); }
     }
 
     private static void match(List<Lot_Return__c> rows) {

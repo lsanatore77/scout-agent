@@ -5,6 +5,8 @@
  *    on Lot Shipment, and when a field action is read, for lots that came into scope after their shipments.
  *  - customers(): the customers that received the lots in scope, one row per customer with their units and lots,
  *    for the Recovery and Effectiveness step.
+ * Only the lines we shipped count here (Shipped By blank). A line with Shipped By set comes from a distributor's own
+ * shipping list: those units are part of what we already shipped to the distributor (CqFieldActionCases reads them).
  */
 public with sharing class CqLotShipments {
     public class Consignee {
@@ -16,7 +18,7 @@ public with sharing class CqLotShipments {
         Map<String, Decimal> out = new Map<String, Decimal>();
         if (lotNumbers == null || lotNumbers.isEmpty()) { return out; }
         for (AggregateResult r : [SELECT Lot_Number__c lot, SUM(Units__c) units FROM Lot_Shipment__c
-                                  WHERE Lot_Number__c IN :lotNumbers GROUP BY Lot_Number__c]) {
+                                  WHERE Lot_Number__c IN :lotNumbers AND Shipped_By__c = null GROUP BY Lot_Number__c]) {
             out.put((String) r.get('lot'), (Decimal) r.get('units'));
         }
         return out;
@@ -56,7 +58,8 @@ public with sharing class CqLotShipments {
         List<String> order = new List<String>();
         if (lotNumbers == null || lotNumbers.isEmpty()) { return new List<Consignee>(); }
         for (Lot_Shipment__c s : [SELECT Lot_Number__c, Units__c, Customer__c, Customer__r.Name FROM Lot_Shipment__c
-                                  WHERE Lot_Number__c IN :lotNumbers AND Customer__c != null ORDER BY Customer__r.Name, Lot_Number__c LIMIT 5000]) {
+                                  WHERE Lot_Number__c IN :lotNumbers AND Customer__c != null AND Shipped_By__c = null
+                                  ORDER BY Customer__r.Name, Lot_Number__c LIMIT 5000]) {
             String key = s.Customer__c;
             if (!byKey.containsKey(key)) {
                 Consignee c = new Consignee(); c.accountId = s.Customer__c; c.name = s.Customer__r.Name;
