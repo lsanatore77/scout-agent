@@ -3,20 +3,22 @@
  * or entered by hand), for the Recovery step of a field action.
  *  - Before save, a return without a Field Action is matched to the open field action whose customers include its
  *    customer and whose lots in scope include its lot.
- *  - After save, the units received per customer and lot are written onto that customer's Track return task for the
- *    lot (CqFieldActionTasks), so the lot's Returned adds up as before. A task with returns behind it is not typed over.
- *    A customer who has now returned every unit shipped is acknowledged on the returns alone (CqFieldActionCases).
+ *  - After save, the lot's Returned is the sum of its returns (CqFieldActionTasks.sync), so Still in Field draws down on
+ *    its own. Track return tasks are plain to-dos and carry no units. A customer who has now returned every unit shipped
+ *    is acknowledged on the returns alone (CqFieldActionCases).
  */
 public with sharing class CqLotReturns {
 
-    /** Trigger: match the field action (before), then put the units received on the return tasks (after). */
+    /** Trigger: match the field action (before), then bring the lots' Returned into line with the returns (after). */
     public static void onChange(List<Lot_Return__c> rows, Map<Id, Lot_Return__c> before, Boolean isBefore) {
         if (isBefore) { match(rows); return; }
         cache.clear();   // the returns just changed
         Set<Id> fas = new Set<Id>();
         if (rows != null) { for (Lot_Return__c r : rows) { if (r.Field_Action__c != null) { fas.add(r.Field_Action__c); } } }
         if (before != null) { for (Lot_Return__c r : before.values()) { if (r.Field_Action__c != null) { fas.add(r.Field_Action__c); } } }
-        for (Id fa : fas) { toTasks(fa); CqFieldActionCases.fullReturns(fa); }
+        CqFieldActionTasks.returnsChanged = true;
+        for (Id fa : fas) { CqFieldActionTasks.sync(fa); CqFieldActionCases.fullReturns(fa); }
+        CqFieldActionTasks.returnsChanged = false;
     }
 
     private static void match(List<Lot_Return__c> rows) {
@@ -49,6 +51,7 @@ public with sharing class CqLotReturns {
     private class Got {
         Map<String, Decimal> units = new Map<String, Decimal>();
         Map<String, List<String>> rmas = new Map<String, List<String>>();
+        Map<String, Decimal> byLot = new Map<String, Decimal>();   // every return on the field action, whoever sent it
     }
     private static Map<Id, Got> cache = new Map<Id, Got>();
     private static Got got(Id fieldActionId) {
@@ -62,6 +65,9 @@ public with sharing class CqLotReturns {
                 custOf.put(c.Customer__c, c.Id);
             }
             for (Lot_Return__c r : rs) {
+                if (String.isNotBlank(r.Lot_Number__c)) {
+                    g.byLot.put(r.Lot_Number__c, (g.byLot.containsKey(r.Lot_Number__c) ? g.byLot.get(r.Lot_Number__c) : 0) + (r.Units_Received__c == null ? 0 : r.Units_Received__c));
+                }
                 Id c = custOf.get(r.Customer__c);
                 if (c == null) { continue; }
                 String k = c + '|' + r.Lot_Number__c;
@@ -80,16 +86,6 @@ public with sharing class CqLotReturns {
     /** The RMA numbers behind each customer and lot, keyed as received(). */
     public static Map<String, List<String>> rmas(Id fieldActionId) { return got(fieldActionId).rmas; }
 
-    /** Writes the units received onto the matching Track return tasks of a field action. */
-    public static void toTasks(Id fieldActionId) {
-        Map<String, Decimal> got = received(fieldActionId);
-        if (got.isEmpty()) { return; }
-        List<Task> ups = new List<Task>();
-        for (Task t : [SELECT Id, Units__c, Lot_Number__c, Field_Action_Customer__c FROM Task WHERE WhatId = :fieldActionId
-                       AND Recall_Task_Type__c = :CqFieldActionTasks.RETURN_IT AND Field_Action_Customer__c != null AND Lot_Number__c != null]) {
-            Decimal n = got.get(t.Field_Action_Customer__c + '|' + t.Lot_Number__c);
-            if (n != null && n != t.Units__c) { ups.add(new Task(Id = t.Id, Units__c = n)); }
-        }
-        if (!ups.isEmpty()) { update ups; }
-    }
+    /** Units received per lot on a field action, from every return, keyed by lot number. */
+    public static Map<String, Decimal> receivedByLot(Id fieldActionId) { return got(fieldActionId).byLot; }
 }

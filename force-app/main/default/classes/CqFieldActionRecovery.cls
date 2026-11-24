@@ -5,7 +5,7 @@
  *  1. Recovery by lot: units returned, destroyed and corrected against units shipped, per lot in scope.
  *  2. Customers and tasks: the customers that received the lots (from the Lot Shipment records of the lots in scope,
  *     or added by hand) and the recall tasks for each (CqFieldActionTasks). A customer's acknowledgement follows its
- *     Collect response task and is measured against the check level from the strategy; return tasks add up per lot.
+ *     Collect response task and is measured against the check level from the strategy; the RMAs received add up per lot.
  *  3. Held stock: a disposition for each lot held in the strategy.
  *  4. Effectiveness verdict: Effective, or Not Effective with what happens next. Confirm Verdict records it.
  *
@@ -144,7 +144,7 @@ public with sharing class CqFieldActionRecovery {
         v.closedBy = fa.Closed_By__r?.Name; v.closedOn = fa.Closed_On__c;
         if (!v.closed && v.strategyConfirmed) {
             CqLotShipments.fillShipped(recordId);
-            if (fa.Recovery_Status__c != 'Confirmed') { syncCustomers(recordId); CqLotReturns.toTasks(recordId); CqFieldActionTasks.sync(recordId); }
+            if (fa.Recovery_Status__c != 'Confirmed') { syncCustomers(recordId); CqFieldActionTasks.sync(recordId); }
         }
         v.tasks = CqFieldActionTasks.board(recordId, fa, v.closed);
 

@@ -75,20 +75,22 @@ private class CqFieldActionRecoveryTest {
     }
 
     @IsTest
-    static void tasksCarryTheUnitsAndTheAcknowledgement() {
+    static void returnsCountAndTasksCarryTheAcknowledgement() {
         Field_Action__c fa = makeFa();
         CqFieldActionRecovery.getView(fa.Id);      // lists the customer
         Id custId = [SELECT Id FROM Field_Action_Customer__c WHERE Field_Action__c = :fa.Id].Id;
         Task back = new Task(WhatId = fa.Id, Subject = 'Track return of lot FRC-L1', Status = CqFieldActionTasks.OPEN, Priority = 'Normal',
-            Recall_Task_Type__c = CqFieldActionTasks.RETURN_IT, Field_Action_Customer__c = custId, Lot_Number__c = 'FRC-L1', Units__c = 10,
+            Recall_Task_Type__c = CqFieldActionTasks.RETURN_IT, Field_Action_Customer__c = custId, Lot_Number__c = 'FRC-L1',
             ActivityDate = Date.today().addDays(5));
         Task reply = new Task(WhatId = fa.Id, Subject = 'Collect response form', Status = CqFieldActionTasks.DONE, Priority = 'Normal',
             Recall_Task_Type__c = CqFieldActionTasks.RESPONSE, Field_Action_Customer__c = custId);
         insert new List<Task>{ back, reply };
+        insert new Lot_Return__c(RMA_Number__c = 'RMA-FRC', Customer__c = [SELECT Id FROM Account WHERE Name = 'FRC Clinic'].Id, Lot_Number__c = 'FRC-L1',
+            Units_Received__c = 10, Field_Action__c = fa.Id);
 
         Test.startTest();
         CqFieldActionRecovery.View v = CqFieldActionRecovery.getView(fa.Id);
-        System.assertEquals(10, v.lots[0].returned, 'units on a Track return task add up to the lot');
+        System.assertEquals(10, v.lots[0].returned, 'the RMAs received add up to the lot');
         System.assertEquals(100, v.lots[0].pct);
         System.assertEquals(10, v.recovered);
         System.assertEquals('Acknowledged', v.customers[0].status, 'a completed Collect response acknowledges the customer');
@@ -98,8 +100,6 @@ private class CqFieldActionRecoveryTest {
         System.assertEquals(1, v.tasks.completed);
         System.assertEquals(1, v.tasks.dueWeek);
 
-        v = CqFieldActionTasks.setTask(fa.Id, back.Id, 'units', 4);
-        System.assertEquals(4, v.lots[0].returned);
         v = CqFieldActionTasks.setTask(fa.Id, back.Id, 'done', null);
         System.assertEquals(2, v.tasks.completed);
         Test.stopTest();

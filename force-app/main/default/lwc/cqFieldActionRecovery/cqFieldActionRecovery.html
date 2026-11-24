@@ -165,10 +165,10 @@
                                         <template if:true={r.isTask}>
                                             <td><span class="cell2"><span class={r.indentCls}></span>
                                                 <input class="cq-tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
-                                                <span class="cq-stack"><a class="tlink" href={r.href} target="_blank">{r.title}</a><template if:true={r.rmas}><span class="cq-sub block">{r.rmas}</span></template></span></span></td>
+                                                <span class="cq-stack"><a class="tlink" href={r.href} target="_blank">{r.title}</a></span></span></td>
                                             <td class="nw">{r.owner}</td>
                                             <td class={r.dueCls}>{r.due}</td>
-                                            <td class="num"><template if:true={r.hasUnits}><span class="uin"><template if:true={r.locked}><span class="ulock" title="From the returns received (RMAs)">{r.lockedText}</span></template><template if:false={r.locked}><span class="cq-field ni"><input type="number" min="0" data-id={r.id} value={r.unitsVal} onchange={handleUnits} onkeydown={handleUnitsKey} disabled={locked} aria-label={r.unitsLabel} /></span></template><span class="cq-sub nw">{r.ofText}</span></span></template></td>
+                                            <td class="num"><template if:true={r.hasUnits}><span class="uin"><span class="cq-field ni"><input type="number" min="0" data-id={r.id} value={r.unitsVal} onchange={handleUnits} onkeydown={handleUnitsKey} disabled={locked} aria-label={r.unitsLabel} /></span><span class="cq-sub nw">{r.ofText}</span></span></template><template if:true={r.allIn}><span class="okc">All units received</span></template></td>
                                             <td class="num"><span class={r.pillCls}>{r.pill}</span></td>
                                         </template>
                                     </tr>
@@ -189,7 +189,7 @@
                     </template>
                 </template>
                 <template if:false={hasRows}><p class="cq-note">{emptyLine}</p></template>
-                <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Units on a return come from the RMAs received; it is ready to complete once they reach what the customer said is coming back. Notices and responses are on the Notifications step.</span>
+                <span class="cq-hint">Customers come from the lot shipments of the lots in scope. Units returned come from the RMAs received, shown on each lot line; a return task says All units received once they reach what the customer said is coming back, and is ticked off by hand. Notices and responses are on the Notifications step.</span>
             </section>
 
             <div class="grid">

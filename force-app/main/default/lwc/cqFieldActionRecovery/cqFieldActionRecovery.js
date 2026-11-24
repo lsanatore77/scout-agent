@@ -13,7 +13,7 @@ import { sortRows, nextSort, heads } from 'c/cqSort';
 const DISPOSITIONS = ['Scrap', 'Rework', 'Return to Supplier', 'Release'];
 const NEXT_STEPS = ['Widen the scope', 'A further action to customers', 'Extend the check by 30 days'];
 const TYPES = ['Track return', 'Confirm destruction', 'Confirm correction', 'Other'];   // notices and responses are added on Notifications
-const UNIT_TYPES = ['Track return', 'Confirm destruction', 'Confirm correction'];
+const UNIT_TYPES = ['Confirm destruction', 'Confirm correction'];   // a return's units come from the RMAs (Lot Returns), not the task
 /** Notice and response tasks live on the Notifications step; Recovery shows the units coming back. */
 const NOTIFY_TYPES = ['Send recall notice', 'Collect response'];
 const NEW_CUSTOMER = '__new';
@@ -76,7 +76,9 @@ export default class CqFieldActionRecovery extends LightningElement {
     get locked() { return !this.v.strategyConfirmed || this.v.closed; }
     get needsStrategy() { return this.ready && !this.v.strategyConfirmed; }
     get showStep() { return this.ready && this.v.strategyConfirmed; }
-    get t() { return (this.v && this.v.tasks) || { tasks: [], suggestions: [], people: [], lotsByCustomer: {}, shippedByLine: {}, usedByLine: {}, expectedByLine: {}, open: 0, completed: 0, overdue: 0, dueWeek: 0 }; }
+    get t() { return (this.v && this.v.tasks) || { tasks: [], suggestions: [], people: [], lotsByCustomer: {}, shippedByLine: {}, usedByLine: {}, expectedByLine: {}, receivedByLine: {}, rmasByLine: {}, open: 0, completed: 0, overdue: 0, dueWeek: 0 }; }
+    /** Units received on the RMAs for a customer and lot. */
+    received(cid, lot) { return Number((this.t.receivedByLine || {})[cid + '|' + lot] || 0); }
     /** The tasks this step shows: returns, destructions, corrections and any other task, not the notices and responses. */
     get myTasks() { return this.t.tasks.filter((x) => !NOTIFY_TYPES.includes(x.type)); }
     get mySuggestions() { return this.t.suggestions.filter((s) => !NOTIFY_TYPES.includes(s.type)); }
@@ -125,8 +127,8 @@ export default class CqFieldActionRecovery extends LightningElement {
     }
     get showCorrected() { return this.isCorrection; }
     get tableHint() {
-        return 'Shipped comes from the lot shipments. ' + (this.isCorrection ? 'Corrected and Returned add' : this.showDestroyed ? 'Returned and Destroyed add' : 'Returned adds')
-            + ' up from the units on the tasks below; returns come from the RMAs received. Used is what the customers reported on Notifications.';
+        const tasks = this.isCorrection ? ' Corrected adds up from the units on the tasks below.' : this.showDestroyed ? ' Destroyed adds up from the units on the tasks below.' : '';
+        return 'Shipped comes from the lot shipments. Returned comes from the RMAs received.' + tasks + ' Used is what the customers reported on Notifications.';
     }
     // every table sorts on a heading click (c/cqSort); a customer's lots and tasks travel with the customer
     lotSort = { key: 'lot', dir: 'asc' };
@@ -239,8 +241,8 @@ export default class CqFieldActionRecovery extends LightningElement {
         return lots;
     }
     /**
-     * Units still out with a customer for a lot (all their lots when none is given): shipped to them, less the units back on
-     * their return, destruction and correction tasks, and less what they reported as used, which never comes back. Null when unknown.
+     * Units still out with a customer for a lot (all their lots when none is given): shipped to them, less the units received
+     * on their RMAs, the units on their destruction and correction tasks, and what they reported as used. Null when unknown.
      */
     custOut(c, mine, lot) {
         if (c.other) { return null; }
@@ -248,7 +250,7 @@ export default class CqFieldActionRecovery extends LightningElement {
         const one = (l) => {
             const n = t.shippedByLine[c.id + '|' + l];
             if (n === undefined || n === null) { return null; }
-            const back = mine.filter((x) => x.lot === l && x.hasUnits).reduce((s, x) => s + Number(x.units || 0), 0);
+            const back = this.received(c.id, l) + mine.filter((x) => x.lot === l && x.hasUnits).reduce((s, x) => s + Number(x.units || 0), 0);
             return Math.max(0, n - back - Number((t.usedByLine || {})[c.id + '|' + l] || 0));
         };
         if (lot) { return one(lot); }
@@ -293,37 +295,38 @@ export default class CqFieldActionRecovery extends LightningElement {
                 const shipped = t.shippedByLine[c.id + '|' + lot];
                 const known = shipped !== undefined && shipped !== null;
                 const out = outOf(lot);
-                const returned = sumOf(lot, 'Track return'), destroyed = sumOf(lot, 'Confirm destruction'), corrected = sumOf(lot, 'Confirm correction');
+                const returned = this.received(c.id, lot), destroyed = sumOf(lot, 'Confirm destruction'), corrected = sumOf(lot, 'Confirm correction');
                 const used = usedOf(lot);
                 const parts = [returned || !(destroyed || corrected) ? returned + ' returned' : '', destroyed ? destroyed + ' destroyed' : '',
                     corrected ? corrected + ' corrected' : '', used ? used + ' used' : ''].filter(Boolean);
                 rows.push({ key: 'l' + c.id + lot, isLot: true, rowCls: '', title: lot,   // nested under the customer by its indent, not a band
                     inRecall: this.v.lots.some((l) => l.lot === lot),
-                    sub: '',   // shipped, back and still out are in the Units column
+                    sub: (t.rmasByLine || {})[c.id + '|' + lot] || '',   // the RMAs behind what came back; the figures are in the Units column
                     unitsBack: parts.join(' · '),
                     outText: out === null ? '' : out + ' out', outCls: out ? 'warnc' : 'okc' });
                 // a return expects what the customer said is coming back (Notifications), or else everything shipped
                 const said = (t.expectedByLine || {})[c.id + '|' + lot];
                 const expected = said !== undefined && said !== null ? said : known ? shipped : null;
-                lt.forEach((x) => rows.push(this.taskRow(x, 'i2', expected)));
+                lt.forEach((x) => rows.push(this.taskRow(x, 'i2', expected, returned)));
             });
         });
         return rows;
     }
-    taskRow(x, indent, expected) {
+    /**
+     * A task row. A return task is a plain to-do: no units of its own; once the RMAs show every expected unit back it says
+     * All units received, and someone still ticks it off. Destruction and correction tasks take their units in the row.
+     */
+    taskRow(x, indent, expected, received) {
         const hasExp = expected !== undefined && expected !== null;
-        const got = x.units === undefined || x.units === null ? null : Number(x.units);
-        // units from the RMAs received are not typed over; once they reach what is expected, the task is ready to complete
-        const ready = !x.done && x.fromReturns && hasExp && got !== null && got >= expected;
+        const allIn = !x.done && x.type === 'Track return' && hasExp && expected > 0 && Number(received || 0) >= expected;
         return { key: 't' + x.id, isTask: true, rowCls: '', id: x.id, title: x.subject, indentCls: indent === 'i2' ? 'ind2' : 'ind1', href: '/lightning/r/Task/' + x.id + '/view',
             done: x.done, checkLabel: (x.done ? 'Reopen ' : 'Complete ') + x.subject,
             hasUnits: x.hasUnits, unitsVal: x.units === undefined || x.units === null ? '' : x.units,
-            ofText: hasExp ? 'of ' + expected + (x.type === 'Track return' ? ' expected' : '') : '',
-            locked: !!x.fromReturns, lockedText: got === null ? '0' : String(got), rmas: x.rmas || '', ready,
+            ofText: hasExp ? 'of ' + expected : '', allIn,
             unitsLabel: (x.type === 'Confirm correction' ? 'Units corrected' : x.type === 'Confirm destruction' ? 'Units destroyed' : 'Units back') + ': ' + x.subject,
             owner: x.owner, due: this.day(x.due), dueCls: 'nw' + (x.overdue ? ' badc b' : ''),
-            pill: x.done ? 'Done' : ready ? 'Ready to Complete' : x.overdue ? 'Overdue' : 'Open',
-            pillCls: 'cq-pill soft ' + (x.done ? 'pos' : ready ? 'pos' : x.overdue ? 'crit' : 'neu') };
+            pill: x.done ? 'Done' : x.overdue ? 'Overdue' : 'Open',
+            pillCls: 'cq-pill soft ' + (x.done ? 'pos' : x.overdue ? 'crit' : 'neu') };
     }
     get hasRows() { return this.rows.length > 0; }
     get emptyLine() {

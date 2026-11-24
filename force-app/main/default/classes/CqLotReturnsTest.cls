@@ -1,4 +1,4 @@
-/** Lot Returns (RMA receipts): matched to the field action, summed onto the return tasks, and read by Recovery with the units used. */
+/** Lot Returns (RMA receipts): matched to the field action, summed onto the lot's Returned, and read by Recovery with the units used. */
 @IsTest
 private class CqLotReturnsTest {
 
@@ -28,9 +28,10 @@ private class CqLotReturnsTest {
     static Id acc(String name) { return [SELECT Id FROM Account WHERE Name = :name].Id; }
     static Field_Action_Customer__c cust(String name) { return [SELECT Id FROM Field_Action_Customer__c WHERE Customer_Name__c = :name]; }
     static Task taskOf(String name) { return [SELECT Id, Units__c FROM Task WHERE Field_Action_Customer__r.Customer_Name__c = :name AND Recall_Task_Type__c = :CqFieldActionTasks.RETURN_IT]; }
+    static Decimal returnedOf(Id faId) { return [SELECT Units_Returned__c FROM Field_Action_Lot__c WHERE Field_Action__c = :faId LIMIT 1].Units_Returned__c; }
 
     @IsTest
-    static void returnsAreMatchedAndAddUpOnTheReturnTask() {
+    static void returnsAreMatchedAndAddUpOnTheLot() {
         Field_Action__c fa = makeFa();
         Test.startTest();
         insert new List<Lot_Return__c>{
@@ -38,23 +39,22 @@ private class CqLotReturnsTest {
             new Lot_Return__c(RMA_Number__c = 'RMA-2', Customer__c = acc('LRT Hospital A'), Lot_Number__c = 'LRT-L1', Units_Received__c = 4, Date_Received__c = Date.today().addDays(-1), Source__c = 'ERP') };
         Test.stopTest();
         System.assertEquals(2, [SELECT COUNT() FROM Lot_Return__c WHERE Field_Action__c = :fa.Id], 'a return with no field action is matched by its customer and lot');
-        System.assertEquals(10, taskOf('LRT Hospital A').Units__c, 'the two receipts add up on the customer\'s return task');
-        System.assertEquals(null, taskOf('LRT Hospital B').Units__c, 'another customer\'s task is not touched');
+        System.assertEquals(10, returnedOf(fa.Id), 'the two receipts add up on the lot\'s Returned');
+        System.assertEquals(null, taskOf('LRT Hospital A').Units__c, 'the return task is a plain to-do: no units are written onto it');
         System.assertEquals(new List<String>{ 'RMA-1', 'RMA-2' }, CqLotReturns.rmas(fa.Id).get(cust('LRT Hospital A').Id + '|LRT-L1'));
 
-        delete [SELECT Id FROM Lot_Return__c WHERE RMA_Number__c = 'RMA-2'];
-        System.assertEquals(6, taskOf('LRT Hospital A').Units__c, 'a receipt taken away comes off the task');
+        delete [SELECT Id FROM Lot_Return__c];
+        System.assertEquals(0, returnedOf(fa.Id), 'receipts taken away come off the lot, down to none');
     }
 
     @IsTest
-    static void unitsFromReturnsAreNotTypedOver() {
+    static void returnTasksTakeNoUnits() {
         Field_Action__c fa = makeFa();
-        insert new Lot_Return__c(RMA_Number__c = 'RMA-1', Customer__c = acc('LRT Hospital A'), Lot_Number__c = 'LRT-L1', Units_Received__c = 6);
         Boolean refused = false;
-        try { CqFieldActionTasks.setTask(fa.Id, taskOf('LRT Hospital A').Id, 'units', 20); } catch (AuraHandledException e) { refused = true; }
-        System.assert(refused, 'units that come from the RMAs cannot be typed over');
-        CqFieldActionTasks.setTask(fa.Id, taskOf('LRT Hospital B').Id, 'units', 3);
-        System.assertEquals(3, taskOf('LRT Hospital B').Units__c, 'a task with no returns behind it still takes typed units');
+        try { CqFieldActionTasks.setTask(fa.Id, taskOf('LRT Hospital B').Id, 'units', 3); } catch (AuraHandledException e) { refused = true; }
+        System.assert(refused, 'units returned come from the RMAs, never from the task');
+        CqFieldActionTasks.setTask(fa.Id, taskOf('LRT Hospital B').Id, 'done', null);
+        System.assertEquals(CqFieldActionTasks.DONE, [SELECT Status FROM Task WHERE Id = :taskOf('LRT Hospital B').Id].Status, 'it is still ticked off by hand');
     }
 
     @IsTest
@@ -68,17 +68,15 @@ private class CqLotReturnsTest {
         Test.stopTest();
         CqFieldActionRecovery.LotRec l = v.lots[0];
         System.assertEquals(30, l.shipped);
-        System.assertEquals(10, l.returned, 'returned comes from the RMAs, through the return task');
+        System.assertEquals(10, l.returned, 'returned comes from the RMAs');
         System.assertEquals(12, l.used, 'used comes from the customer\'s response');
         System.assertEquals(8, l.field, '30 shipped, 10 back and 12 used: 8 still in the field (all with B)');
         System.assertEquals(22, v.recovered, 'units used count as accounted for');
         System.assertEquals(10, v.tasks.expectedByLine.get(a + '|LRT-L1'), 'Recovery expects back what the customer said is returning');
         System.assertEquals(12, v.tasks.usedByLine.get(a + '|LRT-L1'));
-        Boolean seen = false;
-        for (CqFieldActionTasks.TaskRow t : v.tasks.tasks) {
-            if (t.customerId == a) { seen = true; System.assert(t.fromReturns); System.assertEquals('RMA-1', t.rmas); }
-        }
-        System.assert(seen);
+        System.assertEquals(10, v.tasks.receivedByLine.get(a + '|LRT-L1'), 'received per customer and lot, for the lot line');
+        System.assertEquals('RMA-1', v.tasks.rmasByLine.get(a + '|LRT-L1'));
+        for (CqFieldActionTasks.TaskRow t : v.tasks.tasks) { System.assert(!t.hasUnits, 'a return task carries no units'); }
         System.assert(v.sSummary.contains('12 used'), v.sSummary);
     }
 

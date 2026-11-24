@@ -2,8 +2,9 @@
  * CqFieldActionTasks: the recall work on a Field Action, kept as standard Salesforce Tasks (WhatId = the Field Action),
  * so it shows in each owner's My Tasks with reminders. Used by the Recovery and Effectiveness step.
  *  - Recall Task Type says what a task is; Field Action Customer and Lot Number say who and which lot it is about.
- *  - Units on Track return and Confirm destruction tasks add up to the lot's Returned and Destroyed (Confirm correction
- *    to Corrected).
+ *  - A lot's Returned is the sum of its Lot Returns (RMAs, CqLotReturns). Track return tasks are plain to-dos: an owner,
+ *    a due date, done or not; the board says when all the units are in, but the task is closed by hand.
+ *  - Units on Confirm destruction and Confirm correction tasks add up to the lot's Destroyed and Corrected.
  *  - Notifying customers and collecting their responses runs on Cases (CqFieldActionCases), not on tasks. A Collect
  *    response task still marks a customer who has no Case (Acknowledged when completed, No reply when overdue).
  *  - CQ.AI suggests the tasks a field action still needs, from the strategy and the lot shipments: a return (or
@@ -25,8 +26,6 @@ public with sharing class CqFieldActionTasks {
         @AuraEnabled public Date due; @AuraEnabled public Boolean done = false; @AuraEnabled public Boolean overdue = false;
         @AuraEnabled public Boolean dueWeek = false; @AuraEnabled public Decimal units; @AuraEnabled public Boolean hasUnits = false;
         @AuraEnabled public String lot; @AuraEnabled public Id customerId;
-        @AuraEnabled public Boolean fromReturns = false;   // units come from Lot Return records (RMAs): not typed over
-        @AuraEnabled public String rmas;                     // 'RMA-1042, RMA-1057'
     }
     public class Suggestion {
         @AuraEnabled public String key; @AuraEnabled public String type; @AuraEnabled public String subject; @AuraEnabled public Id customerId;
@@ -44,6 +43,8 @@ public with sharing class CqFieldActionTasks {
         @AuraEnabled public Map<String, Decimal> shippedByLine = new Map<String, Decimal>();   // customerId|lot -> units shipped
         @AuraEnabled public Map<String, Decimal> usedByLine = new Map<String, Decimal>();      // customerId|lot -> used, as the customer reported
         @AuraEnabled public Map<String, Decimal> expectedByLine = new Map<String, Decimal>();  // customerId|lot -> returning, as the customer reported
+        @AuraEnabled public Map<String, Decimal> receivedByLine = new Map<String, Decimal>();  // customerId|lot -> units received on the RMAs
+        @AuraEnabled public Map<String, String> rmasByLine = new Map<String, String>();        // customerId|lot -> 'RMA-1042, RMA-1057'
     }
 
     private static List<Task> tasksOf(Id recordId) {
@@ -52,20 +53,20 @@ public with sharing class CqFieldActionTasks {
                 FROM Task WHERE WhatId = :recordId ORDER BY ActivityDate NULLS LAST, CreatedDate LIMIT 2000];
     }
 
+    public static Boolean returnsChanged = false;   // set by CqLotReturns when a return is saved or deleted
     /**
-     * Brings the lots' Returned, Destroyed and Corrected, and the customers' status, into line with the tasks.
-     * Only lots with units recorded on their tasks, and customers with a response task, are touched, so figures typed
-     * before tasks existed stay until a task carries units.
+     * Brings the lots' Returned (from the Lot Returns), Destroyed and Corrected (from the tasks), and the customers' status,
+     * into line. Returned is only touched once the field action has returns (or one was just taken away), so a figure
+     * entered on a field action that never used Lot Returns stays. Destroyed and Corrected are only touched on lots whose
+     * tasks carry units, and status only for customers with a response task.
      */
     public static void sync(Id recordId) {
         List<Task> ts = tasksOf(recordId);
-        if (ts.isEmpty()) { return; }
-        Map<String, Decimal> back = new Map<String, Decimal>(), gone = new Map<String, Decimal>(), fixed = new Map<String, Decimal>();
+        Map<String, Decimal> back = CqLotReturns.receivedByLot(recordId), gone = new Map<String, Decimal>(), fixed = new Map<String, Decimal>();
         Map<Id, Integer> rankOf = new Map<Id, Integer>();
         for (Task t : ts) {
             String lot = t.Lot_Number__c;
             Decimal u = t.Units__c;   // a task with no units yet says nothing about the lot
-            if (lot != null && u != null && t.Recall_Task_Type__c == RETURN_IT) { back.put(lot, (back.containsKey(lot) ? back.get(lot) : 0) + u); }
             if (lot != null && u != null && t.Recall_Task_Type__c == DESTROY) { gone.put(lot, (gone.containsKey(lot) ? gone.get(lot) : 0) + u); }
             if (lot != null && u != null && t.Recall_Task_Type__c == CORRECT) { fixed.put(lot, (fixed.containsKey(lot) ? fixed.get(lot) : 0) + u); }
             if (t.Field_Action_Customer__c != null && t.Recall_Task_Type__c == RESPONSE) {
@@ -79,7 +80,8 @@ public with sharing class CqFieldActionTasks {
         for (Field_Action_Lot__c l : [SELECT Id, Lot_Number__c, Units_Returned__c, Units_Destroyed__c, Units_Corrected__c FROM Field_Action_Lot__c
                                       WHERE Field_Action__c = :recordId AND Approved_In_Scope__c = true]) {
             Field_Action_Lot__c up = new Field_Action_Lot__c(Id = l.Id); Boolean change = false;
-            if (back.containsKey(l.Lot_Number__c) && back.get(l.Lot_Number__c) != l.Units_Returned__c) { up.Units_Returned__c = back.get(l.Lot_Number__c); change = true; }
+            Decimal got = back.containsKey(l.Lot_Number__c) ? back.get(l.Lot_Number__c) : 0;
+            if ((!back.isEmpty() || returnsChanged) && got != l.Units_Returned__c) { up.Units_Returned__c = got; change = true; }
             if (gone.containsKey(l.Lot_Number__c) && gone.get(l.Lot_Number__c) != l.Units_Destroyed__c) { up.Units_Destroyed__c = gone.get(l.Lot_Number__c); change = true; }
             if (fixed.containsKey(l.Lot_Number__c) && fixed.get(l.Lot_Number__c) != l.Units_Corrected__c) { up.Units_Corrected__c = fixed.get(l.Lot_Number__c); change = true; }
             if (change) { lotUps.add(up); }
@@ -102,7 +104,6 @@ public with sharing class CqFieldActionTasks {
         b.me = UserInfo.getUserId();
         Date today = Date.today();
         Set<String> have = new Set<String>();
-        Map<String, List<String>> rmaOf = CqLotReturns.rmas(recordId);
         // the customers How Far It Goes lists (CqFieldActionDepth); the others' tasks and suggestions are left off the board
         List<Field_Action_Customer__c> custs = new List<Field_Action_Customer__c>();
         Set<Id> leftOut = new Set<Id>(), working = new Set<Id>();
@@ -119,9 +120,7 @@ public with sharing class CqFieldActionTasks {
             TaskRow x = new TaskRow();
             x.id = t.Id; x.subject = t.Subject; x.type = t.Recall_Task_Type__c; x.owner = t.Owner?.Name; x.due = t.ActivityDate;
             x.done = t.IsClosed; x.units = t.Units__c; x.lot = t.Lot_Number__c; x.customerId = t.Field_Action_Customer__c;
-            x.hasUnits = x.type == RETURN_IT || x.type == DESTROY || x.type == CORRECT;
-            List<String> rs = x.type == RETURN_IT ? rmaOf.get(x.customerId + '|' + x.lot) : null;
-            if (rs != null) { x.fromReturns = true; x.rmas = String.join(rs, ', '); }
+            x.hasUnits = x.type == DESTROY || x.type == CORRECT;   // a return's units come from the RMAs, not the task
             x.overdue = !x.done && x.due != null && x.due < today;
             x.dueWeek = !x.done && x.due != null && x.due >= today && x.due < today.addDays(7);
             if (x.done) { b.completed++; } else { b.open++; }
@@ -143,6 +142,9 @@ public with sharing class CqFieldActionTasks {
             if (l.Units_Returning__c != null) { b.expectedByLine.put(l.Field_Action_Customer__c + '|' + l.Lot_Number__c, l.Units_Returning__c); }
         }
         if (!custs.isEmpty()) { b.shippedByLine = CqFieldActionCases.shippedByLine(recordId); }
+        b.receivedByLine = CqLotReturns.received(recordId);
+        Map<String, List<String>> rmaOf = CqLotReturns.rmas(recordId);
+        for (String k : rmaOf.keySet()) { b.rmasByLine.put(k, String.join(rmaOf.get(k), ', ')); }
 
         // CQ.AI: the tasks still missing for this kind of action
         if (!closed && fa.Strategy_Status__c == 'Confirmed') {
@@ -155,7 +157,7 @@ public with sharing class CqFieldActionTasks {
                 for (String lot : b.lotsByCustomer.get(c.Id)) {
                     // nothing to track back when the customer reported none of the lot coming back (all used, say)
                     if (!isCorrection && b.expectedByLine.get(c.Id + '|' + lot) == 0) { continue; }
-                    // the units shipped show beside the task's Units box, worked out fresh, so the title carries no figure that can go stale
+                    // the units expected and received show on the lot line, worked out fresh, so the title carries no figure that can go stale
                     addSuggestion(b, have, isCorrection ? CORRECT : RETURN_IT, c, lot,
                         (isCorrection ? 'Confirm correction' : 'Track return') + ' of lot ' + lot, returnBy);
                 }
@@ -242,7 +244,7 @@ public with sharing class CqFieldActionTasks {
             ActivityDate = String.isBlank(values.get('due')) ? null : Date.valueOf(values.get('due')),
             Recall_Task_Type__c = String.isBlank(type) ? OTHER : type, Field_Action_Customer__c = customerId,
             Lot_Number__c = String.isBlank(values.get('lot')) ? null : values.get('lot'),
-            Units__c = String.isBlank(values.get('units')) ? null : Decimal.valueOf(values.get('units')));
+            Units__c = String.isBlank(values.get('units')) || type == RETURN_IT ? null : Decimal.valueOf(values.get('units')));
         reopen(fa);
         return CqFieldActionRecovery.getView(recordId);
     }
@@ -253,8 +255,8 @@ public with sharing class CqFieldActionTasks {
         Field_Action__c fa = openFa(recordId);
         Task t = [SELECT Id, WhatId, Recall_Task_Type__c, Lot_Number__c, Field_Action_Customer__c FROM Task WHERE Id = :taskId];
         if (t.WhatId != recordId) { throw new AuraHandledException('That task belongs to another record.'); }
-        if (change == 'units' && t.Recall_Task_Type__c == RETURN_IT && CqLotReturns.rmas(recordId).containsKey(t.Field_Action_Customer__c + '|' + t.Lot_Number__c)) {
-            throw new AuraHandledException('These units come from the returns received (RMAs), so they cannot be typed over.');
+        if (change == 'units' && t.Recall_Task_Type__c == RETURN_IT) {
+            throw new AuraHandledException('Units returned come from the returns received (RMAs), not from the task.');
         }
         if (change == 'done') { update new Task(Id = taskId, Status = DONE); }
         else if (change == 'open') { update new Task(Id = taskId, Status = OPEN); }
