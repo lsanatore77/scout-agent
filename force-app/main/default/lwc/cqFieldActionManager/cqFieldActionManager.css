@@ -32,9 +32,6 @@
 .cscope { width: 1%; }
 .sc { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
 .ind { display: inline-block; }
-.chev { width: 24px; height: 24px; padding: 0; border: none; border-radius: 6px; background: none; color: var(--cq-ink); font-size: 16px; line-height: 1; cursor: pointer; vertical-align: middle; }
-.chev:hover { background: var(--cq-hl-bg); }
-.chev0 { display: inline-block; width: 24px; }
 .it { vertical-align: middle; }
 .it.lot { font-weight: 700; }
 .it.sub { font-weight: 600; }

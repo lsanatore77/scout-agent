@@ -31,7 +31,7 @@
 
 /* the customer / lot / task table: the header leaves room for the chevron; a lot carries its "In this recall" tag */
 .hcell, .cell2 { display: flex; align-items: center; gap: 6px; }
-.chsp { flex: none; display: inline-block; width: 22px; }
+.chsp { flex: none; display: inline-block; width: 26px; }
 .lotn { font-weight: 600; }
 .lotline { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 /* nesting: a lot sits in from its customer's name (past the chevron), its tasks further in */

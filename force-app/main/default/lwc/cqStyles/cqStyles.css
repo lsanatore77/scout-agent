@@ -558,10 +558,13 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-check-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 /* a neutral group heading: small, capitals, muted (the purple one for CQ.AI is .cq-ai-eyebrow) */
 .cq-grouplabel { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); letter-spacing: .4px; text-transform: uppercase; margin-bottom: 2px; }
-/* expand chevron: button.cq-rchev-btn > span.cq-rchev(.open) holding a single right angle quote; grey, it turns down when the row opens */
-.cq-rchev-btn { flex: none; width: 22px; padding: 0; border: none; background: none; cursor: pointer; }
-.cq-rchev { display: inline-block; width: 12px; font-size: 18px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
-.cq-rchev.open { transform: rotate(90deg); }
+/* expand chevron, the one every table uses: button.cq-rchev-btn[aria-expanded] > span.cq-rchev holding a single right angle quote; grey,
+   it turns down when the row opens (aria-expanded="true" on the button, or .open on the span). span.cq-rchev-sp keeps its place on a row with nothing to open */
+.cq-rchev-btn { flex: none; width: 26px; padding: 0; border: none; background: none; cursor: pointer; vertical-align: middle; }
+.cq-rchev { display: inline-block; width: 16px; font-size: 24px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
+.cq-rchev.open, .cq-rchev-btn[aria-expanded="true"] > .cq-rchev { transform: rotate(90deg); }
+.cq-rchev-btn:hover > .cq-rchev { color: var(--cq-ink); }
+.cq-rchev-sp { flex: none; display: inline-block; width: 26px; }
 /* the search box over a table, at its left: div.cq-field.cq-tblsearch > input[type=search] */
 .cq-field.cq-tblsearch { width: 260px; max-width: 100%; }
 /* tick box: input[type=checkbox].cq-tick, blue */
@@ -574,7 +577,7 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-statcard { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); font: inherit; text-align: left; cursor: pointer; }
 .cq-statcard:hover { border-color: var(--cq-line-field); }
 .cq-statcard.on { border: 2px solid var(--cq-link); background: var(--cq-surface); padding: 11px 13px; }
-.cq-statcard-k { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
+.cq-statcard-k { font-size: 15px; font-weight: 600; color: var(--cq-muted); }
 .cq-statcard-v { font-size: 28px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; color: var(--cq-ink); }
 .cq-statcard-v.ok { color: var(--cq-pos-fg); }
 .cq-statcard-v.bad { color: var(--cq-crit-fg); }
