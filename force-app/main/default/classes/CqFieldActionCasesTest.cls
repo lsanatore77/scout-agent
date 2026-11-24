@@ -150,4 +150,28 @@ private class CqFieldActionCasesTest {
         update new Case(Id = h.Case__c, Response_Due__c = Date.today().addDays(21));
         System.assertEquals(Date.today().addDays(21), row('FCT Hospital').Response_Due__c, 'an extension agreed on the Case moves the due date');
     }
+
+    @IsTest
+    static void whatTheCustomerReportedIsEnteredOnTheCase() {
+        Field_Action__c fa = makeFa('Distributor');
+        Field_Action_Customer__c h = row('FCT Hospital');
+        Test.startTest();
+        CqFieldActionCases.CaseView v = CqFieldActionCases.caseView(h.Case__c);
+        System.assertEquals(true, v.fieldAction);
+        System.assertEquals('FCT Hospital', v.customer);
+        System.assertEquals(1, v.lines.size());
+        System.assertEquals(10, v.lines[0].shipped);
+        CqFieldActionCases.saveCaseLine(h.Case__c, 'FCT-L1', 'used', 3);
+        v = CqFieldActionCases.saveCaseLine(h.Case__c, 'FCT-L1', 'returning', 5);
+        System.assertEquals(2, v.lines[0].unknown, '10 shipped less 3 used and 5 returning');
+        Boolean refused = false;
+        try { CqFieldActionCases.saveCaseLine(h.Case__c, 'FCT-L1', 'colour', 1); } catch (AuraHandledException e) { refused = true; }
+        System.assert(refused);
+        update new Case(Id = h.Case__c, Status = 'Closed');
+        Test.stopTest();
+        System.assertEquals('Acknowledged', row('FCT Hospital').Status__c, 'with the figures in, the Case closes as Response Received');
+        Case plain = new Case(Subject = 'An ordinary case');
+        insert plain;
+        System.assertEquals(false, CqFieldActionCases.caseView(plain.Id).fieldAction);
+    }
 }

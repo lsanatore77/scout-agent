@@ -5,74 +5,47 @@
             <h3 class="cq-step-title nom">Notifications</h3>
             <span class={statePill}>{stateText}</span>
         </div>
-        <template if:true={needsStrategy}><p class="cq-note">Confirm the strategy first: the notice is built from its key message.</p></template>
+        <template if:true={needsStrategy}><p class="cq-note">Confirm the strategy first: the notice is built from its key message, and confirming it opens a Case for each customer.</p></template>
 
         <template if:true={showStep}>
-            <p class="cq-step-intro">Tell every customer who received the lots, and record what each one tells us back.</p>
+            <p class="cq-step-intro">Customer service works one Case per customer. This page follows them: who has acknowledged, who is still open, and what each one reported.</p>
 
             <section class="cq-stepcard">
                 <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">1</span><span class="cq-stepcard-title">Customer Notice</span><span class="cq-grow"></span>
-                    <span class="cq-sub">From the key message in Strategy</span>
+                    <button class="cq-btn-outline" onclick={handleFollowUp} disabled={cantFollowUp}>{followLabel}</button>
                     <button class="cq-btn-primary" onclick={handleMarkSent} disabled={cantMarkSent}>{markLabel}</button>
                 </div>
                 <template if:true={hasMessage}><div class="letter">{v.message}</div></template>
                 <template if:false={hasMessage}><p class="cq-note">No key message yet: write it in Strategy, under What We Tell Customers.</p></template>
-                <div class="meta"><span>{sentLine}</span><template if:true={dueLine}><span>{dueLine}</span></template></div>
+                <div class="meta"><span>{sentLine}</span><template if:true={dueLine}><span>{dueLine}</span></template>
+                    <span>Both buttons record on each open Case; nothing is emailed from here.</span></div>
             </section>
 
-            <div class="cq-statcards tcards" role="group" aria-label="Filter customers">
+            <div class="cq-statcards tcards">
                 <template for:each={cards} for:item="c">
-                    <button key={c.key} class={c.cls} data-key={c.key} aria-pressed={c.pressed} onclick={handleCard}>
+                    <div key={c.key} class="cq-statcard flat">
                         <span class="cq-statcard-k">{c.label}</span><span class={c.numCls}>{c.n}</span>
-                    </button>
+                        <template if:true={c.href}><a class="cq-link" href={c.href} target="_blank" aria-label={c.linkLabel}>View Cases</a></template>
+                    </div>
                 </template>
             </div>
 
             <section class="cq-stepcard">
-                <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">Customer Responses</span><span class="cq-grow"></span>
-                    <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
-                    <span class="cq-sub">What each customer reported, by lot</span>
+                <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">{tableTitle}</span><span class="cq-grow"></span>
+                    <span class="cq-sub">{tallyLine}</span>
+                    <template if:true={hasDone}><button class="cq-link" onclick={handleShowDone} aria-pressed={showDonePressed}>{showDoneLabel}</button></template>
                 </div>
-                <template if:true={v.leftOut}>
-                    <div class="cq-ai-card row">
-                        <span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI" question="Who does How Far It Goes leave out of this field action, and why?"></c-cq-ai-why></span>
-                        <span class="cq-ai-text">{v.leftOut}</span>
-                    </div>
-                </template>
-                <template if:true={v.aiLine}>
-                    <div class="cq-ai-card row">
-                        <span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which customers should we follow up with, and when?"></c-cq-ai-why></span>
-                        <span class="cq-ai-text">{v.aiLine}</span>
-                    </div>
-                </template>
-                <template if:true={hasSuggestions}>
-                    <div class="cq-ai-card row">
-                        <span class="cq-grow"><span class="cq-ai-eyebrow"><c-cq-ai-why variant="label" text="CQ.AI Suggests" question="Which notice and response tasks does CQ.AI suggest, and why?"></c-cq-ai-why></span><span class="cq-ai-text">{v.suggestLine}</span></span>
-                        <button class="cq-btn-outline cq-btn-sm ghost" onclick={handleReview} aria-expanded={reviewing}>Review</button>
-                    </div>
-                    <template if:true={reviewing}>
-                        <div class="sugg">
-                            <template for:each={suggestRows} for:item="s">
-                                <label key={s.key} class="srow">
-                                    <input type="checkbox" data-key={s.key} checked={s.checked} onchange={handleKeep} aria-label={s.label} />
-                                    <span class="cq-grow">{s.subject}</span><span class="cq-sub nw">{s.due}</span>
-                                </label>
-                            </template>
-                            <div class="formbtns">
-                                <button class="cq-btn-primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
-                                <button class="cq-btn-outline" onclick={handleReview}>Cancel</button>
-                                <span class="cq-hint">Assigned to you; reassign any task on the Task record.</span>
-                            </div>
-                        </div>
-                    </template>
-                </template>
+                <div class="cq-field cq-tblsearch"><input type="search" value={search} oninput={handleSearch} placeholder="Search customers" aria-label="Search customers" /></div>
                 <template if:true={hasRows}>
                     <div class="cq-tblwrap">
                         <table class="cq-tbl compact">
                             <thead><tr>
-                                <th><span class="hcell"><span class="chsp"></span>Customer / Lot / Task</span></th>
-                                <th class="num fig">Shipped</th><th class="num fig">Used</th><th class="num fig">Returning</th><th class="num fig">Destroyed</th>
-                                <th class="num fig">Unknown</th><th class="num stcol">Status</th>
+                                <template for:each={heads} for:item="h">
+                                    <th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}>
+                                        <template if:true={h.sortable}><button class="cq-sortbtn" data-key={h.key} onclick={handleSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template>
+                                        <template if:true={h.plain}>{h.label}</template>
+                                    </th>
+                                </template>
                             </tr></thead>
                             <tbody>
                                 <template for:each={rows} for:item="r">
@@ -80,27 +53,32 @@
                                         <template if:true={r.isCust}>
                                             <td><span class="cell2">
                                                 <button class="cq-rchev-btn" data-id={r.id} onclick={handleToggle} aria-expanded={r.expanded} aria-label={r.toggleLabel}><span class={r.chevCls} aria-hidden="true">&#8250;</span></button>
-                                                <span class="cq-stack"><span class="b">{r.title}</span><span class="cq-sub block">{r.sub}</span></span></span></td>
-                                            <td class="num">{r.shipped}</td><td class="num">{r.used}</td><td class="num">{r.returning}</td><td class="num">{r.destroyed}</td>
-                                            <td class={r.unknownCls}>{r.unknown}</td>
-                                            <td class="num"><span class="stk"><span class={r.pillCls}>{r.pill}</span>
-                                                <button class="cq-link sm" data-id={r.id} data-acked={r.acked} onclick={handleRespond} disabled={locked} aria-label={r.actAria}>{r.actLabel}</button></span></td>
+                                                <span class="b">{r.name}</span></span></td>
+                                            <td class="nw">{r.kind}</td>
+                                            <td class="nw"><template if:true={r.caseHref}><a class="tlink" href={r.caseHref} target="_blank">{r.caseNumber}</a></template><template if:false={r.caseHref}>—</template></td>
+                                            <td class="num">{r.shippedText}</td><td class="num">{r.returningText}</td>
+                                            <td class={r.unknownCls}>{r.unknownText}</td>
+                                            <td class={r.dueCls}>{r.dueText}</td>
+                                            <td class="nw"><span class={r.pillCls} title={r.pillTitle}>{r.status}</span></td>
+                                            <td class="nw">
+                                                <template if:true={r.canClose}><button class="cq-link" data-id={r.id} onclick={handleOpenClose} disabled={busy} aria-label={r.closeAria}>Close Without Response</button></template>
+                                                <template if:true={r.canReopen}><button class="cq-link" data-id={r.id} onclick={handleReopen} disabled={busy} aria-label={r.reopenAria}>Reopen</button></template>
+                                            </td>
                                         </template>
-                                        <template if:true={r.isTask}>
-                                            <td><span class="cell2"><span class="ind1"></span>
-                                                <input class="cq-tick" type="checkbox" data-id={r.id} checked={r.done} onchange={handleCheck} disabled={locked} aria-label={r.checkLabel} />
-                                                <span class="cq-stack"><a class="tlink" href={r.href} target="_blank">{r.title}</a><span class="cq-sub block">{r.owner} &middot; <span class={r.dueCls}>due {r.due}</span></span></span></span></td>
-                                            <td></td><td></td><td></td><td></td><td></td>
-                                            <td class="num"><span class={r.pillCls}>{r.pill}</span></td>
-                                        </template>
-                                        <template if:true={r.isLot}>
-                                            <td><span class="cell2"><span class="ind1"></span><span class="lotn">{r.lot}</span></span></td>
-                                            <td class="num">{r.shipped}</td>
-                                            <td class="num"><span class="cq-field ni"><input type="number" min="0" data-cust={r.cust} data-lot={r.lot} data-f="used" value={r.used} onchange={handleFigure} onkeydown={handleFigureKey} disabled={locked} aria-label={r.usedLabel} /></span></td>
-                                            <td class="num"><span class="cq-field ni"><input type="number" min="0" data-cust={r.cust} data-lot={r.lot} data-f="returning" value={r.returning} onchange={handleFigure} onkeydown={handleFigureKey} disabled={locked} aria-label={r.retLabel} /></span></td>
-                                            <td class="num"><span class="cq-field ni"><input type="number" min="0" data-cust={r.cust} data-lot={r.lot} data-f="destroyed" value={r.destroyed} onchange={handleFigure} onkeydown={handleFigureKey} disabled={locked} aria-label={r.desLabel} /></span></td>
-                                            <td class={r.unknownCls}>{r.unknown}</td>
-                                            <td></td>
+                                        <template if:true={r.isLots}>
+                                            <td colspan="9" class="lotcell">
+                                                <table class="cq-tbl compact lots" aria-label={r.lotsLabel}>
+                                                    <thead><tr><th scope="col">Lot</th><th scope="col" class="num">Shipped</th><th scope="col" class="num">Used</th>
+                                                        <th scope="col" class="num">Returning</th><th scope="col" class="num">Destroyed</th><th scope="col" class="num">Unknown</th></tr></thead>
+                                                    <tbody>
+                                                        <template for:each={r.lines} for:item="l">
+                                                            <tr key={l.lot}><td class="b">{l.lot}</td><td class="num">{l.shipped}</td><td class="num">{l.used}</td>
+                                                                <td class="num">{l.returning}</td><td class="num">{l.destroyed}</td><td class={l.unknownCls}>{l.unknown}</td></tr>
+                                                        </template>
+                                                    </tbody>
+                                                </table>
+                                                <template if:true={r.note}><p class="cq-sub lotnote">{r.note}</p></template>
+                                            </td>
                                         </template>
                                     </tr>
                                 </template>
@@ -109,10 +87,31 @@
                     </div>
                 </template>
                 <template if:false={hasRows}><p class="cq-note">{emptyLine}</p></template>
-                <span class="cq-hint">Open a customer to see its notice and response tasks and enter what it reported for each lot. Unknown is shipped less used, returning and destroyed: units nobody can account for. Recovery expects back the units returning.</span>
+                <span class="cq-hint">Click a column heading to sort. Figures come from each customer's Case. Submit moves the acknowledged customers to Recovery; the rest stay here until they respond or are closed without a response. Unknown is shipped less used, returning and destroyed.</span>
             </section>
 
-            <template if:true={error}><div class="cq-msg crit errbox">{error}</div></template>
+            <template if:true={closing}>
+                <div class="cq-modal-back" onkeydown={handleCloseKey}>
+                    <section class="cq-modal" role="dialog" aria-modal="true" aria-labelledby="cwr-head">
+                        <header class="cq-modal-head">
+                            <h2 id="cwr-head" class="cq-modal-title">Close Without Response</h2>
+                            <button class="cq-modal-x" aria-label="Close" onclick={handleCancelClose}>&times;</button>
+                        </header>
+                        <div class="cq-modal-body">
+                            <p class="nom">{closing.name} has not acknowledged. Closing lets Recovery go ahead without them: they stay not acknowledged, their Case closes as No Response, and they can be reopened if a reply comes in.</p>
+                            <label class="cq-field"><span class="cq-label">Reason<span class="cq-req">*</span></span>
+                                <textarea rows="3" maxlength="255" value={reason} oninput={handleReason} placeholder="For example: no answer after 3 follow-ups; site closed" aria-required="true"></textarea></label>
+                            <template if:true={error}><div class="cq-msg crit">{error}</div></template>
+                        </div>
+                        <footer class="cq-modal-foot">
+                            <button class="cq-btn-outline" onclick={handleCancelClose}>Cancel</button>
+                            <button class="cq-btn-primary" onclick={handleConfirmClose} disabled={cantConfirmClose}>Close Without Response</button>
+                        </footer>
+                    </section>
+                </div>
+            </template>
+
+            <template if:false={closing}><template if:true={error}><div class="cq-msg crit errbox">{error}</div></template></template>
         </template>
     </template>
 </template>

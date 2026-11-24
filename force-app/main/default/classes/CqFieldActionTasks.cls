@@ -3,9 +3,12 @@
  * so it shows in each owner's My Tasks with reminders. Used by the Recovery and Effectiveness step.
  *  - Recall Task Type says what a task is; Field Action Customer and Lot Number say who and which lot it is about.
  *  - Units on Track return and Confirm destruction tasks add up to the lot's Returned and Destroyed (Confirm correction
- *    to Corrected). A completed Collect response marks the customer Acknowledged; an overdue one marks No reply.
- *  - CQ.AI suggests the tasks a field action still needs, from the strategy and the lot shipments: a notice and a
- *    response per customer, and a return (or correction) per lot shipped to them. The coordinator reviews and creates them.
+ *    to Corrected).
+ *  - Notifying customers and collecting their responses runs on Cases (CqFieldActionCases), not on tasks. A Collect
+ *    response task still marks a customer who has no Case (Acknowledged when completed, No reply when overdue).
+ *  - CQ.AI suggests the tasks a field action still needs, from the strategy and the lot shipments: a return (or
+ *    correction) per lot shipped to each customer Recovery is working (submitted from Notifications, closed without a
+ *    response, or with no Case). The coordinator reviews and creates them.
  */
 public with sharing class CqFieldActionTasks {
     public static final String NOTICE = 'Send recall notice';
@@ -85,7 +88,8 @@ public with sharing class CqFieldActionTasks {
         if (rankOf.isEmpty()) { return; }
         List<String> states = new List<String>{ '', 'Sent', 'No reply', 'Acknowledged' };
         List<Field_Action_Customer__c> custUps = new List<Field_Action_Customer__c>();
-        for (Field_Action_Customer__c c : [SELECT Id, Status__c FROM Field_Action_Customer__c WHERE Id IN :rankOf.keySet()]) {
+        for (Field_Action_Customer__c c : [SELECT Id, Status__c, Case__c FROM Field_Action_Customer__c WHERE Id IN :rankOf.keySet()]) {
+            if (c.Case__c != null) { continue; }   // their Case says whether they acknowledged
             String s = states[rankOf.get(c.Id)];
             if (s != c.Status__c) { custUps.add(new Field_Action_Customer__c(Id = c.Id, Status__c = s, Responded_On__c = s == 'Acknowledged' ? Date.today() : null)); }
         }
@@ -99,13 +103,16 @@ public with sharing class CqFieldActionTasks {
         Date today = Date.today();
         Set<String> have = new Set<String>();
         Map<String, List<String>> rmaOf = CqLotReturns.rmas(recordId);
-        // the customers How Far It Goes reaches (CqFieldActionDepth); the others' tasks and suggestions are left off the board
+        // the customers How Far It Goes lists (CqFieldActionDepth); the others' tasks and suggestions are left off the board
         List<Field_Action_Customer__c> custs = new List<Field_Action_Customer__c>();
-        Set<Id> leftOut = new Set<Id>();
-        for (Field_Action_Customer__c c : [SELECT Id, Customer__c, Customer_Name__c, Lots__c, Customer__r.Customer_Type__c, Field_Action__r.Depth__c
+        Set<Id> leftOut = new Set<Id>(), working = new Set<Id>();
+        for (Field_Action_Customer__c c : [SELECT Id, Customer__c, Customer_Name__c, Lots__c, Kind__c, Case__c, Submitted_On__c, Closed_Without_Response_On__c,
+                                                  Field_Action__r.Depth__c
                                            FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY Customer_Name__c]) {
-            if (CqFieldActionDepth.includes(c.Field_Action__r.Depth__c, c.Customer__r?.Customer_Type__c, c.Customer__c)) { custs.add(c); }
-            else { leftOut.add(c.Id); }
+            if (!CqFieldActionDepth.listed(c.Field_Action__r.Depth__c, c.Kind__c)) { leftOut.add(c.Id); continue; }
+            custs.add(c);
+            // Recovery works a customer once Notifications has submitted them or closed them without a response (or they have no Case)
+            if (c.Case__c == null || c.Submitted_On__c != null || c.Closed_Without_Response_On__c != null) { working.add(c.Id); }
         }
         for (Task t : tasksOf(recordId)) {
             if (t.Field_Action_Customer__c != null && leftOut.contains(t.Field_Action_Customer__c)) { continue; }
@@ -124,14 +131,8 @@ public with sharing class CqFieldActionTasks {
             have.add(x.type + '|' + x.customerId + '|' + (x.lot == null ? '' : x.lot));
         }
 
-        // what each customer received, from the lot shipments of the lots in scope
-        Set<String> lots = new Set<String>();
-        for (Field_Action_Lot__c l : [SELECT Lot_Number__c FROM Field_Action_Lot__c WHERE Field_Action__c = :recordId AND Approved_In_Scope__c = true]) {
-            lots.add(l.Lot_Number__c);
-        }
-        Map<Id, Id> custByAccount = new Map<Id, Id>();
+        // what each customer received: what we shipped them, or what their distributor did (CqFieldActionCases)
         for (Field_Action_Customer__c c : custs) {
-            if (c.Customer__c != null) { custByAccount.put(c.Customer__c, c.Id); }
             List<String> ls = new List<String>();
             if (String.isNotBlank(c.Lots__c)) { for (String s : c.Lots__c.split(',\\s*')) { if (String.isNotBlank(s)) { ls.add(s.trim()); } } }
             b.lotsByCustomer.put(c.Id, ls);
@@ -141,27 +142,16 @@ public with sharing class CqFieldActionTasks {
             if (l.Units_Used__c != null) { b.usedByLine.put(l.Field_Action_Customer__c + '|' + l.Lot_Number__c, l.Units_Used__c); }
             if (l.Units_Returning__c != null) { b.expectedByLine.put(l.Field_Action_Customer__c + '|' + l.Lot_Number__c, l.Units_Returning__c); }
         }
-        if (!lots.isEmpty() && !custByAccount.isEmpty()) {
-            for (AggregateResult r : [SELECT Customer__c acc, Lot_Number__c lot, SUM(Units__c) units FROM Lot_Shipment__c
-                                      WHERE Lot_Number__c IN :lots AND Customer__c IN :custByAccount.keySet() GROUP BY Customer__c, Lot_Number__c]) {
-                Id cid = custByAccount.get((Id) r.get('acc'));
-                b.shippedByLine.put(cid + '|' + (String) r.get('lot'), (Decimal) r.get('units'));
-            }
-        }
+        if (!custs.isEmpty()) { b.shippedByLine = CqFieldActionCases.shippedByLine(recordId); }
 
         // CQ.AI: the tasks still missing for this kind of action
         if (!closed && fa.Strategy_Status__c == 'Confirmed') {
             Date checkBy = fa.Check_By__c == null ? today.addDays(30) : fa.Check_By__c;
-            Date noticeBy = today.addDays(2);
-            Date responseBy = today.addDays(14) < checkBy ? today.addDays(14) : checkBy;
             Date returnBy = checkBy.addDays(-7) > today ? checkBy.addDays(-7) : checkBy;
             Boolean isNotice = fa.Action_Type__c == CqFieldActionStrategy.NOTICE;
             Boolean isCorrection = fa.Action_Type__c == CqFieldActionStrategy.CORRECTION;
-            String noticeWord = fa.Action_Type__c == CqFieldActionStrategy.WITHDRAWAL ? 'withdrawal notice' : 'recall notice';   // a withdrawal is never called a recall
             for (Field_Action_Customer__c c : custs) {
-                addSuggestion(b, have, NOTICE, c, null, 'Send ' + noticeWord + ' to ' + c.Customer_Name__c, noticeBy);
-                if (fa.Check_Level__c != 'Level E') { addSuggestion(b, have, RESPONSE, c, null, 'Collect response form from ' + c.Customer_Name__c, responseBy); }
-                if (isNotice) { continue; }
+                if (isNotice || !working.contains(c.Id)) { continue; }
                 for (String lot : b.lotsByCustomer.get(c.Id)) {
                     // nothing to track back when the customer reported none of the lot coming back (all used, say)
                     if (!isCorrection && b.expectedByLine.get(c.Id + '|' + lot) == 0) { continue; }
@@ -174,10 +164,10 @@ public with sharing class CqFieldActionTasks {
                 Map<String, Integer> byType = new Map<String, Integer>();
                 for (Suggestion s : b.suggestions) { byType.put(s.type, (byType.containsKey(s.type) ? byType.get(s.type) : 0) + 1); }
                 List<String> parts = new List<String>();
-                for (String k : new List<String>{ NOTICE, RESPONSE, RETURN_IT, CORRECT }) {
+                for (String k : new List<String>{ RETURN_IT, CORRECT }) {
                     if (!byType.containsKey(k)) { continue; }
                     Integer n = byType.get(k);
-                    parts.add(n + ' ' + (k == NOTICE ? noticeWord : k == RESPONSE ? 'response' : k == RETURN_IT ? 'return' : 'correction') + (n == 1 ? '' : 's'));
+                    parts.add(n + ' ' + (k == RETURN_IT ? 'return' : 'correction') + (n == 1 ? '' : 's'));
                 }
                 Integer total = b.suggestions.size();
                 b.suggestLine = total + ' task' + (total == 1 ? '' : 's') + ' for ' + (fa.Check_Level__c == null ? 'this' : 'a ' + fa.Check_Level__c) + ' '

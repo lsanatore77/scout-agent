@@ -115,7 +115,7 @@ public with sharing class CqFieldActionCases {
     /** Opens a Case for each listed customer that has none. */
     private static void openCases(Field_Action__c fa) {
         List<Field_Action_Customer__c> need = new List<Field_Action_Customer__c>();
-        for (Field_Action_Customer__c c : [SELECT Id, Customer__c, Customer_Name__c, Kind__c FROM Field_Action_Customer__c
+        for (Field_Action_Customer__c c : [SELECT Id, Customer__c, Customer_Name__c, Kind__c, Notice_Sent_On__c FROM Field_Action_Customer__c
                                            WHERE Field_Action__c = :fa.Id AND Case__c = null AND Closed_Without_Response_On__c = null AND Status__c != :ACK
                                            ORDER BY Customer_Name__c]) {
             if (CqFieldActionDepth.listed(fa.Depth__c, c.Kind__c)) { need.add(c); }
@@ -126,7 +126,8 @@ public with sharing class CqFieldActionCases {
         List<Case> cases = new List<Case>();
         for (Field_Action_Customer__c c : need) {
             cases.add(new Case(AccountId = c.Customer__c, Subject = (word + ' ' + fa.Name + ': ' + c.Customer_Name__c).left(255), Origin = ORIGIN,
-                Description = fa.Key_Message__c, Field_Action__c = fa.Id, Field_Action_Customer__c = c.Id, Response_Due__c = due));
+                Description = fa.Key_Message__c, Field_Action__c = fa.Id, Field_Action_Customer__c = c.Id, Response_Due__c = due,
+                Notice_Sent_On__c = c.Notice_Sent_On__c));   // a notice already recorded on the customer carries to the Case
         }
         insert cases;
         List<Field_Action_Customer__c> ups = new List<Field_Action_Customer__c>();
@@ -350,5 +351,71 @@ public with sharing class CqFieldActionCases {
             update new Field_Action_Customer__c(Id = c.Id, Status__c = PENDING, Responded_On__c = null, Acknowledged_By__c = null, Submitted_On__c = null,
                 Submitted_By__c = null, Closed_Without_Response_On__c = null, No_Response_Reason__c = null);
         }
+    }
+
+    // ---------------------------------------------------------------- on the Case page: what the customer reported, by lot
+
+    public class Line {
+        @AuraEnabled public String lot; @AuraEnabled public Decimal shipped;
+        @AuraEnabled public Decimal used; @AuraEnabled public Decimal returning; @AuraEnabled public Decimal destroyed;
+        @AuraEnabled public Decimal unknown;   // shipped less used, returning and destroyed; null until any is recorded
+    }
+    public class CaseView {
+        @AuraEnabled public Boolean fieldAction = false;   // false: an ordinary Case, the panel shows nothing
+        @AuraEnabled public Id fieldActionId; @AuraEnabled public String fieldActionName; @AuraEnabled public String customer;
+        @AuraEnabled public Boolean locked = false;        // the field action is closed
+        @AuraEnabled public List<Line> lines = new List<Line>();
+    }
+
+    /** The lots this Case's customer received, with what they reported for each. */
+    @AuraEnabled
+    public static CaseView caseView(Id caseId) {
+        CaseView v = new CaseView();
+        List<Case> cs = [SELECT Id, Field_Action_Customer__c FROM Case WHERE Id = :caseId AND Field_Action_Customer__c != null];
+        if (cs.isEmpty()) { return v; }
+        Field_Action_Customer__c c = [SELECT Id, Customer_Name__c, Lots__c, Field_Action__c, Field_Action__r.Name, Field_Action__r.Status__c
+                                      FROM Field_Action_Customer__c WHERE Id = :cs[0].Field_Action_Customer__c];
+        v.fieldAction = true; v.fieldActionId = c.Field_Action__c; v.fieldActionName = c.Field_Action__r.Name; v.customer = c.Customer_Name__c;
+        v.locked = c.Field_Action__r.Status__c == 'Closed';
+        Map<String, Decimal> shipped = shippedByLine(c.Field_Action__c);
+        Map<String, Customer_Response_Line__c> said = new Map<String, Customer_Response_Line__c>();
+        for (Customer_Response_Line__c l : [SELECT Lot_Number__c, Units_Used__c, Units_Returning__c, Units_Destroyed__c
+                                            FROM Customer_Response_Line__c WHERE Field_Action_Customer__c = :c.Id]) {
+            said.put(l.Lot_Number__c, l);
+        }
+        for (String lot : lotList(c.Lots__c)) {
+            Line l = new Line();
+            l.lot = lot; l.shipped = shipped.get(c.Id + '|' + lot);
+            Customer_Response_Line__c r = said.get(lot);
+            if (r != null) {
+                l.used = r.Units_Used__c; l.returning = r.Units_Returning__c; l.destroyed = r.Units_Destroyed__c;
+                if (l.shipped != null && (l.used != null || l.returning != null || l.destroyed != null)) {
+                    l.unknown = Math.max(0, l.shipped - n(l.used) - n(l.returning) - n(l.destroyed));
+                }
+            }
+            v.lines.add(l);
+        }
+        return v;
+    }
+
+    /** One figure the customer reported for a lot: used, returning or destroyed (blank clears it). */
+    @AuraEnabled
+    public static CaseView saveCaseLine(Id caseId, String lot, String field, Decimal value) {
+        List<Case> cs = [SELECT Id, Field_Action__c, Field_Action_Customer__c FROM Case WHERE Id = :caseId AND Field_Action_Customer__c != null];
+        if (cs.isEmpty()) { throw new AuraHandledException('This Case is not a field action notification.'); }
+        if ([SELECT Status__c FROM Field_Action__c WHERE Id = :cs[0].Field_Action__c].Status__c == 'Closed') { throw new AuraHandledException('This field action is closed.'); }
+        if (String.isBlank(lot)) { throw new AuraHandledException('Choose the lot.'); }
+        if (value != null && value < 0) { throw new AuraHandledException('Units cannot be negative.'); }
+        Id customerId = cs[0].Field_Action_Customer__c;
+        List<Customer_Response_Line__c> have = [SELECT Id FROM Customer_Response_Line__c WHERE Field_Action_Customer__c = :customerId AND Lot_Number__c = :lot LIMIT 1];
+        Customer_Response_Line__c l = have.isEmpty() ? new Customer_Response_Line__c(Field_Action_Customer__c = customerId, Lot_Number__c = lot) : have[0];
+        switch on field {
+            when 'used' { l.Units_Used__c = value; }
+            when 'returning' { l.Units_Returning__c = value; }
+            when 'destroyed' { l.Units_Destroyed__c = value; }
+            when else { throw new AuraHandledException('Unknown figure: ' + field); }
+        }
+        upsert l;
+        return caseView(caseId);
     }
 }

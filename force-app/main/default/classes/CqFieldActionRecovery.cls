@@ -26,7 +26,9 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public Decimal units; @AuraEnabled public String lots;
         @AuraEnabled public String status; @AuraEnabled public Decimal followUps; @AuraEnabled public Date respondedOn;
         @AuraEnabled public String source;
-        @AuraEnabled public String type;   // Customer Type on the Account
+        @AuraEnabled public String type;   // the customer's kind: Distributor, Direct Customer, Customer
+        @AuraEnabled public Boolean pending = false;      // still open on Notifications (not submitted to Recovery yet)
+        @AuraEnabled public Boolean noResponse = false;   // closed without a response
     }
     public class HoldDisp {
         @AuraEnabled public Id id; @AuraEnabled public String lot; @AuraEnabled public String kind; @AuraEnabled public String item;
@@ -69,6 +71,7 @@ public with sharing class CqFieldActionRecovery {
         @AuraEnabled public Decimal shipped = 0; @AuraEnabled public Decimal recovered = 0; @AuraEnabled public Boolean shippedKnown = false;
         @AuraEnabled public Integer acked = 0; @AuraEnabled public Integer total = 0; @AuraEnabled public Boolean targetMet = false;
         @AuraEnabled public Integer notified = 0;   // customers sent the notice (Notifications step)
+        @AuraEnabled public Integer stragglers = 0; // customers still open on Notifications: not submitted to Recovery, not closed without a response
         @AuraEnabled public Boolean ackRequired = ACK_REQUIRED;
         @AuraEnabled public Integer decided = 0;
         @AuraEnabled public String aiVerdict; @AuraEnabled public String aiLine;
@@ -170,11 +173,15 @@ public with sharing class CqFieldActionRecovery {
 
         // 2. customers
         for (Field_Action_Customer__c c : [SELECT Id, Customer_Name__c, Units__c, Lots__c, Status__c, Follow_Ups__c, Responded_On__c, Source__c, Notice_Sent_On__c,
-                                                  Customer__c, Customer__r.Customer_Type__c
+                                                  Kind__c, Case__c, Submitted_On__c, Closed_Without_Response_On__c
                                            FROM Field_Action_Customer__c WHERE Field_Action__c = :recordId ORDER BY Source__c DESC NULLS LAST, Customer_Name__c]) {
-            if (!CqFieldActionDepth.includes(fa.Depth__c, c.Customer__r?.Customer_Type__c, c.Customer__c)) { continue; }   // not reached at this depth
+            if (!CqFieldActionDepth.listed(fa.Depth__c, c.Kind__c)) { continue; }   // not listed at this depth
             Cust x = new Cust();
-            x.type = c.Customer__r?.Customer_Type__c;
+            x.type = c.Kind__c;
+            x.noResponse = c.Closed_Without_Response_On__c != null && c.Status__c != 'Acknowledged';
+            // still open on Notifications: their Case is not submitted and not closed without a response
+            x.pending = c.Case__c != null && c.Submitted_On__c == null && c.Closed_Without_Response_On__c == null;
+            if (x.pending) { v.stragglers++; }
             x.id = c.Id; x.name = c.Customer_Name__c; x.units = c.Units__c; x.lots = c.Lots__c; x.status = c.Status__c == null ? 'Sent' : c.Status__c;
             x.followUps = c.Follow_Ups__c; x.respondedOn = c.Responded_On__c; x.source = c.Source__c;
             v.customers.add(x); v.total++;
@@ -250,7 +257,8 @@ public with sharing class CqFieldActionRecovery {
         add(v, 'strategy', 'Strategy confirmed', stratOk ? (fa.Action_Type__c + (fa.Depth__c == null ? '' : ' to ' + fa.Depth__c.toLowerCase() + ' level')
             + (fa.Check_Level__c == null ? '' : ' · ' + fa.Check_Level__c + (fa.Check_By__c == null ? '' : ' by ' + day(fa.Check_By__c))))
             : 'The strategy is not confirmed', stratOk ? 'ok' : 'open', true);
-        add(v, 'notifications', 'Notifications', v.total == 0 ? 'No customers listed' : v.notified + ' of ' + v.total + ' customers notified · ' + v.acked + ' responded',
+        add(v, 'notifications', 'Notifications', v.total == 0 ? 'No customers listed' : v.notified + ' of ' + v.total + ' customers notified · ' + v.acked + ' acknowledged'
+            + (v.stragglers > 0 ? ' · ' + v.stragglers + ' still open' : ''),
             v.total > 0 && v.notified == v.total ? 'ok' : 'open', false);
         add(v, 'report', 'Regulatory Report', 'Not Applicable: reported in a separate system', 'na', false);
         String unitsDetail = !v.shippedKnown ? 'Units shipped are not recorded on the Scope step'

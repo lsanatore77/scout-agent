@@ -58,13 +58,13 @@ private class CqFieldActionRecoveryTest {
         System.assertEquals(CqFieldActionRecovery.CAPA_MISSING, check(v, 'capa').detail);
         System.assert(v.sSummary.contains('removed the product from lot FRC-L1 at hospital level (Class II).'), v.sSummary);
 
-        // CQ.AI suggests a notice and a response per customer, and a return per lot shipped to them
-        System.assertEquals(3, v.tasks.suggestions.size());
-        System.assert(v.tasks.suggestLine.startsWith('3 tasks for a Level A removal (recall): 1 recall notice, 1 response, 1 return.'), v.tasks.suggestLine);
+        // CQ.AI suggests a return per lot shipped to the customer; notices and responses run on Cases
+        System.assertEquals(1, v.tasks.suggestions.size());
+        System.assert(v.tasks.suggestLine.startsWith('1 task for a Level A removal (recall): 1 return.'), v.tasks.suggestLine);
         List<String> keys = new List<String>();
         for (CqFieldActionTasks.Suggestion s : v.tasks.suggestions) { keys.add(s.key); }
         v = CqFieldActionTasks.createSuggested(fa.Id, keys);
-        System.assertEquals(3, v.tasks.open);
+        System.assertEquals(1, v.tasks.open);
         System.assertEquals(0, v.tasks.suggestions.size(), 'a task that exists is not suggested again');
         System.assertEquals('In Progress', v.recovery);
 

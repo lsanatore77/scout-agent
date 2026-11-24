@@ -21,8 +21,4 @@ public with sharing class CqFieldActionDepth {
     /** The kind of a customer we shipped to, from the Customer Type on its Account. */
     public static String kindOf(String customerType) { return customerType == DISTRIBUTOR ? DISTRIBUTOR : DIRECT; }
 
-    // ---- kept until the Notifications and Recovery screens read Kind (they still pass the Account's Customer Type)
-    public static Boolean includes(String depth, String customerType, Id accountId) { return true; }
-    public static Boolean untyped(String depth, String customerType, Id accountId) { return false; }
-    public static String leftOutLine(String depth, Map<String, Integer> outByType, Integer untypedCount) { return null; }
 }

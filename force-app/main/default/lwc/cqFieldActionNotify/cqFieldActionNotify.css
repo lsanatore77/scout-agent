@@ -4,34 +4,24 @@
 .cq-step-intro { margin-top: 10px; }
 .b { font-weight: 600; }
 .nw { white-space: nowrap; }
+.nom { margin: 0; }
 .warnc { color: var(--cq-warn-fg); }
 .okc { color: var(--cq-pos-fg); }
 .badc { color: var(--cq-crit-fg); }
 .cq-stepcard + .cq-stepcard, .tcards + .cq-stepcard { margin-top: 16px; }
 .tcards { margin-top: 16px; }
-.cq-stepcard-head.mid { align-items: center; }
+.cq-stepcard-head.mid { align-items: center; flex-wrap: wrap; gap: 8px; }
 
 /* the notice: the key message as the customer reads it, then who it went to and when */
 .letter { padding: 10px 12px; border-radius: 6px; background: var(--cq-neu-bg); line-height: 1.5; white-space: pre-line; }
 .meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--cq-muted); }
-.cq-ai-card.row { display: flex; align-items: center; gap: 10px; min-width: 0; padding: 10px 12px; }
-.cq-ai-card + .cq-ai-card { margin-top: 8px; }
-/* CQ.AI's suggested tasks, ticked to keep; Review is a CQ.AI action, so the small button is purple */
-.sugg { display: flex; flex-direction: column; gap: 2px; padding: 8px 12px; border: 1px solid var(--cq-accent-line); border-radius: var(--cq-r-card); }
-.srow { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--cq-line); cursor: pointer; }
-.formbtns { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-top: 6px; }
-.cq-btn-outline.ghost { border-color: var(--cq-accent); color: var(--cq-accent); }
 
-/* the responses table: a customer, then its tasks and lots one step in */
-.hcell, .cell2 { display: flex; align-items: center; gap: 6px; }
-.chsp { flex: none; display: inline-block; width: 22px; }
-.ind1 { flex: none; display: inline-block; width: 48px; }
-.lotn { font-weight: 600; }
-.fig { width: 90px; }
-.stcol { width: 130px; }
-.stk { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-.cq-link.sm { font-size: 12px; }
-.tlink { color: var(--cq-link); text-decoration: none; }
+/* the customers table: one line a customer; opening one shows the lots it received in a table of their own */
+.cell2 { display: flex; align-items: center; gap: 6px; }
+.cq-tbl td { vertical-align: middle; }
+.tlink { color: var(--cq-link); text-decoration: none; font-weight: 600; }
 .tlink:hover { text-decoration: underline; }
-.cq-field.ni { width: 70px; display: inline-block; }
-.cq-field.ni input { min-height: 28px; padding: 2px 8px; text-align: right; }
+.cq-tbl.compact td.lotcell { padding: 8px 12px 12px 40px; background: var(--cq-surface); }
+.cq-tbl.lots { width: auto; min-width: min(560px, 100%); border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.cq-tbl.lots th { background: var(--cq-bg); }
+.lotnote { margin: 8px 0 0; }

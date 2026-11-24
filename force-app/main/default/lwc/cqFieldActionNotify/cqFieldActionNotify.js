@@ -1,18 +1,24 @@
 import { LightningElement, api } from 'lwc';
 import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
+import { sortRows, nextSort, heads } from 'c/cqSort';
 import getView from '@salesforce/apex/CqFieldActionNotify.getView';
 import markSent from '@salesforce/apex/CqFieldActionNotify.markSent';
-import saveLine from '@salesforce/apex/CqFieldActionNotify.saveLine';
-import setResponded from '@salesforce/apex/CqFieldActionNotify.setResponded';
-import setTask from '@salesforce/apex/CqFieldActionNotify.setTask';
-import createTasks from '@salesforce/apex/CqFieldActionNotify.createTasks';
+import followUp from '@salesforce/apex/CqFieldActionNotify.followUp';
+import submit from '@salesforce/apex/CqFieldActionNotify.submit';
+import closeWithoutResponse from '@salesforce/apex/CqFieldActionNotify.closeWithoutResponse';
+import reopen from '@salesforce/apex/CqFieldActionNotify.reopen';
 
-const FIGURES = ['used', 'returning', 'destroyed'];
+const COLS = [
+    { key: 'name', label: 'Customer' }, { key: 'kind', label: 'Type' }, { key: 'caseNumber', label: 'Case' },
+    { key: 'shipped', label: 'Shipped', num: true }, { key: 'returning', label: 'Returning', num: true }, { key: 'unknown', label: 'Unknown', num: true },
+    { key: 'due', label: 'Due' }, { key: 'status', label: 'Status' }, { key: 'action', label: 'Action', sortable: false }
+];
 
 /**
- * Field Action step 4, Notifications: the notice that goes to every customer (the key message from Strategy, and when
- * it was sent), and what each customer reported back on its response form, per lot (CqFieldActionNotify). Recovery
- * expects back the units a customer says it is returning.
+ * Field Action step 4, Notifications. Customer service works one Case per customer (CqFieldActionCases); this step
+ * follows them: the notice, who has acknowledged, who is still open, and what each one reported on their Case, by lot.
+ * The coordinator submits the acknowledged customers to Recovery in batches (the footer's Submit button); once
+ * submitted they leave the list, which keeps the open ones. A customer who never answers is closed without a response.
  */
 export default class CqFieldActionNotify extends LightningElement {
     @api recordId;
@@ -20,10 +26,12 @@ export default class CqFieldActionNotify extends LightningElement {
     error;
     saving = 0;
     footSig;
-    filter = 'all';          // all | notified | responded | waiting | overdue
+    search = '';
+    sort = { key: 'due', dir: 'asc' };
+    showDone = false;        // also list the customers already submitted or closed without a response
     openCust = {};           // customer rows opened (all start closed)
-    reviewing = false;       // CQ.AI's suggested notice and response tasks open for review
-    kept = {};               // suggestion key -> false when unticked
+    closing;                 // the customer being closed without a response
+    reason = '';
 
     async connectedCallback() {
         try { this.apply(await getView({ recordId: this.recordId })); }
@@ -32,14 +40,17 @@ export default class CqFieldActionNotify extends LightningElement {
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     apply(v) {
         this.v = JSON.parse(JSON.stringify(v));
-        this.dispatchEvent(new CustomEvent('notifychange', { detail: { total: this.v.total, notified: this.v.notified, responded: this.v.responded } }));
+        this.dispatchEvent(new CustomEvent('notifychange', { detail: { total: this.v.total, notified: this.v.notified, responded: this.v.acked,
+            settled: this.v.submitted + this.v.noResponse } }));
     }
     async call(fn, fallback) {
         this.error = undefined;
         this.saving += 1;
+        let ok = true;
         try { this.apply(await fn()); notifyRecordUpdateAvailable([{ recordId: this.recordId }]); }
-        catch (e) { this.error = this.msg(e, fallback); }
+        catch (e) { this.error = this.msg(e, fallback); ok = false; }
         this.saving -= 1;
+        return ok;
     }
     get ready() { return !!this.v; }
     get busy() { return this.saving > 0; }
@@ -48,144 +59,136 @@ export default class CqFieldActionNotify extends LightningElement {
     get showStep() { return this.ready && this.v.strategyConfirmed; }
     day(d) { return d ? new Date(d + 'T00:00:00').toLocaleDateString() : ''; }
     num(x) { return x === undefined || x === null ? '—' : String(Number(x)); }
+    plural(n, word) { return n + ' ' + word + (n === 1 ? '' : 's'); }
 
-    /** This step has no confirm of its own: the footer keeps only Back and Next. */
+    /** The step's own action sits in the footer before Back and Next: Submit N Responses. */
     renderedCallback() {
         if (!this.v) { return; }
-        const detail = { show: false, label: '', disabled: true, blocker: '' };
+        const n = this.v.toSubmit;
+        const detail = { show: this.showStep && !this.locked && n > 0, label: 'Submit ' + this.plural(n, 'Response'), disabled: this.busy, blocker: '' };
         const sig = JSON.stringify(detail);
         if (sig !== this.footSig) { this.footSig = sig; this.dispatchEvent(new CustomEvent('footchange', { detail })); }
     }
+    @api confirm() { return this.call(() => submit({ recordId: this.recordId }), 'Could not submit the responses.'); }
 
     // ---- header
+    get settled() { return this.v.submitted + this.v.noResponse; }
     get stateText() {
         if (!this.v.total) { return 'No customers'; }
-        if (this.v.responded === this.v.total) { return 'All responded'; }
-        return this.v.notified ? 'In Progress' : 'Not started';
+        if (this.settled === this.v.total) { return 'All Submitted'; }
+        return this.v.notified || this.v.acked ? 'In Progress' : 'Not Started';
     }
-    get statePill() { return 'cq-pill soft ' + (this.v.total && this.v.responded === this.v.total ? 'pos' : this.v.notified ? 'warn' : 'neu'); }
-    get isWithdrawal() { return this.v.action === 'Withdrawal'; }
-    get noticeWord() { return this.isWithdrawal ? 'withdrawal notice' : 'recall notice'; }
+    get statePill() { return 'cq-pill soft ' + (this.v.total && this.settled === this.v.total ? 'pos' : this.v.notified || this.v.acked ? 'warn' : 'neu'); }
 
     // ---- 1. the notice
     get hasMessage() { return !!(this.v.message || '').trim(); }
     get sentLine() {
         const v = this.v;
         if (!v.total) { return 'No customers yet: they come from the lot shipments of the lots in scope.'; }
-        return 'Sent to ' + v.notified + ' of ' + v.total + ' customer' + (v.total === 1 ? '' : 's') + (v.sentOn ? ' · first sent ' + this.day(v.sentOn) : '');
+        return 'Sent to ' + v.notified + ' of ' + this.plural(v.total, 'customer') + (v.sentOn ? ' · first sent ' + this.day(v.sentOn) : '');
     }
     get dueLine() { return this.v.dueOn ? 'Responses due ' + this.day(this.v.dueOn) : ''; }
-    get unsent() { return this.v.total - this.v.notified; }
-    get canMarkSent() { return !this.locked && !this.busy && this.unsent > 0; }
-    get cantMarkSent() { return !this.canMarkSent; }
-    get markLabel() { return this.unsent > 0 && this.unsent < this.v.total ? 'Mark Sent to the Other ' + this.unsent : 'Mark Notice Sent'; }
-    async handleMarkSent() {
-        if (!this.canMarkSent) { return; }
-        await this.call(() => markSent({ recordId: this.recordId, customerIds: null }), 'Could not mark the notice sent.');
+    get cantMarkSent() { return this.locked || this.busy || this.v.unsent === 0; }
+    get markLabel() {
+        if (this.v.total && this.v.unsent === 0) { return 'Notice Sent to All'; }
+        return this.v.notified > 0 ? 'Mark Sent to the Other ' + this.v.unsent : 'Mark Notice Sent';
     }
+    get cantFollowUp() { return this.locked || this.busy || this.v.pending === 0; }
+    get followLabel() { return this.v.pending ? 'Log Follow-Up for ' + this.v.pending + ' Pending' : 'Log Follow-Up'; }
+    handleMarkSent() { if (!this.cantMarkSent) { this.call(() => markSent({ recordId: this.recordId }), 'Could not mark the notice sent.'); } }
+    handleFollowUp() { if (!this.cantFollowUp) { this.call(() => followUp({ recordId: this.recordId }), 'Could not log the follow-up.'); } }
 
-    // ---- counts: click one to filter the table, click it again to show everyone
+    // ---- counts, from the Cases; View Cases opens the Field Action Cases report filtered to this field action
     get cards() {
         const v = this.v;
-        return [['notified', 'Notified', v.notified], ['responded', 'Responded', v.responded], ['waiting', 'No Reply Yet', v.waiting], ['overdue', 'Overdue', v.overdue]]
-            .map(([key, label, n]) => ({ key, label, n, pressed: this.filter === key ? 'true' : 'false',
-                cls: 'cq-statcard' + (this.filter === key ? ' on' : ''),
-                numCls: 'cq-statcard-v' + (key === 'responded' && n ? ' ok' : key === 'overdue' && n ? ' bad' : '') }));
-    }
-    handleCard(event) { const k = event.currentTarget.dataset.key; this.filter = this.filter === k ? 'all' : k; }
-    keep(c) {
-        const acked = c.status === 'Acknowledged';
-        switch (this.filter) {
-            case 'notified': return !!c.sentOn || acked;
-            case 'responded': return acked;
-            case 'waiting': return !acked && !!c.sentOn;
-            case 'overdue': return !acked && !!c.sentOn && (c.overdue || c.status === 'No reply');
-            default: return true;
-        }
-    }
-    get filterLine() {
-        if (this.filter === 'all') { return ''; }
-        return 'Showing ' + this.cards.find((x) => x.key === this.filter).label.toLowerCase();
+        const base = v.reportId ? '/lightning/r/Report/' + v.reportId + '/view?fv0=' + encodeURIComponent(v.name) : '';
+        return [['all', 'Customers', v.total, ''], ['acked', 'Acknowledged', v.acked, 'Acknowledged'],
+            ['pending', 'Pending Acknowledgment', v.pending, 'Pending Acknowledgment'], ['overdue', 'Overdue', v.overdue, 'Overdue']]
+            .map(([key, label, n, fv]) => ({ key, label, n, href: base ? base + (fv ? '&fv1=' + encodeURIComponent(fv) : '') : '',
+                linkLabel: 'View Cases: ' + label,
+                numCls: 'cq-statcard-v' + (key === 'acked' && n ? ' ok' : key === 'overdue' && n ? ' bad' : '') }));
     }
 
-    // ---- 2. responses: a customer, then its notice and response tasks and the lots it received, with the figures it reported
+    // ---- 2. the customers: open ones, and on request those already submitted or closed without a response
+    isDone(c) { return c.submitted || c.noResponse; }
+    get doneCount() { return this.v.customers.filter((c) => this.isDone(c)).length; }
+    get hasDone() { return this.doneCount > 0; }
+    get showDonePressed() { return this.showDone ? 'true' : 'false'; }
+    get showDoneLabel() {
+        const what = this.v.noResponse ? (this.v.submitted ? 'Submitted and Closed' : 'Closed') : 'Submitted';
+        return (this.showDone ? 'Hide ' : 'Show ') + what + ' (' + this.doneCount + ')';
+    }
+    get tableTitle() { return this.showDone ? 'All Customers' : 'Open Customers'; }
+    get tallyLine() {
+        const v = this.v;
+        return [(v.total - this.settled) + ' open', v.submitted + ' submitted to Recovery', v.noResponse ? v.noResponse + ' closed without a response' : '']
+            .filter(Boolean).join(' · ');
+    }
+    get heads() { return heads(COLS, this.sort); }
+    handleSort(event) { this.sort = nextSort(this.sort, event.currentTarget.dataset.key); }
+    handleSearch(event) { this.search = event.target.value; }
+    handleShowDone() { this.showDone = !this.showDone; }
     get rows() {
+        const q = this.search.trim().toLowerCase();
+        const today = new Date().toISOString().slice(0, 10);
+        // pending first, then acknowledged, then closed: the order ties fall back to
+        const rank = (c) => (c.acked ? 1 : c.noResponse ? 2 : 0);
+        const list = this.v.customers
+            .filter((c) => (this.showDone || !this.isDone(c)) && (!q || (c.name || '').toLowerCase().includes(q)))
+            .sort((a, b) => rank(a) - rank(b) || (a.name || '').localeCompare(b.name || ''));
         const rows = [];
-        this.v.customers.filter((c) => this.keep(c)).forEach((c) => {
+        sortRows(list, this.sort).forEach((c) => {
             const open = !!this.openCust[c.id];
-            const sum = (k) => c.lines.reduce((s, l) => s + (l[k] === undefined || l[k] === null ? 0 : Number(l[k])), 0);
-            const has = (k) => c.lines.some((l) => l[k] !== undefined && l[k] !== null);
-            const shippedKnown = c.lines.some((l) => l.shipped !== undefined && l.shipped !== null);
-            const anySaid = FIGURES.some((k) => has(k));
-            const acked = c.status === 'Acknowledged';
-            const unknown = c.lines.reduce((s, l) => s + (l.unknown === undefined || l.unknown === null ? 0 : Number(l.unknown)), 0);
-            rows.push({ key: 'c' + c.id, isCust: true, rowCls: 'cq-row-parent', id: c.id, title: c.name,
-                chevCls: 'cq-rchev' + (open ? ' open' : ''), expanded: open ? 'true' : 'false', toggleLabel: (open ? 'Fold ' : 'Show ') + c.name,
-                sub: [c.type || '', acked && c.respondedOn ? 'Responded ' + this.day(c.respondedOn) : '', c.sentOn ? 'Notice sent ' + this.day(c.sentOn) : 'Notice not sent',
-                    c.lines.length + ' lot' + (c.lines.length === 1 ? '' : 's')].filter(Boolean).join(' · '),
-                shipped: shippedKnown ? String(sum('shipped')) : '—',
-                used: has('used') ? String(sum('used')) : '—', returning: has('returning') ? String(sum('returning')) : '—',
-                destroyed: has('destroyed') ? String(sum('destroyed')) : '—',
-                unknown: anySaid && shippedKnown ? String(unknown) : '—', unknownCls: 'num b ' + (anySaid && shippedKnown ? (unknown ? 'warnc' : 'okc') : ''),
-                pill: acked ? 'Acknowledged' : !c.sentOn ? 'Not sent' : c.status === 'No reply' || c.overdue ? 'No reply' : 'Waiting',
-                pillCls: 'cq-pill soft ' + (acked ? 'pos' : c.status === 'No reply' || c.overdue ? 'crit' : 'neu'),
-                actLabel: acked ? 'Undo' : 'Record Response', acked: acked ? 'true' : 'false',
-                actAria: (acked ? 'Take back the response from ' : 'Record the response from ') + c.name });
+            const pending = !c.acked && !c.noResponse;
+            const known = (x) => x !== undefined && x !== null;
+            rows.push({ key: 'c' + c.id, isCust: true, rowCls: 'cq-row-parent', id: c.id, name: c.name, kind: c.kind || '—',
+                chevCls: 'cq-rchev' + (open ? ' open' : ''), expanded: open ? 'true' : 'false', toggleLabel: (open ? 'Hide lots for ' : 'Show lots for ') + c.name,
+                caseNumber: c.caseNumber, caseHref: c.caseId ? '/lightning/r/Case/' + c.caseId + '/view' : '',
+                shippedText: this.num(c.shipped), returningText: this.num(c.returning), unknownText: this.num(c.unknown),
+                unknownCls: 'num' + (known(c.unknown) ? ' b ' + (c.unknown ? 'warnc' : 'okc') : ''),
+                dueText: c.due ? this.day(c.due) : '—', dueCls: 'nw' + (c.overdue ? ' badc b' : ''),
+                status: c.status, pillCls: 'cq-pill soft ' + (c.acked ? 'pos' : c.noResponse ? 'neu' : c.overdue ? 'crit' : 'warn'),
+                pillTitle: c.acked ? (c.ackedBy === 'Full Return' ? 'Every unit shipped came back' : 'Responded ' + this.day(c.respondedOn))
+                    : c.noResponse ? c.reason : c.overdue && c.due < today ? 'Response overdue' : '',
+                canClose: pending && !this.locked, canReopen: c.noResponse && !this.locked,
+                closeAria: 'Close ' + c.name + ' without a response', reopenAria: 'Reopen ' + c.name });
             if (!open) { return; }
-            c.tasks.forEach((t) => rows.push({ key: 't' + t.id, isTask: true, rowCls: '', id: t.id, title: t.subject, done: t.done,
-                href: '/lightning/r/Task/' + t.id + '/view', checkLabel: (t.done ? 'Reopen ' : 'Complete ') + t.subject,
-                owner: t.owner, due: this.day(t.due), dueCls: 'nw' + (t.overdue ? ' badc b' : ''),
-                pill: t.done ? 'Done' : t.overdue ? 'Overdue' : 'Open', pillCls: 'cq-pill soft ' + (t.done ? 'pos' : t.overdue ? 'crit' : 'neu') }));
-            c.lines.forEach((l) => {
-                const val = (k) => (l[k] === undefined || l[k] === null ? '' : l[k]);
-                rows.push({ key: 'l' + c.id + l.lot, isLot: true, rowCls: '', cust: c.id, lot: l.lot, inRecall: true,
-                    shipped: this.num(l.shipped), used: val('used'), returning: val('returning'), destroyed: val('destroyed'),
-                    unknown: l.unknown === undefined || l.unknown === null ? '—' : String(l.unknown),
-                    unknownCls: 'num ' + (l.unknown ? 'warnc b' : l.unknown === 0 ? 'okc b' : ''),
-                    usedLabel: 'Units used, lot ' + l.lot + ', ' + c.name, retLabel: 'Units returning, lot ' + l.lot + ', ' + c.name,
-                    desLabel: 'Units destroyed, lot ' + l.lot + ', ' + c.name });
-            });
+            rows.push({ key: 'l' + c.id, isLots: true, rowCls: '', lotsLabel: 'Lots shipped to ' + c.name,
+                note: c.noResponse && c.reason ? 'Closed without a response: ' + c.reason : c.ackedBy === 'Full Return' ? 'Acknowledged on the returns: every unit shipped came back.' : '',
+                lines: c.lines.map((l) => ({ lot: l.lot, shipped: this.num(l.shipped), used: this.num(l.used), returning: this.num(l.returning),
+                    destroyed: this.num(l.destroyed), unknown: this.num(l.unknown),
+                    unknownCls: 'num' + (known(l.unknown) ? ' b ' + (l.unknown ? 'warnc' : 'okc') : '') })) });
         });
         return rows;
     }
     get hasRows() { return this.rows.length > 0; }
-    get emptyLine() { return this.filter !== 'all' ? 'No customers match.' : 'No customers yet: they come from the lot shipments of the lots in scope.'; }
+    get emptyLine() {
+        if (this.search.trim()) { return 'No customer matches “' + this.search.trim() + '”.'; }
+        if (!this.v.total) { return 'No customers yet: they come from the lot shipments of the lots in scope.'; }
+        return 'No open customers: everyone has been submitted to Recovery or closed without a response.';
+    }
     handleToggle(event) {
         const id = event.currentTarget.dataset.id;
         this.openCust = { ...this.openCust, [id]: !this.openCust[id] };
     }
-    /** A figure on a lot: saved when the box is left (or Enter is pressed). */
-    async handleFigure(event) {
-        const d = event.target.dataset;
-        const raw = event.target.value;
-        const now = raw === '' ? null : Number(raw);
-        if (now !== null && (isNaN(now) || now < 0)) { this.error = 'Units cannot be negative.'; return; }
-        await this.call(() => saveLine({ recordId: this.recordId, customerId: d.cust, lot: d.lot, field: d.f, value: now }), 'Could not save that figure.');
-    }
-    handleFigureKey(event) { if (event.key === 'Enter') { event.target.blur(); } }
-    async handleRespond(event) {
-        const d = event.currentTarget.dataset;
-        await this.call(() => setResponded({ recordId: this.recordId, customerId: d.id, responded: d.acked !== 'true' }), 'Could not record the response.');
-    }
-    async handleCheck(event) {
-        const id = event.target.dataset.id;
-        await this.call(() => setTask({ recordId: this.recordId, taskId: id, done: event.target.checked }), 'Could not change that task.');
-    }
 
-    // ---- CQ.AI's suggested notice and response tasks
-    get suggestions() { return this.v.suggestions || []; }
-    get hasSuggestions() { return !this.locked && this.suggestions.length > 0; }
-    get suggestRows() {
-        return this.suggestions.map((s) => ({ ...s, checked: this.kept[s.key] !== false, due: this.day(s.due), label: 'Create: ' + s.subject }));
+    // ---- close without a response (a reason is required), and reopen
+    handleOpenClose(event) {
+        const c = this.v.customers.find((x) => x.id === event.currentTarget.dataset.id);
+        if (c) { this.closing = { id: c.id, name: c.name }; this.reason = ''; this.error = undefined; }
     }
-    get keptCount() { return this.suggestions.filter((s) => this.kept[s.key] !== false).length; }
-    get createLabel() { return 'Create ' + this.keptCount + ' Task' + (this.keptCount === 1 ? '' : 's'); }
-    get cantCreate() { return this.busy || this.keptCount === 0; }
-    handleReview() { this.reviewing = !this.reviewing; this.kept = {}; }
-    handleKeep(event) { this.kept = { ...this.kept, [event.target.dataset.key]: event.target.checked }; }
-    async handleCreate() {
-        const keys = this.suggestions.filter((s) => this.kept[s.key] !== false).map((s) => s.key);
-        await this.call(() => createTasks({ recordId: this.recordId, keys }), 'Could not create those tasks.');
-        if (!this.error) { this.reviewing = false; this.kept = {}; }
+    handleCancelClose() { this.closing = undefined; this.reason = ''; this.error = undefined; }
+    handleCloseKey(event) { if (event.key === 'Escape') { this.handleCancelClose(); } }
+    handleReason(event) { this.reason = event.target.value; }
+    get cantConfirmClose() { return this.busy || !this.reason.trim(); }
+    async handleConfirmClose() {
+        if (this.cantConfirmClose) { return; }
+        const id = this.closing.id;
+        const ok = await this.call(() => closeWithoutResponse({ recordId: this.recordId, customerId: id, reason: this.reason }), 'Could not close that customer.');
+        if (ok) { this.closing = undefined; this.reason = ''; }
+    }
+    handleReopen(event) {
+        const id = event.currentTarget.dataset.id;
+        this.call(() => reopen({ recordId: this.recordId, customerId: id }), 'Could not reopen that customer.');
     }
 }

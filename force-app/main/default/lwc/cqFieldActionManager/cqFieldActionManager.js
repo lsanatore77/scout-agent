@@ -200,7 +200,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         if (i === 0) { return true; }
         if (i === SCOPE) { return this.scopeConfirmed; }
         if (i === STRATEGY) { return this.strategyDone; }
-        if (i === NOTIFY) { return this.strategyDone && this.notify.total > 0 && this.notify.notified === this.notify.total; }
+        if (i === NOTIFY) { return this.strategyDone && this.notify.total > 0 && this.notify.settled === this.notify.total; }   // everyone submitted to Recovery or closed without a response
         if (i === RECOVERY) { return this.recoveryDone; }
         if (i === CLOSURE) { return this.isClosed; }
         return false;
@@ -211,7 +211,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
             if (!this.strategyDone) { return 'Needs confirmed strategy'; }
             const t = this.notify.total || 0;
             if (!t) { return 'No customers yet'; }
-            return this.notify.notified < t ? this.notify.notified + ' of ' + t + ' notified' : this.notify.responded + ' of ' + t + ' responded';
+            return (this.notify.responded || 0) + ' of ' + t + ' acknowledged';
         }
         if (i === RECOVERY) {
             if (!this.strategyDone) { return 'Needs confirmed strategy'; }
@@ -265,10 +265,10 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get showFoot() { return !this.is1 || !this.hasLots; }
     handleBack() { const i = this.near(-1); if (i >= 0) { this.go(i); } }
     handleNext() { if (!this.cantNext) { this.go(this.near(1)); } }
-    // A step's own confirm button (Confirm Strategy, Confirm Verdict, Close Field Action) lives in the footer before Back and Next
+    // A step's own confirm button (Confirm Strategy, Submit Responses, Confirm Verdict, Close Field Action) lives in the footer before Back and Next
     foot = { show: false, label: '', disabled: true, blocker: '' };
     handleFootChange(event) { this.foot = event.detail; }
-    get showStepAction() { return (this.is2 || this.is5 || this.is6) && this.foot.show; }
+    get showStepAction() { return (this.is2 || this.is3 || this.is5 || this.is6) && this.foot.show; }
     get hasFootActs() { return this.showStepAction || (this.is1 && this.isPartial && this.hasLots); }
     get footBlocker() { return this.showStepAction ? this.foot.blocker : ''; }
     handleStepAction() {

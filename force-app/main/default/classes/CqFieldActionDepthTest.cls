@@ -22,8 +22,5 @@ private class CqFieldActionDepthTest {
         System.assertEquals('Distributor', CqFieldActionDepth.kindOf('Distributor'));
         System.assertEquals('Direct Customer', CqFieldActionDepth.kindOf('Hospital'));
         System.assertEquals('Direct Customer', CqFieldActionDepth.kindOf(null), 'an Account with no type that we shipped to is a direct customer');
-        System.assertEquals(true, CqFieldActionDepth.includes('Distributor', 'Hospital', null));
-        System.assertEquals(false, CqFieldActionDepth.untyped('Distributor', null, null));
-        System.assertEquals(null, CqFieldActionDepth.leftOutLine('Distributor', new Map<String, Integer>(), 0));
     }
 }

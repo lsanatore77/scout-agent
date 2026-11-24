@@ -1,0 +1,30 @@
+<template>
+    <template if:true={show}>
+        <article class="panel">
+            <div class="head">
+                <h2 class="title">Response by Lot</h2>
+                <a class="cq-link" href={faHref}>{v.fieldActionName}</a>
+            </div>
+            <p class="cq-sub nom">What {v.customer} reported for each lot they received. Enter it before closing the Case as Response Received.</p>
+            <div class="cq-tblwrap">
+                <table class="cq-tbl compact">
+                    <thead><tr><th scope="col">Lot</th><th scope="col" class="num">Shipped</th><th scope="col" class="num">Used</th>
+                        <th scope="col" class="num">Returning</th><th scope="col" class="num">Destroyed</th><th scope="col" class="num">Unknown</th></tr></thead>
+                    <tbody>
+                        <template for:each={rows} for:item="r">
+                            <tr key={r.lot}>
+                                <td class="b">{r.lot}</td><td class="num">{r.shipped}</td>
+                                <td class="num"><span class="cq-field ni"><input type="number" min="0" data-lot={r.lot} data-f="used" value={r.used} onchange={handleFigure} onkeydown={handleKey} disabled={v.locked} aria-label={r.usedLabel} /></span></td>
+                                <td class="num"><span class="cq-field ni"><input type="number" min="0" data-lot={r.lot} data-f="returning" value={r.returning} onchange={handleFigure} onkeydown={handleKey} disabled={v.locked} aria-label={r.retLabel} /></span></td>
+                                <td class="num"><span class="cq-field ni"><input type="number" min="0" data-lot={r.lot} data-f="destroyed" value={r.destroyed} onchange={handleFigure} onkeydown={handleKey} disabled={v.locked} aria-label={r.desLabel} /></span></td>
+                                <td class={r.unknownCls}>{r.unknown}</td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+            <span class="cq-hint">A figure saves when you leave its box. Unknown is shipped less used, returning and destroyed: units nobody can account for. Enter 0 where the answer is none.</span>
+            <template if:true={error}><div class="cq-msg crit">{error}</div></template>
+        </article>
+    </template>
+</template>

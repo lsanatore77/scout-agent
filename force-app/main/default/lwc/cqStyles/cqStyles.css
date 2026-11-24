@@ -309,6 +309,19 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-tbl .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cq-tbl th.center, .cq-tbl td.center { width: 1%; text-align: center; }
 .cq-tbl td.wide { width: 100%; min-width: 200px; }
+/* sortable headings (every CQ table; logic in c/cqSort): th[scope=col][aria-sort] > button.cq-sortbtn > label + span.cq-sortarrow(.asc|.desc).
+   The arrow shows on the sorted column only; hovering another heading hints at it */
+.cq-sortbtn { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; font: inherit; font-weight: inherit; color: inherit; cursor: pointer; white-space: nowrap; }
+.cq-sortbtn:hover { color: var(--cq-ink); }
+.cq-sortbtn:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; border-radius: 2px; }
+.cq-sortarrow { display: inline-block; width: 8px; font-size: 8px; line-height: 1; color: var(--cq-link); }
+.cq-sortarrow.asc::before { content: '\25B2'; }
+.cq-sortarrow.desc::before { content: '\25BC'; }
+.cq-sortbtn:hover .cq-sortarrow:not(.asc):not(.desc)::before { content: '\25B2'; color: var(--cq-line-field); }
+th[aria-sort="ascending"], th[aria-sort="descending"] { color: var(--cq-ink); }
+/* a count card that is not a filter: div.cq-statcard.flat, with an optional a.cq-link under the figure */
+.cq-statcard.flat { cursor: default; }
+.cq-statcard.flat:hover { border-color: var(--cq-line); }
 /* page numbers under a table: .cq-pager > nav.cq-pages > button.pg (on = current, gap = the dots) */
 .cq-pager { display: flex; align-items: center; justify-content: flex-end; gap: 14px; margin-top: 8px; }
 .cq-pages { display: inline-flex; align-items: center; gap: 2px; }
