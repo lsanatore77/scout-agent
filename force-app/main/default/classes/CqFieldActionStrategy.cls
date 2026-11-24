@@ -135,7 +135,8 @@ public with sharing class CqFieldActionStrategy {
             else { heldComps.add(h.Lot_Number__c); }
             v.holds.add(x);
         }
-        // where each held lot sits, from Lot Stock; a component lot also takes its on-hand figure from there
+        // where each held lot sits, and its on-hand figure, from Lot Stock (the same figures Scope shows); a finished lot with no
+        // Lot Stock keeps the figure on its scope row
         Set<String> holdLots = new Set<String>();
         for (HoldRow x : v.holds) { holdLots.add(x.lot); }
         Map<String, CqLotStock.Stock> stock = holdLots.isEmpty() ? new Map<String, CqLotStock.Stock>() : CqLotStock.forLots(holdLots);
@@ -143,7 +144,7 @@ public with sharing class CqFieldActionStrategy {
             CqLotStock.Stock st = stock.get(x.lot);
             if (st == null || st.hasRecord != true) { continue; }
             x.places = st.places; x.asOf = st.asOf; x.source = st.source;
-            if (x.kind != FINISHED) { x.onHand = st.total; }
+            x.onHand = st.total;
         }
         // an unticked hold doesn't free the lot when something else holds it: say what, on the row
         Map<String, CqLotStatus.Outlook> stays = CqLotStatus.outlook(holdLots.clone(), recordId, false);
