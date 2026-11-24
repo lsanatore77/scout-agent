@@ -11,6 +11,7 @@ import addHypothesis from '@salesforce/apex/CqInvestigationChanges.addHypothesis
 import getHistory from '@salesforce/apex/CqInvestigationHistory.getHistory';
 import markNotRelevant from '@salesforce/apex/CqInvestigationHistory.markNotRelevant';
 import restoreRecord from '@salesforce/apex/CqInvestigationHistory.restore';
+import { sortRows, nextSort, heads } from 'c/cqSort';
 
 const STEPS = ['Investigation at a Glance', 'What Changed', 'Check History', 'Find the Cause', 'Actions', 'Conclusion'];
 // Ask CQ.AI ready questions for each step (no commas: the popover splits on them)
@@ -30,6 +31,18 @@ const LANE_H = 58;       // height of one row of timeline labels
 const LABEL_W = 24;      // width of a timeline label, as a percent of the track
 const RATING_CLS = { 'Could Explain It': 'cq-pill soft warn', 'Worth a Look': 'cq-pill soft ai', 'The Affected Lot': 'cq-pill soft neu', Unlikely: 'cq-pill soft neu' };
 const MATCH_TONE = { red: 'crit', yellow: 'warn' };
+const RATING_RANK = { 'Could Explain It': 1, 'Worth a Look': 2, 'The Affected Lot': 3, Unlikely: 4 };   // most likely first when sorted up
+// the tables' columns (c/cqSort): each heading sorts its table; the action column does not
+const COLS = {
+    known: [{ key: 'source', label: 'Source' }, { key: 'says', label: 'What It Says' }, { key: 'chip', label: 'Status' }],
+    chg: [{ key: 'name', label: 'Change' }, { key: 'whatChanged', label: 'What Changed' }, { key: 'day', label: 'When' },
+        { key: 'foundIn', label: 'Found In' }, { key: 'ratingN', label: 'CQ.AI Says' }, { key: 'act', label: '', sortable: false }],
+    hist: [{ key: 'name', label: 'Record' }, { key: 'what', label: 'What Happened' }, { key: 'cause', label: 'Root Cause' },
+        { key: 'fix', label: 'How It Was Fixed' }, { key: 'matchN', label: 'Match' }, { key: 'act', label: '', sortable: false }],
+    oth: [{ key: 'name', label: 'Record' }, { key: 'what', label: 'What Happened' }, { key: 'matchN', label: 'Match' }, { key: 'act', label: '', sortable: false }],
+    plan: [{ key: 'title', label: 'Title' }, { key: 'descText', label: 'Description' }, { key: 'type', label: 'Type' },
+        { key: 'ownerText', label: 'Owner' }, { key: 'due', label: 'Due' }, { key: 'act', label: '', sortable: false }]
+};
 const POLL_TRIES = 8;
 
 /**
@@ -203,7 +216,19 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         if (!this.plans.length) { return 'Plan the actions that fix the cause, then conclude.'; }
         return 'Check the actions, then conclude and complete the investigation.';
     }
-    get knownRows() {
+    // ---- sorting: one sort per table, by heading click
+    sorts = {};
+    get knownHeads() { return heads(COLS.known, this.sorts.known); }
+    get chgHeads() { return heads(COLS.chg, this.sorts.chg); }
+    get histHeads() { return heads(COLS.hist, this.sorts.hist); }
+    get othHeads() { return heads(COLS.oth, this.sorts.oth); }
+    get planHeads() { return heads(COLS.plan, this.sorts.plan); }
+    handleSort(event) {
+        const d = event.currentTarget.dataset;
+        this.sorts = { ...this.sorts, [d.t]: nextSort(this.sorts[d.t], d.key) };
+    }
+    get knownRows() { return sortRows(this.knownList, this.sorts.known); }
+    get knownList() {
         const v = this.v;
         const causes = v.causes || [];
         const tools = v.tools || [];
@@ -252,10 +277,11 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handleAskPin(event) { const c = this.template.querySelector('c-cq-investigation-cause'); if (c) { c.pin(event.detail); } }
 
     // ---- step 5: Actions: a table of the planned actions; Add Action and Edit open a popup
-    get planRows() {
-        return this.plans.map((p, i) => ({ key: p.key, idx: i, title: p.title, descText: this.planDesc(p), type: p.type || '\u2014',
-            ownerText: p.userName || (p.userId ? 'Chosen' : 'You'), dueText: this.dateText(p.due), unsaved: !p.id }));
+    get planList() {
+        return this.plans.map((p, i) => ({ key: p.key, idx: i, title: p.title, descText: this.planDesc(p), type: p.type || '—',
+            ownerText: p.userName || (p.userId ? 'Chosen' : 'You'), due: p.due, dueText: this.dateText(p.due), unsaved: !p.id }));
     }
+    get planRows() { return sortRows(this.planList, this.sorts.plan); }
     get hasPlans() { return this.plans.length > 0; }
     /** CQ fills an empty description with the title, so the same text is not shown twice. */
     planDesc(p) { return p.description && p.description.trim() !== (p.title || '').trim() ? p.description : ''; }
@@ -358,7 +384,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handleSummary(event) { this.summary = event.target.value; this.sumConfirm = false; this.error = undefined; }
     // CQ.AI Suggested Summary: the prompt template writes Problem, Containment, Hypotheses, Root Cause and Actions
     // from the investigation; the actions on screen are sent too, so unsaved ones are included
-    get sumLabel() { return this.sumWriting ? 'Writing\u2026' : this.sumWritten !== undefined ? 'Write It Again' : 'CQ.AI Suggested Summary'; }
+    get sumLabel() { return this.sumWriting ? 'Writing…' : this.sumWritten !== undefined ? 'Write It Again' : 'CQ.AI Suggested Summary'; }
     get sumNote() {
         if (this.sumWriting) { return null; }
         return this.sumWritten !== undefined ? 'Written by CQ.AI from this investigation. Read it and edit before you complete.'
@@ -543,7 +569,8 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     shortText(t) { if (!t) { return ''; } const s = t.split(': ').pop(); return s.length > 60 ? s.slice(0, 57) + '…' : s; }
     get hasBands() { return this.timeline && this.timeline.bands.length > 0; }
 
-    get changeRows() {
+    get changeRows() { return sortRows(this.changeList, this.sorts.chg); }
+    get changeList() {
         if (!this.wc) { return []; }
         const start = this.dn(this.wc.startDate);
         return this.wc.items.map((i) => {
@@ -557,7 +584,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             return {
                 key: i.key, name: i.name, href: i.recordId && !i.byHand ? this.href(i.recordId) : null, byHand: i.byHand,
                 hasHref: !!(i.recordId && !i.byHand), category: i.category, whatChanged: i.whatChanged, foundIn: i.foundIn,
-                whenText: i.inEffect ? 'Since ' + this.md(i.day) : this.md(i.day), rel, rating: i.rating, ratingCls: RATING_CLS[i.rating] || 'cq-pill soft neu',
+                whenText: i.inEffect ? 'Since ' + this.md(i.day) : this.md(i.day), rel, rating: i.rating, ratingN: RATING_RANK[i.rating] || 5, day: i.day, ratingCls: RATING_CLS[i.rating] || 'cq-pill soft neu',
                 added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null,
                 canAdd: !i.hypothesis && i.rating !== 'The Affected Lot' && i.rating !== 'Unlikely'
             };
@@ -775,13 +802,13 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             sub: (i.status || '') + (i.day ? ' · ' + this.mdIso(i.day) : ''), what: i.whatHappened,
             cause, causeNote, causeIsNone: !i.causeHead, invHref: i.investigationId ? this.href(i.investigationId) : null,
             fix, fixHref: i.capaId ? this.href(i.capaId) : null, capaTitle: i.capaTitle, fixNote, effective: this.isEffective(i),
-            matchText: (i.colour || 'Grey') + ' · ' + (i.score || 0), matchCls: 'cq-pill soft ' + (MATCH_TONE[(i.colour || 'Grey').toLowerCase()] || 'neu'), why: i.why,
+            matchText: (i.colour || 'Grey') + ' · ' + (i.score || 0), matchN: i.score || 0, matchCls: 'cq-pill soft ' + (MATCH_TONE[(i.colour || 'Grey').toLowerCase()] || 'neu'), why: i.why,
             added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null, canAdd: !i.hypothesis
         };
     }
-    get histRows() { return this.hist ? this.hist.items.map((i) => this.histRow(i)) : []; }
+    get histRows() { return this.hist ? sortRows(this.hist.items.map((i) => this.histRow(i)), this.sorts.hist) : []; }
     get hasHistRows() { return this.histRows.length > 0; }
-    get otherRows() { return this.hist ? this.hist.others.map((i) => this.histRow(i)) : []; }
+    get otherRows() { return this.hist ? sortRows(this.hist.others.map((i) => this.histRow(i)), this.sorts.oth) : []; }
     get otherCount() { return this.hist ? this.hist.others.length : 0; }
     get hasOthers() { return this.otherCount > 0; }
     get othersLabel() { return this.histShowOthers ? 'Hide Them' : 'Show Them'; }

@@ -31,7 +31,7 @@
                         <div class="cq-card-title cq-mt16">What We Already Know</div>
                         <div class="cq-tblwrap">
                             <table class="cq-tbl">
-                                <thead><tr><th>Source</th><th>What It Says</th><th>Status</th></tr></thead>
+                                <thead><tr><template for:each={knownHeads} for:item="h"><th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-t="known" data-key={h.key} onclick={handleSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th></template></tr></thead>
                                 <tbody>
                                     <template for:each={knownRows} for:item="r">
                                         <tr key={r.key}>
@@ -95,7 +95,7 @@
                             <template if:true={hasChanges}>
                                 <div class="cq-tblwrap">
                                     <table class="cq-tbl">
-                                        <thead><tr><th>Change</th><th>What Changed</th><th>When</th><th>Found In</th><th>CQ.AI Says</th><th></th></tr></thead>
+                                        <thead><tr><template for:each={chgHeads} for:item="h"><th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-t="chg" data-key={h.key} onclick={handleSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th></template></tr></thead>
                                         <tbody>
                                             <template for:each={changeRows} for:item="r">
                                                 <tr key={r.key}>
@@ -202,7 +202,7 @@
                             <template if:true={hasHistRows}>
                                 <div class="cq-tblwrap cq-mt16">
                                     <table class="cq-tbl">
-                                        <thead><tr><th>Record</th><th>What Happened</th><th>Root Cause</th><th>How It Was Fixed</th><th>Match</th><th></th></tr></thead>
+                                        <thead><tr><template for:each={histHeads} for:item="h"><th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-t="hist" data-key={h.key} onclick={handleSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th></template></tr></thead>
                                         <tbody>
                                             <template for:each={histRows} for:item="r">
                                                 <tr key={r.key}>
@@ -243,7 +243,7 @@
                                 <template if:true={histShowOthers}>
                                     <div class="cq-tblwrap">
                                         <table class="cq-tbl">
-                                            <thead><tr><th>Record</th><th>What Happened</th><th>Match</th><th></th></tr></thead>
+                                            <thead><tr><template for:each={othHeads} for:item="h"><th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-t="oth" data-key={h.key} onclick={handleSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th></template></tr></thead>
                                             <tbody>
                                                 <template for:each={otherRows} for:item="r">
                                                     <tr key={r.key}>
@@ -285,7 +285,7 @@
                         <template if:true={hasPlans}>
                             <div class="cq-tblwrap">
                                 <table class="cq-tbl">
-                                    <thead><tr><th>Title</th><th>Description</th><th>Type</th><th>Owner</th><th>Due</th><th></th></tr></thead>
+                                    <thead><tr><template for:each={planHeads} for:item="h"><th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-t="plan" data-key={h.key} onclick={handleSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th></template></tr></thead>
                                     <tbody>
                                         <template for:each={planRows} for:item="p">
                                             <tr key={p.key}>
