@@ -9,6 +9,7 @@ import discardChanges from '@salesforce/apex/CqFieldActionScope.discardChanges';
 import forScope from '@salesforce/apex/CqLotStock.forScope';
 import railStatus from '@salesforce/apex/CqFieldActionRecovery.railStatus';
 import notifyCounts from '@salesforce/apex/CqFieldActionNotify.counts';
+import { sortRows, nextSort, heads } from 'c/cqSort';
 
 // The seven steps of a field action. Regulatory Report is set aside for later and does not block.
 const SMALL_WORDS = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'on', 'in', 'to', 'at', 'for', 'is', 'by', 'per', 'with']);
@@ -317,9 +318,20 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     get hasReviews() { return this.reviews.length > 0; }
     /** The reviews table: a row per review, and under it, once opened, the reason it gave. */
     openRev = {};
+    // the glance tables sort on a heading click (c/cqSort); a review's reason travels with it
+    revSort = {};
+    sigSort = {};
+    get revHeads() {
+        return heads([{ key: 'open', label: 'Open', cls: 'chcol', sortable: false, hidden: true }, { key: 'name', label: 'Review' },
+            { key: 'approval', label: 'Approval' }, { key: 'source', label: 'Source' }, { key: 'score', label: 'Risk' },
+            { key: 'decidedOn', label: 'Decided' }], this.revSort).map((h) => ({ ...h, shown: h.plain && !h.hidden }));
+    }
+    get sigHeads() { return heads([{ key: 'rule', label: 'Signal' }, { key: 'label', label: 'What We See' }], this.sigSort); }
+    handleRevSort(event) { this.revSort = nextSort(this.revSort, event.currentTarget.dataset.key); }
+    handleSigSort(event) { this.sigSort = nextSort(this.sigSort, event.currentTarget.dataset.key); this.sigPage = 0; }
     get reviewRows() {
         const out = [];
-        this.reviews.forEach((r) => {
+        sortRows(this.reviews, this.revSort).forEach((r) => {
             const open = !!this.openRev[r.id];
             out.push({ ...r, key: r.id, isRev: true, expanded: open ? 'true' : 'false', chevCls: 'cq-rchev' + (open ? ' open' : ''),
                 toggleLabel: (open ? 'Hide' : 'Show') + ' the reason for ' + r.name,
@@ -333,7 +345,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         this.openRev = { ...this.openRev, [id]: !this.openRev[id] };
     }
     get signals() {
-        return (this.v.signals || []).map((s) => ({ ...s, pillCls: 'cq-pill soft ' + ({ watch: 'warn', assess: 'warn', escalate: 'crit' }[(s.strength || '').toLowerCase()] || 'neu'), where: s.lot ? 'Lot ' + s.lot : 'Whole Part', label: titleCase(s.label) }));
+        return sortRows((this.v.signals || []).map((s) => ({ ...s, pillCls: 'cq-pill soft ' + ({ watch: 'warn', assess: 'warn', escalate: 'crit' }[(s.strength || '').toLowerCase()] || 'neu'), where: s.lot ? 'Lot ' + s.lot : 'Whole Part', label: titleCase(s.label) })), this.sigSort);
     }
     get hasSignals() { return this.signals.length > 0; }
     // five signals a page, as on Field Action Review; the table keeps the height of its first page
@@ -378,9 +390,25 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     /** The lots the table lists: in scope, then CQ.AI suggestions, then lots with a lot record, then lot numbers found only on records. */
     get shownLots() {
         const rank = (l) => (l.inScope || l.confirmed ? 0 : l.suggested ? 1 : l.known ? 2 : 3);
-        return (this.view === 'in' ? this.lots.filter((l) => l.inScope || l.confirmed) : this.lots)
+        const ranked = (this.view === 'in' ? this.lots.filter((l) => l.inScope || l.confirmed) : this.lots)
             .map((l, i) => ({ l, i })).sort((a, b) => rank(a.l) - rank(b.l) || a.i - b.i).map((x) => x.l);
+        if (!this.scopeSort.key) { return ranked; }
+        // a heading click sorts the lots; what each was built from travels with it, and ties keep the order above
+        return sortRows(ranked.map((l) => {
+            const s = this.stock[l.name];
+            return { l, name: l.name, lot: l.name, built: l.built, records: l.records || 0,
+                shipped: s && s.shipped !== undefined && s.shipped !== null ? s.shipped : l.shipped,
+                onHand: s && s.hasRecord ? s.total : null, status: l.inScope ? 'Added' : l.confirmed ? 'Removing' : '' };
+        }), this.scopeSort).map((x) => x.l);
     }
+    scopeSort = {};
+    get scopeHeads() {
+        return heads([{ key: 'scope', label: 'Scope', cls: 'cscope', sortable: false }, { key: 'name', label: 'Level / Item' },
+            { key: 'partRev', label: 'Part \u00b7 Rev', sortable: false }, { key: 'lot', label: 'Lot' }, { key: 'built', label: 'Qty', num: true },
+            { key: 'supplier', label: 'Supplier', sortable: false }, { key: 'records', label: 'Trace' }, { key: 'shipped', label: 'Shipped', num: true },
+            { key: 'onHand', label: 'On Hand', num: true }, { key: 'status', label: 'Status' }], this.scopeSort);
+    }
+    handleScopeSort(event) { this.scopeSort = nextSort(this.scopeSort, event.currentTarget.dataset.key); this.page = 0; this.tableMin = 0; }
     // ten lots a page; a lot's open rows stay with it
     page = 0;
     get pageCount() { return Math.max(1, Math.ceil(this.shownLots.length / PAGE)); }
