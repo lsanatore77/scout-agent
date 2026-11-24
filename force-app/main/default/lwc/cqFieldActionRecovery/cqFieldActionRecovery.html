@@ -14,7 +14,7 @@
             <template if:true={isNotice}><p class="cq-note">An advisory notice leaves the product in use, so there are no units to recover. Effectiveness rests on the customers acknowledging.</p></template>
             <template if:true={showRecovery}>
             <section class="cq-stepcard">
-                <div class="cq-stepcard-head"><span class="cq-stepcard-n">1</span><span class="cq-stepcard-title">Recovery by Lot</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{recoveryLine}</span></div>
+                <div class="cq-stepcard-head"><span class="cq-stepcard-title">Recovery by Lot</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{recoveryLine}</span></div>
                 <div class="cq-tblwrap">
                     <table class="cq-tbl compact">
                         <thead><tr>
@@ -51,7 +51,7 @@
             </div>
 
             <section class="cq-stepcard">
-                <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">Customers and Tasks</span><span class="cq-grow"></span>
+                <div class="cq-stepcard-head mid"><span class="cq-stepcard-title">Customers and Tasks</span><span class="cq-grow"></span>
                     <template if:true={filterLine}><span class="cq-hint">{filterLine}</span></template>
                     <span class="cq-sub">{progressLine}</span>
                     <button class="cq-btn-outline" onclick={handleOpenAdd} disabled={locked}>+ Add Task</button>
@@ -185,7 +185,7 @@
 
             <div class="grid">
                 <section class="cq-stepcard">
-                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">3</span><span class="cq-stepcard-title">Held Stock</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{dispLine}</span></div>
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-title">Held Stock</span><span class="cq-grow"></span><span class="cq-stepcard-tot">{dispLine}</span></div>
                     <template if:true={hasHolds}>
                         <template if:true={alsoHeldCount}><p class="alsonote" role="note">{alsoHeldLine}</p></template>
                         <div class="cq-tblwrap">
@@ -220,7 +220,7 @@
                 </section>
 
                 <section class="cq-stepcard">
-                    <div class="cq-stepcard-head"><span class="cq-stepcard-n">4</span><span class="cq-stepcard-title">Effectiveness Verdict</span></div>
+                    <div class="cq-stepcard-head"><span class="cq-stepcard-title">Effectiveness Verdict</span></div>
                     <div class="cq-checks" role="list" aria-label="What the verdict rests on">
                         <template for:each={verdictChecks} for:item="c">
                             <div key={c.key} class="cq-check" role="listitem">

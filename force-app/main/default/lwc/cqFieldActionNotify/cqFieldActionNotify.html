@@ -11,7 +11,7 @@
             <p class="cq-step-intro">Customer service works one Case per customer. This page follows them: who has acknowledged, who is still open, and what each one reported.</p>
 
             <section class="cq-stepcard">
-                <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">1</span><span class="cq-stepcard-title">Customer Notice</span><span class="cq-grow"></span>
+                <div class="cq-stepcard-head mid"><span class="cq-stepcard-title">Customer Notice</span><span class="cq-grow"></span>
                     <button class="cq-btn-outline" onclick={handleFollowUp} disabled={cantFollowUp}>{followLabel}</button>
                     <button class="cq-btn-primary" onclick={handleMarkSent} disabled={cantMarkSent}>{markLabel}</button>
                 </div>
@@ -31,7 +31,7 @@
             </div>
 
             <section class="cq-stepcard">
-                <div class="cq-stepcard-head mid"><span class="cq-stepcard-n">2</span><span class="cq-stepcard-title">{tableTitle}</span><span class="cq-grow"></span>
+                <div class="cq-stepcard-head mid"><span class="cq-stepcard-title">{tableTitle}</span><span class="cq-grow"></span>
                     <span class="cq-sub">{tallyLine}</span>
                     <template if:true={hasDone}><button class="cq-link" onclick={handleShowDone} aria-pressed={showDonePressed}>{showDoneLabel}</button></template>
                 </div>
