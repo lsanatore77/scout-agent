@@ -14,6 +14,13 @@ Audit page: https://claude.ai/artifact/3FHHFJVoKeUeVJ8pUwQg6A (19 Nov 2026)
    - under: "You've entered P, there are R remaining items left to Disposition." Fewer is allowed today.
    - Later: disposition stays open until decided; entering fewer will need a justification.
 7. Stray colours: map to nearest theme value, bring back only the ones with no close match.
+8. cqStyles first (24 Nov 2026, Lou): before building, use the shared cqStyles pieces and tokens. A pattern that would be
+   reused goes into cqStyles, not into a component. Component CSS only for layout that belongs to that one screen, and even
+   then every font size and colour comes from a cqStyles token (no fixed px/rem font sizes, no hard-coded colours). If
+   something cannot follow cqStyles, say why before building it. Font scale: --cq-fs-2xs 10, -micro 11, -sm 12,
+   -label/-meta 13, -para/-btn 14, -body 15, -lead 16, -h4 17, -h3 18, -h2 20, -h1 22, -stat 28, -display 68, and glyph
+   sizes -glyph-xs 7, -sm 8, -md 18, -lg 22, -xl 24. Fixed sizes left in components (24 Nov): 238 in 37 live components,
+   converted one component at a time.
 
 ## Pass 1, step rail
 - cqStyles STEP RAIL section: deployed.
