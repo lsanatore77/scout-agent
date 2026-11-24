@@ -21,7 +21,6 @@
 .evt { display: flex; gap: 12px; padding: 8px 14px 8px 36px; border-bottom: 1px solid var(--cq-line); }
 .evt:last-child { border-bottom: none; }
 .rt { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
-.chev { display: inline-block; flex: none; width: 12px; font-size: 18px; line-height: 1; color: var(--cq-muted); text-align: center; transition: transform .15s; }
 .chk { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
 .rr { padding: 8px 0; border-bottom: 1px solid var(--cq-line); }
 .rr:last-child { border-bottom: none; padding-bottom: 0; }
@@ -69,12 +68,11 @@
 .sghead { display: flex; align-items: center; gap: 8px; white-space: nowrap; margin-bottom: 4px; }
 .stbl .srow { cursor: pointer; }
 .stbl .srow.hot td { background: var(--cq-surface); }
-.chevbtn { padding: 0; border: none; background: none; cursor: pointer; }
-.chev.open { transform: rotate(90deg); }
+/* the expand chevron is the shared one (cq-rchev-btn > cq-rchev, cqStyles) */
 .stbl .evrow td { padding: 8px 12px; border-top: 1px solid var(--cq-line); }
 /* With the committee, Reviewer Assessment and Recommendation open view only (class set in renderedCallback) */
 .view.viewonly .cq-step-title::after { content: '\00A0\00B7\00A0View Only'; font-size: 14px; font-weight: 600; color: var(--cq-muted); }
-.view.viewonly button:not(.cq-link):not(.chevbtn), .view.viewonly select, .view.viewonly input, .view.viewonly textarea { pointer-events: none; }
+.view.viewonly button:not(.cq-link):not(.cq-rchev-btn):not(.cq-sortbtn), .view.viewonly select, .view.viewonly input, .view.viewonly textarea { pointer-events: none; }
 .view.viewonly textarea, .view.viewonly input, .view.viewonly select { background: var(--cq-surface); }
 /* shared fields and messages keep this screen's vertical rhythm */
 .cq-field { margin-top: 14px; }

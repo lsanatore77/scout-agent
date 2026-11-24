@@ -10,6 +10,7 @@ import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import noteSuggestions from '@salesforce/apex/CqFarSuggestions.note';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
 import { readDraft, writeDraft, upTo } from 'c/cqWsDraft';
+import { sortRows, nextSort, heads } from 'c/cqSort';
 import { askPolicies, anyRequired, anyUnknown } from 'c/cqEsign';
 
 // shared pill tones (cqStyles .cq-pill.soft.*)
@@ -359,7 +360,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             const open = !!this.openSig[s.id];
             rows.push({ key: 's' + s.id, isSig: true, id: s.id, rule: s.rule, pillCls: s.pillCls, strength: s.strength, sub: (s.meta || '').replace(/-/g, '‑'),   // lots and dates never break at the hyphen
                 label: s.label, why: this.notRepeated(s.label, s.why), n: s.total,
-                expanded: open ? 'true' : 'false', chevCls: 'chev' + (open ? ' open' : ''),
+                expanded: open ? 'true' : 'false', chevCls: 'cq-rchev' + (open ? ' open' : ''),
                 rowCls: 'srow' + (this.hotSig === s.id ? ' hot' : '') + (open ? ' isopen' : '') });
             if (open) {
                 if (s.seenLine) { rows.push({ key: 'f' + s.id, isSeen: true, text: s.seenLine }); }
@@ -374,9 +375,20 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         const m = /^([^.]+)\.\s+(.*)$/.exec(why || '');
         return m && (label || '').toLowerCase().startsWith(m[1].trim().toLowerCase()) ? m[2] : why;
     }
+    // the two signal tables sort on a heading click (c/cqSort); a signal's records travel with it, and paging follows the sort
+    sigSort = null;
+    moreSort = null;
+    sigCols(sort) {
+        return heads([{ key: 'open', label: 'Open', cls: 'chcol', sortable: false, hidden: true }, { key: 'rule', label: 'Signal' },
+            { key: 'label', label: 'What We See' }, { key: 'total', label: 'Records', num: true }], sort).map((h) => ({ ...h, shown: h.plain && !h.hidden }));
+    }
+    get sigHeads() { return this.sigCols(this.sigSort); }
+    get moreHeads() { return this.sigCols(this.moreSort); }
+    handleSigSort(event) { this.sigSort = nextSort(this.sigSort, event.currentTarget.dataset.key); this.sigPage = 0; }
+    handleMoreSort(event) { this.moreSort = nextSort(this.moreSort, event.currentTarget.dataset.key); }
     get signalRows() {
         const from = this.sigPageNow * SIG_PAGE;
-        return this.sigRows(this.signals.slice(from, from + SIG_PAGE));
+        return this.sigRows(sortRows(this.signals, this.sigSort).slice(from, from + SIG_PAGE));
     }
     // ---- five signals a page, with the same page numbers as the other tables (cqStyles .cq-pager)
     sigPage = 0;
@@ -405,7 +417,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         });
         return out;
     }
-    get moreSignalRows() { return this.sigRows(this.moreSignals); }
+    get moreSignalRows() { return this.sigRows(sortRows(this.moreSignals, this.moreSort)); }
     handleSigToggle(event) {
         const id = event.currentTarget.dataset.id;
         this.openSig = { ...this.openSig, [id]: !this.openSig[id] };
