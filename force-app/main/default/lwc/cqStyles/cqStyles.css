@@ -249,8 +249,8 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-optcard > :not(.cq-optcard-title):not(.cq-optcard-desc) { order: 2; }
 .cq-optcard-desc { order: 3; flex: 0 0 100%; font-size: var(--cq-fs-meta); font-weight: 400; color: var(--cq-muted); }
 .cq-optcard[aria-pressed="true"] { border: 2px solid var(--cq-link); background: var(--cq-link-soft); padding: calc(0.875rem - 1px); }
-/* the card CQ.AI suggests is purple, never the neutral blue: tinted at rest, purple edge when chosen */
-.cq-optcard.ai { border-color: var(--cq-accent-line); background: var(--cq-accent-soft); }
+/* fill means chosen, the tag means suggested: CQ.AI's suggestion stays white with a purple border until it is the one picked */
+.cq-optcard.ai { border-color: var(--cq-accent); }
 .cq-optcard.ai[aria-pressed="true"] { border: 2px solid var(--cq-accent); background: var(--cq-accent-soft); }
 @media (max-width: 47.5rem) { .cq-optcards { grid-template-columns: 1fr; } }
 
