@@ -70,7 +70,7 @@
                     </template>
                     <div class="cq-tblwrap">
                         <table class="cq-tbl compact">
-                            <thead><tr><th class="hc">Hold</th><th>Lot</th><th>What</th><th class="num">On Hand</th><th>Held Since</th><th>Status</th></tr></thead>
+                            <thead><tr><template for:each={holdHeads} for:item="c"><th key={c.key} scope="col" class={c.thCls} aria-sort={c.aria}><template if:true={c.sortable}><button class="cq-sortbtn" data-key={c.key} onclick={handleHoldSort} title={c.title}>{c.label}<span class={c.arrowCls} aria-hidden="true"></span></button></template><template if:true={c.plain}>{c.label}</template></th></template></tr></thead>
                             <tbody>
                                 <template for:each={holdRows} for:item="h">
                                     <tr key={h.key} class={h.rowCls}>

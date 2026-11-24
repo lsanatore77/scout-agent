@@ -4,6 +4,7 @@ import getView from '@salesforce/apex/CqFieldActionStrategy.getView';
 import saveField from '@salesforce/apex/CqFieldActionStrategy.saveField';
 import setHold from '@salesforce/apex/CqFieldActionStrategy.setHold';
 import confirmStrategy from '@salesforce/apex/CqFieldActionStrategy.confirmStrategy';
+import { sortRows, nextSort, heads } from 'c/cqSort';
 
 const REMOVAL = 'Removal (Recall)';
 const CORRECTION = 'Correction';
@@ -56,6 +57,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     footSig;
     tab = 'action';      // action | tell | holds | check
     stockOpen = '';      // the hold row whose on-hand split is showing
+    holdSort = null;     // the Holds table's sort ({ key, dir }); rows sort inside their group (finished lots, component lots)
 
     async connectedCallback() {
         // a click anywhere else, or Escape, closes the On Hand card (as on Scope)
@@ -197,15 +199,27 @@ export default class CqFieldActionStrategy extends LightningElement {
     }
 
     // ---- holds
+    get holdHeads() {
+        return heads([
+            { key: 'hold', label: 'Hold', cls: 'hc', sortable: false },
+            { key: 'lot', label: 'Lot' },
+            { key: 'item', label: 'What' },
+            { key: 'onHandN', label: 'On Hand', num: true },
+            { key: 'heldN', label: 'Held Since' },
+            { key: 'stateText', label: 'Status' }
+        ], this.holdSort);
+    }
+    handleHoldSort(event) { this.holdSort = nextSort(this.holdSort, event.currentTarget.dataset.key); }
     get holdRows() {
         const rows = [];
         const add = (kind, title) => {
             const list = (this.v.holds || []).filter((h) => h.kind === kind);
             if (!list.length) { return; }
             rows.push({ key: 'g' + kind, isGroup: true, title, rowCls: 'grp' });
+            const out = [];
             list.forEach((h) => {
                 const state = h.hold && h.held ? ['Held', 'cq-pill soft pos'] : h.hold ? ['Not confirmed', 'cq-pill soft warn'] : h.held ? ['Releasing', 'cq-pill soft crit'] : ['', ''];
-                rows.push({ key: h.id, isGroup: false, rowCls: '', id: h.id, lot: h.lot, hold: h.hold, item: h.item || '',
+                out.push({ key: h.id, isGroup: false, rowCls: '', id: h.id, lot: h.lot, hold: h.hold, item: h.item || '',
                     part: h.part ? h.part : '', why: h.kind === 'Component Lot' ? ncOnce(h.reason) : '', ai: h.suggested && h.kind === 'Component Lot',
                     onHand: h.onHand === undefined || h.onHand === null ? '—' : String(h.onHand),
                     stateText: h.outOfScope ? 'No longer in scope' : state[0], stateCls: h.outOfScope ? 'cq-pill soft crit' : state[1],
@@ -215,8 +229,10 @@ export default class CqFieldActionStrategy extends LightningElement {
                     canOpen: (h.places || []).length > 0, stockOpen: this.stockOpen === h.id && (h.places || []).length > 0,
                     stockExpanded: this.stockOpen === h.id ? 'true' : 'false', popLabel: 'On hand for lot ' + h.lot,
                     asOfText: [h.source, h.asOf ? 'as of ' + new Date(h.asOf).toLocaleString() : ''].filter(Boolean).join(' · '),
-                    heldText: h.heldOn ? new Date(h.heldOn).toLocaleDateString() : '—', stays: h.stays });
+                    heldText: h.heldOn ? new Date(h.heldOn).toLocaleDateString() : '—', stays: h.stays,
+                    onHandN: h.onHand === undefined || h.onHand === null ? null : Number(h.onHand), heldN: h.heldOn ? new Date(h.heldOn).getTime() : null });
             });
+            rows.push(...sortRows(out, this.holdSort));
         };
         add('Finished Lot', 'Finished lots in scope');
         add('Component Lot', 'Component lots in these lots');
@@ -235,7 +251,7 @@ export default class CqFieldActionStrategy extends LightningElement {
         const why = [];
         if (fin.length) { why.push('Every finished lot in scope is held so none of its stock ships while the recall runs.'); }
         comps.forEach((c) => {
-            const m = /(NC-\S+) \u00b7 in lot (\S+)/i.exec(ncOnce(c.reason));
+            const m = /(NC-\S+) · in lot (\S+)/i.exec(ncOnce(c.reason));
             why.push(m ? c.lot + ' has ' + m[1] + ' against it and went into ' + m[2] + '.' : c.lot + ': ' + ncOnce(c.reason));
         });
         return { headline: 'Hold ' + hs.length + ' Lot' + (hs.length === 1 ? '' : 's') + ': ' + parts.join(' and '), why: why.join(' ') };
