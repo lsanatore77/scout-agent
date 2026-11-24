@@ -38,7 +38,7 @@ const INSTRUCTION_HINT = {
 const LEVELS = [['Level A', 'A · 100%'], ['Level B', 'B · Your share'], ['Level C', 'C · 10%'], ['Level D', 'D · 2%'], ['Level E', 'None']];
 const LEVEL_HINT = {
     'Level A': 'Every customer confirms they received the notice and acted on it.',
-    'Level B': 'A share between 10% and 100% of customers, set below.',
+    'Level B': 'A share between 10% and 100% of customers, which you set.',
     'Level C': '10% of customers are checked.',
     'Level D': '2% of customers are checked.',
     'Level E': 'No check. The regulator must agree.'
@@ -116,7 +116,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     get stateText() { return this.v.status || 'Not started'; }
     get statePill() { return 'cq-pill soft ' + (this.v.status === 'Confirmed' ? 'pos' : this.v.status ? 'warn' : 'neu'); }
 
-    // ---- tabs: one section, a numbered tab per part; the number is green when that part is done, amber when it needs fixing
+    // ---- tabs: one section, a tab per part; a green tick when that part is done, an amber ! when it needs fixing (no numbers)
     get tabState() {
         const p = Number(this.percent);
         const checkDone = !!this.level && (!this.isLevelB || (p > 10 && p < 100)) && (!this.needsCheck || (!!this.method && !!this.checkBy));
@@ -131,7 +131,7 @@ export default class CqFieldActionStrategy extends LightningElement {
         const n = (this.v.holds || []).filter((h) => h.hold).length;
         const st = this.tabState;
         return [['action', 'Action and Depth'], ['tell', 'What We Tell Customers'], ['holds', 'Holds (' + n + ')'], ['check', 'Effectiveness Check']]
-            .map(([key, label], i) => ({ key, label, num: String(i + 1), sel: this.tab === key ? 'true' : 'false',
+            .map(([key, label]) => ({ key, label, mark: st[key] === 'ok' ? '✓' : st[key] === 'warn' ? '!' : '', sel: this.tab === key ? 'true' : 'false',
                 cls: 'tab' + (this.tab === key ? ' on' : ''), numCls: 'tnum' + (st[key] ? ' ' + st[key] : '') }));
     }
     handleTab(event) { this.tab = event.currentTarget.dataset.tab; }

@@ -29,7 +29,7 @@
             <section class="tabbox">
                 <div class="tabs" role="tablist" aria-label="Strategy">
                     <template for:each={tabs} for:item="t">
-                        <button key={t.key} class={t.cls} role="tab" aria-selected={t.sel} data-tab={t.key} onclick={handleTab}><span class={t.numCls}>{t.num}</span>{t.label}</button>
+                        <button key={t.key} class={t.cls} role="tab" aria-selected={t.sel} data-tab={t.key} onclick={handleTab}><template if:true={t.mark}><span class={t.numCls} aria-hidden="true">{t.mark}</span></template>{t.label}</button>
                     </template>
                 </div>
                 <div class="panel" role="tabpanel">
