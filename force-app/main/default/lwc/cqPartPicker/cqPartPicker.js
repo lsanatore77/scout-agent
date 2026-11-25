@@ -81,7 +81,7 @@ export default class CqPartPicker extends LightningElement {
         this.picked = p;
         this.open = false;
         this.term = '';
-        this.dispatchEvent(new CustomEvent('change', { detail: { recordId: p.id } }));
+        this.dispatchEvent(new CustomEvent('change', { detail: { recordId: p.id, partNumber: p.partNumber, name: p.name } }));
     }
     handleClear() {
         this.picked = undefined;
@@ -89,6 +89,11 @@ export default class CqPartPicker extends LightningElement {
         this.dispatchEvent(new CustomEvent('change', { detail: { recordId: null } }));
     }
     @api clear() { this.picked = undefined; this.term = ''; }
+    /** Start a search from outside with a word already typed (CQ.AI's word for the part), and open the list. */
+    @api startSearch(t) {
+        this.picked = undefined;
+        this.handleInput({ target: { value: t || '' } });
+    }
     /** Fill the part from outside (a chosen lot) without firing change. */
     @api setPart(p) {
         this.picked = p && p.id ? { id: p.id, partNumber: p.partNumber, name: p.name } : undefined;

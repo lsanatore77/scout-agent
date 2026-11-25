@@ -52,7 +52,7 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   Survey done 25 Nov (doc "Nonconformance: Workspace Survey"). **Decision (Lou, 25 Nov): keep building on CQ's NC, not a
   ground-up NC of our own.** Use CQ's unused NC fields where they fit (Risk Justification, Conclusion, Risk Assessment,
   Recommended Action, Invalid Nonconformance, Corrective / Preventive Action) before adding our own.
-  **Report a Nonconformance (designing, 25 Nov; mockup "Report a Nonconformance Mockup").** A two-step popup anyone can
+  **Report a Nonconformance (built 25 Nov: CqNcReport + CqNcReportTest 10/10, LWC cqNcReport; not yet on a page; mockup "Report a Nonconformance Mockup").** A two-step popup anyone can
   use: describe it, Next, then check and Create and Send to Triage (submitted on create, no Submit task). Step 1: a
   one-line Possible Duplicate check under the description while typing (lot numbers in the text matched against open NCs'
   impacted lots, no AI; Merge or Create; merging skips step 2). Step 2 repeats the check only when CQ.AI finds a lot step 1
@@ -73,6 +73,11 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   default 0/30 to the rule, with the rule as the entity definition 10/10 in form, 5/10 with where found (add FOUND AT
   when missing). One CQ entity extraction call with our own entity definitions replaces 5W2H and a new prompt
   template; CQ's 5W2H action handles only one input per call.
+  Build notes: Merge (addToExisting) posts the report on the NC's feed and gives its owner a task (people only, not queues);
+  CQ.AI's suggestions are kept as a note "CQ.AI at creation" and the words as reported as a Quick NC "As Reported" row;
+  files are held in the popup and attached after Create or Merge (3 MB each). CQ's Submit did not move a new NC to
+  Triage when run from anonymous Apex (nor an existing Draft NC); check from the popup in the browser. If it stays in
+  Draft the done screen says so, and Triage's start submits it anyway.
 - **Later (Lou, 24 Nov): Field Action numbers kept current straight away.** For now a nightly job and a Refresh Numbers
   button work them out. Records change in many places (workspace, tasks, cases, ERP loads), and the numbers being right
   matters, so move to updating on change, handing large loads to a background job (bulk limits, record locks).

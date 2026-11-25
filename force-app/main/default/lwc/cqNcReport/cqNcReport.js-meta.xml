@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>CQ.AI Report a Nonconformance</masterLabel>
+    <description>A button that opens the Report a Nonconformance popup: describe it, CQ.AI fills in the record, Create and Send to Triage. Checks for a possible duplicate on the same lot.</description>
+    <targets>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+        <target>lightning__RecordPage</target>
+        <target>lightning__UtilityBar</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__AppPage,lightning__HomePage,lightning__RecordPage,lightning__UtilityBar">
+            <property name="buttonLabel" type="String" label="Button Label" default="Report a Nonconformance" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>
