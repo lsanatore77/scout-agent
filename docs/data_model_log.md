@@ -2,6 +2,9 @@
 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
+### 24 Nov 2026
+- **Field Action**: added Workspace Step (Glance, Scope, Strategy, Notifications, Reporting, Recovery, Closure, Complete) and Started On, set by the workspace; Days Open, Days to Notify and Check Overdue (formulas); Notices Sent On, Lots in Scope, Units on Hand, Lots on Hold, Customers, Customers Notified, Customers Responded, Closed Without Response, Responses Overdue, Units Returned, Units Destroyed, Units Corrected, Units Used, Units Unaccounted, Recovery %, Check Target Met and Numbers Updated On, worked out by `CqFieldActionNumbers` (nightly job `CqFieldActionNumbersJob`, or Refresh Numbers in the workspace header); CQ.AI Suggested Action Type, CQ.AI Suggested Depth, CQ.AI Suggested Check Level and Strategy Reason, saved at Confirm Strategy. Quantity Shipped now follows the lots in scope when their shipments are known. Status is unchanged.
+
 ### 16 Nov 2026
 - **New object Event Question** (`Event_Question__c`, EQ-000): the quick questions on Report a Problem, set per company. Fields: Order, Question, Answer Type (Yes or No, Choice, Text, Number, Date), Choices (semicolon separated), Role (Where Found, Product Affected, Injury, Safety Risk, None: what CQ.AI reads), Urgent When (answers that make the event urgent), Help Text, Required, Active. Seeded with the four standard questions and one extra ("Which test or inspection found it?").
 - **New object Event Answer** (`Event_Answer__c`, EA-00000): one answer per question on an event, master-detail to Quality Event (related list Answers). Fields: Event Question (lookup), Question Text, Role and Order as asked, Answer.

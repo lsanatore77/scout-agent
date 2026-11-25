@@ -14,7 +14,8 @@ private class CqFieldActionStrategyTest {
         return new Map<String, String>{
             'action' => CqFieldActionStrategy.REMOVAL, 'depth' => 'Hospital', 'instruction' => CqFieldActionStrategy.RETURN_IT,
             'message' => 'Stop using the product and return it.', 'level' => level, 'percent' => percent,
-            'method' => 'Phone call', 'checkBy' => String.valueOf(Date.today().addDays(30)) };
+            'method' => 'Phone call', 'checkBy' => String.valueOf(Date.today().addDays(30)),
+            'why' => 'Chosen for the test' };
     }
 
     static String confirmRefused(Id faId, Map<String, String> values) {
@@ -210,5 +211,44 @@ private class CqFieldActionStrategyTest {
         update new Field_Action__c(Id = fa.Id, Status__c = 'Closed');
         System.assertEquals(true, CqFieldActionStrategy.getView(fa.Id).closed);
         System.assertEquals('refused', confirmRefused(fa.Id, choices('Level A', null)), 'a closed field action is not changed');
+    }
+
+    @IsTest
+    static void aChoiceOtherThanCqAisNeedsAReasonAndIsKeptBesideIt() {
+        Field_Action__c fa = makeFa('Class II', 100);   // CQ.AI: Removal, to Hospital Level, Level A
+        Map<String, String> same = choices('Level A', null);
+        same.remove('why');
+        Test.startTest();
+        CqFieldActionStrategy.View v = CqFieldActionStrategy.confirmStrategy(fa.Id, same);
+        System.assertEquals('Confirmed', v.status, 'as CQ.AI suggests: no reason needed');
+        Field_Action__c r = [SELECT CQAI_Suggested_Action_Type__c, CQAI_Suggested_Depth__c, CQAI_Suggested_Check_Level__c, Strategy_Reason__c
+                             FROM Field_Action__c WHERE Id = :fa.Id];
+        System.assertEquals(CqFieldActionStrategy.REMOVAL, r.CQAI_Suggested_Action_Type__c);
+        System.assertEquals('Hospital', r.CQAI_Suggested_Depth__c);
+        System.assertEquals('Level A', r.CQAI_Suggested_Check_Level__c);
+        System.assertEquals(null, r.Strategy_Reason__c);
+        System.assertEquals('Accepted CQ.AI Suggestion: Strategy', CqAuditTrail.get(fa.Id).entries[0].title);
+
+        Map<String, String> other = same.clone();
+        other.put('depth', 'Patient');
+        CqFieldActionStrategy.saveField(fa.Id, 'depth', 'Patient');
+        try {
+            CqFieldActionStrategy.confirmStrategy(fa.Id, other);
+            System.assert(false, 'a different depth needs a reason');
+        } catch (AuraHandledException e) {
+            System.assert(true);   // the message (shown on screen) names what differs; Apex tests only see 'Script-thrown exception'
+        }
+        other.put('why', '  Implanted in some patients.  ');
+        v = CqFieldActionStrategy.confirmStrategy(fa.Id, other);
+        System.assertEquals('Implanted in some patients.', v.reason);
+        Test.stopTest();
+        r = [SELECT Depth__c, CQAI_Suggested_Depth__c, Strategy_Reason__c FROM Field_Action__c WHERE Id = :fa.Id];
+        System.assertEquals('Patient', r.Depth__c);
+        System.assertEquals('Hospital', r.CQAI_Suggested_Depth__c, 'CQ.AI\'s suggestion is kept beside the choice');
+        CqAuditTrail.Entry entry = CqAuditTrail.get(fa.Id).entries[0];
+        System.assertEquals('Changed CQ.AI Suggestion: Strategy', entry.title);
+        System.assertEquals(true, entry.changed);
+        System.assert(entry.cqValue.contains('Hospital') && entry.personValue.contains('Patient'), entry.cqValue + ' / ' + entry.personValue);
+        System.assertEquals('Implanted in some patients.', entry.reason);
     }
 }

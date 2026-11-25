@@ -47,8 +47,13 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 - **Later (Lou, 24 Nov): Field Action numbers kept current straight away.** For now a nightly job and a Refresh Numbers
   button work them out. Records change in many places (workspace, tasks, cases, ERP loads), and the numbers being right
   matters, so move to updating on change, handing large loads to a background job (bulk limits, record locks).
-- **Next (Lou, 24 Nov): Field Action gets the Field Action Review treatment.** Record fields for each workspace step, status
-  and step on the record, and the new fields on the page layout (no Path, no field history, as for the review), so a standard record page and reports show where it stands.
+- **Field Action record fields (24 Nov, built).** 26 fields (doc "Field Action: Proposed Fields"): Workspace Step, Started On,
+  Days Open, Days to Notify, Check Overdue, the scope, notification and recovery numbers, Numbers Updated On, CQ.AI's suggested
+  action, depth and check level, and Strategy Reason. Numbers: CqFieldActionNumbers (one place), the nightly
+  CqFieldActionNumbersJob (2:17 am) and Refresh Numbers in the workspace header. Strategy needs a reason when it differs from
+  CQ.AI; the audit trail shows the latest confirm against CQ.AI's suggestion. Page layout rebuilt in sections. Status unchanged;
+  regulatory report fields wait for that step. Note: the audit trail entry is read from the record, so only the latest
+  confirm shows; a log of every confirm would need its own rows (later, with the approval matrix work if wanted).
 - Field Action Review: page layout done 24 Nov (Progress, Checklist, Recommendation and Committee sections). Lou: no Path,
   related lists as they are, no field history (the Audit Trail is the record). FAR-0004 restored. Design system on hold.
 - Field Action Review and the other screens onto the shared grey `.cq-card` (list in cqstyles_centralising.md).

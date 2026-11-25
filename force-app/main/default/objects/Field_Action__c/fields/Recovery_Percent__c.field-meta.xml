@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Recovery_Percent__c</fullName>
+    <label>Recovery %</label>
+    <description>Units accounted for against units shipped.</description>
+    <inlineHelpText>Worked out each night, or with Refresh Numbers in the workspace.</inlineHelpText>
+    <precision>5</precision>
+    <scale>0</scale>
+    <type>Percent</type>
+</CustomField>

@@ -51,6 +51,7 @@ public with sharing class CqFieldActionStrategy {
         @AuraEnabled public String whyAction; @AuraEnabled public String whyLevel;
         @AuraEnabled public String sHeadline;   // what CQ.AI suggests, said first: 'Removal, to Hospital Level'
         @AuraEnabled public String sLevelHeadline;   // the check level CQ.AI suggests, said first: 'Level A, 100% Check'
+        @AuraEnabled public String reason;   // why the confirmed strategy differs from CQ.AI (Strategy Reason)
         @AuraEnabled public List<HoldRow> holds = new List<HoldRow>();
         @AuraEnabled public List<Comp> components = new List<Comp>();   // component lots that can be added as holds
     }
@@ -58,7 +59,7 @@ public with sharing class CqFieldActionStrategy {
     private static Field_Action__c load(Id recordId) {
         return [SELECT Id, Name, Status__c, Action_Type__c, Recall_Class__c, Part__c, Part__r.Name, Part__r.compliancequest__Part_Number__c,
                        Scope__c, Scope_Status__c, Depth__c, Customer_Instruction__c, Key_Message__c, Check_Level__c, Check_Percent__c,
-                       Check_Method__c, Check_By__c, Strategy_Status__c, Strategy_Confirmed_By__r.Name, Strategy_Confirmed_On__c
+                       Check_Method__c, Check_By__c, Strategy_Status__c, Strategy_Confirmed_By__r.Name, Strategy_Confirmed_On__c, Strategy_Reason__c
                 FROM Field_Action__c WHERE Id = :recordId];
     }
     private static Boolean scopeConfirmed(Field_Action__c fa) {
@@ -81,7 +82,7 @@ public with sharing class CqFieldActionStrategy {
     public static View getView(Id recordId) {
         Field_Action__c fa = load(recordId);
         View v = new View();
-        v.id = fa.Id; v.status = fa.Strategy_Status__c; v.confirmedBy = fa.Strategy_Confirmed_By__r?.Name; v.confirmedOn = fa.Strategy_Confirmed_On__c;
+        v.id = fa.Id; v.status = fa.Strategy_Status__c; v.confirmedBy = fa.Strategy_Confirmed_By__r?.Name; v.confirmedOn = fa.Strategy_Confirmed_On__c; v.reason = fa.Strategy_Reason__c;
         v.closed = fa.Status__c == 'Closed'; v.scopeConfirmed = scopeConfirmed(fa);
         v.partNumber = fa.Part__r?.compliancequest__Part_Number__c; v.partName = fa.Part__r?.Name; v.recallClass = fa.Recall_Class__c;
         v.action = fa.Action_Type__c; v.depth = fa.Depth__c; v.instruction = fa.Customer_Instruction__c; v.message = fa.Key_Message__c;
@@ -302,6 +303,15 @@ public with sharing class CqFieldActionStrategy {
         return false;
     }
 
+    /** Which of the action, how far it goes and the check level differ from CQ.AI's suggestion (none when CQ.AI made none). */
+    public static List<String> differences(View v, String action, String depth, String level) {
+        List<String> out = new List<String>();
+        if (v.sAction != null && action != v.sAction) { out.add('action'); }
+        if (v.sDepth != null && depth != v.sDepth) { out.add('how far it goes'); }
+        if (v.sLevel != null && level != v.sLevel) { out.add('check level'); }
+        return out;
+    }
+
     /** Confirm Strategy: saves what is on screen, places ticked holds, releases unticked ones. */
     @AuraEnabled
     public static View confirmStrategy(Id recordId, Map<String, String> values) {
@@ -323,6 +333,13 @@ public with sharing class CqFieldActionStrategy {
         if (!fits(action, instruction)) { throw new AuraHandledException('The customer instruction does not match the action.'); }
         Decimal p = level == 'Level B' ? Decimal.valueOf(pct) : null;
         if (p != null && (p <= 10 || p >= 100)) { throw new AuraHandledException('For Level B, check more than 10% and less than 100% of customers.'); }
+        // as on the review: a choice other than CQ.AI's needs a reason, kept beside what CQ.AI suggested
+        View before = getView(recordId);
+        List<String> differs = differences(before, action, depth, level);
+        String why = String.isBlank(values.get('why')) ? null : values.get('why').trim();
+        if (!differs.isEmpty() && why == null) {
+            throw new AuraHandledException('Say why the ' + String.join(differs, ', ') + ' differ' + (differs.size() == 1 ? 's' : '') + ' from what CQ.AI suggested.');
+        }
 
         List<Field_Action_Hold__c> ups = new List<Field_Action_Hold__c>();
         Datetime now = Datetime.now();
@@ -334,7 +351,9 @@ public with sharing class CqFieldActionStrategy {
         update new Field_Action__c(Id = recordId, Action_Type__c = action, Depth__c = depth, Customer_Instruction__c = instruction,
             Key_Message__c = message, Check_Level__c = level, Check_Percent__c = p,
             Check_Method__c = level == 'Level E' ? null : method, Check_By__c = level == 'Level E' || String.isBlank(dueOn) ? null : Date.valueOf(dueOn),
-            Strategy_Status__c = 'Confirmed', Strategy_Confirmed_By__c = UserInfo.getUserId(), Strategy_Confirmed_On__c = now);
+            Strategy_Status__c = 'Confirmed', Strategy_Confirmed_By__c = UserInfo.getUserId(), Strategy_Confirmed_On__c = now,
+            CQAI_Suggested_Action_Type__c = before.sAction, CQAI_Suggested_Depth__c = before.sDepth, CQAI_Suggested_Check_Level__c = before.sLevel,
+            Strategy_Reason__c = differs.isEmpty() ? null : why);
         if (action == WITHDRAWAL && fa.Recall_Class__c != null) { update new Field_Action__c(Id = recordId, Recall_Class__c = null); }
         return getView(recordId);
     }

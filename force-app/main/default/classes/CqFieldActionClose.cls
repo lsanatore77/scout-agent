@@ -47,7 +47,11 @@ public with sharing class CqFieldActionClose {
         if (v.closed || !v.canClose) { return CqFieldActionRecovery.closeFieldAction(recordId, summary); }   // says why it cannot close
         CqFaSignable.signing = String.isNotBlank(summary) ? summary : String.isNotBlank(v.summary) ? v.summary : v.sSummary;
         CqEsign.sign(recordId, ACTION, comment, password, mine);
-        return CqFieldActionRecovery.closeFieldAction(recordId, summary);
+        CqFieldActionRecovery.View closed = CqFieldActionRecovery.closeFieldAction(recordId, summary);
+        // the record shows the workspace as Complete and keeps its final numbers
+        update new Field_Action__c(Id = recordId, Workspace_Step__c = CqFieldActionProgress.COMPLETE);
+        CqFieldActionNumbers.refresh(new Set<Id>{ recordId });
+        return closed;
     }
 
     private static Boolean isAdmin() {

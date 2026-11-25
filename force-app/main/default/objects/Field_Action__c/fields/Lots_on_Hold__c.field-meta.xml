@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lots_on_Hold__c</fullName>
+    <label>Lots on Hold</label>
+    <description>Lots held by this field action.</description>
+    <inlineHelpText>Worked out each night, or with Refresh Numbers in the workspace.</inlineHelpText>
+    <precision>12</precision>
+    <scale>0</scale>
+    <type>Number</type>
+</CustomField>

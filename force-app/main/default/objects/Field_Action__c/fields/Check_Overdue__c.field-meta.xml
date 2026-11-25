@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Check_Overdue__c</fullName>
+    <label>Check Overdue</label>
+    <description>The effectiveness check-by date has passed and no verdict is confirmed.</description>
+    <inlineHelpText>Calculated from Check By, Recovery Status and Status.</inlineHelpText>
+    <formula><![CDATA[AND(NOT(ISBLANK(Check_By__c)), Check_By__c < TODAY(), NOT(ISPICKVAL(Recovery_Status__c, 'Confirmed')), NOT(ISPICKVAL(Status__c, 'Closed')))]]></formula>
+    <type>Checkbox</type>
+</CustomField>

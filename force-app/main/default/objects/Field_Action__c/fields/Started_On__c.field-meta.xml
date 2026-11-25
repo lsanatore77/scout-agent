@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Started_On__c</fullName>
+    <label>Started On</label>
+    <description>When the coordinator first opened the field action in the workspace.</description>
+    <inlineHelpText>Set by the workspace the first time it is opened.</inlineHelpText>
+    <type>DateTime</type>
+</CustomField>

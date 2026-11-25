@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Days_to_Notify__c</fullName>
+    <label>Days to Notify</label>
+    <description>Days from the decision to the first customer notice. A common regulatory measure.</description>
+    <inlineHelpText>Calculated: decision (or creation) to Notices Sent On. Blank until a notice goes out.</inlineHelpText>
+    <formula><![CDATA[IF(ISBLANK(Notices_Sent_On__c), NULL, Notices_Sent_On__c - DATEVALUE(BLANKVALUE(Decided_On__c, CreatedDate)))]]></formula>
+    <formulaTreatBlanksAs>BlankAsBlank</formulaTreatBlanksAs>
+    <precision>6</precision>
+    <scale>0</scale>
+    <type>Number</type>
+</CustomField>

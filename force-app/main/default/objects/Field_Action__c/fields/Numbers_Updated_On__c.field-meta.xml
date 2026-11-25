@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Numbers_Updated_On__c</fullName>
+    <label>Numbers Updated On</label>
+    <description>When the scope, notification and recovery numbers were last worked out.</description>
+    <inlineHelpText>Set by the nightly job and by Refresh Numbers.</inlineHelpText>
+    <type>DateTime</type>
+</CustomField>

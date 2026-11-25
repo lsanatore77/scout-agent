@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Strategy_Reason__c</fullName>
+    <label>Strategy Reason</label>
+    <description>Why the coordinator chose a different action, depth or check level from CQ.AI.</description>
+    <inlineHelpText>Required when the strategy differs from CQ.AI.</inlineHelpText>
+    <length>32768</length>
+    <visibleLines>3</visibleLines>
+    <type>LongTextArea</type>
+</CustomField>

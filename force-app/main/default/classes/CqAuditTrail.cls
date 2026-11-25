@@ -69,7 +69,10 @@ public with sharing class CqAuditTrail {
     private static Trail fieldAction(Id recordId) {
         Field_Action__c fa;
         try {
-            fa = [SELECT Id, Name, Status__c, Closed_By__r.Name, Closed_On__c, Closure_Summary__c FROM Field_Action__c WHERE Id = :recordId WITH USER_MODE];
+            fa = [SELECT Id, Name, Status__c, Closed_By__r.Name, Closed_On__c, Closure_Summary__c,
+                         Strategy_Confirmed_By__r.Name, Strategy_Confirmed_On__c, Action_Type__c, Depth__c, Check_Level__c,
+                         CQAI_Suggested_Action_Type__c, CQAI_Suggested_Depth__c, CQAI_Suggested_Check_Level__c, Strategy_Reason__c
+                  FROM Field_Action__c WHERE Id = :recordId WITH USER_MODE];
         } catch (QueryException e) {
             throw new AuraHandledException('You do not have access to this record.');
         }
@@ -87,6 +90,18 @@ public with sharing class CqAuditTrail {
             if (c.How__c == 'Review') { bits.add('With the review decision'); }
             if (String.isNotBlank(c.Reason__c)) { bits.add(c.Reason__c); }
             x.detail = bits.isEmpty() ? null : String.join(bits, ': ');
+            t.entries.add(x);
+        }
+        // the confirmed strategy, set against CQ.AI's suggestion as a review's decisions are: what each was, and why they differ
+        if (fa.Strategy_Confirmed_On__c != null) {
+            String chosen = strategyText(fa.Action_Type__c, fa.Depth__c, fa.Check_Level__c);
+            String ai = fa.CQAI_Suggested_Action_Type__c == null && fa.CQAI_Suggested_Depth__c == null && fa.CQAI_Suggested_Check_Level__c == null ? null
+                : strategyText(fa.CQAI_Suggested_Action_Type__c, fa.CQAI_Suggested_Depth__c, fa.CQAI_Suggested_Check_Level__c);
+            Entry x = new Entry();
+            x.id = fa.Id + '-strategy'; x.at = fa.Strategy_Confirmed_On__c; x.kind = 'decision'; x.who = fa.Strategy_Confirmed_By__r?.Name;
+            x.changed = ai != null && ai != chosen;
+            x.title = x.changed ? 'Changed CQ.AI Suggestion: Strategy' : ai != null ? 'Accepted CQ.AI Suggestion: Strategy' : 'Confirmed the Strategy';
+            if (x.changed) { x.cqValue = ai; x.personValue = chosen; x.reason = fa.Strategy_Reason__c; } else { x.detail = chosen; }
             t.entries.add(x);
         }
         // closing it, and the signatures: each in the timeline, and the signatures again in their own list
@@ -122,6 +137,9 @@ public with sharing class CqAuditTrail {
         return p > 0 ? changedBy.left(p) : changedBy;
     }
     private static String cut(String s, Integer n) { return s == null ? null : s.abbreviate(n); }
+    private static String strategyText(String action, String depth, String level) {
+        return (action == null ? '—' : action) + ', to ' + (depth == null ? '—' : depth) + ' Level, ' + (level == null ? 'no check level' : level);
+    }
 
     private static List<Entry> entries(Id recordId) {
         List<Field_Action_Review_Audit__c> rows = new Reader().rowsOf(String.valueOf(recordId));

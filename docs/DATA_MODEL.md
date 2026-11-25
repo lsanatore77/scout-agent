@@ -8,6 +8,9 @@ Every object and field this project adds to the org. Built from the metadata in 
 
 Newest first. Add a line here whenever an object or field is created, changed or removed, then run `python3 tools/data_model.py`.
 
+### 24 Nov 2026
+- **Field Action**: added Workspace Step (Glance, Scope, Strategy, Notifications, Reporting, Recovery, Closure, Complete) and Started On, set by the workspace; Days Open, Days to Notify and Check Overdue (formulas); Notices Sent On, Lots in Scope, Units on Hand, Lots on Hold, Customers, Customers Notified, Customers Responded, Closed Without Response, Responses Overdue, Units Returned, Units Destroyed, Units Corrected, Units Used, Units Unaccounted, Recovery %, Check Target Met and Numbers Updated On, worked out by `CqFieldActionNumbers` (nightly job `CqFieldActionNumbersJob`, or Refresh Numbers in the workspace header); CQ.AI Suggested Action Type, CQ.AI Suggested Depth, CQ.AI Suggested Check Level and Strategy Reason, saved at Confirm Strategy. Quantity Shipped now follows the lots in scope when their shipments are known. Status is unchanged.
+
 ### 16 Nov 2026
 - **New object Event Question** (`Event_Question__c`, EQ-000): the quick questions on Report a Problem, set per company. Fields: Order, Question, Answer Type (Yes or No, Choice, Text, Number, Date), Choices (semicolon separated), Role (Where Found, Product Affected, Injury, Safety Risk, None: what CQ.AI reads), Urgent When (answers that make the event urgent), Help Text, Required, Active. Seeded with the four standard questions and one extra ("Which test or inspection found it?").
 - **New object Event Answer** (`Event_Answer__c`, EA-00000): one answer per question on an event, master-detail to Quality Event (related list Answers). Fields: Event Question (lookup), Question Text, Role and Order as asked, Answer.
@@ -49,6 +52,12 @@ Objects and fields from earlier work are listed below; their history is in git (
 
 ## Fields added to existing objects
 
+### Account
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Customer_Type__c` | Customer Type | Picklist | Distributor, Hospital, Clinic | What kind of customer this is, for field actions: How Far It Goes (Strategy) decides which types are notified. |
+
 ### Activity
 
 | API name | Label | Type | Details | Description |
@@ -57,6 +66,28 @@ Objects and fields from earlier work are listed below; their history is in git (
 | `Lot_Number__c` | Lot Number | Text | 80 chars | For tasks on a Field Action: the lot the task is about. |
 | `Recall_Task_Type__c` | Recall Task Type | Picklist | Send recall notice, Collect response, Track return, Confirm destruction, Confirm correction, Other | For tasks on a Field Action: what the task is. Return and destruction tasks carry the units; a completed Collect response marks the customer Acknowledged. |
 | `Units__c` | Units | Number | 9,0 | For return, destruction and correction tasks on a Field Action: units returned, destroyed or corrected so far. Adds up to the lot's recovery figures. |
+
+### Case
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Acknowledgment__c` | Acknowledgment | Text | formula | Where a field action notification Case stands, in the words the Notifications step uses. Blank on any other Case. The Field Action Cases report filters on it (contains), so every value carries the word Acknowledgment or Acknowledged. |
+| `Aware_Date__c` | Aware Date | DateTime |  | When the company became aware of the problem: the moment the report was sent from the mobile intake. |
+| `Customer_Reported__c` | Customer (As Reported) | Text | 255 chars | Mobile intake answer: the customer as the reporter named it. Account is set only when it matches one Account. |
+| `Field_Action_Customer__c` | Field Action Customer | Lookup | to Field_Action_Customer__c | The customer row on the field action that this Case tracks. |
+| `Field_Action__c` | Field Action | Lookup | to Field_Action__c | The field action this Case notifies a customer about. Set on Cases created from a confirmed strategy. |
+| `Found_By__c` | Found By (Test or Inspection) | Text | 255 chars | Mobile intake answer: which test or inspection found the problem. |
+| `Injured_Person__c` | Who Was Hurt | Text | 255 chars | Mobile intake answer: who was hurt. Personal information: keep access to people who need it. |
+| `Injury_Reported__c` | Injury Reported | Picklist | Yes, No | Mobile intake answer: was anyone injured, as the reporter said it. Product Caused Harm is the triage value. |
+| `Lot_Number__c` | Lot Number | Text | 80 chars | Lot or batch number the reporter gave in the mobile intake. Carried to the Complaint when one is created from the Case. |
+| `Notice_Sent_On__c` | Notice Sent On | Date |  | When the field action notice went to this customer. |
+| `Product_Affected__c` | Product Affected | Picklist | Yes, No | Mobile intake answer: did this affect a product. |
+| `Reported_By__c` | Reported By | Lookup | to User | The employee who reported the problem in the mobile intake. Contact stays for the customer. |
+| `Response_Due__c` | Response Due | Date |  | When the customer response is due. An open Case past this date is overdue on the field action. |
+| `Response_Outcome__c` | Response Outcome | Picklist | Response Received, No Response | How a field action Case closed. Response Received marks the customer Acknowledged; No Response leaves it not acknowledged. |
+| `Safety_Risk_Reported__c` | Safety Risk Reported | Picklist | Yes, No, Not Sure | Mobile intake answer: could anyone get hurt or is product safety at risk, as the reporter said it. Impact on Safety or Environment is the triage value. |
+| `Supplier_Reported__c` | Supplier (As Reported) | Text | 255 chars | Mobile intake answer: the supplier as the reporter named it. |
+| `Where_Found__c` | Where Found | Picklist | In Our Plant, At a Customer, At a Supplier, Not Known | Mobile intake answer: where the problem happened. |
 
 ### compliancequest__SQX_CAPA__c
 
@@ -76,6 +107,19 @@ Objects and fields from earlier work are listed below; their history is in git (
 | API name | Label | Type | Details | Description |
 |---|---|---|---|---|
 | `Batch__c` | Batch | Lookup | to cqext__CQEBR_Batch__c | The batch record that produced this lot. The firm link between a lot and its batch, used for signal detection and lot genealogy. |
+| `Hold_Reason__c` | Hold Reason | Text | 255 chars | Why the lot is on hold, quarantined or rejected, for example the field action or NC that placed the hold. |
+| `Lot_Type__c` | Lot Type | Picklist | Finished, Sub-assembly, Purchased | Whether the lot is a finished product, a sub-assembly made in house, or purchased material from a supplier. |
+| `Manual_Status__c` | Manual Status | Text | 40 chars | The release status a person last set on the lot by hand. Holds, NCs and receiving inspection can make the lot stricter than this, never looser; only a person clears it. |
+| `Part__c` | Part | Lookup | to compliancequest__SQX_Part__c | The part this lot is of. For a lot with a batch record the batch names the part too; a purchased lot has no batch, so this is where its part is. |
+| `Received_Date__c` | Received Date | Date |  | The date a purchased lot was received. |
+| `Receiving_Inspection__c` | Receiving Inspection | Picklist | Pending, Accepted, Rejected | The result of receiving inspection for a purchased lot: Pending, Accepted or Rejected. |
+| `Release_Status__c` | Release Status | Picklist | Pending QA, Released, On Hold, Quarantined, Rejected, Expired, Withdrawal Pending, Withdrawn, Recall Pending, Recalled | Where the lot stands for release: Pending QA, Released, On Hold, Quarantined, Rejected, Expired, Withdrawal Pending, Withdrawn, Recall Pending or Recalled. Worked out by CqLotStatus: the strictest control wins. |
+| `Status_Conflict__c` | Status Conflict | Text | 255 chars | Set when final decisions on the lot disagree (one releases it, another rejects it). The stricter applies until a person settles it. |
+| `Status_Set_By__c` | Status Set By | Text | 80 chars | What set the lot's Release Status: Manual, a field action (e.g. FA-0001), an NC (e.g. NC-000077) or Receiving inspection. |
+| `Status_Set_On__c` | Status Set On | DateTime |  | When the lot's Release Status was last set. |
+| `Sterilization_Lot__c` | Sterilization Lot | Text | 80 chars | The sterilization load the lot went through, for example an EO cycle number. |
+| `Supplier_Lot__c` | Supplier Lot | Text | 80 chars | The supplier's own lot number for a purchased lot. |
+| `Supplier__c` | Supplier | Lookup | to Account | The supplier of a purchased lot. An Account, as on CQ nonconformances, so a lot and its supplier NCs name the same supplier. |
 
 ### compliancequest__SQX_Nonconformance__c
 
@@ -92,7 +136,9 @@ Objects and fields from earlier work are listed below; their history is in git (
 | `Repeat_Of__c` | Repeat Of | Lookup | to compliancequest__SQX_Nonconformance__c | The earlier NC with the same problem whose CAPA closed, found at triage (CQ.AI Triage). |
 | `Trend_Event__c` | Trend Event | Lookup | to Quality_Event__c | The Trend event opened when this NC's category reached its limit. |
 | `Triage_By__c` | Triaged By | Lookup | to User |  |
+| `Triage_Disposition_Instructions__c` | Triage Disposition Instructions | LongTextArea | 5000 chars | Optional instructions from triage for whoever disposes the affected lots. Entered in Next Steps of CQ.AI Triage. |
 | `Triage_Draft__c` | Triage Draft | LongTextArea | 20000 chars | Work in progress in the Triage workspace, so a triager can leave and pick up where they left off. Cleared when triage is completed. |
+| `Triage_Investigation_Focus__c` | Triage Investigation Focus | LongTextArea | 5000 chars | Optional note from triage on what the investigation should look into. Entered in Next Steps of CQ.AI Triage. |
 | `Triage_Notes__c` | Triage Notes | LongTextArea | 5000 chars | What the triager decided at each step of the Triage Assistant. |
 | `Triage_On__c` | Triaged On | DateTime |  |  |
 | `Triage_Path__c` | Triage Path | Picklist | Continue with Investigation, Join Investigation, New Investigation, Log Only | Path chosen by the triager in the Triage Assistant. |
@@ -103,6 +149,12 @@ Objects and fields from earlier work are listed below; their history is in git (
 | API name | Label | Type | Details | Description |
 |---|---|---|---|---|
 | `Has_NC__c` | Has NC? | Checkbox |  |  |
+
+### compliancequest__SQX_Product_History_Review__c
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Checklist_Draft__c` | Checklist Draft | LongTextArea | 20000 chars | Work in progress on the checklist in the PHR workspace, so a reviewer can save, leave and pick up where they left off. Cleared when the checklist is submitted. |
 
 ### compliancequest__SQX_Root_Cause__c
 
@@ -149,6 +201,27 @@ Custom fields on existing objects found in the dev org (snapshot 14 Nov 2026) th
 
 ## Objects this project created
 
+### CQ.AI Workspace Settings (`CQ_AI_Workspace_Settings__c`)
+
+How the CQ.AI workspaces look, for the whole org, a profile or one user. Steps Position puts the step list on the left (default) or across the top; Theme names a cqStyles theme (blank is the standard look).
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Steps_Position__c` | Steps Position | Text | 10 chars | Where the workspace steps sit: Left (the default, also when blank) or Top. |
+| `Theme__c` | Theme | Text | 40 chars | The cqStyles theme the workspaces use. Blank is the standard look; Harbor is the backup style. |
+
+### Customer Response Line (`Customer_Response_Line__c`)
+
+The Customer Response Line object records what a customer reported for one lot on its response form: units used, returning and destroyed. Recorded on the Notifications step; the Recovery step expects the units returning.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Field_Action_Customer__c` | Field Action Customer | Lookup | to Field_Action_Customer__c | The customer whose response this is. |
+| `Lot_Number__c` | Lot Number | Text | 80 chars | The lot the figures are for. |
+| `Units_Destroyed__c` | Units Destroyed | Number | 10,0 | Units the customer says it destroyed on site. |
+| `Units_Returning__c` | Units Returning | Number | 10,0 | Units the customer says it is sending back. |
+| `Units_Used__c` | Units Used | Number | 10,0 | Units the customer reports as used (for example on patients), so they cannot come back. |
+
 ### Event Answer (`Event_Answer__c`)
 
 The Event Answer object records each answer given on Report a Problem, as a child of its Quality Event. It keeps the question text, role and order as asked, so rewording a question later does not change old events. Commonly used for event review and reporting.
@@ -172,6 +245,7 @@ The Event Question object holds the quick questions a company asks on Report a P
 | `Answer_Type__c` | Answer Type | Picklist | Yes or No, Choice, Text, Number, Date | How the question is answered. |
 | `Audio_Source_Text__c` | Audio Source Text | Text | 255 chars | The exact wording the stored audio clip speaks, so a reworded question whose clip is now stale can be detected and regenerated. |
 | `Audio_Wav_Base64__c` | Audio WAV (base64) | LongTextArea | 131072 chars | Base64 of this question's read-aloud clip, stored as a PCM WAV. Played in the intake chat through the Web Audio API because the Salesforce mobile WebView blocks the HTML audio element. Populated from pre-generated TTS. |
+| `Case_Field__c` | Case Field | Text | 80 chars | API name of the Case field this question's answer is saved to when the report becomes a Case (for example Found_By__c). Blank: the answer goes in the Case Description only. |
 | `Choices__c` | Choices | Text | 255 chars | For Choice: the choices, separated by semicolons, in order. |
 | `Help_Text__c` | Help Text | Text | 255 chars | A short line shown under the question. |
 | `Order__c` | Order | Number | 4,0 | Where the question appears on Report a Problem, lowest first. |
@@ -180,20 +254,64 @@ The Event Question object holds the quick questions a company asks on Report a P
 | `Role__c` | Role | Picklist | Where Found, Product Affected, Injury, Safety Risk, Injured Person, Customer, Supplier, Lot Or Part, None | What CQ.AI reads the answer as. Rewording a question keeps its role; questions with no role are saved and shown but do not steer the suggestion. |
 | `Urgent_When__c` | Urgent When | Text | 255 chars | Answers that make the event urgent, separated by semicolons. |
 
+### Field Action Checklist Assignment (`Field_Action_Checklist_Assignment__c`)
+
+The Field Action Checklist Assignment object says which Field Action Checklist a review gets for a Part or a Part Family (one or the other). A part's own assignment wins over its family's; with neither, the default checklist applies. Commonly used for setting checklists by product line.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Active__c` | Active | Checkbox |  | Only active assignments are used. |
+| `Checklist__c` | Checklist | Lookup | to Field_Action_Checklist__c | The checklist reviews of this part or part family get. |
+| `Part_Family__c` | Part Family | Lookup | to compliancequest__SQX_Part_Family__c | A part family whose parts get this checklist. |
+| `Part__c` | Part | Lookup | to compliancequest__SQX_Part__c | One part that gets this checklist. Wins over its part family's assignment. |
+
+### Field Action Checklist Question (`Field_Action_Checklist_Question__c`)
+
+The Field Action Checklist Question object holds one question in a Field Action Checklist, with its wording (required), order, help text and a Key that tells CQ.AI how to suggest an answer. Active questions are copied onto each review that gets the checklist. Commonly used for maintaining review questions.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Active__c` | Active | Checkbox |  | Only active questions are copied onto new reviews. |
+| `Field_Action_Checklist__c` | Checklist | MasterDetail | to Field_Action_Checklist__c | The checklist this question belongs to. |
+| `Help_Text__c` | Help Text | Text | 255 chars | A line of guidance shown under the question. |
+| `Key__c` | Key | Text | 40 chars | A short fixed code (for example injury or left) that CQ.AI uses to find the records that answer this question, and that reports use to compare answers across checklists. |
+| `Question__c` | Question | Text | 255 chars | The question as the reviewer sees it. |
+| `Sort_Order__c` | Sort Order | Number | 4,0 | Where the question appears in the checklist, lowest first. |
+
+### Field Action Checklist (`Field_Action_Checklist__c`)
+
+The Field Action Checklist object is a named list of questions a Field Action Review answers on its Reviewer Assessment step, such as Standard or Implantable Device. Active marks lists in use; Default is the list used when no assignment matches. Commonly used for review checklists by product type.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Active__c` | Active | Checkbox |  | Only active checklists are given to new reviews. |
+| `Default__c` | Default | Checkbox |  | The checklist a review gets when no Field Action Checklist Assignment matches its part or part family. |
+| `Description__c` | Description | LongTextArea | 32768 chars | What this checklist is for and which products it covers. |
+
 ### Field Action Customer (`Field_Action_Customer__c`)
 
 The Field Action Customer object records one customer that received product in a field action's scope: the units and lots it received, and whether it has acknowledged the notice. Used for the effectiveness check.
 
 | API name | Label | Type | Details | Description |
 |---|---|---|---|---|
+| `Acknowledged_By__c` | Acknowledged By | Picklist | Response, Full Return | How the acknowledgement was met: a response on the Case, or every unit shipped came back. |
+| `Case__c` | Case | Lookup | to Case | The Case customer service works for this customer on this field action. |
+| `Closed_Without_Response_On__c` | Closed Without Response On | Date |  | When this customer was closed without a response. It stays not acknowledged. |
 | `Customer_Name__c` | Customer Name | Text | 255 chars | The customer that received product. |
 | `Customer__c` | Customer | Lookup | to Account | The customer's Account, when known. |
+| `Distributor__c` | Supplied By | Lookup | to Field_Action_Customer__c | For a Customer: the distributor on this field action that shipped to them. |
 | `Field_Action__c` | Field Action | Lookup | to Field_Action__c | The field action this customer is part of. |
 | `Follow_Ups__c` | Follow Ups | Number | 9,0 | How many times the customer has been followed up. |
+| `Kind__c` | Kind | Picklist | Distributor, Direct Customer, Customer | Distributor or Direct Customer: we shipped to them. Customer: a distributor shipped to them. |
 | `Lots__c` | Lots | Text | 255 chars | The lots in scope the customer received. |
+| `No_Response_Reason__c` | No Response Reason | Text | 255 chars | Why this customer was closed without a response. |
+| `Notice_Sent_On__c` | Notice Sent On | Date |  | When the field action notice was sent to this customer. |
 | `Responded_On__c` | Responded On | Date |  | When the customer acknowledged. |
+| `Response_Due__c` | Response Due | Date |  | When this customer response is due, from its Case. |
 | `Source__c` | Source | Picklist | Shipment, Added by hand | Where the customer came from: the lot shipments, or added by hand. |
 | `Status__c` | Status | Picklist | Sent, Acknowledged, No reply | Where the customer's reply stands. |
+| `Submitted_By__c` | Submitted By | Lookup | to User | Who submitted this customer response to Recovery. |
+| `Submitted_On__c` | Submitted On | DateTime |  | When the coordinator submitted this customer response to Recovery. |
 | `Units__c` | Units | Number | 9,0 | Units of the lots in scope the customer received. |
 
 ### Field Action Hold (`Field_Action_Hold__c`)
@@ -213,6 +331,8 @@ The Field Action Hold object records a hold on one lot for a field action: a fin
 | `Lot_Number__c` | Lot Number | Text | 80 chars | The lot held. |
 | `Part_Number__c` | Part Number | Text | 80 chars | Part number of the lot. |
 | `Reason__c` | Reason | Text | 255 chars | Why the hold is suggested or was placed. |
+| `Rework_Done_By__c` | Rework Done By | Lookup | to User | Who marked the rework of this held lot done. |
+| `Rework_Done_On__c` | Rework Done On | DateTime |  | When the rework of this held lot was finished (Rework Done in Recovery). The field action then lets go of the lot. |
 | `Suggested__c` | Suggested | Checkbox |  | CQ.AI suggested holding this lot. |
 
 ### Field Action Lot (`Field_Action_Lot__c`)
@@ -237,26 +357,122 @@ The Field Action Lot object records one lot in the scope of a field action. It h
 | `Units_Returned__c` | Units Returned | Number | 9,0 | Units of this lot returned by customers. |
 | `Units_Shipped__c` | Units Shipped | Number | 18,0 | Units of this lot that left our control, as entered by the coordinator. |
 
+### Field Action Record Activity (`Field_Action_Record_Activity__c`)
+
+The Field Action Record Activity object is CQ's electronic signature log for a Field Action: one row per signed action (closing it), with Activity Code, Purpose of Signature, Comment and who signed. Its Activity Code values are the actions an admin can require a signature for.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Activity_Code__c` | Activity Code | Picklist | close |  |
+| `Comment_Long__c` | Comment Long | LongTextArea | 32768 chars |  |
+| `Comment__c` | Comment | TextArea |  |  |
+| `Field_Action__c` | Field Action | MasterDetail | to Field_Action__c |  |
+| `Modified_By__c` | Modified By | TextArea |  |  |
+| `New_Stage__c` | New Stage | Text | 255 chars |  |
+| `Old_Stage__c` | Old Stage | Text | 255 chars |  |
+| `Purpose_Of_Signature__c` | Purpose Of Signature | Text | 80 chars |  |
+| `Signed_Content__c` | Signed Content Fingerprint | Text | 64 chars | SHA-256 fingerprint of what was signed (the closing summary, the CAPA and the verdict). If the field action changes later, it no longer matches. |
+| `Transaction_Id__c` | Transaction Id | Text | 80 chars |  |
+| `Type_of_Activity__c` | Type of Activity | Text | 20 chars |  |
+| `Verified_By__c` | Verified By | Text | 40 chars | How the signer was verified: Password (CQ) today; Company Sign-In (Entra) later. |
+
+### Field Action Review Audit Entry (`Field_Action_Review_Audit__c`)
+
+The Field Action Review Audit Entry object is the audit trail for Field Action Reviews: one locked row per create, field change, delete or signature, with the field, old and new values, who and when. Rows survive the review. Commonly used for audits, investigations and data-integrity checks.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Action__c` | Action | Text | 20 chars | What happened: Create, Edit, Delete or Signature. |
+| `Changed_By__c` | Changed By | Text | 255 chars | Name and username of the person who made the change, kept as text so it survives user renames. |
+| `Facts__c` | Facts | LongTextArea | 32768 chars | For a CQ.AI Suggestion: the facts it rests on, one per line, as they stood when the suggestion was made. |
+| `Field_Action_Review__c` | Field Action Review | Lookup | to Field_Action_Review__c | The review this entry belongs to. Cleared if the review is deleted; Record Id and Record Name keep the link. |
+| `Field_Label__c` | Field | Text | 255 chars | Label of the changed field as people see it, for an Edit. |
+| `Field_Name__c` | Field Name | Text | 80 chars | API name of the changed field, for an Edit. |
+| `New_Value__c` | New Value | LongTextArea | 32768 chars | The value after the change. |
+| `Old_Value__c` | Old Value | LongTextArea | 32768 chars | The value before the change. |
+| `Reason__c` | Reason | LongTextArea | 32768 chars | For a Changed decision: why the person chose differently from the CQ.AI Suggestion. Required in that case. |
+| `Record_Id__c` | Record Id | Text | 18 chars | Id of the review, kept even after the review is deleted. |
+| `Record_Name__c` | Record Name | Text | 80 chars | Number of the review (FAR-...), kept even after the review is deleted. |
+| `Request_Id__c` | Request Id | Text | 80 chars | Salesforce request id: entries with the same value were saved together. |
+| `Signature__c` | Signature | Lookup | to Field_Action_Review_Record_Activity__c | For a Signature entry, the signature row it records. |
+| `Sources__c` | Sources | LongTextArea | 32768 chars | For a CQ.AI Suggestion: the records the facts come from, as JSON [{"label","id"}]. |
+| `Suggestion_Key__c` | Suggestion | Text | 40 chars | For a CQ.AI Suggestion and the decision on it: what was suggested (Risk Level, Outcome, Field Action, Scope). |
+| `Suggestion__c` | CQ.AI Suggestion | Lookup | to Field_Action_Review_Audit__c | For an Accepted or Changed decision: the CQ.AI Suggestion entry it answers. |
+
+### Field Action Review Check (`Field_Action_Review_Check__c`)
+
+The Field Action Review Check object records one checklist question and its answer on a Field Action Review, with the question text copied in, CQ.AI's suggested answer, notes, and who answered and when. Rows are copied from the review's checklist when it starts. Commonly used for review evidence, audits and reports.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Answer__c` | Answer | Picklist | Yes, No, Not Known | The reviewer's answer. Blank until answered. |
+| `Answered_By__c` | Answered By | Lookup | to User | The person who chose the answer. |
+| `Answered_On__c` | Answered On | DateTime |  | When the answer was chosen. |
+| `CQAI_Suggested_Answer__c` | CQ.AI Suggested Answer | Picklist | Yes, No, Not Known | The answer CQ.AI proposed from the records, kept to compare with the reviewer's answer. |
+| `Field_Action_Review__c` | Field Action Review | MasterDetail | to Field_Action_Review__c | The review this answer belongs to. |
+| `Key__c` | Key | Text | 40 chars | The question's Key, copied from the library, so reports and CQ.AI can match answers across checklists. |
+| `Notes__c` | Notes | LongTextArea | 32768 chars | Why CQ.AI suggested its answer, or the reviewer's note. |
+| `Question_Text__c` | Question Text | LongTextArea | 32768 chars | The question exactly as asked on this review, kept even if the library question is reworded later. |
+| `Question__c` | Question | Lookup | to Field_Action_Checklist_Question__c | The library question this row was copied from. |
+| `Sort_Order__c` | Sort Order | Number | 4,0 | Where the question appears on this review. |
+
+### Field Action Review Record Activity (`Field_Action_Review_Record_Activity__c`)
+
+The Field Action Review Record Activity object is CQ's electronic signature log for a Field Action Review: one row per signed committee action, with Activity Code, Purpose of Signature, Comment and who signed. Its Activity Code values are the actions an admin can require a signature for.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Activity_Code__c` | Activity Code | Picklist | approve, reject |  |
+| `Comment_Long__c` | Comment Long | LongTextArea | 32768 chars |  |
+| `Comment__c` | Comment | TextArea |  |  |
+| `Field_Action_Review__c` | Field Action Review | MasterDetail | to Field_Action_Review__c |  |
+| `Modified_By__c` | Modified By | TextArea |  |  |
+| `New_Stage__c` | New Stage | Text | 255 chars |  |
+| `Old_Stage__c` | Old Stage | Text | 255 chars |  |
+| `Purpose_Of_Signature__c` | Purpose Of Signature | Text | 80 chars |  |
+| `Signed_Content__c` | Signed Content Fingerprint | Text | 64 chars | SHA-256 fingerprint of the recommendation as it stood when signed (outcome, rationale, risk, hazard, summary, emergency). If the review changes later, it no longer matches. |
+| `Transaction_Id__c` | Transaction Id | Text | 80 chars |  |
+| `Type_of_Activity__c` | Type of Activity | Text | 20 chars |  |
+| `Verified_By__c` | Verified By | Text | 40 chars | How the signer was verified: Password (CQ) today; Company Sign-In (Entra) later. |
+
 ### Field Action Review (`Field_Action_Review__c`)
 
 The Field Action Review object records the review of whether one Nonconformance or one Complaint needs a field action. It holds the Reason for Review, requester, Reviewer, affected Part and lot, Risk Level, the Outcome and its rationale, and the Field Action it led to. Created by Send for Review at triage.
 
 | API name | Label | Type | Details | Description |
 |---|---|---|---|---|
+| `Action_Type_Reason__c` | Action Type Reason | LongTextArea | 32768 chars | Why the coordinator chose a different action type from CQ.AI. |
+| `Assessment_Completed_On__c` | Assessment Completed On | DateTime |  | When the coordinator completed the Reviewer Assessment step. |
+| `CQAI_Suggested_Outcome__c` | CQ.AI Suggested Outcome | Picklist | No Field Action, Field Action Needed | The outcome CQ.AI suggested, kept to compare with the one chosen. |
+| `CQAI_Suggested_Risk_Level__c` | CQ.AI Suggested Risk Level | Picklist | Low, Medium, High | The risk level CQ.AI suggested, kept to compare with the one chosen. |
+| `CQAI_Suggested_Scope__c` | CQ.AI Suggested Scope | Picklist | Full, Partial | The scope CQ.AI suggested, kept to compare with the one chosen. |
+| `Checklist_Change_Reason__c` | Checklist Change Reason | LongTextArea | 32768 chars | Why the coordinator changed the checklist chosen automatically. Shown to the committee and saved in the audit trail. |
+| `Checklist__c` | Checklist | Lookup | to Field_Action_Checklist__c | The checklist whose questions this review answers: from the part, then the part family, then the default. |
+| `Checks_Answered__c` | Checks Answered | Summary |  | How many checklist questions are answered. |
+| `Checks_Total__c` | Checks Total | Summary |  | How many checklist questions the review has. |
 | `Committee_Approval__c` | Committee Approval | Lookup | to cqext__CQAPR_Approval__c | The CQ Approval the committee is working through, or the last one it completed. |
 | `Complaint__c` | Complaint | Lookup | to compliancequest__SQX_Complaint__c |  |
+| `Days_Open__c` | Days Open | Number | 6,0; formula | Days from the request to the decision, or to today while the review is open. |
 | `Decided_By__c` | Decided By | Lookup | to User |  |
 | `Decided_On__c` | Decided On | DateTime |  |  |
 | `Due_Date__c` | Due Date | Date |  |  |
+| `Emergency_Approver__c` | Emergency Approver | Lookup | to User | The single approver chosen for an emergency approval. |
 | `Emergency_Reason__c` | Emergency Reason | LongTextArea | 5000 chars | Why the coordinator escalated to emergency approval. |
 | `Emergency__c` | Emergency | Checkbox |  | The recall coordinator escalated this review to emergency approval: one emergency approver signs off for the committee. |
+| `Field_Action_Choice__c` | Field Action Choice | Picklist | New Field Action, Add to Existing | Whether the recommendation is a new field action or adding this to an existing one. |
 | `Field_Action__c` | Field Action | Lookup | to Field_Action__c |  |
 | `Health_Hazard_Summary__c` | Health Hazard Summary | LongTextArea | 10000 chars |  |
 | `Lot_Number__c` | Lot Number | Text | 255 chars |  |
 | `Nonconformance__c` | Nonconformance | Lookup | to compliancequest__SQX_Nonconformance__c |  |
 | `Outcome_Rationale__c` | Outcome Rationale | LongTextArea | 10000 chars |  |
+| `Outcome_Reason__c` | Outcome Reason | LongTextArea | 32768 chars | Why the coordinator chose a different outcome from CQ.AI. |
 | `Outcome__c` | Outcome | Picklist | No Field Action, Field Action Needed |  |
+| `Overdue__c` | Overdue | Checkbox | formula | The review is open and past its due date. |
 | `Part__c` | Part | Lookup | to compliancequest__SQX_Part__c |  |
+| `Proposed_Action_Type__c` | Proposed Action Type | Picklist | Correction, Removal (Recall), Withdrawal, Advisory Notice | The type of new field action the coordinator recommends. |
+| `Proposed_Field_Action__c` | Proposed Field Action | Lookup | to Field_Action__c | The existing field action the coordinator recommends adding this to. The Field Action field is set only when the committee approves. |
+| `Proposed_Recall_Class__c` | Proposed Recall Class | Picklist | Class I, Class II, Class III | The recall class the coordinator recommends for a new field action. |
+| `Proposed_Title__c` | Proposed Title | Text | 255 chars | The title for a new field action, used when the committee approves. |
 | `Quantity_Affected__c` | Quantity Affected | Number | 12,0 |  |
 | `Quantity_Shipped__c` | Quantity Shipped | Number | 12,0 |  |
 | `Reason_for_Review__c` | Reason for Review | LongTextArea | 5000 chars |  |
@@ -265,12 +481,18 @@ The Field Action Review object records the review of whether one Nonconformance 
 | `Requested_By__c` | Requested By | Lookup | to User |  |
 | `Requested_On__c` | Requested On | DateTime |  |  |
 | `Review_Draft__c` | Review Draft | LongTextArea | 20000 chars | Work in progress in the Field Action Review workspace, so a reviewer can leave and pick up where they left off. Cleared when the decision is submitted. |
+| `Review_Step__c` | Review Step | Picklist | Review at a Glance, Reviewer Assessment, Recommendation, Committee Approval, Complete | The workspace step the review is on, for the Path on the record page and for reports. |
 | `Review_Summary__c` | Review Summary | LongTextArea | 10000 chars | What the reviewer considered: evidence, checklist answers and the risk score factors, written by the workspace when the decision is submitted. |
 | `Reviewer__c` | Reviewer | Lookup | to User |  |
+| `Risk_Level_Reason__c` | Risk Level Reason | LongTextArea | 32768 chars | Why the coordinator chose a different risk level from CQ.AI. |
 | `Risk_Level__c` | Risk Level | Picklist | Low, Medium, High |  |
 | `Risk_Score__c` | Risk Score | Number | 3,0 | Field action risk score out of 100 at the time of the decision. |
+| `Scope_Reason__c` | Scope Reason | LongTextArea | 32768 chars | Why the coordinator chose a different scope from CQ.AI. |
 | `Scope__c` | Scope | Picklist | Full, Partial | Full: every lot of the part. Partial: the named lots only. Recommended by the coordinator and approved by the committee. |
-| `Status__c` | Status | Picklist | New, In Review, With Committee, Decided, Closed |  |
+| `Started_On__c` | Started On | DateTime |  | When the coordinator first opened the review in the workspace. |
+| `Status__c` | Status | Picklist | New, In Review, Escalated, With Committee, Decided, Withdrawn | Where the review stands: New, In Review, Escalated, With Committee, Decided, or Withdrawn (dropped by its nonconformance before a decision). |
+| `Submitted_On__c` | Submitted On | DateTime |  | When the review was last sent to the committee. |
+| `Times_Sent_Back__c` | Times Sent Back | Number | 3,0 | How many times the committee sent the review back. |
 | `Title__c` | Title | Text | 255 chars |  |
 
 ### Field Action Scope Change (`Field_Action_Scope_Change__c`)
@@ -285,22 +507,42 @@ The Field Action Scope Change object logs each lot added to or removed from a fi
 | `Lot_Number__c` | Lot Number | Text | 80 chars | The lot that was added or removed. |
 | `Reason__c` | Reason | Text | 255 chars | Why the lot was added or removed. |
 
+### Field Action Settings (`Field_Action_Settings__c`)
+
+Org-wide settings for Field Actions. Demo Mode lets a Field Action close and be signed while units, customers or recall tasks are still open, so a demo does not get stuck; leave it off in real use.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Demo_Mode__c` | Demo Mode | Checkbox |  | On: units recovered, customers confirmed and recall tasks completed do not stop closing (demo use). Off: every checklist item must be done before the Recall Coordinator can sign and close. |
+| `NC_Quarantines_Whole_Lot__c` | NC Quarantines Whole Lot | Checkbox |  | On: any NC with quantity left to dispose quarantines the whole lot. Off (default): only an NC that covers all of the lot's stock does; a smaller quantity shows on the lot's Quality list. |
+
 ### Field Action (`Field_Action__c`)
 
 The Field Action object records one field action for a product problem: a correction, removal (recall) or advisory notice. It holds the Title, Status, Action Type, Recall Class, the affected Part, lots and quantities, and who decided and why. Each Field Action gathers the Field Action Reviews that led to it.
 
 | API name | Label | Type | Details | Description |
 |---|---|---|---|---|
-| `Action_Type__c` | Action Type | Picklist | Correction, Removal (Recall), Advisory Notice |  |
+| `Action_Type__c` | Action Type | Picklist | Correction, Removal (Recall), Withdrawal, Advisory Notice | What the field action does to the product: Removal (Recall), Withdrawal (pulled for a minor issue, not a recall, not reported), Correction or Advisory Notice. |
 | `CAPA__c` | CAPA | Lookup | to compliancequest__SQX_CAPA__c | The CAPA that root cause and prevention continue in. |
+| `CQAI_Suggested_Action_Type__c` | CQ.AI Suggested Action Type | Picklist | Correction, Removal (Recall), Withdrawal, Advisory Notice | What CQ.AI suggested for Action Type when the strategy was confirmed; kept beside the chosen value. |
+| `CQAI_Suggested_Check_Level__c` | CQ.AI Suggested Check Level | Picklist | Level A, Level B, Level C, Level D, Level E | What CQ.AI suggested for Check Level when the strategy was confirmed; kept beside the chosen value. |
+| `CQAI_Suggested_Depth__c` | CQ.AI Suggested Depth | Picklist | Distributor, Hospital, Patient | What CQ.AI suggested for How Far It Goes when the strategy was confirmed; kept beside the chosen value. |
 | `Check_By__c` | Check By | Date |  | When the effectiveness check should be complete. |
 | `Check_Level__c` | Check Level | Picklist | Level A, Level B, Level C, Level D, Level E | Effectiveness check level: A every customer, B a share set by the coordinator, C 10%, D 2%, E no check. |
 | `Check_Method__c` | Check Method | Picklist | Signed response form, then phone, Phone call, Site visit | How the effectiveness check is done. |
+| `Check_Overdue__c` | Check Overdue | Checkbox | formula | The effectiveness check-by date has passed and no verdict is confirmed. |
 | `Check_Percent__c` | Check Percent | Number | 3,0 | For Level B: the share of customers checked. |
+| `Check_Target_Met__c` | Check Target Met | Checkbox |  | The effectiveness check reached its level (for example every customer for Level A). |
 | `Closed_By__c` | Closed By | Lookup | to User | Who closed the field action. |
 | `Closed_On__c` | Closed On | DateTime |  | When the field action was closed. |
+| `Closed_Without_Response__c` | Closed Without Response | Number | 12,0 | Customers closed without a response. |
 | `Closure_Summary__c` | Closure Summary | LongTextArea | 10000 chars | The closing write-up, drafted by CQ.AI and edited by the coordinator. |
 | `Customer_Instruction__c` | Customer Instruction | Picklist | Stop use, quarantine and return, Stop use and destroy on site, Hold for our technician to correct on site, Continue use with the added warning | What customers are told to do with the product. |
+| `Customers_Notified__c` | Customers Notified | Number | 12,0 | Customers sent the notice. |
+| `Customers_Responded__c` | Customers Responded | Number | 12,0 | Customers who acknowledged. |
+| `Customers__c` | Customers | Number | 12,0 | Customers who received affected lots, at the depth chosen. |
+| `Days_Open__c` | Days Open | Number | 6,0; formula | Days from the decision to closing, or to today while open. |
+| `Days_to_Notify__c` | Days to Notify | Number | 6,0; formula | Days from the decision to the first customer notice. A common regulatory measure. |
 | `Decided_By__c` | Decided By | Lookup | to User |  |
 | `Decided_On__c` | Decided On | DateTime |  |  |
 | `Decision_Rationale__c` | Decision Rationale | LongTextArea | 10000 chars |  |
@@ -308,13 +550,19 @@ The Field Action object records one field action for a product problem: a correc
 | `Description__c` | Description | LongTextArea | 10000 chars |  |
 | `Key_Message__c` | Key Message | LongTextArea | 4000 chars | The core message to customers. The Notifications step builds the customer letter from it. |
 | `Lot_Numbers__c` | Lot Numbers | Text | 255 chars |  |
+| `Lots_in_Scope__c` | Lots in Scope | Number | 12,0 | Lots in the confirmed scope. |
+| `Lots_on_Hold__c` | Lots on Hold | Number | 12,0 | Lots held by this field action. |
 | `Next_Step__c` | Next Step | Picklist | Widen the scope, A further action to customers, Extend the check by 30 days | What happens when the field action was not effective. |
+| `Notices_Sent_On__c` | Notices Sent On | Date |  | When the first customer notice went out: the earliest Notice Sent On across its customers. |
+| `Numbers_Updated_On__c` | Numbers Updated On | DateTime |  | When the scope, notification and recovery numbers were last worked out. |
 | `Other_Records__c` | Other Records | Text | 255 chars | Other related records, for example nonconformances. |
 | `Part__c` | Part | Lookup | to compliancequest__SQX_Part__c |  |
 | `Quantity_Affected__c` | Quantity Affected | Number | 12,0 |  |
 | `Quantity_Shipped__c` | Quantity Shipped | Number | 12,0 |  |
 | `Recall_Class__c` | Recall Class | Picklist | Class I, Class II, Class III |  |
+| `Recovery_Percent__c` | Recovery % | Percent |  | Units accounted for against units shipped. |
 | `Recovery_Status__c` | Recovery Status | Picklist | In Progress, Confirmed | In Progress until the effectiveness verdict is confirmed. |
+| `Responses_Overdue__c` | Responses Overdue | Number | 12,0 | Customers whose response is past its due date. |
 | `Scope_Approval__c` | Scope Approval | Lookup | to cqext__CQAPR_Approval__c | The CQ Approval for the scope that is with the committee, or the last one it completed. |
 | `Scope_Approved_On__c` | Scope Approved On | DateTime |  | When the scope was last approved. |
 | `Scope_Confirmed_By__c` | Scope Confirmed By | Lookup | to User | Who last confirmed the lot list. |
@@ -323,14 +571,23 @@ The Field Action object records one field action for a product problem: a correc
 | `Scope_Emergency__c` | Scope Emergency | Checkbox |  | Ticked when the scope was sent to one emergency approver instead of the committee. |
 | `Scope_Status__c` | Scope Status | Picklist | Full Scope, Being Defined, Confirmed, With Committee, Approved | Where the scope stands. Full Scope covers every lot and needs no confirming. A Partial scope is Being Defined until the coordinator confirms it; a change after that returns it to Being Defined. With Committee and Approved are kept for a later scope approval. |
 | `Scope__c` | Scope | Picklist | Full, Partial | Full: every lot of the part. Partial: the lots in scope only. Set from the review the committee approved. |
+| `Started_On__c` | Started On | DateTime |  | When the coordinator first opened the field action in the workspace. |
 | `Status__c` | Status | Picklist | New, In Progress, Closed |  |
 | `Strategy_Confirmed_By__c` | Strategy Confirmed By | Lookup | to User | Who last confirmed the strategy. |
 | `Strategy_Confirmed_On__c` | Strategy Confirmed On | DateTime |  | When the strategy was last confirmed. |
+| `Strategy_Reason__c` | Strategy Reason | LongTextArea | 32768 chars | Why the coordinator chose a different action, depth or check level from CQ.AI. |
 | `Strategy_Status__c` | Strategy Status | Picklist | Being Defined, Confirmed | Being Defined while the coordinator works on the strategy; Confirmed once Confirm Strategy is pressed. A change after confirming returns it to Being Defined. |
 | `Title__c` | Title | Text | 255 chars |  |
+| `Units_Corrected__c` | Units Corrected | Number | 12,0 | Units corrected in the field, across the lots in scope. |
+| `Units_Destroyed__c` | Units Destroyed | Number | 12,0 | Units destroyed by customers, across the lots in scope. |
+| `Units_Returned__c` | Units Returned | Number | 12,0 | Units returned to us, across the lots in scope. |
+| `Units_Unaccounted__c` | Units Unaccounted | Number | 12,0 | Units shipped less those returned, destroyed, corrected or used. |
+| `Units_Used__c` | Units Used | Number | 12,0 | Units used on patients, as customers reported. |
+| `Units_on_Hand__c` | Units on Hand | Number | 12,0 | Units still in our stock across the lots in scope. |
 | `Verdict_By__c` | Verdict By | Lookup | to User | Who confirmed the verdict. |
 | `Verdict_On__c` | Verdict On | DateTime |  | When the verdict was confirmed. |
 | `Verdict__c` | Verdict | Picklist | Effective, Not Effective | Whether the field action was effective. |
+| `Workspace_Step__c` | Workspace Step | Picklist | Glance, Scope, Strategy, Notifications, Reporting, Recovery, Closure, Complete | The workspace step the coordinator is on, for reports and the record page. The workspace keeps its longer step names. |
 
 ### Investigation Change (`Investigation_Change__c`)
 
@@ -397,6 +654,20 @@ A past record marked Not Relevant on the Check History step of the CQ.AI Investi
 | `Record_Id__c` | Record Id | Text | 18 chars | The Id of the NC, CAPA or inspection marked Not Relevant. |
 | `Record_Name__c` | Record | Text | 80 chars | The name of the record, for example NC-000162. |
 
+### Lot Return (`Lot_Return__c`)
+
+The Lot Return object records units of a lot received back from a customer, one record per RMA receipt line, loaded from the ERP or entered by hand. The Recovery step adds them up per customer and lot against the units the customer said it would return.
+
+| API name | Label | Type | Details | Description |
+|---|---|---|---|---|
+| `Customer__c` | Customer | Lookup | to Account | The customer that returned the units. |
+| `Date_Received__c` | Date Received | Date |  | When the units were received. |
+| `Field_Action__c` | Field Action | Lookup | to Field_Action__c | The open field action this return counts toward, matched by customer and lot. |
+| `Lot_Number__c` | Lot Number | Text | 80 chars | The lot the returned units belong to. |
+| `RMA_Number__c` | RMA Number | Text | 80 chars | The return authorization (RMA) the units came back under. |
+| `Source__c` | Source | Picklist | ERP, Manual | Where the record came from: the ERP feed, or entered by hand. |
+| `Units_Received__c` | Units Received | Number | 10,0 | How many units of the lot were received on this RMA line. |
+
 ### Lot Shipment (`Lot_Shipment__c`)
 
 The Lot Shipment object records units of one lot shipped to one customer: Lot, Lot Number, Customer, Units and Ship Date, with ship-to, contact and order number. Loaded from the ERP. Field actions use it to list the customers that received the lots in scope.
@@ -410,6 +681,7 @@ The Lot Shipment object records units of one lot shipped to one customer: Lot, L
 | `Order_Number__c` | Order Number | Text | 80 chars | The sales order or delivery number in the ERP. |
 | `Ship_Date__c` | Ship Date | Date |  | When the units were shipped. |
 | `Ship_To__c` | Ship To | Text | 255 chars | Ship-to address or site. |
+| `Shipped_By__c` | Shipped By | Lookup | to Account | Blank: we shipped this line. A distributor: the line is from that distributor own shipping list, to one of its customers. |
 | `Units__c` | Units | Number | 9,0 | Units of the lot shipped. |
 
 ### Lot Stock (`Lot_Stock__c`)

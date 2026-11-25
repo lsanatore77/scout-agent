@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Units_Unaccounted__c</fullName>
+    <label>Units Unaccounted</label>
+    <description>Units shipped less those returned, destroyed, corrected or used.</description>
+    <inlineHelpText>Worked out each night, or with Refresh Numbers in the workspace.</inlineHelpText>
+    <precision>12</precision>
+    <scale>0</scale>
+    <type>Number</type>
+</CustomField>
