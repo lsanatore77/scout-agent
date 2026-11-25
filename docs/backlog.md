@@ -17,7 +17,11 @@ Salesforce options (checked 24 Nov): **Data 360 Document AI** (OCR + LLM to fiel
 needs Data 360 credits, an LLM enabled, and Agentforce switched on, which clashes with "leave Agentforce alone");
 **Intelligent Document Reader** (Amazon Textract OCR per page, needs an add-on licence; text only, the field mapping is ours).
 Either way the new work is the same: map text to the lot's fields and show each value for a person to confirm.
-Next: check which licences the dev org has (read only).
+Dev org check (24 Nov, read only, nothing changed): Agentforce, Data Cloud (Starter) with its default data space, and
+Einstein generative AI are all on. Document AI is not offered anywhere (Setup search, Data Cloud Feature Manager, App
+Launcher), and Digital Wallet opens "Page doesn't exist", so the org shows no credit balance. Intelligent Document Reader
+is not provisioned. Agentforce is fine to use (Lou, 24 Nov). Next: ask Salesforce what turns Document AI on for this org
+(likely a Data 360 edition with credits beyond Starter); Google Vision remains the reader we already have.
 Other candidates: customer response emails filling Field Action cases; supplier replies; failure and severity coding;
 regulatory report drafts from a complaint and its investigation.
 
