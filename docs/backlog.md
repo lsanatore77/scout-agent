@@ -53,9 +53,11 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   ground-up NC of our own.** Use CQ's unused NC fields where they fit (Risk Justification, Conclusion, Risk Assessment,
   Recommended Action, Invalid Nonconformance, Corrective / Preventive Action) before adding our own.
   **Report a Nonconformance (designing, 25 Nov; mockup "Report a Nonconformance Mockup").** A two-step popup anyone can
-  use: describe it, Next, then check and Create and Send to Triage (submitted on create, no Submit task). Step 2: a
-  one-line duplicate check (open NCs on the same lot, Merge or Create), CQ.AI Suggested Description (CQ's CQSS_Paraphraser
-  prompt, Use This / Keep Mine), and CQ.AI Filled In (Title, Part, Lot, Defective Quantity, Type, Failure; one Edit).
+  use: describe it, Next, then check and Create and Send to Triage (submitted on create, no Submit task). Step 1: a
+  one-line Possible Duplicate check under the description while typing (lot numbers in the text matched against open NCs'
+  impacted lots, no AI; Merge or Create; merging skips step 2). Step 2 repeats the check only when CQ.AI finds a lot step 1
+  missed. Step 2: CQ.AI Suggested Description (CQ's CQSS_Paraphraser prompt, Use This / Keep Mine) and CQ.AI Filled In
+  6 Fields (Title, Part, Lot, Defective Quantity, Type, Failure; one Edit).
   Nothing is saved before Create. CQ's 5W2H extractor and risk action both work on unsaved values (tested in dev).
   Risk and the lot hold stay in Triage, not creation.
   **Title rule (Lou, 25 Nov):** item, defect, where found ("Balloon burst below rated pressure at final inspection"); no
