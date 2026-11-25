@@ -6,6 +6,10 @@
             steps={railSteps} progress={progress} error={error}
             show-foot blocker={footBlocker} back-disabled={cantBack} next-disabled={cantNext} next-outline={showStepAction}
             onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onopen={handleShellOpen} onaskcqaction={handleAskAction}>
+            <div slot="actions" class="numbers">
+                <button class="cq-btn-outline" onclick={handleRefresh} disabled={refreshing} title="Work out the scope, notification and recovery numbers on the record now">{refreshLabel}</button>
+                <span class="cq-sub numwhen">{numbersLine}</span>
+            </div>
 
                     <template if:true={is0}>
                         <div class="cq-cols top wide32">

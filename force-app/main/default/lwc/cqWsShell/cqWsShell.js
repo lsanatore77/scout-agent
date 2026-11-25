@@ -6,6 +6,7 @@ import getLook from '@salesforce/apex/CqWsSettings.get';
  * the Review Steps rail, the step's own content (the default slot), any error, and the footer (blocker, Back, Next).
  * How it looks comes from CQ.AI Workspace Settings (CqWsSettings): the steps on the left or across the top, and the
  * cqStyles theme, set on this frame's host so every step inside picks it up. A step may put a side column in slot="side".
+ * A workspace may put its own header buttons in slot="actions", before Audit Trail and Ask CQ.AI.
  * The workspace owns the data and the steps; the shell only draws them and reports clicks as events:
  * step (detail: index), back, next, edit, restart, reopen, open (detail: record id).
  */

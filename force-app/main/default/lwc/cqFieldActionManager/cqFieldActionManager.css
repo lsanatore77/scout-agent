@@ -42,3 +42,6 @@
 .cq-pill.notconf { margin-left: 8px; }
 /* the step's own buttons (Confirm Strategy, Confirm Verdict, Confirm Scope) sit in the shared frame's footer, before Back and Next */
 .footacts { display: inline-flex; align-items: center; gap: 12px; }
+/* Refresh Numbers in the header (the shared frame's actions slot): the button, with when the numbers were last worked out under it */
+.numbers { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.numwhen { font-size: var(--cq-fs-meta); white-space: nowrap; }

@@ -44,3 +44,7 @@
 .addrow .addsel { flex: 0 1 480px; }
 /* the lot stays held by something else without this field action's hold */
 .stillheld { display: block; margin-top: 4px; font-size: var(--cq-fs-sm); line-height: 1.4; color: var(--cq-warn-fg); }
+/* the reason when a choice differs from CQ.AI, under the choices, as on the review's Reviewer Assessment */
+.cq-field.why { margin-top: 0; }
+.panel .cq-field.why > .cq-label { font-size: var(--cq-fs-label); font-weight: 600; color: var(--cq-ink); }
+.whynote { display: block; margin-top: 4px; font-size: var(--cq-fs-meta); color: var(--cq-muted); }

@@ -47,6 +47,12 @@
                             <c-cq-ws-choice variant="rows" name="How Far It Goes" data-field="depth" options={depthOptions} value={depth} disabled={locked} onchoose={handleChoose}></c-cq-ws-choice>
                         </div>
                     </div>
+                    <template if:true={whyOnAction}>
+                        <label class="cq-field why"><span class="cq-label">{whyLabel}<span class="cq-req">*</span></span>
+                            <textarea rows="2" value={why} oninput={handleWhy} disabled={locked} placeholder={whyHint}></textarea>
+                            <span class="whynote">Saved in the audit trail with CQ.AI's suggestion.</span>
+                        </label>
+                    </template>
                     </template>
                     <template if:true={isTell}>
                     <div class="two">
@@ -141,6 +147,12 @@
                         </div>
                     </template>
                     </div>
+                    <template if:true={whyOnCheck}>
+                        <label class="cq-field why"><span class="cq-label">{whyLabel}<span class="cq-req">*</span></span>
+                            <textarea rows="2" value={why} oninput={handleWhy} disabled={locked} placeholder={whyHint}></textarea>
+                            <span class="whynote">Saved in the audit trail with CQ.AI's suggestion.</span>
+                        </label>
+                    </template>
                     </template>
                 </div>
             </section>

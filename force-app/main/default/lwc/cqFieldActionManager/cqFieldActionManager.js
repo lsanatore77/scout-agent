@@ -9,6 +9,9 @@ import discardChanges from '@salesforce/apex/CqFieldActionScope.discardChanges';
 import forScope from '@salesforce/apex/CqLotStock.forScope';
 import railStatus from '@salesforce/apex/CqFieldActionRecovery.railStatus';
 import notifyCounts from '@salesforce/apex/CqFieldActionNotify.counts';
+import refreshNumbers from '@salesforce/apex/CqFieldActionNumbers.refreshNumbers';
+import numbersUpdatedOn from '@salesforce/apex/CqFieldActionNumbers.updatedOn';
+import saveStep from '@salesforce/apex/CqFieldActionProgress.saveStep';
 import { sortRows, nextSort, heads } from 'c/cqSort';
 
 // The seven steps of a field action. Regulatory Report is set aside for later and does not block.
@@ -94,6 +97,8 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
 
     rail = {};           // strategy, recovery, verdict and status for the later steps
     notify = {};         // customers, notified and responded, for the Notifications step's line in the rail
+    numbersOn;           // when the record's numbers were last worked out (Refresh Numbers, or the nightly job)
+    refreshing = false;
 
     async connectedCallback() {
         // the On Hand card closes on any click outside it, or on Escape
@@ -109,6 +114,32 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
         catch (e) { this.error = this.msg(e, 'Could not read this field action.'); }
         await this.loadRail();
         await this.loadStock();
+        this.keepStep();
+        try { this.numbersOn = await numbersUpdatedOn({ recordId: this.recordId }); } catch (e) { /* the header shows no time */ }
+    }
+    /** The step on the record (Workspace Step) and, the first time, Started On: for reports and the record page. */
+    keepStep() {
+        if (!this.v) { return; }
+        saveStep({ recordId: this.recordId, step: this.step }).catch(() => { /* the workspace carries on; the record keeps its last step */ });
+    }
+    // ---- Refresh Numbers (workspace header): works out the record's numbers now, as the nightly job does
+    get refreshLabel() { return this.refreshing ? 'Refreshing…' : 'Refresh Numbers'; }
+    get numbersLine() {
+        if (!this.numbersOn) { return 'Not worked out yet'; }
+        const d = new Date(this.numbersOn);
+        const sameDay = d.toDateString() === new Date().toDateString();
+        const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        return 'Updated ' + (sameDay ? 'today ' + time : d.toLocaleDateString() + ' ' + time);
+    }
+    async handleRefresh() {
+        if (this.refreshing) { return; }
+        this.refreshing = true;
+        this.error = undefined;
+        try {
+            this.numbersOn = await refreshNumbers({ recordId: this.recordId });
+            notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
+        } catch (e) { this.error = this.msg(e, 'Could not refresh the numbers.'); }
+        this.refreshing = false;
     }
     disconnectedCallback() {
         document.removeEventListener('click', this.closePop);
@@ -243,7 +274,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     }
     get progress() { return this.steps.filter((s) => s.done).length + ' of ' + STEPS.length + ' steps complete'; }
     handleStep(event) { const i = Number(event.detail); if (!this.isLocked(i)) { this.go(i); } }
-    go(i) { this.step = i; this.error = undefined; this.foot = { show: false, label: '', disabled: true, blocker: '' }; }
+    go(i) { this.step = i; this.error = undefined; this.foot = { show: false, label: '', disabled: true, blocker: '' }; this.keepStep(); }
     // ---- Ask CQ.AI: the Field Action agent, told which step is open, with ready questions for that step
     get askStep() { return STEPS[this.step] ? STEPS[this.step].label : ''; }
     get askSuggestions() { return ASK[this.step] || ASK[0]; }
@@ -362,7 +393,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     handleSigNext() { this.sigPage = Math.min(this.sigPageCount - 1, this.sigPageNow + 1); }
     handleSigPage(event) { this.sigPage = Number(event.currentTarget.dataset.p); }
     get sigPageItems() { return pageLinks(this.sigPageCount, this.sigPageNow); }
-    goScope() { this.step = SCOPE; }
+    goScope() { this.step = SCOPE; this.keepStep(); }
 
     // ---- step 2: scope
     get scopePill() { return 'cq-pill soft neu'; }

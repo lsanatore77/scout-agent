@@ -59,6 +59,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     stockOpen = '';      // the hold row whose on-hand split is showing
     holdSort = null;     // the Holds table's sort ({ key, dir }); rows sort inside their group (finished lots, component lots)
     editing = false;     // a confirmed strategy shows as a summary; Change (or Show Details once closed) opens the tabs
+    why;                 // why the strategy differs from CQ.AI's suggestion (Strategy Reason); kept while moving between tabs
 
     async connectedCallback() {
         // a click anywhere else, or Escape, closes the On Hand card (as on Scope)
@@ -76,6 +77,7 @@ export default class CqFieldActionStrategy extends LightningElement {
     msg(e, fallback) { return (e && e.body && e.body.message) || fallback; }
     apply(v) {
         this.v = JSON.parse(JSON.stringify(v));
+        if (this.why === undefined) { this.why = this.v.reason || ''; }
         this.dispatchEvent(new CustomEvent('strategychange', { detail: { status: this.v.status, action: this.v.action } }));
     }
     get ready() { return !!this.v; }
@@ -192,7 +194,8 @@ export default class CqFieldActionStrategy extends LightningElement {
             { key: 'i', k: 'What We Tell Customers', v: this.instruction, d: this.message, ai: this.vsAi(this.instruction, v.sInstruction) },
             { key: 'h', k: 'Holds', v: held.length ? held.length + (held.length === 1 ? ' hold' : ' holds') + ' on ' + lots.length + (lots.length === 1 ? ' lot' : ' lots') : 'No holds',
                 d: lots.join(', '), ai: '' },
-            { key: 'c', k: 'Effectiveness Check', v: check, d: LEVEL_HINT[this.level], ai: this.vsAi(this.level, v.sLevel, LEVELS) }
+            { key: 'c', k: 'Effectiveness Check', v: check, d: LEVEL_HINT[this.level], ai: this.vsAi(this.level, v.sLevel, LEVELS) },
+            ...(v.reason ? [{ key: 'r', k: 'Why It Differs From CQ.AI', v: v.reason, d: '', ai: '' }] : [])
         ].map((r) => ({ ...r, aiCls: 'sai' + (r.ai.startsWith('As') ? ' same' : '') }));
     }
     async handleText(event) {
@@ -306,6 +309,25 @@ export default class CqFieldActionStrategy extends LightningElement {
         this.saving -= 1;
     }
 
+    // ---- a choice other than CQ.AI's needs a reason, as on the review (one reason for the action, how far it goes and the check level)
+    get differs() {
+        const v = this.v; const out = [];
+        if (v.sAction && this.action !== v.sAction) { out.push({ key: 'action', label: this.pick(ACTIONS, this.action), ai: this.pick(ACTIONS, v.sAction) }); }
+        if (v.sDepth && this.depth !== v.sDepth) { out.push({ key: 'depth', label: this.depth, ai: v.sDepth }); }
+        if (v.sLevel && this.level !== v.sLevel) { out.push({ key: 'level', label: this.level, ai: v.sLevel }); }
+        return out;
+    }
+    get needsWhy() { return this.differs.length > 0; }
+    get whyOnAction() { return this.differs.some((d) => d.key === 'action' || d.key === 'depth'); }
+    get whyOnCheck() { return this.differs.some((d) => d.key === 'level'); }
+    get whyLabel() {
+        const d = this.differs;
+        return d.length === 1 ? 'Why ' + d[0].label + ' instead of ' + d[0].ai + ', as CQ.AI suggests?'
+            : 'Why ' + d.map((x) => x.label).join(', ') + ' instead of ' + d.map((x) => x.ai).join(', ') + ', as CQ.AI suggests?';
+    }
+    get whyHint() { return 'What do you know that the facts in CQ do not show?'; }
+    handleWhy(event) { this.why = event.target.value; }
+
     // ---- confirm
     get fits() {
         const a = this.action; const i = this.instruction;
@@ -323,6 +345,7 @@ export default class CqFieldActionStrategy extends LightningElement {
             if (!this.percent || !(p > 10 && p < 100)) { return 'For Level B, check more than 10% and less than 100%'; }
         }
         if (this.needsCheck && (!this.method || !this.checkBy)) { return 'Choose how and by when we check'; }
+        if (this.needsWhy && !(this.why || '').trim()) { return 'Say why the strategy differs from CQ.AI'; }
         return '';
     }
     get confirmed() { return this.v.status === 'Confirmed'; }
@@ -335,7 +358,8 @@ export default class CqFieldActionStrategy extends LightningElement {
         try {
             this.apply(await confirmStrategy({ recordId: this.recordId, values: {
                 action: this.action, depth: this.depth, instruction: this.instruction, message: this.message,
-                level: this.level, percent: this.percent, method: this.method, checkBy: this.checkBy } }));
+                level: this.level, percent: this.percent, method: this.method, checkBy: this.checkBy,
+                why: this.needsWhy ? (this.why || '').trim() : null } }));
             this.editing = false;
             notifyRecordUpdateAvailable([{ recordId: this.recordId }]);
         } catch (e) { this.error = this.msg(e, 'Could not confirm the strategy.'); }
