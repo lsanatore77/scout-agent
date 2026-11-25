@@ -45,7 +45,7 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 
 ## Work queue
 - **Next (Lou, 24 Nov): Field Action gets the Field Action Review treatment.** Record fields for each workspace step, status
-  and step on the record (Path), and related lists, so a standard record page and reports show where it stands.
+  and step on the record, and the new fields on the page layout (no Path, no field history, as for the review), so a standard record page and reports show where it stands.
 - Field Action Review: page layout done 24 Nov (Progress, Checklist, Recommendation and Committee sections). Lou: no Path,
   related lists as they are, no field history (the Audit Trail is the record). FAR-0004 restored. Design system on hold.
 - Field Action Review and the other screens onto the shared grey `.cq-card` (list in cqstyles_centralising.md).
