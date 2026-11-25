@@ -1,6 +1,6 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 /* the heading sits in a row with its status, so the intro keeps its own gap */
 .cq-step-intro { margin-top: 10px; }
 .b { font-weight: 600; }
@@ -13,10 +13,10 @@
 .grid > .cq-stepcard + .cq-stepcard { margin-top: 0; }
 .tcards { margin-top: 16px; }
 /* the recovery cards: a smaller grey tail on the figure (' · 28%', ' of 7'), amber while units are still out */
-.vx { font-size: 15px; font-weight: 600; color: var(--cq-muted); }
+.vx { font-size: var(--cq-fs-body); font-weight: 600; color: var(--cq-muted); }
 .cq-statcard-v.warn { color: var(--cq-warn-fg); }
 /* the task filters under the Customers and Tasks heading: small chips; Overdue turns red when there are any */
-.cq-chip.tchip { min-height: 26px; padding: 0 12px 2px; font-size: 13px; }
+.cq-chip.tchip { min-height: 26px; padding: 0 12px 2px; font-size: var(--cq-fs-meta); }
 .cq-chip.tchip.bad:not([aria-pressed="true"]) { color: var(--cq-crit-fg); }
 
 /* tables, nested rows, marks, the checklist, chevron, tick, search, filter cards, bar, form grid and small buttons come from cqStyles */
@@ -59,9 +59,9 @@
 .cq-btn-outline.ghost { border-color: var(--cq-accent); color: var(--cq-accent); }
 /* the lot stays held by something else after this field action releases it */
 /* what else holds a lot: one line above the table, a short tag per row */
-.alsonote { margin: 0 0 10px; padding: 8px 12px; border-radius: 6px; background: var(--cq-neu-bg); font-size: 13px; color: var(--cq-muted); }
+.alsonote { margin: 0 0 10px; padding: 8px 12px; border-radius: 6px; background: var(--cq-neu-bg); font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 td.also .cq-pill a { color: inherit; text-decoration: underline; }
-.stillheld { display: block; margin-top: 6px; font-size: 12px; line-height: 1.4; color: var(--cq-warn-fg); }
+.stillheld { display: block; margin-top: 6px; font-size: var(--cq-fs-sm); line-height: 1.4; color: var(--cq-warn-fg); }
 /* a confirmed Rework: the lot stays On Hold until someone marks the rework done */
 .rework { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
-.reworked { display: block; margin-top: 6px; font-size: 12px; color: var(--cq-pos-fg); }
+.reworked { display: block; margin-top: 6px; font-size: var(--cq-fs-sm); color: var(--cq-pos-fg); }

@@ -1,8 +1,8 @@
 @import 'c/cqStyles';
 
-:host { display: block; min-width: 0; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; min-width: 0; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .recsec { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.seclab { font-size: 13px; color: var(--cq-muted); }
+.seclab { font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 .ocgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; }
 .oc, .row { display: flex; align-items: flex-start; gap: 12px; width: 100%; box-sizing: border-box; font: inherit; color: var(--cq-ink); text-align: left; cursor: pointer; }
 .oc { padding: 14px 16px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
@@ -15,10 +15,10 @@
 .on .rd { border: 5px solid var(--cq-link); }
 .occ { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .octop { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.oc .oct { font-size: 15px; }
-.row .oct { font-size: 13px; }
-.oc .ocd { font-size: 12px; color: var(--cq-muted); }
-.row .ocd { font-size: 11px; color: var(--cq-muted); }
-.ailab { font-size: 12px; white-space: nowrap; }
+.oc .oct { font-size: var(--cq-fs-body); }
+.row .oct { font-size: var(--cq-fs-meta); }
+.oc .ocd { font-size: var(--cq-fs-sm); color: var(--cq-muted); }
+.row .ocd { font-size: var(--cq-fs-micro); color: var(--cq-muted); }
+.ailab { font-size: var(--cq-fs-sm); white-space: nowrap; }
 button:disabled { cursor: default; }
 .off .occ { opacity: .55; }

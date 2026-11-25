@@ -1,13 +1,13 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 /* one seat: who signs and where it stands; the signer's own seat is highlighted with its signature box */
 .seat { padding: 12px 14px; border-top: 1px solid var(--cq-line); }
 .seat.yours { background: var(--cq-link-soft); box-shadow: inset 3px 0 0 var(--cq-link); }
 .stop { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .stop .cq-pill { flex: none; white-space: nowrap; }
-.fname { font-size: 13px; font-weight: 700; }
-.who { font-size: 13px; }
+.fname { font-size: var(--cq-fs-meta); font-weight: 700; }
+.who { font-size: var(--cq-fs-meta); }
 .cq-pill.soft.you { background: var(--cq-bg); color: var(--cq-link); }
 .seat .cq-field { margin-top: 10px; }
 .sbtns { display: flex; gap: 8px; margin-top: 10px; }
@@ -17,12 +17,12 @@
 .signcover { position: absolute; inset: -6px; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
     border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); cursor: progress; }
 .spinhold { position: relative; display: block; width: 48px; height: 48px; }
-.covertext { max-width: 90%; font-size: 13px; font-weight: 600; text-align: center; color: var(--cq-ink); }
+.covertext { max-width: 90%; font-size: var(--cq-fs-meta); font-weight: 600; text-align: center; color: var(--cq-ink); }
 /* the password must be typed; the browser's autofill is noticed and cleared */
-.signmean { margin: 10px 0 0; font-size: 13px; line-height: 1.45; color: var(--cq-ink); }
-.sigpw { font-size: 13px; }
+.signmean { margin: 10px 0 0; font-size: var(--cq-fs-meta); line-height: 1.45; color: var(--cq-ink); }
+.sigpw { font-size: var(--cq-fs-meta); }
 .sigpw:-webkit-autofill { animation-name: cqAutofillStart; animation-duration: 1ms; }
 .sigpw:autofill { animation-name: cqAutofillStart; animation-duration: 1ms; }
 @keyframes cqAutofillStart { from { opacity: 1; } to { opacity: 1; } }
-.pwwarn { display: block; margin-top: 6px; font-size: 13px; color: var(--cq-crit-fg); }
+.pwwarn { display: block; margin-top: 6px; font-size: var(--cq-fs-meta); color: var(--cq-crit-fg); }
 .unk { display: block; margin-top: 6px; }

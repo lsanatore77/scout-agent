@@ -65,7 +65,7 @@ lightning-badge.lot-badge {
 
 .count-title {
     font-weight: bold;
-    font-size: 0.8125rem;
+    font-size: var(--cq-fs-meta);
     margin-bottom: 0.5rem;
 }
 
@@ -78,7 +78,7 @@ lightning-badge.lot-badge {
 }
 
 .count-number {
-    font-size: 1.75rem;
+    font-size: var(--cq-fs-stat);
     line-height: 1;
 }
 
@@ -90,7 +90,7 @@ lightning-badge.lot-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
-    font-size: 0.75rem;
+    font-size: var(--cq-fs-sm);
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
 }
@@ -128,7 +128,7 @@ lightning-badge.lot-badge {
 .count-scale {
     display: flex;
     justify-content: space-between;
-    font-size: 0.6875rem;
+    font-size: var(--cq-fs-micro);
     color: var(--cq-muted);
     margin-top: 0.25rem;
 }
@@ -141,7 +141,7 @@ lightning-badge.lot-badge {
     justify-content: space-between;
     gap: 0.5rem;
     margin-top: 0.5rem;
-    font-size: 0.75rem;
+    font-size: var(--cq-fs-sm);
     color: var(--cq-muted);
 }
 

@@ -1,6 +1,6 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 /* card headings are the shared .cq-card-title */
 .card { padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
 /* the decision card is the committee's decision, not CQ.AI's: a plain card, no caption, the title first (purple is CQ.AI's colour) */
@@ -9,8 +9,8 @@
 .sumcard { display: flex; flex-direction: column; gap: 10px; }
 .sumrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 /* the health hazard summary sits in What Was Decided, under the rationale: a quiet label over the text, no card of its own */
-.hazline { display: flex; flex-direction: column; gap: 2px; font-size: 14px; line-height: 1.45; }
-.hazk { font-size: 13px; color: var(--cq-muted); }
+.hazline { display: flex; flex-direction: column; gap: 2px; font-size: var(--cq-fs-para); line-height: 1.45; }
+.hazk { font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 .hazv { white-space: pre-line; }
 .sumcard > .cq-para { margin-top: 0; }
 /* the glance tables (Reviews That Led Here, Signals on This Part) sit under their card heading; a review's reason opens under it */
@@ -23,7 +23,7 @@
 /* one line a review: the approval takes the spare width and ends in an ellipsis when it is too long (the whole line shows on hover) */
 .cq-tbl td.apcell { width: 100%; max-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--cq-muted); }
 .tbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
-.pendline { font-size: 13px; color: var(--cq-muted); }
+.pendline { font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 .pendline.warn { color: var(--cq-warn-fg); font-weight: 600; }
 /* the lot tree: its own scroll and a header that stays put; the rows are the shared compact table */
 .tree { margin-top: 8px; max-height: 560px; overflow: auto; }

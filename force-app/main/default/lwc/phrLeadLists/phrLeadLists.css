@@ -4,11 +4,11 @@
 .wrap { display: flex; flex-direction: column; gap: 0.75rem; position: relative; background: var(--cq-bg); border-radius: 0.5rem; padding: 0.75rem 1rem 1rem; }
 lightning-card { display: block; border: 1px solid var(--cq-hl-line); border-radius: 0.5rem; }
 .top { display: flex; justify-content: space-between; align-items: center; }
-.top-title { font-weight: 700; font-size: 0.9375rem; }
+.top-title { font-weight: 700; font-size: var(--cq-fs-body); }
 .table { max-width: 100%; overflow-x: auto; }
 .notadded { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
 /* Sized to fit its column: no forced width, so there is no sideways scroll bar. */
-.grid { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.grid { width: 100%; border-collapse: collapse; font-size: var(--cq-fs-sm); }
 .grid th { text-align: left; font-weight: 700; color: var(--cq-muted); padding: 0.375rem 0.5rem; border-bottom: 1px solid var(--cq-line-field); white-space: nowrap; }
 .grid td { padding: 0.375rem 0.5rem; border-bottom: 1px solid var(--cq-hl-line); vertical-align: top; white-space: nowrap; }
 /* The title (cut to 45 characters) stays on one line and takes the spare width. */

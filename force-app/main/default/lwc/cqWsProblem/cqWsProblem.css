@@ -1,14 +1,14 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .problem { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 28px; height: 268px; box-sizing: border-box; padding: 14px; border-radius: 4px; background: var(--cq-bg); border: 1px solid var(--cq-line); }
 .photo { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 130px; box-sizing: border-box; padding: 8px; border-radius: 4px; background: var(--cq-bg); border: 1px dashed var(--cq-line-field); overflow: hidden; }
 .photo.has { position: relative; min-height: 160px; padding: 0; border: none; background: #2b3138; }
 .photo img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
-.nophoto { font-size: 11px; color: var(--cq-muted); text-align: center; }
+.nophoto { font-size: var(--cq-fs-micro); color: var(--cq-muted); text-align: center; }
 .ptext { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
 .ptext .cq-tiles { margin-top: auto; padding-top: 4px; }
 .plabel { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
-.quote { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 9; overflow: hidden; font-size: 13px; line-height: 1.45; white-space: pre-line; }
+.quote { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 9; overflow: hidden; font-size: var(--cq-fs-meta); line-height: 1.45; white-space: pre-line; }
 .cq-tile { border-radius: 4px; }
 @media (max-width: 760px) { .problem { grid-template-columns: 1fr; height: auto; } }

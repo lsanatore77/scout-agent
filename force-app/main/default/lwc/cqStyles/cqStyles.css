@@ -27,6 +27,7 @@
   --cq-fs-h3:      1.125rem;  /* 18 - small headings */
   --cq-fs-h2:      1.25rem;   /* 20 - step titles, popup titles, a big value */
   --cq-fs-h1:      1.375rem;  /* 22 - the record name in the header */
+  --cq-fs-xl:      1.5rem;    /* 24 - a large word or value (a suggested level on a suggestion card) */
   --cq-fs-stat:    1.75rem;   /* 28 - the number on a stat card */
   --cq-fs-display: 4.25rem;   /* 68 - one headline number (the risk score) */
   /* glyphs (marks and arrows drawn with a character, not words) */

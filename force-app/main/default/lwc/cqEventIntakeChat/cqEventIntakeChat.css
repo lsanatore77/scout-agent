@@ -4,7 +4,7 @@
 .cq-msg.err { margin: 0.75rem 1rem 0; }
 
 .body { padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-.q { margin: 0; font-size: 1.125rem; font-weight: 700; }
+.q { margin: 0; font-size: var(--cq-fs-h3); font-weight: 700; }
 .p { margin: 0; color: var(--cq-muted); line-height: 1.45; }
 .hintbox { margin: 0; padding: 0.625rem 0.75rem; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); color: var(--cq-muted); }
 
@@ -27,4 +27,4 @@
 .ft .sp { flex: 1; }
 
 .done { align-items: center; text-align: center; padding: 1.75rem 1rem; }
-.ok { width: 3rem; height: 3rem; border-radius: 50%; background: var(--cq-pos-bg); color: var(--cq-pos-fg); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 700; }
+.ok { width: 3rem; height: 3rem; border-radius: 50%; background: var(--cq-pos-bg); color: var(--cq-pos-fg); display: flex; align-items: center; justify-content: center; font-size: var(--cq-fs-glyph-xl); font-weight: 700; }

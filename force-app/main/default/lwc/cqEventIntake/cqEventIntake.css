@@ -1,8 +1,8 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--cq-hl-line); margin: -6px 0 18px; }
-.tab { padding: 8px 14px; border: none; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--cq-muted); border-bottom: 3px solid transparent; cursor: pointer; }
+.tab { padding: 8px 14px; border: none; background: none; font: inherit; font-size: var(--cq-fs-btn); font-weight: 600; color: var(--cq-muted); border-bottom: 3px solid transparent; cursor: pointer; }
 .tab.on { color: var(--cq-link); border-bottom-color: var(--cq-link); }
 .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
 /* form fields use the shared .cq-field / .cq-group patterns from cqStyles */
@@ -12,18 +12,18 @@
 .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .card { min-height: 64px; padding: 12px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); text-align: left; font: inherit; display: flex; flex-direction: column; gap: 3px; cursor: pointer; }
 .card.on { border: 2px solid var(--cq-link); background: var(--cq-link-soft); }
-.card b { font-size: 14px; color: var(--cq-ink); }
-.card span { color: var(--cq-muted); font-size: 13px; font-weight: 400; }
+.card b { font-size: var(--cq-fs-para); color: var(--cq-ink); }
+.card span { color: var(--cq-muted); font-size: var(--cq-fs-meta); font-weight: 400; }
 .plainbox { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; }
 .trendbox { align-self: start; }
 .whyv { line-height: 1.45; color: var(--cq-ink); }
 .count { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
-.bignum { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bignum { font-size: var(--cq-fs-stat); font-weight: 700; font-variant-numeric: tabular-nums; }
 .bar { height: 8px; border-radius: 4px; background: var(--cq-neu-bg); overflow: hidden; }
 .bar i { display: block; height: 100%; }
 .top8 { margin-top: 8px; }
 .sentrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.smalllink { font-size: 13px; color: var(--cq-link); font-weight: 600; cursor: pointer; }
+.smalllink { font-size: var(--cq-fs-meta); color: var(--cq-link); font-weight: 600; cursor: pointer; }
 .plainbtn { padding: 0; border: none; background: none; font-family: inherit; }
 @media (max-width: 760px) { .cols { grid-template-columns: 1fr; } .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 /* shared pieces keep this screen's spacing: the intro follows the tabs, notes sit in a spaced column */

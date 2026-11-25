@@ -1,9 +1,9 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .panel { display: flex; flex-direction: column; gap: 10px; padding: 14px; border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); background: var(--cq-bg); }
 .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.title { margin: 0; font-size: 16px; font-weight: 700; }
+.title { margin: 0; font-size: var(--cq-fs-lead); font-weight: 700; }
 .nom { margin: 0; }
 .b { font-weight: 600; }
 .warnc { color: var(--cq-warn-fg); }

@@ -1,25 +1,25 @@
 @import 'c/cqStyles';
 
 .wrap { position: relative; display: inline-block; }
-.trigger { border: none; background: transparent; color: var(--cq-hl-ask); font-weight: 700; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 4px; }
+.trigger { border: none; background: transparent; color: var(--cq-hl-ask); font-weight: 700; font-size: var(--cq-fs-btn); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 4px; }
 .trigger:hover { background: var(--cq-hl-ask-hover); }
 .trigger .star { color: var(--cq-hl-ask); }
-.star { color: var(--cq-ask); font-size: 16px; line-height: 1; }
-.star.small { font-size: 12px; margin-right: 6px; }
+.star { color: var(--cq-ask); font-size: var(--cq-fs-lead); line-height: 1; }
+.star.small { font-size: var(--cq-fs-sm); margin-right: 6px; }
 
 .pop { position: absolute; right: 0; top: 40px; width: 380px; max-height: 560px; background: var(--cq-bg); border: 1px solid var(--cq-line-field); border-radius: 10px; box-shadow: 0 12px 32px rgba(11, 42, 74, .18); display: flex; flex-direction: column; z-index: 9000; }
 .head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--cq-line); }
-.title { font-weight: 700; font-size: 14px; }
-.sub { font-size: 11px; color: var(--cq-faint); flex: 1; }
-.log { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 60px; max-height: 320px; font-size: 13px; }
+.title { font-weight: 700; font-size: var(--cq-fs-para); }
+.sub { font-size: var(--cq-fs-micro); color: var(--cq-faint); flex: 1; }
+.log { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 60px; max-height: 320px; font-size: var(--cq-fs-meta); }
 .msg { padding: 8px 10px; border-radius: 10px; max-width: 92%; line-height: 1.45; white-space: pre-wrap; }
 .msg.user { align-self: flex-end; background: var(--cq-ask); color: #fff; border-bottom-right-radius: 2px; }
 .msg.agent { align-self: flex-start; background: var(--cq-ask-soft); color: var(--cq-ink); border-bottom-left-radius: 2px; }
 .msg.thinking { min-width: 60px; min-height: 36px; position: relative; }
-.err { color: var(--cq-crit-fg); background: var(--cq-crit-bg); border-radius: 6px; padding: 8px 10px; font-size: 12px; }
+.err { color: var(--cq-crit-fg); background: var(--cq-crit-bg); border-radius: 6px; padding: 8px 10px; font-size: var(--cq-fs-sm); }
 .suggest { padding: 4px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
-.label { font-size: 11px; font-weight: 700; color: var(--cq-muted); letter-spacing: .4px; text-transform: uppercase; }
-.chip { text-align: left; border: 1px solid var(--cq-line); background: var(--cq-bg); border-radius: 6px; padding: 8px 10px; font-size: 13px; color: var(--cq-ask); cursor: pointer; }
+.label { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); letter-spacing: .4px; text-transform: uppercase; }
+.chip { text-align: left; border: 1px solid var(--cq-line); background: var(--cq-bg); border-radius: 6px; padding: 8px 10px; font-size: var(--cq-fs-meta); color: var(--cq-ask); cursor: pointer; }
 .chip:hover { background: var(--cq-accent-soft); }
 .foot { display: flex; gap: 8px; align-items: center; padding: 8px 12px 12px; border-top: 1px solid var(--cq-line); }
 .foot lightning-input { flex: 1; }
@@ -39,13 +39,13 @@
 
 /* Add to Evidence (or another pinLabel) under an answer */
 .pinrow { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
-.pinbtn { border: 1px solid var(--cq-line-field); background: var(--cq-bg); border-radius: 4px; padding: 2px 10px 3px; font: inherit; font-size: 12px; font-weight: 600; color: var(--cq-ink); cursor: pointer; }
+.pinbtn { border: 1px solid var(--cq-line-field); background: var(--cq-bg); border-radius: 4px; padding: 2px 10px 3px; font: inherit; font-size: var(--cq-fs-sm); font-weight: 600; color: var(--cq-ink); cursor: pointer; }
 .pinbtn:hover { background: var(--cq-hl-bg); }
-.pinrow.pinned { font-size: 12px; font-weight: 600; color: var(--cq-pos-fg); }
+.pinrow.pinned { font-size: var(--cq-fs-sm); font-weight: 600; color: var(--cq-pos-fg); }
 
 /* Ask Claude (demo orgs only): Claude's colour, so it is never mistaken for CQ.AI */
 .pinbtn.claudebtn { border-color: #c96442; color: #a8502f; }
 .pinbtn.claudebtn:hover { background: #fbf1ec; }
 .pinbtn:disabled { opacity: .5; cursor: default; }
 .msg.agent.claude { background: #faf6f1; border: 1px solid #ecdccb; }
-.ctag { font-size: 11px; font-weight: 700; color: #a8502f; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 2px; }
+.ctag { font-size: var(--cq-fs-micro); font-weight: 700; color: #a8502f; letter-spacing: .4px; text-transform: uppercase; margin-bottom: 2px; }

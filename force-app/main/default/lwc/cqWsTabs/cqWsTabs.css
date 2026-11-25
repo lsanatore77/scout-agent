@@ -1,9 +1,9 @@
 @import 'c/cqStyles';
 
-:host { display: block; position: sticky; top: 12px; min-width: 0; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; position: sticky; top: 12px; min-width: 0; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .evid { border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .evbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px; border-bottom: 1px solid var(--cq-line); }
-.evtab { margin-bottom: -1px; padding: 10px 12px; border: 0; border-bottom: 2px solid transparent; background: none; font: inherit; font-size: 13px; color: var(--cq-muted); cursor: pointer; pointer-events: auto; }
+.evtab { margin-bottom: -1px; padding: 10px 12px; border: 0; border-bottom: 2px solid transparent; background: none; font: inherit; font-size: var(--cq-fs-meta); color: var(--cq-muted); cursor: pointer; pointer-events: auto; }
 .evtab:hover { color: var(--cq-ink); }
 .evtab.on { color: var(--cq-ink); border-bottom-color: var(--cq-link); }
 .evtab:focus-visible { outline: 2px solid var(--cq-link); outline-offset: -2px; }

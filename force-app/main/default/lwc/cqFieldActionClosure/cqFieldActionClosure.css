@@ -1,9 +1,9 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 /* the heading sits in a row with its status, so the intro keeps its own gap */
 .cq-step-intro { margin-top: 10px; }
-.aitag { color: var(--cq-accent); font-size: 13px; font-weight: 600; }
+.aitag { color: var(--cq-accent); font-size: var(--cq-fs-meta); font-weight: 600; }
 
 /* the checklist (.cq-checks, .cq-check, .cq-mark, .cq-grouplabel), the columns and the links come from cqStyles */
 .cq-check-body .cq-link { align-self: flex-start; }
@@ -13,12 +13,12 @@
 
 .capa { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); }
 .capaopts { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.or { font-size: 13px; color: var(--cq-muted); }
+.or { font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 .capaopts select { flex: 1; width: auto; }
 /* the Signature card is the shared signature seat (c-cq-sign-seat) in a card without padding, as on Field Action Review */
 .seatcard { padding: 0; overflow: hidden; }
 .seatcard .cq-stepcard-head { padding: 14px 16px 10px; margin: 0; }
 .sadmin { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
-.snote { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--cq-line); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
+.snote { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--cq-line); font-size: var(--cq-fs-meta); line-height: 1.45; color: var(--cq-muted); }
 .snote.blk { color: var(--cq-warn-fg); font-weight: 600; }
 .seatcard .demo { margin-left: 10px; }

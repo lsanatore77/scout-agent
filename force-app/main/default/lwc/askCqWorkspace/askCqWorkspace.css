@@ -3,24 +3,24 @@
 /* The icon colour (theme colour 747E96, the Product History Review object's own) is passed to the shared frame as icon-color. */
 
 .footacts { display: contents; }
-.blocker { color: var(--cq-warn-fg); font-weight: 600; font-size: 13px; }
-.footnote { color: var(--cq-muted); font-size: 13px; }
+.blocker { color: var(--cq-warn-fg); font-weight: 600; font-size: var(--cq-fs-meta); }
+.footnote { color: var(--cq-muted); font-size: var(--cq-fs-meta); }
 .sect { padding: 0 0 8px; }
 .sect-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 6px; flex-wrap: wrap; }
-.sect-title { font-size: 15px; font-weight: 700; }
-.sect-sub { font-size: 13px; color: var(--cq-muted); }
+.sect-title { font-size: var(--cq-fs-body); font-weight: 700; }
+.sect-sub { font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 .cq-note { margin: 0; }
 
 /* checklist */
 .q { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--cq-line); }
 .qt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
 .qh { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.question { font-size: 15px; font-weight: 700; color: var(--cq-ink); }
-.ev { font-size: 13px; color: var(--cq-muted); line-height: 1.5; }
+.question { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
+.ev { font-size: var(--cq-fs-meta); color: var(--cq-muted); line-height: 1.5; }
 
-.file { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); font-size: 13px; }
+.file { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--cq-line); font-size: var(--cq-fs-meta); }
 .file a { font-weight: 700; }
-.file lightning-formatted-date-time { color: var(--cq-faint); font-size: 13px; margin-left: auto; }
+.file lightning-formatted-date-time { color: var(--cq-faint); font-size: var(--cq-fs-meta); margin-left: auto; }
 .cq-msg.ok { margin: 0 0 8px; }
 .ynwrap { flex: none; flex-wrap: nowrap; }
 .ynwrap .cq-chip { min-width: 64px; }

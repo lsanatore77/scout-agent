@@ -1,13 +1,13 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 
 .tabbox { display: flex; flex-direction: column; margin-top: 16px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 14px; border-bottom: 1px solid var(--cq-line); }
-.tab { display: inline-flex; align-items: center; gap: 6px; padding: 12px 12px 10px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; background: none; font: inherit; font-size: 14px; font-weight: 600; color: var(--cq-muted); cursor: pointer; }
+.tab { display: inline-flex; align-items: center; gap: 6px; padding: 12px 12px 10px; margin-bottom: -1px; border: none; border-bottom: 2px solid transparent; background: none; font: inherit; font-size: var(--cq-fs-btn); font-weight: 600; color: var(--cq-muted); cursor: pointer; }
 .tab:hover { color: var(--cq-ink); }
 .tab.on { font-weight: 700; color: var(--cq-ink); border-bottom-color: var(--cq-link); }
-.tnum { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; box-sizing: border-box; border-radius: 8px; border: 1px solid var(--cq-line-field); font-size: 10px; font-weight: 700; color: var(--cq-muted); }
+.tnum { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; box-sizing: border-box; border-radius: 8px; border: 1px solid var(--cq-line-field); font-size: var(--cq-fs-2xs); font-weight: 700; color: var(--cq-muted); }
 .tnum.ok { border: none; background: var(--cq-pos-bg); color: var(--cq-pos-fg); }
 .tnum.warn { border: none; background: var(--cq-warn-bg); color: var(--cq-warn-fg); }
 .panel { display: flex; flex-direction: column; gap: 14px; height: 440px; box-sizing: border-box; padding: 18px 20px; overflow: auto; }
@@ -37,10 +37,10 @@
 .sk { color: var(--cq-muted); }
 .sv { display: flex; flex-direction: column; gap: 2px; min-width: 0; white-space: pre-line; }
 .svv { font-weight: 700; }
-.sai { font-size: 12px; color: var(--cq-muted); text-align: right; }
+.sai { font-size: var(--cq-fs-sm); color: var(--cq-muted); text-align: right; }
 .sai.same { color: var(--cq-accent); }
 .sfoot { display: flex; align-items: center; gap: 12px; padding-top: 14px; }
 @media (max-width: 900px) { .srow { grid-template-columns: 1fr; gap: 4px; } .sai { text-align: left; } }
 .addrow .addsel { flex: 0 1 480px; }
 /* the lot stays held by something else without this field action's hold */
-.stillheld { display: block; margin-top: 4px; font-size: 12px; line-height: 1.4; color: var(--cq-warn-fg); }
+.stillheld { display: block; margin-top: 4px; font-size: var(--cq-fs-sm); line-height: 1.4; color: var(--cq-warn-fg); }

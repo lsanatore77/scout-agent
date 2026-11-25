@@ -1,6 +1,6 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .cq-step-intro { margin-top: 10px; }
 .b { font-weight: 600; }
 .nw { white-space: nowrap; }
@@ -14,7 +14,7 @@
 
 /* the notice: the key message as the customer reads it, then who it went to and when */
 .letter { padding: 10px 12px; border-radius: 6px; background: var(--cq-neu-bg); line-height: 1.5; white-space: pre-line; }
-.meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--cq-muted); }
+.meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: var(--cq-fs-sm); color: var(--cq-muted); }
 
 /* the customers table: one line a customer; opening one shows the lots it received in a table of their own */
 .cell2 { display: flex; align-items: center; gap: 6px; }

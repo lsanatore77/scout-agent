@@ -1,6 +1,6 @@
 @import 'c/cqStyles';
 
-:host { display: block; font-size: 13px; color: var(--cq-ink); }
+:host { display: block; font-size: var(--cq-fs-meta); color: var(--cq-ink); }
 /* one decision card, the same as Disposition and Investigation in Next Steps: name and state, the suggestion, the choices */
 :host { height: 100%; }
 .kard { display: flex; flex-direction: column; gap: 8px; min-width: 0; height: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--cq-line); background: var(--cq-bg); }

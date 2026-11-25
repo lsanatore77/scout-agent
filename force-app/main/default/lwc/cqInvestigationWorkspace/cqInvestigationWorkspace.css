@@ -1,6 +1,6 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .red { color: var(--cq-crit-fg); }
 .lvl { font-weight: 700; }
 .lvl.low { color: var(--cq-pos-fg); }
@@ -13,11 +13,11 @@
 /* What Changed */
 .lookback { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0; }
 .card { padding: 14px; border-radius: 10px; border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
-.card > .tl { position: relative; margin: 4px 10px 0; font-size: 13px; color: var(--cq-ink); }
+.card > .tl { position: relative; margin: 4px 10px 0; font-size: var(--cq-fs-meta); color: var(--cq-ink); }
 .tl-axis { position: absolute; left: 0; right: 0; height: 2px; background: var(--cq-line); }
 .tl-shade { position: absolute; height: 26px; background: rgba(74, 47, 192, .06); border-left: 1px dashed #b9aef0; border-right: 1px dashed #b9aef0; }
-.tl-tick { position: absolute; font-size: 11px; color: #6b7480; white-space: nowrap; }
-.tl-band { position: absolute; height: 18px; box-sizing: border-box; padding: 0 8px; border-radius: 4px; border: 1px solid var(--cq-warn-line); background: repeating-linear-gradient(135deg, var(--cq-warn-bg) 0 8px, #fdf6ee 8px 16px); color: var(--cq-warn-fg); font-size: 11px; font-weight: 600; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-tick { position: absolute; font-size: var(--cq-fs-micro); color: #6b7480; white-space: nowrap; }
+.tl-band { position: absolute; height: 18px; box-sizing: border-box; padding: 0 8px; border-radius: 4px; border: 1px solid var(--cq-warn-line); background: repeating-linear-gradient(135deg, var(--cq-warn-bg) 0 8px, #fdf6ee 8px 16px); color: var(--cq-warn-fg); font-size: var(--cq-fs-micro); font-weight: 600; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tl-dot { position: absolute; width: 12px; height: 12px; margin-left: -6px; border-radius: 999px; border: 2px solid #fff; box-sizing: content-box; }
 .tl-dot.change { background: var(--cq-accent); box-shadow: 0 0 0 1px var(--cq-accent); }
 .tl-dot.lot { background: var(--cq-link); box-shadow: 0 0 0 1px var(--cq-link); }
@@ -33,14 +33,14 @@
 .tl-box.lot .tl-head { color: var(--cq-link); }
 .tl-box.start { background: var(--cq-crit-bg); border: 1px solid var(--cq-crit-line); }
 .tl-box.start .tl-head { color: var(--cq-crit-fg); }
-.tl-head { font-size: 13px; font-weight: 700; white-space: nowrap; }
-.tl-text { font-size: 13px; line-height: 1.35; }
-.tl-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; color: var(--cq-muted); }
+.tl-head { font-size: var(--cq-fs-meta); font-weight: 700; white-space: nowrap; }
+.tl-text { font-size: var(--cq-fs-meta); line-height: 1.35; }
+.tl-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 .lg.change { color: var(--cq-accent); } .lg.lot { color: var(--cq-link); } .lg.band { color: var(--cq-warn-fg); } .lg-shade { color: var(--cq-accent); }
 .added { color: var(--cq-pos-fg); font-weight: 600; white-space: nowrap; }
 .notincq { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 48px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--cq-line); background: var(--cq-surface); margin: 14px 0; }
 .addchange { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 10px; border: 2px solid var(--cq-link); background: var(--cq-link-soft); margin: 14px 0; }
-.big2 { font-size: 15px; }
+.big2 { font-size: var(--cq-fs-body); }
 .hyprow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--cq-line); }
 .tl-text::first-letter { text-transform: uppercase; }
 /* a little space between the date labels and the shaded 14 days */
@@ -52,12 +52,12 @@
 .redtext { color: var(--cq-crit-fg); font-weight: 600; }
 .top8x { margin-top: 2px; align-items: center; }
 .actcol { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-.smalllink { font-size: 13px; color: var(--cq-link); cursor: pointer; }
+.smalllink { font-size: var(--cq-fs-meta); color: var(--cq-link); cursor: pointer; }
 .smalllink:hover { text-decoration: underline; }
 .dismissed { display: inline-flex; align-items: center; gap: 6px; }
 /* CQ.AI Suggested Summary on Conclusion */
 .ibtn { display: inline-flex; align-items: center; gap: 6px; }
-.sumbusy { box-sizing: border-box; min-height: 200px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-surface); color: var(--cq-muted); font-size: 14px; font-weight: 400; }
+.sumbusy { box-sizing: border-box; min-height: 200px; display: flex; align-items: center; justify-content: center; gap: 10px; border-radius: 4px; border: 1px solid var(--cq-line-field); background: var(--cq-surface); color: var(--cq-muted); font-size: var(--cq-fs-para); font-weight: 400; }
 .pspin { width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--cq-accent-line); border-top-color: var(--cq-accent); animation: pspin .8s linear infinite; }
 @keyframes pspin { to { transform: rotate(360deg); } }
 .sumask { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 12px 0 0; }

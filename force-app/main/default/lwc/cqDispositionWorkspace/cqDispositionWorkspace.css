@@ -1,6 +1,6 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .strong { font-weight: 700; }
 .green { color: var(--cq-pos-fg); }
 .amber { color: var(--cq-warn-fg); }
@@ -27,7 +27,7 @@
 .cq-card-title { margin-bottom: 6px; }
 .cq-pcard .cq-card-title { margin-bottom: 0; }
 .cq-ai-card { min-width: 0; }
-.cq-ai-card.fsug { padding: 10px 12px; font-size: 14px; }
+.cq-ai-card.fsug { padding: 10px 12px; font-size: var(--cq-fs-para); }
 .cq-msg.warn { margin: 8px 0 14px; }
 .cq-field input.qty { width: 110px; }
 .cq-field input.date { width: 170px; }

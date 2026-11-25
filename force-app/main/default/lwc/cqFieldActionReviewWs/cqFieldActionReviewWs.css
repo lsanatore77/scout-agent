@@ -1,36 +1,36 @@
 @import 'c/cqStyles';
 
-:host { display: block; color: var(--cq-ink); font-size: 13px; --cq-r-card: 4px; --cq-r-field: 4px; }
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); --cq-r-card: 4px; --cq-r-field: 4px; }
 /* header, rail, glance, suggestion, tabs and choices come from the shared c-cq-ws-* pieces; this file styles the step content */
 .cq-tblwrap, .cq-tile, .cq-modal { border-radius: 4px; }
-.lab { font-size: 13px; font-weight: 600; color: var(--cq-muted); }
+.lab { font-size: var(--cq-fs-label); font-weight: 600; color: var(--cq-muted); }
 .decided { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 8px 12px; border-radius: 4px; background: var(--cq-pos-bg); color: var(--cq-pos-fg); font-weight: 600; }
 .card { padding: 14px; border-radius: 4px; border: 1px solid var(--cq-line); background: var(--cq-bg); }
 /* the coordinator's own recommendation: a plain card (purple is CQ.AI's colour); a quiet caption over the outcome */
 .card.sug { padding: 16px; }
-.card.sug > .lab { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
+.card.sug > .lab { font-size: var(--cq-fs-label); font-weight: 400; color: var(--cq-muted); }
 .sughead { display: flex; align-items: baseline; gap: 10px; margin-top: 2px; }
-.score { font-size: 68px; font-weight: 700; line-height: 1; }
-.lvl { font-weight: 700; font-size: 16px; }
+.score { font-size: var(--cq-fs-display); font-weight: 700; line-height: 1; }
+.lvl { font-weight: 700; font-size: var(--cq-fs-lead); }
 .lvl.low { color: var(--cq-pos-fg); }
 .lvl.medium { color: var(--cq-warn-fg); }
 .lvl.high { color: var(--cq-crit-fg); }
 .ftable { margin-top: 10px; border-top: 1px solid var(--cq-accent-line); }
-.fname { font-size: 13px; font-weight: 700; }
+.fname { font-size: var(--cq-fs-meta); font-weight: 700; }
 .cq-know { margin-top: 12px; }
 .evt { display: flex; gap: 12px; padding: 8px 14px 8px 36px; border-bottom: 1px solid var(--cq-line); }
 .evt:last-child { border-bottom: none; }
 .rt { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
-.chk { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.chk { display: flex; align-items: center; gap: 8px; font-size: var(--cq-fs-btn); font-weight: 600; cursor: pointer; }
 .rr { padding: 8px 0; border-bottom: 1px solid var(--cq-line); }
 .rr:last-child { border-bottom: none; padding-bottom: 0; }
-.rv2 { font-size: 14px; line-height: 1.45; white-space: pre-line; }
+.rv2 { font-size: var(--cq-fs-para); line-height: 1.45; white-space: pre-line; }
 .crow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--cq-line); }
 .cq-msg.back { display: flex; flex-direction: column; gap: 4px; margin: 0 0 14px; }
 .backtext { white-space: pre-line; }
 .cq { display: flex; align-items: flex-start; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--cq-line); }
 .cqt { flex: 1; min-width: 0; }
-.question { font-size: 14px; font-weight: 400; line-height: 28px; color: var(--cq-ink); }   /* the chips' height, so the question sits level with them */
+.question { font-size: var(--cq-fs-para); font-weight: 400; line-height: 28px; color: var(--cq-ink); }   /* the chips' height, so the question sits level with them */
 .ynwrap { flex: none; }
 .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 760px) { .pair { grid-template-columns: 1fr; } .cq { flex-direction: column; } }
@@ -39,12 +39,12 @@
 .nrow { display: grid; grid-template-columns: 140px minmax(0, 1fr) 72px; column-gap: 10px; align-items: center; min-height: 34px; padding: 0 6px; margin: 0 -6px; border-radius: 4px; }
 .nrow.hot { background: var(--cq-surface); }
 .nl { display: flex; flex-direction: column; min-width: 0; }
-.nt { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nt { font-size: var(--cq-fs-meta); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ntrack { position: relative; height: 16px; border-left: 2px solid var(--cq-muted); }
 .nbar { position: absolute; left: 0; top: 2px; height: 12px; border-radius: 0 6px 6px 0; }
-.nx { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nx { font-size: var(--cq-fs-meta); font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .trend { display: block; width: 100%; height: auto; }
-.legend { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 11px; color: var(--cq-muted); }
+.legend { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-size: var(--cq-fs-micro); color: var(--cq-muted); }
 .lg { display: inline-flex; align-items: center; gap: 6px; }
 .sw { display: inline-block; width: 14px; height: 3px; border-radius: 2px; }
 .assess { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
@@ -71,27 +71,27 @@
 /* the expand chevron is the shared one (cq-rchev-btn > cq-rchev, cqStyles) */
 .stbl .evrow td { padding: 8px 12px; border-top: 1px solid var(--cq-line); }
 /* With the committee, Reviewer Assessment and Recommendation open view only (class set in renderedCallback) */
-.view.viewonly .cq-step-title::after { content: '\00A0\00B7\00A0View Only'; font-size: 14px; font-weight: 600; color: var(--cq-muted); }
+.view.viewonly .cq-step-title::after { content: '\00A0\00B7\00A0View Only'; font-size: var(--cq-fs-para); font-weight: 600; color: var(--cq-muted); }
 .view.viewonly button:not(.cq-link):not(.cq-rchev-btn):not(.cq-sortbtn), .view.viewonly select, .view.viewonly input, .view.viewonly textarea { pointer-events: none; }
 .view.viewonly textarea, .view.viewonly input, .view.viewonly select { background: var(--cq-surface); }
 /* shared fields and messages keep this screen's vertical rhythm */
 .cq-field { margin-top: 14px; }
 .riskcard .cq-field { margin-top: 0; }
 /* what the reviewer types, at the screen's 13px text size */
-.cq-field textarea, .cq-field input, .cq-field select { font-size: 13px; }
+.cq-field textarea, .cq-field input, .cq-field select { font-size: var(--cq-fs-meta); }
 /* the hazard summary starts at its 2 rows (the shared minimum height would make it 3): it can still be dragged bigger */
 .riskcard textarea[data-f="hazard"] { min-height: 0; }
 /* Recommendation: sections in decision order; the field action list sits under Field Action Needed */
 .recwrap { display: flex; flex-direction: column; gap: 22px; max-width: 820px; }
 .recwrap > .cq-field { margin-top: 0; }
-.recwrap > .cq-field .cq-label { font-size: 13px; font-weight: 400; color: var(--cq-muted); }
+.recwrap > .cq-field .cq-label { font-size: var(--cq-fs-label); font-weight: 400; color: var(--cq-muted); }
 .ocgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 10px; }
 .fasec { grid-column: -2 / -1; min-width: 0; }
 .newfa { display: flex; flex-direction: column; gap: 12px; padding: 12px 14px 14px 42px; border-top: 1px solid var(--cq-line); background: var(--cq-link-soft); box-shadow: inset 3px 0 0 var(--cq-link); }
 .newfa .recsec { display: flex; flex-direction: column; gap: 8px; }
 .newfa .cq-field { margin-top: 0; }
-.newfa .cq-label { font-size: 12px; font-weight: 400; color: var(--cq-muted); }
-.scopenote { margin: 0; font-size: 11px; line-height: 1.45; color: var(--cq-muted); }
+.newfa .cq-label { font-size: var(--cq-fs-sm); font-weight: 400; color: var(--cq-muted); }
+.scopenote { margin: 0; font-size: var(--cq-fs-micro); line-height: 1.45; color: var(--cq-muted); }
 /* card headings: bold, Title Case, body size (the Reported Answers sub-heading on a CQ.AI suggestion card) */
 .card > .lab, .chead .lab, .plabel { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
 .cq-kv-v { white-space: pre-line; }
@@ -101,17 +101,17 @@
 .card.rec { padding: 14px 16px 6px; }
 .rrow { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 16px; padding: 10px 0; border-top: 1px solid var(--cq-line); }
 .card.rec > .lab { padding-bottom: 6px; }
-.rk { font-size: 13px; color: var(--cq-muted); }
-.rv { font-size: 13px; line-height: 1.5; min-width: 0; white-space: pre-line; }
-.rbig { font-size: 15px; font-weight: 700; }
-.cqmatch { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 13px; color: var(--cq-accent); }
+.rk { font-size: var(--cq-fs-meta); color: var(--cq-muted); }
+.rv { font-size: var(--cq-fs-meta); line-height: 1.5; min-width: 0; white-space: pre-line; }
+.rbig { font-size: var(--cq-fs-body); font-weight: 700; }
+.cqmatch { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: var(--cq-fs-meta); color: var(--cq-accent); }
 .card.seats { padding: 0; overflow: hidden; }
 .shead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 14px 14px 10px; }
 /* each committee seat is c-cq-sign-seat (the shared signature seat); the admin links sit inside it */
 .seat { padding: 12px 14px; border-top: 1px solid var(--cq-line); }
 .sadmin { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
-.snote { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--cq-line); font-size: 13px; line-height: 1.45; color: var(--cq-muted); }
+.snote { margin: 0; padding: 10px 14px 12px; border-top: 1px solid var(--cq-line); font-size: var(--cq-fs-meta); line-height: 1.45; color: var(--cq-muted); }
 /* the reason for choosing differently from CQ.AI: required, saved in the audit trail */
 .cq-field.why { margin-top: 10px; }
-.why .cq-label { font-size: 13px; font-weight: 600; color: var(--cq-ink); }
-.whynote { display: block; margin-top: 4px; font-size: 13px; color: var(--cq-muted); }
+.why .cq-label { font-size: var(--cq-fs-label); font-weight: 600; color: var(--cq-ink); }
+.whynote { display: block; margin-top: 4px; font-size: var(--cq-fs-meta); color: var(--cq-muted); }

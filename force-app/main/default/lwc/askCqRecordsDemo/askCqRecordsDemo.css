@@ -1,12 +1,12 @@
 @import 'c/cqStyles';
 
 .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.title { font-size: 15px; font-weight: 700; }
+.title { font-size: var(--cq-fs-body); font-weight: 700; }
 .actions { display: flex; align-items: center; gap: 10px; }
 .cols { position: relative; }
 .cols-menu { position: absolute; right: 0; top: 30px; z-index: 20; background: var(--cq-bg); border: 1px solid var(--cq-line); border-radius: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.12); padding: 8px 0; min-width: 160px; }
-.cols-title { font-size: 13px; font-weight: 700; color: var(--cq-ink); padding: 2px 12px 6px; }
-.cols-item { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
+.cols-title { font-size: var(--cq-fs-meta); font-weight: 700; color: var(--cq-ink); padding: 2px 12px 6px; }
+.cols-item { display: flex; align-items: center; gap: 8px; padding: 6px 12px; font-size: var(--cq-fs-meta); cursor: pointer; }
 .cols-item:hover { background: var(--cq-surface); }
 .cols-item input { margin: 0; }
 .msg { margin: 0 16px 8px; }
@@ -14,10 +14,10 @@
 .loading { position: relative; height: 40px; }
 
 .tabs { display: flex; gap: 2px; padding: 0 16px; border-bottom: 1px solid var(--cq-line); }
-.tab { border: none; background: transparent; padding: 8px 12px; font-size: 13px; color: var(--cq-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 6px; }
+.tab { border: none; background: transparent; padding: 8px 12px; font-size: var(--cq-fs-meta); color: var(--cq-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 6px; }
 .tab:hover { color: var(--cq-ink); }
 .tab.active { color: var(--cq-ink); font-weight: 700; border-bottom-color: var(--cq-link); }
-.on-badge { background: var(--cq-link); color: #fff; border-radius: 9px; font-size: 10px; font-weight: 700; padding: 1px 6px; }
+.on-badge { background: var(--cq-link); color: #fff; border-radius: 9px; font-size: var(--cq-fs-2xs); font-weight: 700; padding: 1px 6px; }
 
 /* the records table comes from cqStyles; here it sits inside a card, with rows centred on the score badge */
 .cq-tblwrap { margin: 12px 16px 0; }
@@ -27,24 +27,24 @@
 .c-why { width: 150px; text-align: center; }
 .c-add { width: 120px; }
 
-.badge { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 44px; border-radius: 8px; font-size: 14px; font-weight: 700; color: #fff; }
+.badge { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 44px; border-radius: 8px; font-size: var(--cq-fs-para); font-weight: 700; color: #fff; }
 .badge.red { background: #e06c6c; }
 .badge.yellow { background: #e8b64a; }
 .badge.grey { background: #b8c0cc; }
-.line { font-size: 13px; color: var(--cq-muted); }
+.line { font-size: var(--cq-fs-meta); color: var(--cq-muted); }
 .line.dim { color: var(--cq-faint); }
 
 /* read-only count above the table: grey so it does not look like the clickable purple pills */
-.tag { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 11px; background: #f0f1f3; color: var(--cq-muted); font-size: 11px; font-weight: 600; white-space: nowrap; }
-.tag .st { font-size: 11px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px; border-radius: 11px; background: #f0f1f3; color: var(--cq-muted); font-size: var(--cq-fs-micro); font-weight: 600; white-space: nowrap; }
+.tag .st { font-size: var(--cq-fs-micro); }
 
 .switch { width: 36px; height: 20px; border-radius: 10px; border: none; padding: 0; position: relative; background: #d5dbe3; cursor: pointer; }
 .switch.on { background: var(--cq-link); }
 .knob { position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 8px; background: var(--cq-bg); transition: left .15s; }
 .switch.on .knob { left: 18px; }
-.added { font-size: 13px; font-weight: 700; color: var(--cq-pos-fg); }
+.added { font-size: var(--cq-fs-meta); font-weight: 700; color: var(--cq-pos-fg); }
 
 .pager { display: flex; align-items: center; gap: 14px; padding: 8px 16px 6px; }
 .vdiv { width: 1px; height: 22px; background: var(--cq-line); }
 .bom { --slds-c-checkbox-color-border: var(--cq-line-field); }
-.page-label { font-size: 13px; color: var(--cq-muted); }
+.page-label { font-size: var(--cq-fs-label); color: var(--cq-muted); }
