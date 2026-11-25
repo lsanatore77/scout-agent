@@ -13,6 +13,11 @@ the source evidence is kept and linked to each value, the audit trail records wh
 fields and points to where each value came from; the person confirms. Ties in with the CoC data cleanup below.
 Builds on the Google Vision text extraction CQ already uses on PDFs (Lou, 24 Nov). Not in this repo or the dev org yet:
 find out where it runs, whether it returns text with positions on the page, and where the text is stored.
+Salesforce options (checked 24 Nov): **Data 360 Document AI** (OCR + LLM to fields from a JSON schema, confidence per field;
+needs Data 360 credits, an LLM enabled, and Agentforce switched on, which clashes with "leave Agentforce alone");
+**Intelligent Document Reader** (Amazon Textract OCR per page, needs an add-on licence; text only, the field mapping is ours).
+Either way the new work is the same: map text to the lot's fields and show each value for a person to confirm.
+Next: check which licences the dev org has (read only).
 Other candidates: customer response emails filling Field Action cases; supplier replies; failure and severity coding;
 regulatory report drafts from a complaint and its investigation.
 
