@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Question__c</fullName><label>Question</label><description>The library question this row was copied from.</description><inlineHelpText>The question in the checklist library.</inlineHelpText><deleteConstraint>SetNull</deleteConstraint><referenceTo>Field_Action_Checklist_Question__c</referenceTo><relationshipLabel>Review Checks</relationshipLabel><relationshipName>Review_Checks</relationshipName><required>false</required><type>Lookup</type>
+</CustomField>

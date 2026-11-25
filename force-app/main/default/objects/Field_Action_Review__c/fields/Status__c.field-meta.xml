@@ -1,37 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
-    <fullName>Status__c</fullName>
-    <label>Status</label>
-    <type>Picklist</type>
-    <valueSet>
-        <restricted>true</restricted>
-        <valueSetDefinition>
-            <sorted>false</sorted>
-            <value>
-                <fullName>New</fullName>
-                <default>true</default>
-                <label>New</label>
-            </value>
-            <value>
-                <fullName>In Review</fullName>
-                <default>false</default>
-                <label>In Review</label>
-            </value>
-            <value>
-                <fullName>With Committee</fullName>
-                <default>false</default>
-                <label>With Committee</label>
-            </value>
-            <value>
-                <fullName>Decided</fullName>
-                <default>false</default>
-                <label>Decided</label>
-            </value>
-            <value>
-                <fullName>Closed</fullName>
-                <default>false</default>
-                <label>Closed</label>
-            </value>
-        </valueSetDefinition>
-    </valueSet>
+    <fullName>Status__c</fullName><label>Status</label><description>Where the review stands: New, In Review, Escalated, With Committee, Decided, or Withdrawn (dropped by its nonconformance before a decision).</description><inlineHelpText>Set by the workspace as the review moves on.</inlineHelpText><required>false</required><type>Picklist</type><valueSet><restricted>true</restricted><valueSetDefinition><sorted>false</sorted><value><fullName>New</fullName><default>true</default><label>New</label></value><value><fullName>In Review</fullName><default>false</default><label>In Review</label></value><value><fullName>Escalated</fullName><default>false</default><label>Escalated</label></value><value><fullName>With Committee</fullName><default>false</default><label>With Committee</label></value><value><fullName>Decided</fullName><default>false</default><label>Decided</label></value><value><fullName>Withdrawn</fullName><default>false</default><label>Withdrawn</label></value></valueSetDefinition></valueSet>
 </CustomField>

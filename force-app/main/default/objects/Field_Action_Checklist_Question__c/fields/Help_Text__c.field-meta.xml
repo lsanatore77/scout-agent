@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Help_Text__c</fullName><label>Help Text</label><description>A line of guidance shown under the question.</description><inlineHelpText>Optional: what the reviewer should consider when answering.</inlineHelpText><length>255</length><required>false</required><type>Text</type>
+</CustomField>

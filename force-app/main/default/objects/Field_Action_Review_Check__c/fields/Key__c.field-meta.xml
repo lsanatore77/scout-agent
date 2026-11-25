@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Key__c</fullName><label>Key</label><description>The question's Key, copied from the library, so reports and CQ.AI can match answers across checklists.</description><inlineHelpText>Copied from the library question.</inlineHelpText><length>40</length><required>false</required><type>Text</type>
+</CustomField>

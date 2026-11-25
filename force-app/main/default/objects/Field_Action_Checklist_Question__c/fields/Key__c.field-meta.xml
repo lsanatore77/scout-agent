@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Key__c</fullName><label>Key</label><description>A short fixed code (for example injury or left) that CQ.AI uses to find the records that answer this question, and that reports use to compare answers across checklists.</description><inlineHelpText>Leave blank for a question CQ.AI should not suggest an answer to. Do not change it once reviews use the question.</inlineHelpText><length>40</length><required>false</required><type>Text</type>
+</CustomField>

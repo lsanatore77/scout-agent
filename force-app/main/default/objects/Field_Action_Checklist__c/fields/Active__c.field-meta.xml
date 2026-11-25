@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Active__c</fullName><label>Active</label><description>Only active checklists are given to new reviews.</description><inlineHelpText>Clear to stop giving this checklist to new reviews. Reviews that already have it keep their questions.</inlineHelpText><defaultValue>true</defaultValue><type>Checkbox</type>
+</CustomField>

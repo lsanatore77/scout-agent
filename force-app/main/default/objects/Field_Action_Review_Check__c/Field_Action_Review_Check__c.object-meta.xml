@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus><description>The Field Action Review Check object records one checklist question and its answer on a Field Action Review, with the question text copied in, CQ.AI's suggested answer, notes, and who answered and when. Rows are copied from the review's checklist when it starts. Commonly used for review evidence, audits and reports.</description><enableHistory>true</enableHistory><enableReports>true</enableReports><enableSearch>true</enableSearch><label>Field Action Review Check</label><nameField><displayFormat>FRC-{00000}</displayFormat><label>Check Number</label><type>AutoNumber</type><startingNumber>1</startingNumber></nameField><pluralLabel>Field Action Review Checks</pluralLabel><sharingModel>ControlledByParent</sharingModel><visibility>Public</visibility>
+</CustomObject>

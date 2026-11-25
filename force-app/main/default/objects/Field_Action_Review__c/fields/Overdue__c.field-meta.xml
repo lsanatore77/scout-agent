@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Overdue__c</fullName>
+    <label>Overdue</label>
+    <description>The review is open and past its due date.</description>
+    <inlineHelpText>Calculated from Due Date and Status.</inlineHelpText>
+    <formula><![CDATA[AND(NOT(ISBLANK(Due_Date__c)), Due_Date__c < TODAY(), NOT(ISPICKVAL(Status__c, 'Decided')), NOT(ISPICKVAL(Status__c, 'Withdrawn')))]]></formula>
+    <type>Checkbox</type>
+</CustomField>

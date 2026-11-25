@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Answered_By__c</fullName><label>Answered By</label><description>The person who chose the answer.</description><inlineHelpText>Set when the answer is chosen.</inlineHelpText><deleteConstraint>SetNull</deleteConstraint><referenceTo>User</referenceTo><relationshipLabel>Field Action Review Checks Answered</relationshipLabel><relationshipName>Field_Action_Review_Checks_Answered</relationshipName><required>false</required><type>Lookup</type>
+</CustomField>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Checklist__c</fullName><label>Checklist</label><description>The checklist whose questions this review answers: from the part, then the part family, then the default.</description><inlineHelpText>Chosen automatically. The coordinator can change it before submitting, with a reason.</inlineHelpText><deleteConstraint>SetNull</deleteConstraint><referenceTo>Field_Action_Checklist__c</referenceTo><relationshipLabel>Reviews</relationshipLabel><relationshipName>Reviews</relationshipName><required>false</required><type>Lookup</type>
+</CustomField>

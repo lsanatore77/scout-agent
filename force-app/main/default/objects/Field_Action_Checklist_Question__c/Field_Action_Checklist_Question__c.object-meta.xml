@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus><description>The Field Action Checklist Question object holds one question in a Field Action Checklist, with its wording (required), order, help text and a Key that tells CQ.AI how to suggest an answer. Active questions are copied onto each review that gets the checklist. Commonly used for maintaining review questions.</description><enableHistory>true</enableHistory><enableReports>true</enableReports><enableSearch>true</enableSearch><label>Field Action Checklist Question</label><nameField><displayFormat>FCQ-{0000}</displayFormat><label>Question Number</label><type>AutoNumber</type><startingNumber>1</startingNumber></nameField><pluralLabel>Field Action Checklist Questions</pluralLabel><sharingModel>ControlledByParent</sharingModel><visibility>Public</visibility>
+</CustomObject>

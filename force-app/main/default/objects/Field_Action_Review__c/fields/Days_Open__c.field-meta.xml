@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Days_Open__c</fullName><label>Days Open</label><description>Days from the request to the decision, or to today while the review is open.</description><inlineHelpText>Calculated: request to decision, or to today.</inlineHelpText><formula><![CDATA[ROUND(IF(ISBLANK(Decided_On__c), NOW(), Decided_On__c) - BLANKVALUE(Requested_On__c, CreatedDate), 0)]]></formula><formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs><precision>6</precision><scale>0</scale><type>Number</type>
+</CustomField>

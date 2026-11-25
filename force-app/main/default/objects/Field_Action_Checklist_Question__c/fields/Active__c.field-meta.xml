@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Active__c</fullName><label>Active</label><description>Only active questions are copied onto new reviews.</description><inlineHelpText>Clear to stop asking this question on new reviews. Reviews that already have it keep it.</inlineHelpText><defaultValue>true</defaultValue><type>Checkbox</type>
+</CustomField>

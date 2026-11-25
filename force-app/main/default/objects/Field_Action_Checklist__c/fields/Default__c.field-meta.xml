@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Default__c</fullName><label>Default</label><description>The checklist a review gets when no Field Action Checklist Assignment matches its part or part family.</description><inlineHelpText>Tick on one checklist only: the one every review gets unless its part or part family has its own.</inlineHelpText><defaultValue>false</defaultValue><type>Checkbox</type>
+</CustomField>

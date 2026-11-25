@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Part_Family__c</fullName><label>Part Family</label><description>A part family whose parts get this checklist.</description><inlineHelpText>Fill in a Part or a Part Family, not both.</inlineHelpText><deleteConstraint>SetNull</deleteConstraint><referenceTo>compliancequest__SQX_Part_Family__c</referenceTo><relationshipLabel>Field Action Checklist Assignments</relationshipLabel><relationshipName>Field_Action_Checklist_Assignments</relationshipName><required>false</required><type>Lookup</type>
+</CustomField>

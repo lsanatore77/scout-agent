@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Proposed_Field_Action__c</fullName><label>Proposed Field Action</label><description>The existing field action the coordinator recommends adding this to. The Field Action field is set only when the committee approves.</description><inlineHelpText>Set when the recommendation is to add to an existing field action.</inlineHelpText><deleteConstraint>SetNull</deleteConstraint><referenceTo>Field_Action__c</referenceTo><relationshipLabel>Proposed in Reviews</relationshipLabel><relationshipName>Proposed_In_Reviews</relationshipName><required>false</required><type>Lookup</type>
+</CustomField>

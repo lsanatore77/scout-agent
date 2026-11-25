@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus><description>The Field Action Checklist object is a named list of questions a Field Action Review answers on its Reviewer Assessment step, such as Standard or Implantable Device. Active marks lists in use; Default is the list used when no assignment matches. Commonly used for review checklists by product type.</description><enableHistory>true</enableHistory><enableReports>true</enableReports><enableSearch>true</enableSearch><label>Field Action Checklist</label><nameField><label>Checklist Name</label><type>Text</type></nameField><pluralLabel>Field Action Checklists</pluralLabel><sharingModel>ReadWrite</sharingModel><visibility>Public</visibility>
+</CustomObject>
