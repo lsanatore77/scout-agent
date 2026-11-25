@@ -49,6 +49,9 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   decision actions (create the NC or Complaint, and the Safety Event), Triage, Investigation and Disposition each getting
   the Field Action treatment (step and progress on the record, CQ.AI's suggestions kept beside the choice with a reason,
   page layout), then the NC's own close. Start with a gap survey of the three workspaces, as for Field Action.
+  Survey done 25 Nov (doc "Nonconformance: Workspace Survey"). **Decision (Lou, 25 Nov): keep building on CQ's NC, not a
+  ground-up NC of our own.** Use CQ's unused NC fields where they fit (Risk Justification, Conclusion, Risk Assessment,
+  Recommended Action, Invalid Nonconformance, Corrective / Preventive Action) before adding our own.
 - **Later (Lou, 24 Nov): Field Action numbers kept current straight away.** For now a nightly job and a Refresh Numbers
   button work them out. Records change in many places (workspace, tasks, cases, ERP loads), and the numbers being right
   matters, so move to updating on change, handing large loads to a background job (bulk limits, record locks).
