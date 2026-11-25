@@ -58,7 +58,8 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   impacted lots, no AI; Merge or Create; merging skips step 2). Step 2 repeats the check only when CQ.AI finds a lot step 1
   missed. Step 2: CQ.AI Suggested Description (CQ's CQSS_Paraphraser prompt, Use This / Keep Mine) and CQ.AI Filled In
   6 Fields (Title, Part, Lot, Defective Quantity, Type, Failure; one Edit).
-  Nothing is saved before Create. CQ's 5W2H extractor and risk action both work on unsaved values (tested in dev).
+  CQ.AI runs on Next (5W2H, part and lot, paraphrase and title, side by side); measure the wait in dev and only start it
+  early (on a pause) if it feels slow. Nothing is saved before Create. CQ's 5W2H extractor and risk action both work on unsaved values (tested in dev).
   Risk and the lot hold stay in Triage, not creation.
   **Title rule (Lou, 25 Nov):** item, defect, where found ("Balloon burst below rated pressure at final inspection"); no
   lot, quantity, date, part number or names; under 80 characters; sentence case, no full stop; the product's own words.
