@@ -11,7 +11,7 @@
                         <h3 class="cq-step-title">Field Action at a Glance</h3>
                         <div class="cq-cols top wide32">
                             <div class="cq-col lead">
-                                <div class="card sumcard">
+                                <div class="cq-card sumcard">
                                     <div class="cq-big">{v.title}</div>
                                     <div class="sumrow">
                                         <span class="cq-pill soft neu">{v.actionType}</span>
@@ -27,7 +27,7 @@
                                         </template>
                                     </div>
                                 </div>
-                                <div class="card">
+                                <div class="cq-card">
                                     <div class="cq-card-title">Reviews That Led Here</div>
                                     <template if:true={hasReviews}>
                                         <div class="cq-tblwrap">
@@ -56,7 +56,7 @@
                                     <template if:false={hasReviews}><p class="cq-note">No review is linked to this field action.</p></template>
                                 </div>
                             </div>
-                            <div class="card">
+                            <div class="cq-card">
                                 <div class="cq-card-title">Signals on This Part</div>
                                 <template if:true={hasSignals}>
                                     <div class="cq-tblwrap sigwrap" style={sigTableStyle}>

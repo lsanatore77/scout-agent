@@ -1,8 +1,7 @@
 @import 'c/cqStyles';
 
 :host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
-/* card headings are the shared .cq-card-title */
-.card { padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
+/* cards are the shared .cq-card, headed by .cq-card-title */
 /* the decision card is the committee's decision, not CQ.AI's: a plain card, no caption, the title first (purple is CQ.AI's colour) */
 /* a signal's name and strength pill stay on one line, as on Field Action Review; What We See takes the rest and wraps */
 .sgh { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
@@ -14,7 +13,7 @@
 .hazv { white-space: pre-line; }
 .sumcard > .cq-para { margin-top: 0; }
 /* the glance tables (Reviews That Led Here, Signals on This Part) sit under their card heading; a review's reason opens under it */
-.card .cq-tblwrap { margin-top: 8px; }
+.cq-card .cq-tblwrap { margin-top: 8px; }
 .cq-tbl .chcol { width: 1%; padding-right: 0; }
 .cq-tbl td.sigcell { min-width: 160px; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }

@@ -142,4 +142,7 @@ Kept local for now: the popover card (Scope's On Hand breakdown), until a second
 - **Step cards are a very light grey** (`--cq-card-bg`, #fafbfc, a shade lighter than the table header), so a card reads as a card
   without bands or extra lines. Tables inside stay white (`.cq-stepcard .cq-tblwrap`), as do chips, buttons and boxes. A theme can
   set its own shade with `--cqt-card-bg`. Used by Field Action Notifications, Recovery and Closure.
+- **Plain cards are the shared `.cq-card`** (same grey, white tables inside), headed by `.cq-card-title`. Screens are moving their
+  local `.card` across one at a time. Done: Field Action at a Glance. To do: Field Action Review, Investigation, Triage at a Glance,
+  Event Intake, Event Review, Lot Record, PHR lead package, old Field Action workspace. CQ.AI's purple cards stay purple.
 - **The step intro (`.cq-step-intro`) is 11px** (`--cq-fs-micro`) on every workspace.
