@@ -21,7 +21,8 @@ Dev org check (24 Nov, read only, nothing changed): Agentforce, Data Cloud (Star
 Einstein generative AI are all on. Document AI is not offered anywhere (Setup search, Data Cloud Feature Manager, App
 Launcher), and Digital Wallet opens "Page doesn't exist", so the org shows no credit balance. Intelligent Document Reader
 is not provisioned. Agentforce is fine to use (Lou, 24 Nov). Next: ask Salesforce what turns Document AI on for this org
-(likely a Data 360 edition with credits beyond Starter); Google Vision remains the reader we already have.
+(likely a Data 360 edition with credits beyond Starter). **Decision (Lou, 24 Nov): Lou is requesting Document AI; until it
+arrives the pilot uses Google Vision.** Keep the reader behind one step so Document AI can replace it later without changing the screens.
 Other candidates: customer response emails filling Field Action cases; supplier replies; failure and severity coding;
 regulatory report drafts from a complaint and its investigation.
 
