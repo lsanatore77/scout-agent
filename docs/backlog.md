@@ -64,6 +64,15 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   **Title rule (Lou, 25 Nov):** item, defect, where found ("Balloon burst below rated pressure at final inspection"); no
   lot, quantity, date, part number or names; under 80 characters; sentence case, no full stop; the product's own words.
   Written by our own prompt, not CQ's 5W2H "What".
+  **Type (Lou, 25 Nov):** all three stay. Customer NCs are used on purpose as a light complaint record. CQ.AI rule:
+  Customer if it came from the field (hospital, patient, procedure, returned device), Supplier if found at incoming
+  inspection on supplier material, otherwise Internal.
+  **Accuracy test (25 Nov, 30 dev NCs, nothing saved):** lot 4/4 where written, never invented; quantity right every
+  time it was in the text; part exact 1/30 (generic words otherwise), so part comes from the lot record; type 21/30 (all
+  4 Customer missed: needs the rule above); Failure from the extractor's DEFECT, not 5W2H How; titles from CQ's
+  default 0/30 to the rule, with the rule as the entity definition 10/10 in form, 5/10 with where found (add FOUND AT
+  when missing). One CQ entity extraction call with our own entity definitions replaces 5W2H and a new prompt
+  template; CQ's 5W2H action handles only one input per call.
 - **Later (Lou, 24 Nov): Field Action numbers kept current straight away.** For now a nightly job and a Refresh Numbers
   button work them out. Records change in many places (workspace, tasks, cases, ERP loads), and the numbers being right
   matters, so move to updating on change, handing large loads to a background job (bulk limits, record locks).
