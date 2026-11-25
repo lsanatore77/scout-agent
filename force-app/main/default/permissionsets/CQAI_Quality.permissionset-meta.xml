@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses>
+        <apexClass>CqEventParts</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>CqNcReport</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
     <description>CQ.AI Quality module: event intake (Report a Problem, Quick Log) for now; triage, disposition and investigation access is added as the set is built out.</description>
     <fieldPermissions>
         <editable>true</editable>
@@ -480,4 +488,8 @@
         <object>Investigation_Not_Relevant__c</object>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
+    <tabSettings>
+        <tab>Report_a_Nonconformance</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
 </PermissionSet>

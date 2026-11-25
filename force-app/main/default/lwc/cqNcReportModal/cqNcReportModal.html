@@ -1,0 +1,146 @@
+<template>
+    <lightning-modal-header label="Report a Nonconformance">
+        <template if:true={stepText}><span class="sub">{stepText}</span></template>
+    </lightning-modal-header>
+
+                <!-- step 1: what happened -->
+                <template if:true={isStep1}>
+                    <lightning-modal-body><div class="body">
+                        <label class="cq-field">
+                            <span class="cq-label">What Happened?<span class="cq-req">*</span></span>
+                            <textarea data-id="desc" rows="6" value={text} oninput={handleText} aria-required="true"></textarea>
+                            <span class="cq-hint">Say what you found, where, and how many. Include the lot if you have it.</span>
+                        </label>
+                        <template if:true={showDupStep1}>
+                            <div class="dupwrap" role="region" aria-label="Possible duplicate" aria-live="polite">
+                                <span class="duplbl">Possible Duplicate</span>
+                                <div class="dup">
+                                    <span class="grow"><a href="#" class="b" onclick={handleDupOpen}>{dup.name}</a>{dupLine}<template if:true={dupMore}><span class="cq-sub"> ({dupMore})</span></template></span>
+                                    <button class="cq-btn-outline cq-btn-sm" onclick={handleMerge} disabled={saving}>Merge</button>
+                                    <button class="cq-btn-outline cq-btn-sm" onclick={handleDupCreate} disabled={saving}>Create</button>
+                                </div>
+                            </div>
+                        </template>
+                        <div class="files">
+                            <button class="cq-link" onclick={handleAddFiles}>Add Photos or Files</button><span class="cq-hint">Optional</span>
+                            <input data-id="files" type="file" multiple class="hidden" onchange={handleFiles} aria-label="Add photos or files" />
+                        </div>
+                        <template if:true={hasFiles}>
+                            <ul class="filelist">
+                                <template for:each={files} for:item="f">
+                                    <li key={f.key}><span class="grow">{f.name}</span><button class="cq-link" data-key={f.key} onclick={handleRemoveFile} aria-label="Remove file">Remove</button></li>
+                                </template>
+                            </ul>
+                        </template>
+                        <template if:true={fileNote}><span class="cq-hint">{fileNote}</span></template>
+                        <template if:true={error}><div class="cq-msg crit">{error}</div></template>
+                    </div></lightning-modal-body>
+                    <lightning-modal-footer><div class="foot">
+                        <button class="cq-btn-outline" onclick={handleClose}>Cancel</button>
+                        <button class="cq-btn-primary" onclick={handleNext} disabled={cantNext}>Next</button>
+                    </div></lightning-modal-footer>
+                </template>
+
+                <!-- step 2: check and create -->
+                <template if:true={isStep2}>
+                    <lightning-modal-body><div class="body">
+                        <template if:true={reading}>
+                            <div class="cq-spinwrap"><div class="cq-spin"><lightning-spinner size="small" alternative-text="Reading"></lightning-spinner></div><span class="cq-sub">CQ.AI is reading your description…</span></div>
+                        </template>
+                        <template if:false={reading}>
+                            <template if:true={showDupStep2}>
+                                <div class="dupwrap" role="region" aria-label="Possible duplicate">
+                                    <span class="duplbl">Possible Duplicate</span>
+                                    <div class="dup">
+                                        <span class="grow"><a href="#" class="b" onclick={handleDupOpen}>{dup.name}</a>{dupLine}</span>
+                                        <button class="cq-btn-outline cq-btn-sm" onclick={handleMerge} disabled={saving}>Merge</button>
+                                        <button class="cq-btn-outline cq-btn-sm" onclick={handleDupCreate} disabled={saving}>Create</button>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template if:true={showWording}>
+                                <div class="cq-ai-card">
+                                    <span class="cq-ai-eyebrow">&#10022; CQ.AI Suggested Description</span>
+                                    <p class="cq-ai-text">{wording}</p>
+                                    <div class="cq-opts tight">
+                                        <button class={useCls} aria-pressed={usePressed} onclick={handleUseWording}>Use This</button>
+                                        <button class={keepCls} aria-pressed={keepPressed} onclick={handleKeepMine}>Keep Mine</button>
+                                        <template if:true={wordingState}><span class="cq-sub">{wordingState}</span></template>
+                                    </div>
+                                    <details class="cq-know"><summary>What you wrote</summary><p class="cq-para">{text}</p></details>
+                                </div>
+                            </template>
+
+                            <div class="filled">
+                                <div class="filledhead"><span class="cq-ai-eyebrow">{filledHead}</span><span class="grow"></span><button class="cq-link" onclick={handleEdit}>{editLabel}</button></div>
+                                <template if:false={editing}>
+                                    <dl class="kvs">
+                                        <div class={titleNone}><dt>Title</dt><dd>{titleText}</dd></div>
+                                        <div class="span2"><dt>Part</dt>
+                                            <dd>
+                                                <template if:false={showPartPicker}><span>{partLabel}</span> <button class="cq-link" onclick={handleClearPart}>Change</button></template>
+                                                <template if:true={showPartPicker}><c-cq-part-picker class="picker" onchange={handlePart}></c-cq-part-picker></template>
+                                            </dd>
+                                        </div>
+                                        <div class={lotNone}><dt>Lot</dt><dd>{lotText}</dd></div>
+                                        <div class={qtyNone}><dt>Defective Quantity</dt><dd>{qtyText}</dd></div>
+                                        <div><dt>Type</dt><dd>{v.type}</dd></div>
+                                        <div class={failureNone}><dt>Failure</dt><dd>{failureText}</dd></div>
+                                    </dl>
+                                </template>
+                                <template if:true={editing}>
+                                    <div class="cq-formgrid edit">
+                                        <label class="cq-field span2"><span class="cq-label">Title</span>
+                                            <input type="text" maxlength="255" data-field="title" value={v.title} oninput={handleField} /></label>
+                                        <div class="cq-field span2"><span class="cq-label">Part</span>
+                                            <template if:false={showPartPicker}><div class="cq-pick-picked"><span class="cq-pick-label">{partLabel}</span><button class="cq-pick-x" onclick={handleClearPart} aria-label="Clear the part">&times;</button></div></template>
+                                            <template if:true={showPartPicker}><c-cq-part-picker onchange={handlePart}></c-cq-part-picker></template>
+                                        </div>
+                                        <label class="cq-field"><span class="cq-label">Lot</span>
+                                            <input type="text" maxlength="80" data-field="lot" value={v.lot} oninput={handleField} /></label>
+                                        <label class="cq-field"><span class="cq-label">Defective Quantity</span>
+                                            <input type="number" min="1" data-field="quantity" value={v.quantity} oninput={handleField} /></label>
+                                        <label class="cq-field"><span class="cq-label">Type</span>
+                                            <select data-field="type" onchange={handleField}>
+                                                <template for:each={typeOptions} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                            </select></label>
+                                        <label class="cq-field span2"><span class="cq-label">Failure</span>
+                                            <input type="text" maxlength="255" data-field="failure" value={v.failure} oninput={handleField} /></label>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:true={error}><div class="cq-msg crit">{error}</div></template>
+                    </div></lightning-modal-body>
+                    <lightning-modal-footer><div class="foot">
+                        <button class="cq-btn-outline" onclick={handleBack} disabled={saving}>Back</button>
+                        <span class="grow"></span>
+                        <button class="cq-btn-primary" onclick={handleCreate} disabled={cantCreate}>{createLabel}</button>
+                    </div></lightning-modal-footer>
+                </template>
+
+                <!-- done -->
+                <template if:true={isDone}>
+                    <lightning-modal-body><div class="body">
+                        <div class="cq-donehead"><span class="cq-okdot" aria-hidden="true">&#10003;</span><span class="big"><a href={ncUrl} onclick={handleOpenNc}>{result.name}</a> {sentText}</span></div>
+                        <p class="cq-para nom">{doneTitle}. {doneLine}</p>
+                        <template if:true={hasWarnings}><div class="cq-msg warn">{warningsText}</div></template>
+                    </div></lightning-modal-body>
+                    <lightning-modal-footer><div class="foot">
+                        <button class="cq-btn-outline" onclick={handleAnother}>Report Another</button>
+                        <button class="cq-btn-primary" onclick={handleClose}>Done</button>
+                    </div></lightning-modal-footer>
+                </template>
+                <template if:true={isMerged}>
+                    <lightning-modal-body><div class="body">
+                        <div class="cq-donehead"><span class="cq-okdot" aria-hidden="true">&#10003;</span><span class="big">Added to <a href={ncUrl} onclick={handleOpenNc}>{result.name}</a></span></div>
+                        <p class="cq-para nom">Your report is on {result.name} and its owner has been told. No new NC was created.</p>
+                        <template if:true={hasWarnings}><div class="cq-msg warn">{warningsText}</div></template>
+                    </div></lightning-modal-body>
+                    <lightning-modal-footer><div class="foot">
+                        <button class="cq-btn-outline" onclick={handleAnother}>Report Another</button>
+                        <button class="cq-btn-primary" onclick={handleClose}>Done</button>
+                    </div></lightning-modal-footer>
+                </template>
+</template>

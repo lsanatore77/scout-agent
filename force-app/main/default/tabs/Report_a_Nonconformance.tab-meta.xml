@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomTab xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>CQ.AI Report a Nonconformance: opens the popup on arrival; describe it, CQ.AI fills in the record, Create and Send to Triage.</description>
+    <label>Report a Nonconformance</label>
+    <lwcComponent>cqNcReport</lwcComponent>
+    <motif>Custom26: Flag</motif>
+</CustomTab>

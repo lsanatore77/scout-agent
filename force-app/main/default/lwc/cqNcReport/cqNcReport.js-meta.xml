@@ -3,12 +3,13 @@
     <apiVersion>62.0</apiVersion>
     <isExposed>true</isExposed>
     <masterLabel>CQ.AI Report a Nonconformance</masterLabel>
-    <description>A button that opens the Report a Nonconformance popup: describe it, CQ.AI fills in the record, Create and Send to Triage. Checks for a possible duplicate on the same lot.</description>
+    <description>Opens the Report a Nonconformance popup: describe it, CQ.AI fills in the record, Create and Send to Triage. In the utility bar it opens on click; on its tab it opens on arrival.</description>
     <targets>
         <target>lightning__AppPage</target>
         <target>lightning__HomePage</target>
         <target>lightning__RecordPage</target>
         <target>lightning__UtilityBar</target>
+        <target>lightning__Tab</target>
     </targets>
     <targetConfigs>
         <targetConfig targets="lightning__AppPage,lightning__HomePage,lightning__RecordPage,lightning__UtilityBar">

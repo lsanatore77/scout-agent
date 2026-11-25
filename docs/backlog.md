@@ -52,7 +52,7 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   Survey done 25 Nov (doc "Nonconformance: Workspace Survey"). **Decision (Lou, 25 Nov): keep building on CQ's NC, not a
   ground-up NC of our own.** Use CQ's unused NC fields where they fit (Risk Justification, Conclusion, Risk Assessment,
   Recommended Action, Invalid Nonconformance, Corrective / Preventive Action) before adding our own.
-  **Report a Nonconformance (built 25 Nov: CqNcReport + CqNcReportTest 10/10, LWC cqNcReport; not yet on a page; mockup "Report a Nonconformance Mockup").** A two-step popup anyone can
+  **Report a Nonconformance (built 25 Nov: CqNcReport + CqNcReportTest 10/10; LWC cqNcReport is the launcher and cqNcReportModal the LightningModal popup; placed in the Quality Management and Field Actions utility bars and on the Report_a_Nonconformance tab, which opens the popup on arrival; CQAI_Quality grants the tab and the CqNcReport/CqEventParts classes; mockup "Report a Nonconformance Mockup"). Still to do: the NC list view button (WebLink to /lightning/n/Report_a_Nonconformance) could not be created through the API and needs adding in Setup; browser test of Create (does CQ's submit move it to Triage?), Merge, files and the part picker.** A two-step popup anyone can
   use: describe it, Next, then check and Create and Send to Triage (submitted on create, no Submit task). Step 1: a
   one-line Possible Duplicate check under the description while typing (lot numbers in the text matched against open NCs'
   impacted lots, no AI; Merge or Create; merging skips step 2). Step 2 repeats the check only when CQ.AI finds a lot step 1

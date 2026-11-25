@@ -1,0 +1,42 @@
+@import 'c/cqStyles';
+
+/* The popup, buttons, fields, CQ.AI card and picker all come from cqStyles. Only this popup's own layout is here,
+   and every size and colour is a cqStyles token. */
+:host { display: block; }
+/* a LightningModal (so it opens over the whole page from the utility bar); its body and footer hold the cqStyles pieces */
+.body { display: flex; flex-direction: column; gap: var(--cq-s5); color: var(--cq-ink); font-size: var(--cq-fs-meta); }
+.foot { display: flex; align-items: center; justify-content: flex-end; gap: var(--cq-s3); width: 100%; }
+
+/* "Step 1 of 2" under the popup title (a candidate for the cqStyles popup section) */
+.sub { display: block; margin-top: 2px; font-size: var(--cq-fs-micro); color: var(--cq-muted); }
+
+.grow { flex: 1 1 auto; min-width: 0; }
+.b { font-weight: 700; }
+.nom { margin: 0; }
+.big { font-size: var(--cq-fs-lead); font-weight: 700; }
+.hidden { display: none; }
+
+/* the one-line possible duplicate, with its small label on top */
+.dupwrap { display: flex; flex-direction: column; gap: var(--cq-s1); padding: var(--cq-s4) 0; border-top: 1px solid var(--cq-line); border-bottom: 1px solid var(--cq-line); }
+.duplbl { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); }
+.dup { display: flex; align-items: center; gap: var(--cq-s3); font-size: var(--cq-fs-meta); }
+
+.files { display: flex; align-items: center; gap: var(--cq-s3); }
+.filelist { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: var(--cq-s1); }
+.filelist li { display: flex; align-items: center; gap: var(--cq-s3); font-size: var(--cq-fs-meta); }
+
+.cq-ai-card { display: flex; flex-direction: column; gap: var(--cq-s3); padding: var(--cq-s5); }
+.cq-btn-ai.on, .cq-btn-outline.on { box-shadow: 0 0 0 2px var(--cq-accent-line); }
+
+/* CQ.AI Filled In: each value under its own small label, the same style as the workspace header fields */
+.filled { display: flex; flex-direction: column; gap: var(--cq-s1); padding: var(--cq-s4); border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); }
+.filledhead { display: flex; align-items: center; gap: var(--cq-s3); }
+.kvs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--cq-s3) var(--cq-s5); margin: var(--cq-s2) 0 0; }
+.kvs > div { min-width: 0; }
+.kvs > div.span { grid-column: 1 / -1; }
+.kvs > div.span2 { grid-column: span 2; }
+.kvs dt { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); }
+.kvs dd { margin: 1px 0 0; font-size: var(--cq-fs-meta); font-weight: 600; color: var(--cq-ink); }
+.kvs .none dd { font-weight: 400; font-style: italic; color: var(--cq-faint); }
+.edit { margin-top: var(--cq-s2); }
+@media (max-width: 560px) { .kvs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
