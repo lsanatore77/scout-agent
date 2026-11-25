@@ -136,3 +136,10 @@ Kept local for now: the popover card (Scope's On Hand breakdown), until a second
 - Header text has its own tokens (`--cq-hl-ink`, `--cq-hl-muted`) so a theme can colour the header band separately. A dark header band still needs the Audit Trail and Ask CQ.AI header controls to follow header tokens first.
 - **Side area**: the shell has `slot="side"`, a right-hand column that shows only when a step puts something in it, and drops under the step on narrow screens. Nothing uses it yet.
 - Workspaces on the shared frame: Field Action Review, Field Action, Disposition, Investigation, Triage (the Triage Assistant draws the frame; its old popup mode is no longer used) and the Product History Review (askCqWorkspace). Every workspace with steps now uses `c-cq-ws-shell`. Report a Problem and Event Review have a header only; the old cqFieldActionWorkspace is legacy.
+
+## Standard: step cards and the step intro (2026-11-24, Lou)
+
+- **Step cards are a very light grey** (`--cq-card-bg`, #fafbfc, a shade lighter than the table header), so a card reads as a card
+  without bands or extra lines. Tables inside stay white (`.cq-stepcard .cq-tblwrap`), as do chips, buttons and boxes. A theme can
+  set its own shade with `--cqt-card-bg`. Used by Field Action Notifications, Recovery and Closure.
+- **The step intro (`.cq-step-intro`) is 11px** (`--cq-fs-micro`) on every workspace.

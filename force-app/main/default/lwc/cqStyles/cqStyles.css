@@ -47,6 +47,7 @@
   --cq-line-field: var(--cqt-line-field, #c4cad2);   /* input borders */
   --cq-link:       var(--cqt-link, #0b5cad);   /* record links + focus + selected control */
   --cq-link-soft:  var(--cqt-link-soft, #e8f0fd);   /* soft highlight for a selected neutral control */
+  --cq-card-bg:    var(--cqt-card-bg, #fafbfc);   /* a step card's fill: a shade lighter than the table header, so white tables and controls stand out on it */
 
   /* ---- CQ.AI register (assistant / chat) ---- */
   --cq-accent:      var(--cqt-accent, #4a2fc0);
@@ -305,7 +306,7 @@ button.cq-link { padding: 0; font-family: inherit; }
 .cq-ws-main { flex: 1; min-width: 0; padding: 20px; display: flex; flex-direction: column; }
 .cq-step-title { margin: 0 0 14px; font-size: var(--cq-fs-h2); font-weight: 700; }
 .cq-step-title.nom { margin: 0; }
-.cq-step-intro { margin: -6px 0 14px; color: var(--cq-muted); max-width: 72ch; }
+.cq-step-intro { margin: -6px 0 14px; font-size: var(--cq-fs-micro); color: var(--cq-muted); max-width: 72ch; }
 .cq-ws-foot { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: auto; padding-top: 20px; }
 .cq-blocker { color: var(--cq-warn-fg); font-weight: 600; }
 .cq-grow { flex: 1 1 auto; min-width: 0; }
@@ -521,7 +522,9 @@ button.cq-hl-v.link { padding: 0; border: 0; background: none; font-family: inhe
 .cq-pcard { padding: 14px; border-radius: var(--cq-r-card); background: var(--cq-surface); border: 1px solid var(--cq-line); display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .cq-prob { margin: 0; font-size: var(--cq-fs-para); line-height: 1.45; }
 /* a numbered card inside a step: .cq-stepcard > .cq-stepcard-head (.cq-stepcard-n + .cq-stepcard-title, then .cq-grow + .cq-stepcard-tot) */
-.cq-stepcard { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-bg); }
+.cq-stepcard { display: flex; flex-direction: column; gap: 10px; min-width: 0; padding: 14px; border-radius: var(--cq-r-card); border: 1px solid var(--cq-line); background: var(--cq-card-bg); }
+/* tables in a step card stay white on its grey */
+.cq-stepcard .cq-tblwrap { background: var(--cq-bg); }
 .cq-stepcard-head { display: flex; align-items: baseline; gap: 8px; }
 .cq-stepcard-n { font-size: var(--cq-fs-meta); font-weight: 700; color: var(--cq-muted); }
 .cq-stepcard-title { font-size: var(--cq-fs-body); font-weight: 700; }
