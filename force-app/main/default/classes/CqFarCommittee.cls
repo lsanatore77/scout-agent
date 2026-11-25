@@ -110,7 +110,7 @@ public with sharing class CqFarCommittee {
         x.recommendedBy = r.Recommended_By__r?.Name; x.recommendedOn = r.Recommended_On__c;
         x.seats = seats();
         if (r.Committee_Approval__c == null) { return x; }
-        List<String> back = loadApproval(x, r.Committee_Approval__c, r.Status__c == 'With Committee');
+        List<String> back = loadApproval(x, r.Committee_Approval__c, CqFarChecklist.AWAITING.contains(r.Status__c));
         if (r.Status__c == 'In Review' && x.approvalStatus == 'Rejected' && !back.isEmpty()) { x.sentBack = String.join(back, '\n'); }
         return x;
     }
@@ -170,21 +170,39 @@ public with sharing class CqFarCommittee {
         if (outcome != 'No Field Action' && outcome != 'Field Action Needed') { throw new AuraHandledException('Choose an outcome.'); }
         if (String.isBlank(rationale)) { throw new AuraHandledException('A rationale is required.'); }
         if (emergency == true && String.isBlank(emergencyReason)) { throw new AuraHandledException('Give the reason for the emergency.'); }
-        Field_Action_Review__c r = [SELECT Id, Name, Status__c, Reviewer__c FROM Field_Action_Review__c WHERE Id = :recordId];
-        if (r.Status__c == 'With Committee') { throw new AuraHandledException('This review is already with the committee.'); }
-        if (r.Status__c == 'Decided' || r.Status__c == 'Closed') { throw new AuraHandledException('This review is already decided.'); }
+        Field_Action_Review__c r = [SELECT Id, Name, Status__c, Reviewer__c, Started_On__c, Assessment_Completed_On__c, Part__c,
+                                           Nonconformance__r.compliancequest__SQX_Part__c, Complaint__r.compliancequest__SQX_Part__c
+                                    FROM Field_Action_Review__c WHERE Id = :recordId];
+        if (CqFarChecklist.AWAITING.contains(r.Status__c)) { throw new AuraHandledException('This review is already with the committee.'); }
+        if (r.Status__c == 'Decided' || r.Status__c == 'Withdrawn') { throw new AuraHandledException('This review is already decided.'); }
+        Id partId = CqFieldActionReview.partOf(r);
+        Map<String, Object> d = CqFarChecklist.parse(draft);
+        CqFarChecklist.fromDraft(r, d, false);
 
         r.Health_Hazard_Summary__c = hazard; r.Review_Summary__c = summary; r.Risk_Score__c = score; r.Risk_Level__c = riskLevel;
         r.Outcome__c = outcome; r.Outcome_Rationale__c = rationale;
         r.Emergency__c = emergency == true; r.Emergency_Reason__c = emergency == true ? emergencyReason : null;
         r.Recommended_By__c = UserInfo.getUserId(); r.Recommended_On__c = Datetime.now();
         r.Review_Draft__c = String.isBlank(draft) ? null : draft.left(20000);     // kept: it holds the field action to start or join
-        r.Status__c = 'With Committee';
+        // an emergency goes to one emergency approver: Escalated, for reports; otherwise to the committee
+        r.Status__c = emergency == true ? 'Escalated' : 'With Committee';
+        r.Review_Step__c = CqFarChecklist.STEPS[3]; r.Submitted_On__c = Datetime.now();
+        if (r.Assessment_Completed_On__c == null) { r.Assessment_Completed_On__c = r.Submitted_On__c; }
+        if (emergency != true) { r.Emergency_Approver__c = null; }
         if (r.Reviewer__c == null) { r.Reviewer__c = UserInfo.getUserId(); }
         update r;
+        if (d != null) {
+            Object checks = d.get('checks');
+            CqFarChecklist.saveAnswers(r.Id, partId, checks instanceof Map<String, Object> ? (Map<String, Object>) checks : null);
+        }
 
         Id made = submitApproval(r, r.Name + ': ' + outcome + '. ' + rationale, team, emergency);
-        update new Field_Action_Review__c(Id = r.Id, Committee_Approval__c = made);
+        Field_Action_Review__c done = new Field_Action_Review__c(Id = r.Id, Committee_Approval__c = made);
+        if (emergency == true) {
+            List<Member> members = (List<Member>) JSON.deserialize(team, List<Member>.class);
+            done.Emergency_Approver__c = members[0].userId;     // submitApproval allows exactly one in an emergency
+        }
+        update done;
         return CqFieldActionReview.getView(recordId);
     }
 
@@ -255,10 +273,12 @@ public with sharing class CqFarCommittee {
     public static void onClosed(Map<Id, String> statusByApproval) {
         for (Field_Action_Review__c r : [
                 SELECT Id, Committee_Approval__c, Health_Hazard_Summary__c, Review_Summary__c, Risk_Score__c, Risk_Level__c,
-                       Outcome__c, Outcome_Rationale__c, Review_Draft__c
-                FROM Field_Action_Review__c WHERE Committee_Approval__c IN :statusByApproval.keySet() AND Status__c = 'With Committee']) {
+                       Outcome__c, Outcome_Rationale__c, Review_Draft__c, Times_Sent_Back__c
+                FROM Field_Action_Review__c WHERE Committee_Approval__c IN :statusByApproval.keySet() AND Status__c IN :CqFarChecklist.AWAITING]) {
             if (statusByApproval.get(r.Committee_Approval__c) != 'Approved') {
-                update new Field_Action_Review__c(Id = r.Id, Status__c = 'In Review');
+                // sent back: the coordinator picks it up at the recommendation
+                update new Field_Action_Review__c(Id = r.Id, Status__c = 'In Review', Review_Step__c = CqFarChecklist.STEPS[2],
+                    Times_Sent_Back__c = (r.Times_Sent_Back__c == null ? 0 : r.Times_Sent_Back__c) + 1);
                 continue;
             }
             Map<String, Object> d = new Map<String, Object>();

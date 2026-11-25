@@ -259,7 +259,7 @@ public with sharing class CqAuditTrail {
             t.signatures.add(s);
         }
         Integer seats = 0; Integer waiting = 0;
-        if (c != null && r.Status__c == 'With Committee') {
+        if (c != null && CqFarChecklist.AWAITING.contains(r.Status__c)) {
             for (CqFarCommittee.Step s : c.steps) {
                 seats++;
                 if (s.status == 'Approved' || s.status == 'Rejected') { continue; }

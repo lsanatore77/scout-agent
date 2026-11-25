@@ -52,7 +52,7 @@ public with sharing class CqFarSuggestions {
     @AuraEnabled
     public static void note(Id recordId) {
         Field_Action_Review__c r = [SELECT Name, Status__c FROM Field_Action_Review__c WHERE Id = :recordId WITH USER_MODE];
-        if (r.Status__c == 'Decided' || r.Status__c == 'Closed' || r.Status__c == 'With Committee') { return; }
+        if (!CqFarChecklist.OPEN.contains(r.Status__c)) { return; }
         CqFieldActionReview.View v = CqFieldActionReview.getView(recordId);
         record(recordId, r.Name, items(v, CqFieldActionLots.scopeFor(v)));
     }
@@ -192,6 +192,29 @@ public with sharing class CqFarSuggestions {
                 Changed_By__c = CqFarAudit.who().left(255), Request_Id__c = CqFarAudit.request()));
         }
         CqFarAudit.write(out);
+
+        // on the record too, for reports: what CQ.AI suggested beside what was chosen, and the reasons for choosing differently
+        Field_Action_Review__c rec = new Field_Action_Review__c(Id = recordId, CQAI_Suggested_Risk_Level__c = null,
+            CQAI_Suggested_Outcome__c = null, CQAI_Suggested_Scope__c = null);
+        for (Item it : items) {
+            if (it.key == RISK) { rec.CQAI_Suggested_Risk_Level__c = it.choice; }
+            else if (it.key == OUTCOME) { rec.CQAI_Suggested_Outcome__c = it.choice; }
+            else if (it.key == SCOPE) { rec.CQAI_Suggested_Scope__c = it.choice; }
+        }
+        rec.Risk_Level_Reason__c = reasonFor(d, RISK, chosen, items);
+        rec.Outcome_Reason__c = reasonFor(d, OUTCOME, chosen, items);
+        rec.Scope_Reason__c = reasonFor(d, SCOPE, chosen, items);
+        String typeWhy = d.reasons.get('Action Type');
+        rec.Action_Type_Reason__c = String.isBlank(typeWhy) ? null : typeWhy.trim().left(32768);
+        update rec;
+    }
+
+    /** The reason given for choosing differently from CQ.AI on one suggestion, or null when the choice was CQ.AI's. */
+    private static String reasonFor(Decisions d, String key, Map<String, String> chosen, List<Item> items) {
+        String why = d.reasons.get(key);
+        if (String.isBlank(why) || !chosen.containsKey(key)) { return null; }
+        for (Item it : items) { if (it.key == key && it.choice == chosen.get(key)) { return null; } }
+        return why.trim().left(32768);
     }
 
     /** A choice as the trail shows it: a field action by its number, a new one in words. */

@@ -197,7 +197,7 @@ public with sharing class CqTriageController {
                 update as user open[0];
             }
         } else if (!open.isEmpty()) {
-            for (Field_Action_Review__c r : open) { r.Status__c = 'Closed'; r.Outcome_Rationale__c = 'Withdrawn from the nonconformance before a decision.'; }
+            for (Field_Action_Review__c r : open) { r.Status__c = 'Withdrawn'; r.Outcome_Rationale__c = 'Withdrawn from the nonconformance before a decision.'; }
             update as user open;
         }
         return getGlance(recordId).fieldAction;

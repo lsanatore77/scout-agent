@@ -53,6 +53,7 @@ function titleCase(text) {
 }
 const LEVELS = ['Low', 'Medium', 'High'];
 const ANSWERS = ['Yes', 'No', 'Not known'];
+// the questions when the review carries none (CqFarChecklist sends the review's own checklist)
 const QUESTIONS = [
     { id: 'left', text: 'Has affected product left our control (shipped or in use)?' },
     { id: 'injury', text: 'Has an injury or death been reported?' },
@@ -135,8 +136,8 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     apply(v, first) {
         const wasWaiting = this.waiting;
         this.v = v;
-        this.done = v.status === 'Decided' || v.status === 'Closed';
-        this.waiting = v.status === 'With Committee';
+        this.done = v.status === 'Decided' || v.status === 'Withdrawn';
+        this.waiting = v.status === 'With Committee' || v.status === 'Escalated';   // Escalated: with the emergency approver
         // CQ's policy does not change between signatures: ask again only when the review goes to or leaves the committee
         if (first || this.waiting !== wasWaiting) { this.loadSign(); }
         if (!first) { return; }
@@ -264,11 +265,11 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     get steps() {
         const v = this.v || {};
         const n = (v.signals || []).length;
-        const answered = QUESTIONS.filter((q) => this.checks[q.id]).length;
+        const answered = this.checklistQs.filter((q) => this.checks[q.id]).length;
         const subs = [
             this.maxStep > 0 || this.done ? 'Reviewed' : 'Start here',
             this.done || this.waiting ? (this.level || v.riskLevel || v.band) + ' · score ' + v.score
-                : answered + ' of ' + QUESTIONS.length + ' answered · ' + n + ' signal' + (n === 1 ? '' : 's'),
+                : answered + ' of ' + this.checklistQs.length + ' answered · ' + n + ' signal' + (n === 1 ? '' : 's'),
             this.done ? v.outcome : this.outcome || v.outcome || 'Not decided',
             this.done ? 'Approved' : this.waiting ? this.approvedCount + ' of ' + this.csteps.length + ' approved' : this.emergency ? 'Emergency' : 'Not submitted'
         ];
@@ -540,12 +541,17 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     get assessDone() { return !!this.hazard.trim() && !!this.level && this.checksDone && !(this.levelDiffers && !this.whyLevel.trim()); }
 
     get questions() {
-        return QUESTIONS.map((q) => ({
+        return this.checklistQs.map((q) => ({
             ...q,
             opts: ANSWERS.map((a) => ({ key: q.id + a, q: q.id, a, cls: 'cq-chip', pressed: this.checks[q.id] === a ? 'true' : 'false' }))
         }));
     }
-    get checksDone() { return QUESTIONS.every((q) => !!this.checks[q.id]); }
+    /** The review's checklist (from its part, part family or the default), or the built-in questions. */
+    get checklistQs() {
+        const c = this.v && this.v.checklist;
+        return c && c.questions && c.questions.length ? c.questions.map((q) => ({ id: q.id, text: q.text, help: q.help })) : QUESTIONS;
+    }
+    get checksDone() { return this.checklistQs.every((q) => !!this.checks[q.id]); }
     handleCheck(event) { if (this.waiting) { return; } const d = event.currentTarget.dataset; this.checks = { ...this.checks, [d.q]: d.a }; }
 
     // ---- step 5: recommendation
@@ -705,7 +711,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             ['Outcome', this.outcomeNow], ['Field Action', fa], ['Scope', this.scopeLine], ['Rationale', this.rationale || v.rationale],
             ['Risk', (this.level || v.riskLevel || v.band) + ' · score ' + v.score + ' of 100'],
             ['Health Hazard Summary', this.hazard || v.hazard],
-            ['Checklist', QUESTIONS.filter((q) => this.checks[q.id]).map((q) => q.text + ' ' + this.checks[q.id]).join('\n')],
+            ['Checklist', this.checklistQs.filter((q) => this.checks[q.id]).map((q) => q.text + ' ' + this.checks[q.id]).join('\n')],
             ['Submitted', [c.recommendedBy, c.recommendedOn ? new Date(c.recommendedOn).toLocaleString() : ''].filter(Boolean).join(' · ')],
             ['Emergency', c.emergency ? c.emergencyReason : '']
         ].filter(([, val]) => !!val).map(([k, val]) => ({ key: k, k, v: val, isOutcome: k === 'Outcome' }));
@@ -818,7 +824,7 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
             'Signals shown: ' + ((v.signals || []).map((s) => s.name + ' ' + s.rule + ' (' + s.strength + ')').join(', ') || 'none'),
             'Risk score: ' + v.score + ' of 100 (' + v.band + '). ' + (v.factors || []).map((f) => f.name + ' ' + f.pts + '/' + f.max).join('; '),
             'Risk level: ' + this.level + (this.level === v.band ? ' (as CQ.AI suggested)' : ' (CQ.AI suggested ' + v.band + ')'),
-            'Checklist: ' + QUESTIONS.map((q) => q.text + ' ' + this.checks[q.id]).join(' | '),
+            'Checklist: ' + this.checklistQs.map((q) => q.text + ' ' + this.checks[q.id]).join(' | '),
             'Outcome: ' + this.outcome + (this.outcome === v.suggestedOutcome ? ' (as CQ.AI suggested)' : ' (CQ.AI suggested ' + v.suggestedOutcome + ')'),
             this.isNew ? 'Scope: ' + this.scopeLine + (this.scope === this.scopeData.suggested ? ' (as CQ.AI suggested)' : ' (CQ.AI suggested ' + this.scopeData.suggested + ')') : ''
         ].filter(Boolean).join('\n');

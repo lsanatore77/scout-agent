@@ -48,7 +48,7 @@ export default class CqFieldActionReview extends NavigationMixin(LightningElemen
         return f.reviewStatus === 'Decided' ? 'Decided: ' + (f.reviewOutcome || '') : f.reviewStatus;
     }
     get hasFa() { return this.hasReview && !!this.fa.faId; }
-    get decided() { return !!this.fa && (this.fa.reviewStatus === 'Decided' || (this.fa.reviewStatus === 'Closed' && !!this.fa.reviewOutcome)); }
+    get decided() { return !!this.fa && (this.fa.reviewStatus === 'Decided' || (this.fa.reviewStatus === 'Withdrawn' && !!this.fa.reviewOutcome)); }
     /** The choice is fixed once the review is decided, or when a review was opened from the review side. */
     get locked() { return this.busy || !this.fa || this.reviewOnly || (this.isSent && this.decided); }
     get opts() {
@@ -68,7 +68,7 @@ export default class CqFieldActionReview extends NavigationMixin(LightningElemen
         if (f.setBy) { rows.push({ k: 'Set By', v: f.setBy }); }
         if (f.setOn) { rows.push({ k: 'Set On', v: new Date(f.setOn).toLocaleString() }); }
         if (this.isSent) { rows.push({ k: 'Reason', v: f.reason || '' }); }
-        if (this.hasReview) { rows.push({ k: 'Review', v: f.reviewName + ' \u00b7 ' + this.reviewLine }); }
+        if (this.hasReview) { rows.push({ k: 'Review', v: f.reviewName + ' · ' + this.reviewLine }); }
         return rows;
     }
     handleDetails() { this.detailing = true; }

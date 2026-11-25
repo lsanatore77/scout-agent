@@ -67,6 +67,7 @@ public with sharing class CqFieldActionReview {
         @AuraEnabled public List<Series> trend = new List<Series>();        // complaints, nonconformances and reviews on the part each month
         @AuraEnabled public CqFarCommittee.Info committee;             // the committee approval stage, on CQ Approvals
         @AuraEnabled public String draft;
+        @AuraEnabled public CqFarChecklist.Info checklist;           // the questions this review answers, and which checklist they come from
     }
 
     public static String band(Integer score) { return score >= 70 ? 'High' : score >= 40 ? 'Medium' : 'Low'; }
@@ -255,6 +256,7 @@ public with sharing class CqFieldActionReview {
             sourceRisk != null ? 'NC triage of ' + v.sourceName : isComplaint ? 'Complaints are not triaged here' : 'Not triaged yet'));
         v.know.add(new Know('When did we become aware?', ev?.Aware_Date__c == null ? null : ev.Aware_Date__c.format('MMM d, yyyy h:mm a'), evSrc));
         v.committee = CqFarCommittee.info(r);
+        v.checklist = CqFarChecklist.info(recordId, partId);
         return v;
     }
 
@@ -398,12 +400,31 @@ public with sharing class CqFieldActionReview {
         v.trend.add(c); v.trend.add(n); v.trend.add(f);
     }
 
+    /** The part a review is about: its own, or its nonconformance's or complaint's. */
+    public static Id partOf(Field_Action_Review__c r) {
+        return r.Part__c != null ? r.Part__c : r.Nonconformance__r?.compliancequest__SQX_Part__c != null
+            ? r.Nonconformance__r.compliancequest__SQX_Part__c : r.Complaint__r?.compliancequest__SQX_Part__c;
+    }
+
+    /**
+     * Saves the workspace's work in progress. While the review is with the coordinator, what the draft holds is also
+     * written to the review's fields and its Checklist rows (see CqFarChecklist), for the record page and reports.
+     */
     @AuraEnabled
     public static void saveDraft(Id recordId, String draft) {
-        Field_Action_Review__c r = [SELECT Status__c FROM Field_Action_Review__c WHERE Id = :recordId];
-        r.Review_Draft__c = String.isBlank(draft) ? null : draft.left(20000);
-        if (r.Status__c == 'New' && r.Review_Draft__c != null) { r.Status__c = 'In Review'; }
-        update r;
+        Field_Action_Review__c r = [SELECT Status__c, Started_On__c, Assessment_Completed_On__c, Part__c,
+                                           Nonconformance__r.compliancequest__SQX_Part__c, Complaint__r.compliancequest__SQX_Part__c
+                                    FROM Field_Action_Review__c WHERE Id = :recordId];
+        Field_Action_Review__c up = new Field_Action_Review__c(Id = recordId, Started_On__c = r.Started_On__c, Assessment_Completed_On__c = r.Assessment_Completed_On__c);
+        up.Review_Draft__c = String.isBlank(draft) ? null : draft.left(20000);
+        if (r.Status__c == 'New' && up.Review_Draft__c != null) { up.Status__c = 'In Review'; }
+        Map<String, Object> d = CqFarChecklist.OPEN.contains(r.Status__c) ? CqFarChecklist.parse(up.Review_Draft__c) : null;
+        CqFarChecklist.fromDraft(up, d);
+        update up;
+        if (d != null) {
+            Object checks = d.get('checks');
+            CqFarChecklist.saveAnswers(recordId, partOf(r), checks instanceof Map<String, Object> ? (Map<String, Object>) checks : null);
+        }
     }
 
     @AuraEnabled
@@ -422,7 +443,7 @@ public with sharing class CqFieldActionReview {
         r.Health_Hazard_Summary__c = hazard; r.Review_Summary__c = summary; r.Risk_Score__c = score; r.Risk_Level__c = riskLevel;
         r.Outcome__c = outcome; r.Outcome_Rationale__c = rationale;
         r.Decided_By__c = UserInfo.getUserId(); r.Decided_On__c = Datetime.now();
-        r.Status__c = 'Decided'; r.Review_Draft__c = null;
+        r.Status__c = 'Decided'; r.Review_Draft__c = null; r.Review_Step__c = CqFarChecklist.COMPLETE;
         if ([SELECT Reviewer__c FROM Field_Action_Review__c WHERE Id = :recordId].Reviewer__c == null) { r.Reviewer__c = UserInfo.getUserId(); }
 
         if (outcome == 'Field Action Needed') {
