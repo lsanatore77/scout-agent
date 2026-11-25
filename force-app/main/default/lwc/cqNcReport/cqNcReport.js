@@ -24,14 +24,23 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
     }
 
     connectedCallback() {
-        getEnclosingUtilityId().then((id) => {
-            if (!id) { return; }
-            this.utilityId = id;
-            onUtilityClick({ utilityId: id, eventHandler: () => {
-                minimize({ utilityId: id }).catch(() => {});
-                this.openModal();
-            } }).catch(() => {});
-        }).catch(() => {});
+        // The utility bar API is missing when the utility is popped out into its own window (and off the utility bar),
+        // so check it is there before calling it; the panel's own button still opens the popup.
+        try {
+            if (typeof getEnclosingUtilityId !== 'function') { return; }
+            const p = getEnclosingUtilityId();
+            if (!p || typeof p.then !== 'function') { return; }
+            p.then((id) => {
+                if (!id || typeof onUtilityClick !== 'function') { return; }
+                this.utilityId = id;
+                onUtilityClick({ utilityId: id, eventHandler: () => {
+                    if (typeof minimize === 'function') { minimize({ utilityId: id }).catch(() => {}); }
+                    this.openModal();
+                } }).catch(() => {});
+            }).catch(() => {});
+        } catch (e) {
+            // not in a utility bar
+        }
     }
 
     get hint() { return this.onTab ? 'The Report a Nonconformance popup is closed.' : ''; }
