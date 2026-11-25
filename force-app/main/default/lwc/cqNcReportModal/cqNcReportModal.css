@@ -37,6 +37,7 @@
 .kvs > div.span2 { grid-column: span 2; }
 .kvs dt { font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); }
 .kvs dd { margin: 1px 0 0; font-size: var(--cq-fs-meta); font-weight: 600; color: var(--cq-ink); }
+.kvs dd .cq-link { margin-left: var(--cq-s2); }
 .kvs .none dd { font-weight: 400; font-style: italic; color: var(--cq-faint); }
 .edit { margin-top: var(--cq-s2); }
 @media (max-width: 560px) { .kvs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
