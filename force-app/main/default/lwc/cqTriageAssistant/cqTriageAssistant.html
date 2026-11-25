@@ -12,7 +12,7 @@
                 steps={railSteps} can-restart={canRestart} resumed={showResumed} error={error} progress={progress}
                 show-foot={footNav} blocker={blocker} back-disabled={cantBack} next-disabled={cantNext} next-label={nextLabel}
                 onstep={handleStep} onback={handleBack} onnext={handleNext} onedit={handleEdit} onrestart={handleRestart} onopen={handleShellOpen}>
-                    <template if:true={isGlance}><template if:true={inline}><h3 class="cq-step-title">Triage at a Glance</h3></template><slot></slot>
+                    <template if:true={isGlance}><slot></slot>
                         <template if:true={showRepGlance}>
                             <div class="cq-recur">
                                 <div class="cq-recur-head"><span aria-hidden="true">&#9888;</span> Happened Before, and the Fix Didn&rsquo;t Hold</div>
