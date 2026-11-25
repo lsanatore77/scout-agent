@@ -44,6 +44,11 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   field updates. Waits on Lou's signature review.
 
 ## Work queue
+- **Roadmap (Lou, 25 Nov): CQ's core modules, in order.** Nonconformance (finish over the Thanksgiving break), then
+  Complaints, CAPA, Audits, Controlled Documents, Training, Personnel. Finishing NC means the whole path: Event Review's
+  decision actions (create the NC or Complaint, and the Safety Event), Triage, Investigation and Disposition each getting
+  the Field Action treatment (step and progress on the record, CQ.AI's suggestions kept beside the choice with a reason,
+  page layout), then the NC's own close. Start with a gap survey of the three workspaces, as for Field Action.
 - **Later (Lou, 24 Nov): Field Action numbers kept current straight away.** For now a nightly job and a Refresh Numbers
   button work them out. Records change in many places (workspace, tasks, cases, ERP loads), and the numbers being right
   matters, so move to updating on change, handing large loads to a background job (bulk limits, record locks).
