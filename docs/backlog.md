@@ -52,6 +52,15 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   Survey done 25 Nov (doc "Nonconformance: Workspace Survey"). **Decision (Lou, 25 Nov): keep building on CQ's NC, not a
   ground-up NC of our own.** Use CQ's unused NC fields where they fit (Risk Justification, Conclusion, Risk Assessment,
   Recommended Action, Invalid Nonconformance, Corrective / Preventive Action) before adding our own.
+  **Report a Nonconformance (designing, 25 Nov; mockup "Report a Nonconformance Mockup").** A two-step popup anyone can
+  use: describe it, Next, then check and Create and Send to Triage (submitted on create, no Submit task). Step 2: a
+  one-line duplicate check (open NCs on the same lot, Merge or Create), CQ.AI Suggested Description (CQ's CQSS_Paraphraser
+  prompt, Use This / Keep Mine), and CQ.AI Filled In (Title, Part, Lot, Defective Quantity, Type, Failure; one Edit).
+  Nothing is saved before Create. CQ's 5W2H extractor and risk action both work on unsaved values (tested in dev).
+  Risk and the lot hold stay in Triage, not creation.
+  **Title rule (Lou, 25 Nov):** item, defect, where found ("Balloon burst below rated pressure at final inspection"); no
+  lot, quantity, date, part number or names; under 80 characters; sentence case, no full stop; the product's own words.
+  Written by our own prompt, not CQ's 5W2H "What".
 - **Later (Lou, 24 Nov): Field Action numbers kept current straight away.** For now a nightly job and a Refresh Numbers
   button work them out. Records change in many places (workspace, tasks, cases, ERP loads), and the numbers being right
   matters, so move to updating on change, handing large loads to a background job (bulk limits, record locks).
