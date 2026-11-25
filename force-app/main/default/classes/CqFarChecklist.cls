@@ -42,8 +42,13 @@ public with sharing class CqFarChecklist {
     public class Info {
         @AuraEnabled public Id checklistId; @AuraEnabled public String checklistName;
         @AuraEnabled public String changeReason;
+        @AuraEnabled public Id usualId;          // the checklist the review gets when nobody changes it
+        @AuraEnabled public String source;       // where the checklist came from, in words
+        @AuraEnabled public Boolean canChange = false;   // still with the coordinator, and there is another checklist to change to
         @AuraEnabled public List<Question> questions = new List<Question>();
     }
+    /** A checklist chosen for a part, and why. */
+    public class Pick { public Id id; public String source; }
 
     /** The workspace says Not known; the record says Not Known. */
     private static String answerValue(Object a) {
@@ -54,7 +59,11 @@ public with sharing class CqFarChecklist {
     }
 
     /** The checklist a part gets: its own active assignment, then its family's, then the default. Null when none is set up. */
-    public static Id chooseFor(Id partId) {
+    public static Id chooseFor(Id partId) { return choose(partId).id; }
+
+    /** As chooseFor, with where the checklist came from. */
+    public static Pick choose(Id partId) {
+        Pick k = new Pick();
         if (partId != null) {
             List<compliancequest__SQX_Part__c> p = [SELECT compliancequest__Part_Family__c FROM compliancequest__SQX_Part__c WHERE Id = :partId];
             Id familyId = p.isEmpty() ? null : p[0].compliancequest__Part_Family__c;
@@ -64,13 +73,14 @@ public with sharing class CqFarChecklist {
                     WHERE Active__c = true AND Checklist__r.Active__c = true
                       AND (Part__c = :partId OR (Part_Family__c != null AND Part_Family__c = :familyId))
                     ORDER BY CreatedDate DESC LIMIT 50]) {
-                if (a.Part__c == partId) { return a.Checklist__c; }
+                if (a.Part__c == partId) { k.id = a.Checklist__c; k.source = 'set for this part'; return k; }
                 if (byFamily == null) { byFamily = a.Checklist__c; }
             }
-            if (byFamily != null) { return byFamily; }
+            if (byFamily != null) { k.id = byFamily; k.source = 'set for its part family'; return k; }
         }
         List<Field_Action_Checklist__c> d = [SELECT Id FROM Field_Action_Checklist__c WHERE Active__c = true AND Default__c = true ORDER BY CreatedDate LIMIT 1];
-        return d.isEmpty() ? null : d[0].Id;
+        if (!d.isEmpty()) { k.id = d[0].Id; k.source = 'the default checklist'; } else { k.source = 'the built-in questions'; }
+        return k;
     }
 
     /** A checklist's active questions as check rows (not yet saved). The built-in questions when checklistId is null. */
@@ -101,9 +111,13 @@ public with sharing class CqFarChecklist {
     /** The questions the workspace shows: the review's own rows once it has them, otherwise the checklist it would get. */
     public static Info info(Id reviewId, Id partId) {
         Info x = new Info();
-        Field_Action_Review__c r = [SELECT Checklist__c, Checklist__r.Name, Checklist_Change_Reason__c FROM Field_Action_Review__c WHERE Id = :reviewId];
+        Field_Action_Review__c r = [SELECT Status__c, Checklist__c, Checklist__r.Name, Checklist_Change_Reason__c FROM Field_Action_Review__c WHERE Id = :reviewId];
         List<Field_Action_Review_Check__c> have = rows(reviewId);
         x.checklistId = r.Checklist__c; x.checklistName = r.Checklist__r?.Name; x.changeReason = r.Checklist_Change_Reason__c;
+        Pick usual = choose(partId);
+        x.usualId = usual.id;
+        x.source = String.isNotBlank(x.changeReason) ? 'changed by the coordinator'
+            : x.checklistId == null || x.checklistId == usual.id ? usual.source : 'chosen for this review';
         if (have.isEmpty()) {
             if (x.checklistId == null) { x.checklistId = chooseFor(partId); }
             if (x.checklistId != null && x.checklistName == null) {
@@ -119,6 +133,9 @@ public with sharing class CqFarChecklist {
         } else {
             for (Field_Action_Review_Check__c c : have) { x.questions.add(new Question(c.Key__c, c.Question_Text__c, c.Question__r?.Help_Text__c)); }
         }
+        // Change is offered while the review is with the coordinator and another active checklist exists
+        Id current = x.checklistId;
+        x.canChange = OPEN.contains(r.Status__c) && [SELECT COUNT() FROM Field_Action_Checklist__c WHERE Active__c = true AND Id != :current] > 0;
         return x;
     }
 
@@ -161,6 +178,7 @@ public with sharing class CqFarChecklist {
         Id partId = r.Part__c != null ? r.Part__c : r.Nonconformance__r?.compliancequest__SQX_Part__c != null
             ? r.Nonconformance__r.compliancequest__SQX_Part__c : r.Complaint__r?.compliancequest__SQX_Part__c;
         Boolean usual = checklistId == chooseFor(partId);
+        if (checklistId == r.Checklist__c) { return info(recordId, partId); }     // already this checklist: nothing to clear
         if (!usual && String.isBlank(reason)) { throw new AuraHandledException('Give the reason for using a different checklist.'); }
         delete [SELECT Id FROM Field_Action_Review_Check__c WHERE Field_Action_Review__c = :recordId];
         update new Field_Action_Review__c(Id = recordId, Checklist__c = checklistId, Checklist_Change_Reason__c = usual ? null : reason.trim().left(32768));

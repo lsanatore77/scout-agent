@@ -63,6 +63,8 @@ private class CqFarChecklistTest {
         System.assertEquals(6, x.questions.size());
         System.assertEquals('left', x.questions[0].id);
         System.assertEquals(null, x.checklistId);
+        System.assertEquals('the built-in questions', x.source);
+        System.assert(!x.canChange, 'nothing to change to');
 
         CqFieldActionReview.saveDraft(review.Id, '{"v":3,"step":1,"maxStep":1,"checks":{"injury":"Not known"}}');
         List<Field_Action_Review_Check__c> rs = rows(review.Id);
@@ -116,6 +118,7 @@ private class CqFarChecklistTest {
 
         CqFieldActionReview.View v = CqFieldActionReview.getView(review.Id);
         System.assertEquals('Standard', v.checklist.checklistName);
+        System.assertEquals('the default checklist', v.checklist.source);
         System.assertEquals(2, v.checklist.questions.size());
     }
 
@@ -131,6 +134,9 @@ private class CqFarChecklistTest {
         CqFarChecklist.Info x = CqFarChecklist.changeChecklist(review.Id, other.Id, 'It is a software fault');
         System.assertEquals(2, x.questions.size());
         System.assertEquals('It is a software fault', x.changeReason);
+        System.assertEquals('changed by the coordinator', x.source);
+        System.assertEquals(std.Id, x.usualId);
+        System.assert(x.canChange);
         System.assertEquals(2, rows(review.Id).size());
         System.assertEquals(null, rows(review.Id)[0].Answer__c);
 

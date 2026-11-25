@@ -115,3 +115,14 @@
 .cq-field.why { margin-top: 10px; }
 .why .cq-label { font-size: var(--cq-fs-label); font-weight: 600; color: var(--cq-ink); }
 .whynote { display: block; margin-top: 4px; font-size: var(--cq-fs-meta); color: var(--cq-muted); }
+/* the checklist's header: its name, where it came from, and Change; the panel opens under it */
+.clhead { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.clhead .lab { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
+.clname { font-size: var(--cq-fs-body); font-weight: 600; color: var(--cq-ink); }
+.clchange { margin-left: auto; }
+.clwhy { margin-top: 4px; }
+.clpanel { margin: 10px 0 4px; padding: 12px; border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); background: var(--cq-card-bg); }
+.clpanel > .cq-field:first-child { margin-top: 0; }
+.clpanel select, .clpanel textarea { width: 100%; }
+.clclear { margin: 10px 0 0; font-size: var(--cq-fs-meta); }
+.clbtns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }

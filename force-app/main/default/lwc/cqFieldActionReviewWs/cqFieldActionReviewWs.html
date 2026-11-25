@@ -35,7 +35,34 @@
                     <div class="assess">
                         <div class="cq-col lead">
                             <div class="card">
-                                <div class="lab">Checklist</div>
+                                <div class="clhead">
+                                    <span class="lab">Checklist</span>
+                                    <span class="clname">{clName}</span>
+                                    <span class="cq-sub">{clSource}</span>
+                                    <template if:true={canChangeList}><button class="cq-link clchange" onclick={handleListOpen}>Change</button></template>
+                                </div>
+                                <template if:true={clReason}><p class="cq-note sm0 clwhy">{clReason}</p></template>
+                                <template if:true={listOpen}>
+                                    <div class="clpanel">
+                                        <label class="cq-field"><span class="cq-label">Use a Different Checklist</span>
+                                            <select onchange={handleListPick}>
+                                                <template for:each={listOpts} for:item="o"><option key={o.value} value={o.value} selected={o.selected}>{o.label}</option></template>
+                                            </select>
+                                        </label>
+                                        <template if:true={listNeedsWhy}>
+                                            <label class="cq-field why"><span class="cq-label">Why This Checklist?<span class="cq-req">*</span></span>
+                                                <textarea rows="2" oninput={handleListWhy} placeholder="What makes this review different from others on the part?"></textarea>
+                                                <span class="whynote">Shown to the committee and saved in the audit trail.</span>
+                                            </label>
+                                        </template>
+                                        <template if:true={listClearNote}><p class="cq-msg warn clclear">{listClearNote}</p></template>
+                                        <template if:true={listErr}><p class="cq-msg crit clclear">{listErr}</p></template>
+                                        <div class="clbtns">
+                                            <button class="cq-btn-outline" onclick={handleListCancel} disabled={listBusy}>Cancel</button>
+                                            <button class="cq-btn-primary" onclick={handleListUse} disabled={cantUseList}>{listUseLabel}</button>
+                                        </div>
+                                    </div>
+                                </template>
                                 <template for:each={questions} for:item="q">
                                     <div key={q.id} class="cq">
                                         <div class="cqt"><span class="question">{q.text}</span></div>

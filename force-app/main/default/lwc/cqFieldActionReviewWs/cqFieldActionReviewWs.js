@@ -9,6 +9,8 @@ import actOnStep from '@salesforce/apex/CqFarCommittee.act';
 import reopenReview from '@salesforce/apex/CqFieldActionReview.reopen';
 import noteSuggestions from '@salesforce/apex/CqFarSuggestions.note';
 import getPhotoVersionId from '@salesforce/apex/CqTriagePhoto.getPhotoVersionId';
+import changeChecklist from '@salesforce/apex/CqFarChecklist.changeChecklist';
+import getChecklists from '@salesforce/apex/CqFarChecklist.checklists';
 import { readDraft, writeDraft, upTo } from 'c/cqWsDraft';
 import { sortRows, nextSort, heads } from 'c/cqSort';
 import { askPolicies, anyRequired, anyUnknown } from 'c/cqEsign';
@@ -116,6 +118,12 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
     comment = '';        // an administrator's comment when acting for a member (your own seat has its own, in c-cq-sign-seat)
     signs = {};          // 'approve' / 'reject' -> what CQ's e-signature policy asks for (see askSign)
     evTab = 'signals';   // the evidence tab open beside the checklist
+    listOpen = false;    // the Change panel on the checklist is open
+    listChoices = [];    // the active checklists, read when the panel opens
+    listPick = '';
+    listWhy = '';
+    listBusy = false;
+    listErr = '';
 
     async connectedCallback() {
         // CQ's signature policy is asked at the same time as the review is read, not after it: the seat would otherwise
@@ -552,6 +560,52 @@ export default class CqFieldActionReviewWs extends NavigationMixin(LightningElem
         return c && c.questions && c.questions.length ? c.questions.map((q) => ({ id: q.id, text: q.text, help: q.help })) : QUESTIONS;
     }
     get checksDone() { return this.checklistQs.every((q) => !!this.checks[q.id]); }
+
+    // ---- the checklist the review answers: chosen from its part, its part family or the default; the coordinator can
+    // change it before submitting (a reason is needed unless it is the usual one), which replaces the questions
+    get clInfo() { return (this.v && this.v.checklist) || {}; }
+    get clName() { return this.clInfo.checklistName || 'Built-in Questions'; }
+    get clSource() { return this.clInfo.source ? '· ' + this.clInfo.source : ''; }
+    get clReason() { return this.clInfo.changeReason ? 'Reason for the change: ' + this.clInfo.changeReason : ''; }
+    get canChangeList() { return this.live && !!this.clInfo.canChange && !this.listOpen; }
+    get listOpts() {
+        return this.listChoices.filter((c) => c.Id !== this.clInfo.checklistId).map((c) => ({
+            value: c.Id, selected: c.Id === this.listPick,
+            label: c.Name + (c.Id === this.clInfo.usualId ? ' (the usual one for this review)' : '')
+        }));
+    }
+    get listNeedsWhy() { return !!this.listPick && this.listPick !== this.clInfo.usualId; }
+    get listClearNote() {
+        const n = Object.values(this.checks || {}).filter(Boolean).length;
+        return n ? 'The questions change, so the ' + (n === 1 ? 'answer' : n + ' answers') + ' given so far ' + (n === 1 ? 'is' : 'are') + ' cleared.' : '';
+    }
+    get cantUseList() { return this.listBusy || !this.listPick || (this.listNeedsWhy && !this.listWhy.trim()); }
+    get listUseLabel() { return this.listBusy ? 'Changing…' : 'Use This Checklist'; }
+    async handleListOpen() {
+        this.listErr = ''; this.listWhy = ''; this.listPick = '';
+        try { this.listChoices = (await getChecklists()) || []; } catch (e) { this.listChoices = []; }
+        const first = this.listOpts[0];
+        if (!first) { this.listErr = 'There is no other active checklist to use.'; }
+        this.listPick = first ? first.value : '';
+        this.listOpen = true;
+    }
+    handleListPick(event) { this.listPick = event.target.value; }
+    handleListWhy(event) { this.listWhy = event.target.value; }
+    handleListCancel() { this.listOpen = false; this.listErr = ''; }
+    async handleListUse() {
+        if (this.cantUseList) { return; }
+        this.listBusy = true; this.listErr = '';
+        try {
+            const info = await changeChecklist({ recordId: this.recordId, checklistId: this.listPick, reason: this.listNeedsWhy ? this.listWhy.trim() : null });
+            this.v = { ...this.v, checklist: info };
+            this.checks = {};          // new questions: the answers start again
+            this.listOpen = false;
+            this.persist();
+        } catch (e) {
+            this.listErr = this.msg(e, 'Could not change the checklist.');
+        }
+        this.listBusy = false;
+    }
     handleCheck(event) { if (this.waiting) { return; } const d = event.currentTarget.dataset; this.checks = { ...this.checks, [d.q]: d.a }; }
 
     // ---- step 5: recommendation
