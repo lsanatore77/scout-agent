@@ -44,6 +44,10 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   field updates. Waits on Lou's signature review.
 
 ## Work queue
+- **Next (Lou, 24 Nov): Field Action gets the Field Action Review treatment.** Record fields for each workspace step, status
+  and step on the record (Path), and related lists, so a standard record page and reports show where it stands.
+- Field Action Review leftovers: record page layout, Path, related lists and field history (mock up first); FAR-0004 lost
+  its draft answers and rationale on 24 Nov (restore was offered, not asked for). Design system: on hold (Lou, 24 Nov).
 - Field Action Review and the other screens onto the shared grey `.cq-card` (list in cqstyles_centralising.md).
 - Sorting rollout: Triage Assistant (5 tables), then the rest.
 - Customers and Tasks table rework (Recovery).
