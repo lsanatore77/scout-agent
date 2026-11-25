@@ -270,7 +270,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     /** The rail as the shared frame draws it: a step set aside for later shows a dash and is greyed. */
     get railSteps() {
         return this.steps.map((s) => ({ label: s.label, sub: s.sub, done: s.done, active: s.i === this.step, locked: s.locked,
-            mark: STEPS[s.i].later ? '\u2013' : undefined, later: !!STEPS[s.i].later, alert: s.subCls.includes('alert') }));
+            mark: STEPS[s.i].later ? '–' : undefined, later: !!STEPS[s.i].later, alert: s.subCls.includes('alert') }));
     }
     get progress() { return this.steps.filter((s) => s.done).length + ' of ' + STEPS.length + ' steps complete'; }
     handleStep(event) { const i = Number(event.detail); if (!this.isLocked(i)) { this.go(i); } }
@@ -435,7 +435,7 @@ export default class CqFieldActionManager extends NavigationMixin(LightningEleme
     scopeSort = {};
     get scopeHeads() {
         return heads([{ key: 'scope', label: 'Scope', cls: 'cscope', sortable: false }, { key: 'name', label: 'Level / Item' },
-            { key: 'partRev', label: 'Part \u00b7 Rev', sortable: false }, { key: 'lot', label: 'Lot' }, { key: 'built', label: 'Qty', num: true },
+            { key: 'partRev', label: 'Part · Rev', sortable: false }, { key: 'lot', label: 'Lot' }, { key: 'built', label: 'Qty', num: true },
             { key: 'supplier', label: 'Supplier', sortable: false }, { key: 'records', label: 'Trace' }, { key: 'shipped', label: 'Shipped', num: true },
             { key: 'onHand', label: 'On Hand', num: true }, { key: 'status', label: 'Status' }], this.scopeSort);
     }

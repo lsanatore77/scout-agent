@@ -6,7 +6,6 @@ import getLook from '@salesforce/apex/CqWsSettings.get';
  * the Review Steps rail, the step's own content (the default slot), any error, and the footer (blocker, Back, Next).
  * How it looks comes from CQ.AI Workspace Settings (CqWsSettings): the steps on the left or across the top, and the
  * cqStyles theme, set on this frame's host so every step inside picks it up. A step may put a side column in slot="side".
- * A workspace may put its own header buttons in slot="actions", before Audit Trail and Ask CQ.AI.
  * The workspace owns the data and the steps; the shell only draws them and reports clicks as events:
  * step (detail: index), back, next, edit, restart, reopen, open (detail: record id).
  */
@@ -28,7 +27,7 @@ export default class CqWsShell extends LightningElement {
     /** Ask CQ.AI's pin button under an answer (e.g. Add to Evidence); a pin is passed on as askcqpin. */
     @api pinLabel;
     @api placeholder;           // the Ask CQ.AI box's hint; the popover's own when not set
-    get askPlaceholder() { return this.placeholder || 'Ask about this review\u2026'; }
+    get askPlaceholder() { return this.placeholder || 'Ask about this review…'; }
     @api railTitle = 'Review Steps';
     /** [{ label, sub, done, active, locked, mark?, later?, alert? }] in order. mark replaces the step number (e.g. '–'),
      *  later greys a step set aside for later, alert shows its sub line in red. */
