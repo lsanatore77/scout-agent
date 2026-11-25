@@ -30,6 +30,19 @@ regulatory report drafts from a complaint and its investigation.
 Anthropic's plugin for plant teams (17 skills; quality skill covers a failed inspection to a corrective action report; no
 QMS connectors). Early version, aimed at manufacturers. Later: compare its full skill list with CQ.AI, and consider a CQ connector.
 
+### Field Action Review: record fields, and our own approval matrix (24 Nov 2026, Lou)
+- **Record fields.** The review's progress lives in the workspace and a draft field; a standard record page shows "In Review"
+  and little else. Write each step's values to real fields as the step is completed, add Review Step (picklist), Started On,
+  Submitted On, Days Open and Overdue, rename status Closed to Withdrawn, and put a Path on the record page. Then check the
+  other workspaces (Triage, Investigation, Disposition, Field Action) for the same gap. Lou: needed for analytics and reports.
+- **Approval matrix.** Neither CQ's Approval Matrix (no Field Action record type) nor CQ's approval engine (no CQAPR Approval
+  Setup record for Field_Action_Review__c) knows the object; our code builds the CQ Approval from the coordinator's picks among
+  the "Field Action Committee - " job functions. Lou: we need our own approval matrix for now.
+  Checked 24 Nov (read only): the CQAPR Approval Setup custom metadata shows a **New** button in Setup, so the org can add its
+  own setup record. Plan: our own matrix object (seats per step, chosen by risk level, recall class or emergency) plus a CQAPR
+  Approval Setup record for Field_Action_Review__c whose steps flow reads it, so CQ's engine handles submit, emails, locking and
+  field updates. Waits on Lou's signature review.
+
 ## Work queue
 - Field Action Review and the other screens onto the shared grey `.cq-card` (list in cqstyles_centralising.md).
 - Sorting rollout: Triage Assistant (5 tables), then the rest.
