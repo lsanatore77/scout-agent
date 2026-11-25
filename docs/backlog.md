@@ -11,6 +11,8 @@ the source evidence is kept and linked to each value, the audit trail records wh
 
 **First pilot (chosen): CoC documents filling in lot records.** Claude reads a certificate of conformance, fills the lot's
 fields and points to where each value came from; the person confirms. Ties in with the CoC data cleanup below.
+Builds on the Google Vision text extraction CQ already uses on PDFs (Lou, 24 Nov). Not in this repo or the dev org yet:
+find out where it runs, whether it returns text with positions on the page, and where the text is stored.
 Other candidates: customer response emails filling Field Action cases; supplier replies; failure and severity coding;
 regulatory report drafts from a complaint and its investigation.
 
