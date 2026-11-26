@@ -78,6 +78,15 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   files are held in the popup and attached after Create or Merge (3 MB each). CQ's Submit did not move a new NC to
   Triage when run from anonymous Apex (nor an existing Draft NC); check from the popup in the browser. If it stays in
   Draft the done screen says so, and Triage's start submits it anyway.
+- **NC ownership and access (Lou, 25 Nov; decided, not built).** The rule: only the owner can edit; everyone else is
+  view only. Today the triage workspace has no such check: it shows to anyone who can open an NC in Draft or Triage and
+  saves as the user, so read-only users hit permission errors partway through, and anyone with edit access (admins,
+  CQ shares) can triage, take ownership from the queue on Complete, and leave a partial triage when CQ refuses the move.
+  Findings: CQ submit hands the NC to a queue (dev: CQ Nonconformance Default Queue, 7 members); CQ's Department has a
+  Queue Id (blank in dev) that appears to route by department; CQ's Qualified Owner rule already requires Can Own NC to own
+  an NC from Triage on. Open: queue members' Take Ownership step, admin/supervisor override, read-only users adding a note
+  or photo, the reporter's view, the draft on owner change, routing rules beyond department (Type, Site, part family),
+  and applying the same check to Disposition, Investigation and agent actions. Mock the read-only states before building.
 - **Later (Lou, 24 Nov): Field Action numbers kept current straight away.** For now a nightly job and a Refresh Numbers
   button work them out. Records change in many places (workspace, tasks, cases, ERP loads), and the numbers being right
   matters, so move to updating on change, handing large loads to a background job (bulk limits, record locks).
