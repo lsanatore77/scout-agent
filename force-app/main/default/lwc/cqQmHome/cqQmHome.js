@@ -8,6 +8,7 @@ import myApprovals from '@salesforce/apex/CqApprovals.mine';
 import act from '@salesforce/apex/CqApprovals.act';
 
 const INBOX = 'Triage_Inbox';
+const SUB_MAX = 42;   // the approval detail line: cut at a whole word, then the full text on hover
 const NC_OBJECT = 'compliancequest__SQX_Nonconformance__c';
 const SOON = [
     { key: 'complaints', name: 'Complaints', desc: 'Customer complaints, reportability and responses.', icon: 'standard:case' },
@@ -90,7 +91,8 @@ export default class CqQmHome extends NavigationMixin(LightningElement) {
             ...a,
             url: a.recordId ? '/' + a.recordId : null,
             asked: this.ago(a.requestedOn),
-            sub: [a.objectLabel, a.recordTitle].filter((x) => x).join(' \u00b7 ')
+            sub: [a.objectLabel, a.recordTitle].filter((x) => x).join(' \u00b7 '),
+            subShort: this.cut([a.objectLabel, a.recordTitle].filter((x) => x).join(' \u00b7 '), SUB_MAX)
         }));
     }
     get hasApprovals() { return this.approvals.length > 0; }
@@ -152,6 +154,14 @@ export default class CqQmHome extends NavigationMixin(LightningElement) {
         if (h < 24) { return h + (h === 1 ? ' hour' : ' hours'); }
         const days = Math.floor(h / 24);
         return days + (days === 1 ? ' day' : ' days');
+    }
+    /** Shortens text to max characters at a whole word, with no stray punctuation before the ellipsis. */
+    cut(s, max) {
+        if (!s || s.length <= max) { return s; }
+        let t = s.slice(0, max + 1);
+        const sp = t.lastIndexOf(' ');
+        t = (sp > 0 ? t.slice(0, sp) : t.slice(0, max)).replace(/[\s,;:.\u00b7-]+$/, '');
+        return t + '\u2026';
     }
     errText(e) {
         return (e && e.body && e.body.message) || (e && e.message) || 'Something went wrong.';

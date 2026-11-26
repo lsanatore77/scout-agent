@@ -43,7 +43,7 @@
 .one { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }   /* one line; the full text shows on hover */
 .age { font-size: var(--cq-fs-micro); color: var(--cq-muted); white-space: nowrap; }
 .atop { display: flex; align-items: baseline; justify-content: space-between; gap: var(--cq-s3); flex-wrap: wrap; }
-.aacts { display: flex; align-items: center; gap: var(--cq-s3); margin-top: var(--cq-s2); }
+.aacts { display: flex; align-items: center; gap: var(--cq-s3); margin-top: var(--cq-s4); }
 .needs { display: flex; flex-direction: column; }
 .why { display: block; font-size: var(--cq-fs-micro); font-weight: 700; }
 
