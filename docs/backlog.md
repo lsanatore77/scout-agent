@@ -84,7 +84,7 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   CQ shares) can triage, take ownership from the queue on Complete, and leave a partial triage when CQ refuses the move.
   Findings: CQ submit hands the NC to a queue (dev: CQ Nonconformance Default Queue, 7 members); CQ's Department has a
   Queue Id (blank in dev) that appears to route by department; CQ's Qualified Owner rule already requires Can Own NC to own
-  an NC from Triage on. Open: queue members' Take Ownership step, admin/supervisor override, read-only users adding a note
+  an NC from Triage on. Salesforce admins can override, as always (Lou). Open: queue members' Take Ownership step, a supervisor override, read-only users adding a note
   or photo, the reporter's view, the draft on owner change, routing rules beyond department (Type, Site, part family),
   and applying the same check to Disposition, Investigation and agent actions. Mock the read-only states before building.
 - **Later (Lou, 24 Nov): Field Action numbers kept current straight away.** For now a nightly job and a Refresh Numbers
