@@ -16,6 +16,7 @@ let popupOpen = false;
  */
 export default class CqNcReport extends NavigationMixin(LightningElement) {
     @api buttonLabel = 'Report a Nonconformance';
+    @api inUtilityBar = false;   // set in the utility bar pages: that copy never opens the popup on its own
     utilityId;
     onTab = false;
     opened = false;
@@ -46,7 +47,7 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
         const key = here && ref.state ? ref.state.c__open || '' : '';
         this.utilityCheck.then((id) => {
             if (!here) { this.opened = false; }
-            this.onTab = here && !id;
+            this.onTab = here && !id && !this.inUtilityBar;
             if (this.onTab && (!this.opened || key !== this.lastKey)) {
                 this.opened = true;
                 this.lastKey = key;

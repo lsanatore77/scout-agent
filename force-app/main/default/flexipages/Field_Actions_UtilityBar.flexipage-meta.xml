@@ -8,6 +8,10 @@
                     <value>Report a Nonconformance</value>
                 </componentInstanceProperties>
                 <componentInstanceProperties>
+                    <name>inUtilityBar</name>
+                    <value>true</value>
+                </componentInstanceProperties>
+                <componentInstanceProperties>
                     <name>eager</name>
                     <type>decorator</type>
                     <value>true</value>

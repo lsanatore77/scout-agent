@@ -14,6 +14,7 @@
     <targetConfigs>
         <targetConfig targets="lightning__AppPage,lightning__HomePage,lightning__RecordPage,lightning__UtilityBar">
             <property name="buttonLabel" type="String" label="Button Label" default="Report a Nonconformance" />
+            <property name="inUtilityBar" type="Boolean" label="In the Utility Bar" default="false" description="Tick for the utility bar copy, so only the Report a Nonconformance tab opens the popup on arrival." />
         </targetConfig>
     </targetConfigs>
 </LightningComponentBundle>
