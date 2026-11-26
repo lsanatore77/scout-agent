@@ -53,6 +53,7 @@ export default class CqNcReportModal extends LightningModal {
     mentionSeq = 0;
     picks = {};            // { lot: { lot, partId, partNumber, partName }, part: { partId, partNumber, partName } }
     caretAfter;            // where to put the cursor after a pick
+    mentionPos = { left: 0, top: 0 };   // where the list opens: just under the @, kept inside the box
 
     focused = false;
     saving = false;
@@ -120,6 +121,9 @@ export default class CqNcReportModal extends LightningModal {
     }
     // ---- @: pick a lot or part
 
+    /** A click moves the cursor: open or close the list for the word it lands in. */
+    handleCaret(event) { this.findMention(event.target); }
+
     findMention(box) {
         clearTimeout(this.mentionTimer);
         const caret = box.selectionStart == null ? this.text.length : box.selectionStart;
@@ -128,6 +132,7 @@ export default class CqNcReportModal extends LightningModal {
         const term = m[2];
         this.mentionStart = caret - term.length - 1;
         this.mentionEnd = caret;
+        this.placeMentions(box);
         const seq = ++this.mentionSeq;
         // eslint-disable-next-line @lwc/lwc/no-async-operation
         this.mentionTimer = setTimeout(async () => {
@@ -141,6 +146,36 @@ export default class CqNcReportModal extends LightningModal {
             }
         }, 250);
     }
+    /**
+     * Where the @ sits in the box, found with a hidden copy of the box that holds the text up to the @ (a textarea
+     * does not say where a character is). The list opens under that line, starting at the @, moved left when it
+     * would run past the box's right edge.
+     */
+    placeMentions(box) {
+        const mirror = this.template.querySelector('.mirror');
+        if (!mirror || !box) { return; }
+        try {
+            const cs = window.getComputedStyle(box);
+            ['fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'textTransform', 'wordSpacing',
+                'paddingTop', 'paddingRight', 'paddingBottom', 'paddingLeft', 'borderTopWidth', 'borderRightWidth',
+                'borderBottomWidth', 'borderLeftWidth', 'boxSizing', 'tabSize'].forEach((p) => { mirror.style[p] = cs[p]; });
+            mirror.style.width = box.offsetWidth + 'px';
+            mirror.textContent = '';
+            mirror.appendChild(document.createTextNode(this.text.slice(0, this.mentionStart)));
+            const mark = document.createElement('span');
+            mark.textContent = '@';
+            mirror.appendChild(mark);
+            const lineH = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
+            const listW = Math.min(17 * parseFloat(window.getComputedStyle(document.documentElement).fontSize || 16), box.offsetWidth);
+            const left = Math.max(0, Math.min(box.offsetLeft + mark.offsetLeft, box.offsetLeft + box.offsetWidth - listW));
+            const top = box.offsetTop + mark.offsetTop - box.scrollTop + lineH + 2;
+            const maxTop = box.offsetTop + box.offsetHeight;
+            this.mentionPos = { left, top: Math.min(top, maxTop) };
+        } catch (e) {
+            this.mentionPos = { left: 0, top: box.offsetTop + box.offsetHeight };   // under the box, as before
+        }
+    }
+    get mentionStyle() { return 'left: ' + this.mentionPos.left + 'px; top: ' + this.mentionPos.top + 'px;'; }
     closeMentions() {
         clearTimeout(this.mentionTimer);
         this.mentionSeq++;
