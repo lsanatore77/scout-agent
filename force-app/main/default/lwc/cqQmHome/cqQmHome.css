@@ -23,6 +23,11 @@
 .tname { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
 .tlink { padding: 0; border: 0; background: none; font-family: inherit; text-align: left; cursor: pointer; }
 .tlink:hover { color: var(--cq-link); text-decoration: underline; }
+/* + on a process card: create one (Nonconformance: the Report a Nonconformance popup) */
+.addbtn { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; padding: 0;
+          border: 1px solid var(--cq-line-field); border-radius: var(--cq-r-field); background: var(--cq-bg); cursor: pointer;
+          --slds-c-icon-color-foreground-default: var(--cq-link); }
+.addbtn:hover { background: var(--cq-link-soft); border-color: var(--cq-link); }
 
 /* one line per role, each opening its view of the Triage Inbox */
 .roles { display: flex; flex-direction: column; margin-top: auto; border-top: 1px solid var(--cq-line); }

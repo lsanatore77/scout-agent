@@ -21,6 +21,9 @@
                         <div class="thead">
                             <lightning-icon icon-name="standard:incident" size="small" alternative-text=""></lightning-icon>
                             <button id="t-nc" class="tname tlink" onclick={handleNc}>Nonconformance</button>
+                            <button class="addbtn" onclick={handleNew} title="Report a Nonconformance" aria-label="Report a Nonconformance">
+                                <lightning-icon icon-name="utility:add" size="x-small" alternative-text=""></lightning-icon>
+                            </button>
                         </div>
                         <div class="roles">
                             <template for:each={ncLines} for:item="l">

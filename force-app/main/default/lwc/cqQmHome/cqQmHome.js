@@ -6,6 +6,7 @@ import USER_NAME from '@salesforce/schema/User.Name';
 import loadHome from '@salesforce/apex/CqQmHome.load';
 import myApprovals from '@salesforce/apex/CqApprovals.mine';
 import act from '@salesforce/apex/CqApprovals.act';
+import CqNcReportModal from 'c/cqNcReportModal';
 
 const INBOX = 'Triage_Inbox';
 const SUB_MAX = 42;   // the approval detail line: cut at a whole word, then the full text on hover
@@ -61,6 +62,16 @@ export default class CqQmHome extends NavigationMixin(LightningElement) {
             aria: l.role + ': ' + l.stats.map((s) => s.n + ' ' + s.label).join(', '),
             statList: l.stats.map((s, i) => ({ key: l.key + i, n: s.n, label: s.label, cls: 'sn' + (s.warn ? ' cq-marktext warn' : '') }))
         }));
+    }
+    /** + on the Nonconformance card: the Report a Nonconformance popup. Opening an NC from it goes there; else the counts refresh. */
+    async handleNew() {
+        let result;
+        try { result = await CqNcReportModal.open({ size: 'small', description: 'Report a Nonconformance' }); } catch (e) { result = null; }
+        if (result && result.recordId) {
+            this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: result.recordId, actionName: 'view' } });
+            return;
+        }
+        loadHome().then((h) => { this.home = h; }).catch(() => {});
     }
     handleLine(event) { this.go(event.currentTarget.dataset.view); }
     handleNc() {
