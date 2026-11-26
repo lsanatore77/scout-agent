@@ -87,6 +87,10 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   e-signature and runs in CQ's own component). The workspace's startTriage now moves an older Draft NC with the same
   code and keeps its owner. Follow-up: confirm with CQ whether an API-level Submit exists, and whether CQ's own
   audit trail (NC Record Activity) should get a "submitted" row.
+  Open (Lou, 25 Nov; resolve later, it will come up): imported Draft NCs. A load by a user with CQ's Data Migration
+  permission keeps its Draft NCs in Draft (CQ's own rule for imports); a load by anyone else sends them to Triage and
+  the queue. NCs imported already past Draft keep their stage either way. Decide whether migrated Draft NCs should
+  stay in Draft or go to Triage (a one-line change in CqNcAutoTriage.afterInsert).
 - **NC ownership and access (Lou, 25 Nov; decided, not built).** The rule: only the owner can edit; everyone else is
   view only. Today the triage workspace has no such check: it shows to anyone who can open an NC in Draft or Triage and
   saves as the user, so read-only users hit permission errors partway through, and anyone with edit access (admins,
