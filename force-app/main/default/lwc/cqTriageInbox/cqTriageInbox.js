@@ -64,17 +64,17 @@ export default class CqTriageInbox extends NavigationMixin(LightningElement) {
         const list = [];
         if (d.inQueue) { list.push({ key: 'waiting', label: VIEWS.waiting, n: d.waiting.length }); }
         list.push({ key: 'mine', label: VIEWS.mine, n: d.mine.length });
-        return list.map((v) => ({ ...v, selected: String(v.key === this.view), cls: 'cq-pick-row vrow' + (v.key === this.view ? ' on' : ''), tick: v.key === this.view ? '✓' : '' }));
+        return list.map((v) => ({ ...v, selected: String(v.key === this.view), cls: 'cq-pick-row vrow' + (v.key === this.view ? ' on' : ''), tick: v.key === this.view ? '\u2713' : '' }));
     }
     get subLine() {
         const d = this.data;
         if (!d) { return ''; }
         if (this.isWaiting) {
             const n = d.waiting.length;
-            return n + (n === 1 ? ' item' : ' items') + ' · Oldest first' + (d.queues.length ? ' · ' + d.queues.join(', ') : '');
+            return n + (n === 1 ? ' item' : ' items') + ' \u00b7 Oldest first' + (d.queues.length ? ' \u00b7 ' + d.queues.join(', ') : '');
         }
         const n = d.mine.length;
-        return n + (n === 1 ? ' item' : ' items') + ' · Grouped by stage';
+        return n + (n === 1 ? ' item' : ' items') + ' \u00b7 Grouped by stage';
     }
     handleMenu() { this.menuOpen = !this.menuOpen; }
     handleMenuClose() { this.menuOpen = false; }
@@ -91,11 +91,11 @@ export default class CqTriageInbox extends NavigationMixin(LightningElement) {
         return ((this.data && this.data.waiting) || []).map((r) => ({
             ...r,
             url: '/' + r.id,
-            part: r.part || '–',
+            part: r.part || '\u2013',
             waitCls: r.old ? 'cq-marktext warn' : '',
             flagList: (r.flags || []).map((f, i) => ({ key: r.id + '-' + i, text: f })),
             busy: this.busyId === r.id,
-            takeLabel: this.busyId === r.id ? 'Taking…' : 'Take Ownership',
+            takeLabel: this.busyId === r.id ? 'Taking\u2026' : 'Take Ownership',
             cantTake: !this.data.canOwn || !!this.busyId
         }));
     }
@@ -108,7 +108,7 @@ export default class CqTriageInbox extends NavigationMixin(LightningElement) {
             g.rows.push({
                 ...r,
                 url: '/' + r.id,
-                part: r.part || '–',
+                part: r.part || '\u2013',
                 statusCls: r.statusWarn ? 'cq-marktext warn' : '',
                 flagList: (r.flags || []).map((f, i) => ({ key: r.id + '-' + i, text: f })),
                 btnCls: r.primary === 'Continue Triage' ? 'cq-btn-primary cq-btn-sm' : 'cq-btn-outline cq-btn-sm'
@@ -163,7 +163,7 @@ export default class CqTriageInbox extends NavigationMixin(LightningElement) {
     get hasPeople() { return this.people.length > 0; }
     get pickName() { const p = this.people.find((x) => x.id === this.pickId); return p ? p.name : ''; }
     get noteLabel() { return this.pickName ? 'Note for ' + this.pickName.split(' ')[0] : 'Note'; }
-    get reassignLabel() { return this.saving ? 'Reassigning…' : this.pickName ? 'Reassign to ' + this.pickName : 'Reassign'; }
+    get reassignLabel() { return this.saving ? 'Reassigning\u2026' : this.pickName ? 'Reassign to ' + this.pickName : 'Reassign'; }
     get cantReassign() { return !this.pickId || this.saving; }
 
     async handleReassign(event) {

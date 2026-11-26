@@ -89,8 +89,8 @@ export default class CqQmHome extends NavigationMixin(LightningElement) {
         return this.approvals.map((a) => ({
             ...a,
             url: a.recordId ? '/' + a.recordId : null,
-            asked: 'Requested by ' + (a.requestedBy || 'someone') + ' · ' + this.ago(a.requestedOn),
-            sub: [a.objectLabel, a.recordTitle].filter((x) => x).join(' · ')
+            asked: this.ago(a.requestedOn),
+            sub: [a.objectLabel, a.recordTitle].filter((x) => x).join(' \u00b7 ')
         }));
     }
     get hasApprovals() { return this.approvals.length > 0; }
