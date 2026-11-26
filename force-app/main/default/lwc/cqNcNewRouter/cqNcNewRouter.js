@@ -12,7 +12,7 @@ export default class CqNcNewRouter extends NavigationMixin(LightningElement) {
     connectedCallback() {
         const ref = cqScreens
             ? { type: 'standard__component', attributes: { componentName: 'compliancequest__SQX_Nonconformance_Wizard' } }
-            : { type: 'standard__navItemPage', attributes: { apiName: 'Report_a_Nonconformance' } };
+            : { type: 'standard__navItemPage', attributes: { apiName: 'Report_a_Nonconformance' }, state: { c__open: String(Date.now()) } };
         this[NavigationMixin.Navigate](ref, true);
     }
 }

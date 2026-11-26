@@ -19,6 +19,7 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
     opened = false;
     isOpening = false;
     isOpen = false;   // the popup is up: the tab behind it shows nothing
+    lastKey;
 
     // Resolves to the utility's id when this copy sits in the utility bar, else null. The utility bar copy also sees the
     // page reference, so only the tab's own copy may open the popup on arrival (else it opened twice).
@@ -27,9 +28,17 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
     @wire(CurrentPageReference)
     pageRef(ref) {
         const here = !!ref && ref.type === 'standard__navItemPage' && ref.attributes && ref.attributes.apiName === TAB;
+        // Lightning keeps the tab alive after it is left, so each arrival must open the popup again: the New button sends a
+        // fresh c__open value every time, and leaving the tab (or closing the popup) resets it for a plain arrival.
+        const key = here && ref.state ? ref.state.c__open || '' : '';
         this.utilityCheck.then((id) => {
+            if (!here) { this.opened = false; }
             this.onTab = here && !id;
-            if (this.onTab && !this.opened) { this.opened = true; this.openModal(); }
+            if (this.onTab && (!this.opened || key !== this.lastKey)) {
+                this.opened = true;
+                this.lastKey = key;
+                this.openModal();
+            }
         });
     }
 
@@ -71,8 +80,10 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
             this.isOpen = false;
         }
         if (result && result.recordId) {
+            this.opened = false;
             this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: result.recordId, actionName: 'view' } });
         } else if (this.onTab) {
+            this.opened = false;
             this[NavigationMixin.Navigate]({ type: 'standard__objectPage', attributes: { objectApiName: 'compliancequest__SQX_Nonconformance__c', actionName: 'list' }, state: { filterName: 'Recent' } });
         }
     }
