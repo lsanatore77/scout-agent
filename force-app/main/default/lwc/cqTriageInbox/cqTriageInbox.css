@@ -11,13 +11,13 @@
 .vpick { display: inline-block; }
 .vbtn { display: inline-flex; align-items: center; gap: var(--cq-s2); padding: 0; border: 0; background: none; font: inherit; color: var(--cq-hl-ink); cursor: pointer; }
 .vbtn:hover .cq-hl-title { text-decoration: underline; }
-.vlist { right: auto; width: 18rem; z-index: 30; }
+.vlist { right: auto; width: 18rem; z-index: 31; }
 .vrow { flex-direction: row; align-items: center; gap: var(--cq-s3); }
 .vrow.on { background: var(--cq-link-soft); }
 .vrow .cq-pick-n { flex: 1 1 auto; }
 .tick { width: 1rem; color: var(--cq-link); font-weight: 700; }
 .vn { font-variant-numeric: tabular-nums; }
-.veil { position: fixed; inset: 0; z-index: 20; }
+.veil { position: fixed; inset: 0; z-index: 30; }
 
 /* the message at the top: what happened, Open, and dismiss */
 .msgline { display: flex; align-items: center; gap: var(--cq-s4); }

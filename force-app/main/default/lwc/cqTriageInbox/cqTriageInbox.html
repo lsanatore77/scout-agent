@@ -13,6 +13,8 @@
                                     <lightning-icon icon-name="utility:down" size="x-small" alternative-text="Choose a list view"></lightning-icon>
                                 </button>
                                 <template if:true={menuOpen}>
+                                    <!-- a click anywhere else closes the list; it sits under the list in the same layer -->
+                                    <div class="veil" onclick={handleMenuClose}></div>
                                     <div class="list vlist" role="listbox" aria-label="List views">
                                         <span class="cq-pick-head">List Views</span>
                                         <template for:each={views} for:item="v">
@@ -33,7 +35,6 @@
                     </div>
                 </div>
             </header>
-            <template if:true={menuOpen}><div class="veil" onclick={handleMenuClose}></div></template>
 
             <div class="body">
                 <template if:true={loading}>
