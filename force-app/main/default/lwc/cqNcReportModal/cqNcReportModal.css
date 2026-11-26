@@ -40,4 +40,11 @@
 .kvs dd .cq-link { margin-left: var(--cq-s2); }
 .kvs .none dd { font-weight: 400; font-style: italic; color: var(--cq-faint); }
 .edit { margin-top: var(--cq-s2); }
+
+/* @: the lots and parts offered, just under the description box */
+.mentions { margin-top: calc(-1 * var(--cq-s3)); border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); background: var(--cq-bg); box-shadow: 0 4px 12px rgba(0, 0, 0, .12); max-height: 16rem; overflow-y: auto; }
+.mgrp { display: block; padding: var(--cq-s2) var(--cq-s4) var(--cq-s1); font-size: var(--cq-fs-micro); font-weight: 700; color: var(--cq-muted); }
+.opt { display: flex; align-items: baseline; gap: var(--cq-s3); padding: var(--cq-s2) var(--cq-s4); cursor: pointer; }
+.opt.on, .opt:hover { background: var(--cq-surface); }
+.msub { color: var(--cq-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 560px) { .kvs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

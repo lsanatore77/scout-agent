@@ -125,6 +125,57 @@ public with sharing class CqNcReport {
         return out;
     }
 
+    // ---------------------------------------------------------------- step 1: @ picks a lot or part
+
+    public class Mention {
+        @AuraEnabled public String kind;        // 'lot' or 'part'
+        @AuraEnabled public String label;       // what goes in the text: the lot number, or the part number
+        @AuraEnabled public String sub;         // the line under it: the lot's part, or the part's name
+        @AuraEnabled public String lot;
+        @AuraEnabled public Id partId;
+        @AuraEnabled public String partNumber;
+        @AuraEnabled public String partName;
+    }
+
+    /** What @ offers while the person types: up to five lots whose number starts with the term, and up to five active parts. */
+    @AuraEnabled(cacheable=true)
+    public static List<Mention> mentions(String term) {
+        List<Mention> out = new List<Mention>();
+        String t = term == null ? '' : term.trim();
+        if (t.length() < 1 || t.length() > 40) { return out; }
+        String safe = t.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_');
+        String starts = safe + '%';
+        String anywhere = '%' + safe + '%';
+        List<compliancequest__SQX_Lot_Info__c> lots = [SELECT Name, compliancequest__Part_Number__c FROM compliancequest__SQX_Lot_Info__c
+            WHERE Name LIKE :starts WITH USER_MODE ORDER BY Name DESC LIMIT 5];
+        Set<String> nums = new Set<String>();
+        for (compliancequest__SQX_Lot_Info__c l : lots) { if (String.isNotBlank(l.compliancequest__Part_Number__c)) { nums.add(l.compliancequest__Part_Number__c); } }
+        Map<String, compliancequest__SQX_Part__c> byNum = new Map<String, compliancequest__SQX_Part__c>();
+        if (!nums.isEmpty()) {
+            for (compliancequest__SQX_Part__c p : [SELECT Id, Name, compliancequest__Part_Number__c FROM compliancequest__SQX_Part__c
+                    WHERE compliancequest__Part_Number__c IN :nums WITH USER_MODE]) {
+                byNum.put(p.compliancequest__Part_Number__c, p);
+            }
+        }
+        for (compliancequest__SQX_Lot_Info__c l : lots) {
+            Mention m = new Mention();
+            m.kind = 'lot'; m.label = l.Name; m.lot = l.Name;
+            compliancequest__SQX_Part__c p = byNum.get(l.compliancequest__Part_Number__c);
+            if (p != null) { m.partId = p.Id; m.partNumber = p.compliancequest__Part_Number__c; m.partName = p.Name; }
+            m.sub = p != null ? p.compliancequest__Part_Number__c + ' · ' + p.Name : l.compliancequest__Part_Number__c;
+            out.add(m);
+        }
+        for (compliancequest__SQX_Part__c p : [SELECT Id, Name, compliancequest__Part_Number__c FROM compliancequest__SQX_Part__c
+                WHERE (compliancequest__Part_Number__c LIKE :anywhere OR Name LIKE :anywhere) AND compliancequest__Active__c = true
+                WITH USER_MODE ORDER BY compliancequest__Part_Number__c LIMIT 5]) {
+            Mention m = new Mention();
+            m.kind = 'part'; m.label = String.isNotBlank(p.compliancequest__Part_Number__c) ? p.compliancequest__Part_Number__c : p.Name;
+            m.sub = p.Name; m.partId = p.Id; m.partNumber = p.compliancequest__Part_Number__c; m.partName = p.Name;
+            out.add(m);
+        }
+        return out;
+    }
+
     // ---------------------------------------------------------------- step 2: CQ.AI fills in the record
 
     /** CQ.AI reads the description and fills the record. If CQ.AI cannot run, a plain read picks out the lot and the quantity. */

@@ -78,6 +78,11 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   files are held in the popup and attached after Create or Merge (3 MB each). CQ's Submit did not move a new NC to
   Triage when run from anonymous Apex (nor an existing Draft NC); check from the popup in the browser. If it stays in
   Draft the done screen says so, and Triage's start submits it anyway.
+- **@ in the Report a Nonconformance description (Lou, 25 Nov; built, new NCs only; standardise later if it works).**
+  Optional: typing @ then the start of a lot or part lists up to five lots (number starts with the term, each with its
+  part) and five active parts (number or name contains it), just under the box; arrows, Enter or Tab, Esc; click works.
+  Picking writes "lot L26-0915" or the part number into the text and records the real record; on Next a pick still in
+  the text wins over what CQ.AI read (a lot brings its part). Plain typing works as before. CqNcReport.mentions.
 - **New NCs go straight to Triage (Lou, 25 Nov; built).** Every new NC, wherever it is created, skips Submit: an
   after-insert trigger (CqNcAutoTriage) sets Record Stage Triage, Submitted By the creator, and the owner the queue
   (the Department's Queue Id, else CQ's Default Queue Name setting, else the CQ Nonconformance Default Queue).

@@ -8,9 +8,26 @@
                     <lightning-modal-body><div class="body">
                         <label class="cq-field">
                             <span class="cq-label">What Happened?<span class="cq-req">*</span></span>
-                            <textarea data-id="desc" rows="6" value={text} oninput={handleText} aria-required="true"></textarea>
-                            <span class="cq-hint">Say what you found, where, and how many. Include the lot if you have it.</span>
+                            <textarea data-id="desc" rows="6" value={text} oninput={handleText} onkeydown={handleTextKey} onblur={handleTextBlur}
+                                aria-required="true" role="combobox" aria-autocomplete="list" aria-controls="mentions" aria-expanded={mentionExpanded}
+                                aria-activedescendant={mentionActiveId}></textarea>
+                            <span class="cq-hint">Say what you found, where, and how many. Include the lot if you have it. Type @ to pick a lot or part.</span>
                         </label>
+                        <template if:true={mentionOpen}>
+                            <div class="mentions" id="mentions" role="listbox" aria-label="Lots and parts">
+                                <template for:each={mentionGroups} for:item="g">
+                                    <div key={g.key} role="group" aria-label={g.label}>
+                                        <span class="mgrp">{g.label}</span>
+                                        <template for:each={g.items} for:item="m">
+                                            <div key={m.key} id={m.optId} class={m.cls} role="option" aria-selected={m.selected} data-index={m.index}
+                                                onmousedown={handleMentionDown} onclick={handleMentionClick}>
+                                                <span class="b">{m.label}</span><span class="msub">{m.sub}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
                         <template if:true={showDupStep1}>
                             <div class="dupwrap" role="region" aria-label="Possible duplicate" aria-live="polite">
                                 <span class="duplbl">Possible Duplicate</span>

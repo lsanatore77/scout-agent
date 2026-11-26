@@ -6,10 +6,13 @@ import suggestDescription from '@salesforce/apex/CqNcReport.suggestDescription';
 import create from '@salesforce/apex/CqNcReport.create';
 import addToExisting from '@salesforce/apex/CqNcReport.addToExisting';
 import attachFile from '@salesforce/apex/CqNcReport.attachFile';
+import mentions from '@salesforce/apex/CqNcReport.mentions';
 
 const LOT_LIKE = /\b[A-Za-z0-9]{1,12}(?:-[A-Za-z0-9]{1,12}){1,4}\b/;
 const MAX_FILE_BYTES = 3 * 1024 * 1024;
 const TYPES = ['Internal', 'Supplier', 'Customer'];
+// @ then the start of a lot or part, right before the cursor (after a space or at the start of the text)
+const MENTION = /(^|\s)@([^\s@]{1,40})$/;
 
 /**
  * Report a Nonconformance: a two-step popup anyone can use to raise an NC directly.
@@ -41,6 +44,16 @@ export default class CqNcReportModal extends LightningModal {
     v = {};                // the values to save: title, part, lot, quantity, type, failure
     pickerStarted = false;
 
+    // @ in the description: an optional shortcut to pick the exact lot or part (Lou, 25 Nov 2026; new NCs only for now)
+    mentionItems = [];     // what the search offered
+    mentionActive = 0;     // the highlighted item
+    mentionStart = -1;     // where the @ is in the text
+    mentionEnd = -1;       // the cursor
+    mentionTimer;
+    mentionSeq = 0;
+    picks = {};            // { lot: { lot, partId, partNumber, partName }, part: { partId, partNumber, partName } }
+    caretAfter;            // where to put the cursor after a pick
+
     focused = false;
     saving = false;
     error;
@@ -59,10 +72,16 @@ export default class CqNcReportModal extends LightningModal {
         this.dups = []; this.dupFromStep2 = false; this.dupDismissed = false; this.lastDupText = undefined;
         this.reading = false; this.fill = undefined; this.wording = undefined; this.useWording = false; this.choseWording = false;
         this.editing = false; this.v = {}; this.pickerStarted = false;
+        this.closeMentions(); this.picks = {};
         this.saving = false; this.error = undefined; this.result = undefined;
     }
 
     renderedCallback() {
+        if (this.caretAfter != null) {
+            const box = this.template.querySelector('textarea[data-id="desc"]');
+            if (box) { box.value = this.text; box.focus(); box.setSelectionRange(this.caretAfter, this.caretAfter); }
+            this.caretAfter = undefined;
+        }
         if (this.step === 1 && !this.focused) {
             const box = this.template.querySelector('textarea[data-id="desc"]');
             if (box) { box.focus(); this.focused = true; }
@@ -90,6 +109,7 @@ export default class CqNcReportModal extends LightningModal {
 
     handleText(event) {
         this.text = event.target.value;
+        this.findMention(event.target);
         this.dupDismissed = false;
         clearTimeout(this.dupTimer);
         // a plain lookup, no AI: only when something in the text looks like a lot number
@@ -98,6 +118,89 @@ export default class CqNcReportModal extends LightningModal {
         // eslint-disable-next-line @lwc/lwc/no-async-operation
         this.dupTimer = setTimeout(() => { this.checkDups(t, null, false); }, 500);
     }
+    // ---- @: pick a lot or part
+
+    findMention(box) {
+        clearTimeout(this.mentionTimer);
+        const caret = box.selectionStart == null ? this.text.length : box.selectionStart;
+        const m = MENTION.exec(this.text.slice(0, caret));
+        if (!m) { this.closeMentions(); return; }
+        const term = m[2];
+        this.mentionStart = caret - term.length - 1;
+        this.mentionEnd = caret;
+        const seq = ++this.mentionSeq;
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        this.mentionTimer = setTimeout(async () => {
+            try {
+                const r = await mentions({ term });
+                if (seq !== this.mentionSeq) { return; }
+                this.mentionItems = r || [];
+                this.mentionActive = 0;
+            } catch (e) {
+                this.mentionItems = [];   // a help, never a blocker
+            }
+        }, 250);
+    }
+    closeMentions() {
+        clearTimeout(this.mentionTimer);
+        this.mentionSeq++;
+        this.mentionItems = [];
+        this.mentionActive = 0;
+        this.mentionStart = -1;
+    }
+    get mentionOpen() { return this.isStep1 && this.mentionStart >= 0 && this.mentionItems.length > 0; }
+    get mentionExpanded() { return String(this.mentionOpen); }
+    get mentionActiveId() { return this.mentionOpen ? 'mention-' + this.mentionActive : ''; }
+    get mentionGroups() {
+        const items = this.mentionItems.map((m, i) => ({
+            ...m, key: m.kind + '-' + m.label + '-' + i, index: i, optId: 'mention-' + i,
+            cls: 'opt' + (i === this.mentionActive ? ' on' : ''), selected: String(i === this.mentionActive)
+        }));
+        return [
+            { key: 'lot', label: 'Lots', items: items.filter((x) => x.kind === 'lot') },
+            { key: 'part', label: 'Parts', items: items.filter((x) => x.kind === 'part') }
+        ].filter((g) => g.items.length);
+    }
+    handleTextKey(event) {
+        if (!this.mentionOpen) { return; }
+        const n = this.mentionItems.length;
+        if (event.key === 'ArrowDown') { event.preventDefault(); this.mentionActive = (this.mentionActive + 1) % n; }
+        else if (event.key === 'ArrowUp') { event.preventDefault(); this.mentionActive = (this.mentionActive - 1 + n) % n; }
+        else if (event.key === 'Enter' || event.key === 'Tab') { event.preventDefault(); this.pickMention(this.mentionActive); }
+        else if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); this.closeMentions(); }
+    }
+    handleTextBlur() {
+        // let a click on the list land first
+        // eslint-disable-next-line @lwc/lwc/no-async-operation
+        setTimeout(() => { this.closeMentions(); }, 150);
+    }
+    handleMentionDown(event) { event.preventDefault(); }   // keep the cursor in the box
+    handleMentionClick(event) { this.pickMention(parseInt(event.currentTarget.dataset.index, 10)); }
+    pickMention(i) {
+        const m = this.mentionItems[i];
+        if (!m || this.mentionStart < 0) { return; }
+        const words = m.kind === 'lot' ? 'lot ' + m.label : m.label;
+        const before = this.text.slice(0, this.mentionStart);
+        const after = this.text.slice(this.mentionEnd);
+        const glue = after.startsWith(' ') ? '' : ' ';
+        this.text = before + words + glue + after;
+        this.caretAfter = before.length + words.length + glue.length;
+        if (m.kind === 'lot') {
+            this.picks = { ...this.picks, lot: { lot: m.label, partId: m.partId, partNumber: m.partNumber, partName: m.partName } };
+        } else {
+            this.picks = { ...this.picks, part: { partId: m.partId, partNumber: m.partNumber, partName: m.partName } };
+        }
+        this.closeMentions();
+        if (m.kind === 'lot') { this.dupDismissed = false; this.checkDups(this.text, m.label, false); }
+    }
+    /** The picks still written in the text (one deleted afterwards no longer counts). */
+    livePicks() {
+        const t = (this.text || '').toUpperCase();
+        const lot = this.picks.lot && t.includes(this.picks.lot.lot.toUpperCase()) ? this.picks.lot : null;
+        const part = this.picks.part && this.picks.part.partNumber && t.includes(this.picks.part.partNumber.toUpperCase()) ? this.picks.part : null;
+        return { lot, part };
+    }
+
     async checkDups(t, lot, fromStep2) {
         if (!fromStep2 && t === this.lastDupText) { return; }
         this.lastDupText = t;
@@ -175,6 +278,14 @@ export default class CqNcReportModal extends LightningModal {
             type: TYPES.includes(this.fill.type) ? this.fill.type : 'Internal',
             failure: this.fill.failure || ''
         };
+        // what was picked with @ is exact, so it wins over what CQ.AI read: the lot (with its part), then a picked part
+        const pk = this.livePicks();
+        if (pk.lot) {
+            this.v.lot = pk.lot.lot;
+            if (pk.lot.partId) { this.v.part = { id: pk.lot.partId, partNumber: pk.lot.partNumber, name: pk.lot.partName }; }
+        }
+        if (pk.part) { this.v.part = { id: pk.part.partId, partNumber: pk.part.partNumber, name: pk.part.partName }; }
+        this.v = { ...this.v };
         this.reading = false;
         // the lot CQ.AI found may show a duplicate step 1 could not see
         if (!this.dups.length && this.fill.lot) { this.checkDups('', this.fill.lot, true); }

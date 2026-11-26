@@ -34,6 +34,26 @@ private class CqNcReportTest {
     }
 
     @IsTest
+    static void atOffersLotsWithTheirPartAndParts() {
+        compliancequest__SQX_Part__c part = makePart();
+        Test.startTest();
+        List<CqNcReport.Mention> byLot = CqNcReport.mentions('RL26');
+        List<CqNcReport.Mention> byPart = CqNcReport.mentions('RPT');
+        List<CqNcReport.Mention> none = CqNcReport.mentions(' ');
+        List<CqNcReport.Mention> wild = CqNcReport.mentions('%');
+        Test.stopTest();
+        System.assertEquals(1, byLot.size(), 'the lot, and no part, starts with RL26');
+        System.assertEquals('lot', byLot[0].kind);
+        System.assertEquals('RL26-0915', byLot[0].label);
+        System.assertEquals(part.Id, byLot[0].partId, 'a lot brings its part');
+        System.assertEquals(1, byPart.size(), 'the part matches by number');
+        System.assertEquals('part', byPart[0].kind);
+        System.assertEquals('RPT-1000', byPart[0].label);
+        System.assertEquals(0, none.size(), 'nothing typed, nothing offered');
+        System.assertEquals(0, wild.size(), 'a % is searched as a character, not a wildcard');
+    }
+
+    @IsTest
     static void anOpenNcOnTheSameLotIsAPossibleDuplicate() {
         compliancequest__SQX_Part__c part = makePart();
         Id existing = openNcOnLot(part, 'RL26-0915');
