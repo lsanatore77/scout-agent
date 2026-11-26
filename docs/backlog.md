@@ -91,6 +91,10 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   permission keeps its Draft NCs in Draft (CQ's own rule for imports); a load by anyone else sends them to Triage and
   the queue. NCs imported already past Draft keep their stage either way. Decide whether migrated Draft NCs should
   stay in Draft or go to Triage (a one-line change in CqNcAutoTriage.afterInsert).
+  Rule (Lou, 25 Nov): people using our UI do not use CQ's standard screens for NCs. So CQ's own create paths (the
+  New button, the "Report NC" list button / NC wizard, Report Issue) should be replaced by Report a Nonconformance or
+  hidden for regular users. Known risk if they stay: CQ's wizard opens an edit screen after the save, and by then the
+  NC belongs to the queue, so a non-admin creator likely cannot save it (untested).
 - **NC ownership and access (Lou, 25 Nov; decided, not built).** The rule: only the owner can edit; everyone else is
   view only. Today the triage workspace has no such check: it shows to anyone who can open an NC in Draft or Triage and
   saves as the user, so read-only users hit permission errors partway through, and anyone with edit access (admins,
