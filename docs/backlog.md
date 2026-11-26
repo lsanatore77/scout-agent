@@ -95,6 +95,8 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   New button, the "Report NC" list button / NC wizard, Report Issue) should be replaced by Report a Nonconformance or
   hidden for regular users. Known risk if they stay: CQ's wizard opens an edit screen after the save, and by then the
   NC belongs to the queue, so a non-admin creator likely cannot save it (untested).
+  Packaging (Lou, 25 Nov): CQ's standard NC screens are an Enterprise-tier feature; customers on our UI who want
+  them upgrade to Enterprise. Our tier ships with CQ's standard create paths replaced or hidden.
 - **NC ownership and access (Lou, 25 Nov; decided, not built).** The rule: only the owner can edit; everyone else is
   view only. Today the triage workspace has no such check: it shows to anyone who can open an NC in Draft or Triage and
   saves as the user, so read-only users hit permission errors partway through, and anyone with edit access (admins,
