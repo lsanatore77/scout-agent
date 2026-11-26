@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>62.0</apiVersion>
-    <isExposed>false</isExposed>
-    <description>Routes the Nonconformance New button: Report a Nonconformance, or CQ's wizard for the CQ Standard NC Screens permission.</description>
+    <isExposed>true</isExposed>
+    <description>Routes the Nonconformance New button: Report a Nonconformance, or CQ's wizard for the CQ Standard NC Screens permission. Exposed so CQ's action-override router can load it.</description>
 </LightningComponentBundle>
