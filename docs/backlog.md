@@ -157,3 +157,7 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   (owner only, to queue members who can own NCs, note to the feed) and Continue Triage / Open. Open: members through
   public groups or roles are not followed; investigation and disposition roles and My Investigations; owner-only
   editing.
+- **cqStyles: small buttons sit low (Lou, 25 Nov; for when the design system resumes).** `cq-btn-sm` cuts the buttons'
+  0.1875rem bottom lift to 1px, so the text sits low in the pill, and the filled button is 1px shorter than the outline
+  one (no border). Quality Home's approval card overrides both locally (cqQmHome.css, `.aacts`); fix `cq-btn-sm` in
+  cqStyles and remove the override.
