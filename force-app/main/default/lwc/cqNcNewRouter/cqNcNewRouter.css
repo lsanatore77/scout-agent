@@ -1,0 +1,2 @@
+@import 'c/cqStyles';
+:host { display: block; padding: var(--cq-s5); }

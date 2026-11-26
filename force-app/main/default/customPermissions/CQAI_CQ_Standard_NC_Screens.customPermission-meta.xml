@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomPermission xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Enterprise tier: New on Nonconformance opens CQ's own NC wizard instead of CQ.AI Report a Nonconformance. Not assigned by default.</description>
+    <isLicensed>false</isLicensed>
+    <label>CQ Standard NC Screens</label>
+</CustomPermission>

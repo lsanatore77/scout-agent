@@ -1,0 +1,4 @@
+<!-- Nonconformance New button override: hands straight to c-cq-nc-new-router (Aura is needed only because standard button overrides take Aura components). -->
+<aura:component implements="lightning:actionOverride" access="global">
+    <c:cqNcNewRouter />
+</aura:component>

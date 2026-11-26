@@ -97,6 +97,12 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   NC belongs to the queue, so a non-admin creator likely cannot save it (untested).
   Packaging (Lou, 25 Nov): CQ's standard NC screens are an Enterprise-tier feature; customers on our UI who want
   them upgrade to Enterprise. Our tier ships with CQ's standard create paths replaced or hidden.
+  New button (built 25 Nov): Aura wrapper cqNcNewOverride (standard button overrides take Aura) holds LWC
+  cqNcNewRouter, which opens the Report a Nonconformance tab, or CQ's wizard (SQX_Nonconformance_Wizard) for users
+  with the custom permission CQAI_CQ_Standard_NC_Screens (Enterprise tier; not assigned to anyone). The override is
+  set in Setup (Object Manager > Nonconformance > Buttons, Links, and Actions > New > Edit > Lightning Experience
+  Override > cqNcNewOverride); CQ's own override was compliancequest:SQX_Action_Override. Still to do: remove the
+  "Report NC" and Import list buttons for our tier.
 - **NC ownership and access (Lou, 25 Nov; decided, not built).** The rule: only the owner can edit; everyone else is
   view only. Today the triage workspace has no such check: it shows to anyone who can open an NC in Draft or Triage and
   saves as the user, so read-only users hit permission errors partway through, and anyone with edit access (admins,
