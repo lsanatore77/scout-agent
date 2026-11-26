@@ -9,10 +9,10 @@
  * fields and runs CQ's Complete Triage, so CQ moves the NC to Disposition / Investigate by its own rules.
  * If CQ refuses, the triage stays saved and the reason comes back as a warning.
  *
- * If a queue still owns the NC (CQ's Submit routes it there), the person completing triage becomes the owner.
+ * If a queue still owns the NC (new NCs go to a queue, CqNcAutoTriage), the person completing triage becomes the owner.
  *
- * startTriage() moves a Draft NC to Triage with CQ's own Submit the moment someone starts triage in the workspace,
- * so Draft means not started and Triage means someone is working on it.
+ * startTriage() moves an older Draft NC to Triage the moment someone starts triage in the workspace (new NCs are
+ * already in Triage when created).
  *
  * Defaults live here until the NC settings page exists. E-signature is not asked for yet.
  */
@@ -252,22 +252,26 @@ public with sharing class CqTriageNext {
         @AuraEnabled public String warning;
     }
 
-    /** Triage has started: a Draft NC goes to Triage through CQ's own Submit. Any other stage is left as it is. */
+    /**
+     * Triage has started on an older Draft NC (new NCs go to Triage when created, CqNcAutoTriage): it moves to Triage and
+     * the person starting it stays the owner. Only someone who can edit the NC can start it. Any other stage is left as it is.
+     */
     @AuraEnabled
     public static Started startTriage(Id recordId) {
         compliancequest__SQX_Nonconformance__c cur = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
         Started s = new Started();
         s.stage = cur.compliancequest__Record_Stage__c;
         if (s.stage != 'Draft') { return s; }
+        UserRecordAccess a = [SELECT RecordId, HasEditAccess FROM UserRecordAccess WHERE UserId = :UserInfo.getUserId() AND RecordId = :recordId];
+        if (!a.HasEditAccess) {
+            s.warning = 'The NC was not moved to Triage: ' + CqSave.DENIED;
+            return s;
+        }
         try {
-            update as user new compliancequest__SQX_Nonconformance__c(Id = recordId, compliancequest__Activity_Code__c = SUBMIT,
-                compliancequest__Activity_Comment__c = 'Triage started in CQ.AI Triage.');
-            s.moved = true;
+            s.moved = CqNcAutoTriage.send(new Set<Id>{ recordId }, false) > 0;
             s.stage = [SELECT compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE].compliancequest__Record_Stage__c;
         } catch (DmlException e) {
-            s.warning = 'CQ did not move the NC to Triage: ' + e.getDmlMessage(0);
-        } catch (SecurityException e) {
-            s.warning = 'CQ did not move the NC to Triage: ' + CqSave.DENIED;
+            s.warning = 'The NC was not moved to Triage: ' + e.getDmlMessage(0);
         }
         return s;
     }

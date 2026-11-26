@@ -5,7 +5,7 @@
  * the lots on open NCs (no AI). Step 2 runs CQ.AI on Next: CQ's own Entity Extraction prompt with our field definitions
  * fills the record (title by the title rule, part, lot, quantity, failure, where found, type), and CQ's Paraphraser
  * suggests a clearer description. Nothing is saved before Create, which inserts the NC (plus its impacted part and lot
- * when both are known) and submits it with CQ's own Submit, so it waits in the Nonconformance queue for triage.
+ * when both are known) and sends it straight to Triage and its queue (CqNcAutoTriage), with no Submit step.
  * Merge adds the report to the existing NC instead: a post on its feed and a task for its owner.
  *
  * Decided with Lou, 25 Nov 2026 (docs/backlog.md, "Report a Nonconformance").
@@ -184,7 +184,7 @@ public with sharing class CqNcReport {
 
     // ---------------------------------------------------------------- Create and Merge
 
-    /** Inserts the NC (and its impacted part and lot), submits it with CQ's Submit, and keeps what CQ.AI suggested beside it. */
+    /** Inserts the NC (and its impacted part and lot), keeps what CQ.AI suggested beside it, then sends it to Triage and its queue. */
     @AuraEnabled
     public static Created create(String reportJson) {
         Report r = (Report) JSON.deserialize(reportJson, Report.class);
@@ -200,10 +200,14 @@ public with sharing class CqNcReport {
             compliancequest__Lot_Number__c = String.isBlank(r.lot) ? null : r.lot.trim().left(80),
             compliancequest__Defective_Quantity__c = r.quantity,
             compliancequest__Defect_Description__c = clip(r.failure, 255));
+        // the move to Triage waits until the impacted part, the words as reported and the note are added (below)
+        CqNcAutoTriage.deferred = true;
         try {
             insert as user nc;
         } catch (Exception e) {
             throw new AuraHandledException('The NC was not created: ' + CqSave.why(e));
+        } finally {
+            CqNcAutoTriage.deferred = false;
         }
         c.id = nc.Id;
         c.title = nc.compliancequest__NC_Title__c;
@@ -218,14 +222,6 @@ public with sharing class CqNcReport {
             } catch (Exception e) {
                 c.warnings.add('The impacted part and lot were not added: ' + CqSave.why(e));
             }
-        }
-
-        // CQ's own Submit, so the NC waits in the Nonconformance queue for triage
-        try {
-            update as user new compliancequest__SQX_Nonconformance__c(Id = nc.Id, compliancequest__Activity_Code__c = SUBMIT,
-                compliancequest__Activity_Comment__c = 'Reported in CQ.AI Report a Nonconformance.');
-        } catch (Exception e) {
-            c.warnings.add('CQ did not send it to Triage, so it stays in Draft: ' + CqSave.why(e));
         }
 
         // the person's own words when CQ.AI's wording was used, and a note of what CQ.AI suggested beside what was saved
@@ -244,7 +240,14 @@ public with sharing class CqNcReport {
             c.warnings.add('The note of CQ.AI\'s suggestions was not kept: ' + CqSave.why(e));
         }
 
-        compliancequest__SQX_Nonconformance__c saved = [SELECT Name, compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :nc.Id WITH USER_MODE];
+        // straight to Triage and the queue, as every new NC does (CqNcAutoTriage)
+        try {
+            CqNcAutoTriage.send(new Set<Id>{ nc.Id }, true);
+        } catch (Exception e) {
+            c.warnings.add('It was not sent to Triage, so it stays in Draft: ' + CqSave.why(e));
+        }
+
+        compliancequest__SQX_Nonconformance__c saved = [SELECT Name, compliancequest__Record_Stage__c FROM compliancequest__SQX_Nonconformance__c WHERE Id = :nc.Id];
         c.name = saved.Name;
         c.stage = saved.compliancequest__Record_Stage__c;
         return c;

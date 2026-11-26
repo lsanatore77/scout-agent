@@ -78,6 +78,15 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   files are held in the popup and attached after Create or Merge (3 MB each). CQ's Submit did not move a new NC to
   Triage when run from anonymous Apex (nor an existing Draft NC); check from the popup in the browser. If it stays in
   Draft the done screen says so, and Triage's start submits it anyway.
+- **New NCs go straight to Triage (Lou, 25 Nov; built).** Every new NC, wherever it is created, skips Submit: an
+  after-insert trigger (CqNcAutoTriage) sets Record Stage Triage, Submitted By the creator, and the owner the queue
+  (the Department's Queue Id, else CQ's Default Queue Name setting, else the CQ Nonconformance Default Queue).
+  Report a Nonconformance defers it until its children are saved, then sends it. Left alone: Quick Log NCs and loads by
+  users with CQ's Data Migration permission. Why not CQ's Submit: setting Activity Code 'submit' from Apex or the API is
+  not processed in this org (tested on NC-000192 and fresh NCs, several ways; CQ's Submit quick action needs an
+  e-signature and runs in CQ's own component). The workspace's startTriage now moves an older Draft NC with the same
+  code and keeps its owner. Follow-up: confirm with CQ whether an API-level Submit exists, and whether CQ's own
+  audit trail (NC Record Activity) should get a "submitted" row.
 - **NC ownership and access (Lou, 25 Nov; decided, not built).** The rule: only the owner can edit; everyone else is
   view only. Today the triage workspace has no such check: it shows to anyone who can open an NC in Draft or Triage and
   saves as the user, so read-only users hit permission errors partway through, and anyone with edit access (admins,
