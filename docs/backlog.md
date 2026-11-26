@@ -143,3 +143,10 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 - FA-0001 Notifications: 5 acknowledged without the submit flow ("0 submitted to Recovery").
 - Data cleanup: CoC documents, and the 11-account roster.
 - Salesforce bell notifications.
+- **Quality Management home (Lou, 25 Nov; mockup "Triage Inbox Mockup", board Home; not built).** Comes before the
+  Triage Inbox. One card per process the person can access (unbuilt ones "Coming Soon" for now); the card shows a line
+  per role the person has (e.g. Triage: waiting, yours; Investigation: to investigate, overdue), each line opening that
+  role's page; the title opens the main page. "Needs You" on the right lists the records (not workflow tasks) that most
+  need the person, across every process. Roles come from queue membership, Can Own NC, and later the investigation and
+  disposition roles. Inbox views: tabs or a list-view picker (Waiting for Triage / My NCs), both mocked; Take
+  Ownership one NC at a time.
