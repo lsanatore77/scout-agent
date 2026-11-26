@@ -148,8 +148,8 @@ export default class CqNcReportModal extends LightningModal {
     }
     /**
      * Where the @ sits in the box, found with a hidden copy of the box that holds the text up to the @ (a textarea
-     * does not say where a character is). The list opens under that line, starting at the @, moved left when it
-     * would run past the box's right edge.
+     * does not say where a character is). The list opens under that line (or above it near the bottom), starting at
+     * the @, moved left when it would run past the box's right edge.
      */
     placeMentions(box) {
         const mirror = this.template.querySelector('.mirror');
@@ -167,15 +167,30 @@ export default class CqNcReportModal extends LightningModal {
             mirror.appendChild(mark);
             const lineH = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4;
             const listW = Math.min(17 * parseFloat(window.getComputedStyle(document.documentElement).fontSize || 16), box.offsetWidth);
-            const left = Math.max(0, Math.min(box.offsetLeft + mark.offsetLeft, box.offsetLeft + box.offsetWidth - listW));
-            const top = box.offsetTop + mark.offsetTop - box.scrollTop + lineH + 2;
-            const maxTop = box.offsetTop + box.offsetHeight;
-            this.mentionPos = { left, top: Math.min(top, maxTop) };
+            const left = Math.max(0, Math.min(box.offsetLeft + box.clientLeft + mark.offsetLeft, box.offsetLeft + box.offsetWidth - listW));
+            // the list floats over the popup and never makes it grow or scroll: under the line when the popup's content
+            // has room below it, else above the line; a list longer than its room scrolls inside itself
+            const lineTop = Math.max(0, box.clientTop + mark.offsetTop - box.scrollTop);   // in the box
+            const body = this.template.querySelector('.body');
+            const boxR = box.getBoundingClientRect();
+            const bodyR = body ? body.getBoundingClientRect() : boxR;
+            const below = bodyR.bottom - (boxR.top + lineTop + lineH + 2);
+            const above = (boxR.top + lineTop - 2) - bodyR.top;
+            const WANT = 200;   // about five rows and their group labels
+            if (below >= WANT || below >= above) {
+                this.mentionPos = { left, top: box.offsetTop + lineTop + lineH + 2, maxH: Math.max(below, 72) };
+            } else {
+                this.mentionPos = { left, bottom: box.offsetHeight - lineTop + 2, maxH: Math.max(above, 72) };
+            }
         } catch (e) {
             this.mentionPos = { left: 0, top: box.offsetTop + box.offsetHeight };   // under the box, as before
         }
     }
-    get mentionStyle() { return 'left: ' + this.mentionPos.left + 'px; top: ' + this.mentionPos.top + 'px;'; }
+    get mentionStyle() {
+        const p = this.mentionPos;
+        return 'left: ' + p.left + 'px;' + (p.bottom != null ? ' bottom: ' + p.bottom + 'px;' : ' top: ' + p.top + 'px;')
+            + (p.maxH ? ' max-height: ' + Math.round(p.maxH) + 'px;' : '');
+    }
     closeMentions() {
         clearTimeout(this.mentionTimer);
         this.mentionSeq++;
