@@ -8,7 +8,7 @@
                     <lightning-modal-body><div class="body">
                         <label class="cq-field">
                             <span class="cq-label">What Happened?<span class="cq-req">*</span></span>
-                            <textarea data-id="desc" rows="6" value={text} oninput={handleText} onkeydown={handleTextKey} onblur={handleTextBlur}
+                            <textarea data-id="desc" rows="6" spellcheck="false" value={text} oninput={handleText} onkeydown={handleTextKey} onblur={handleTextBlur}
                                 aria-required="true" role="combobox" aria-autocomplete="list" aria-controls="mentions" aria-expanded={mentionExpanded}
                                 aria-activedescendant={mentionActiveId}></textarea>
                             <span class="cq-hint">Say what you found, where, and how many. Include the lot if you have it. Type @ to pick a lot or part.</span>

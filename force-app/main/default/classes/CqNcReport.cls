@@ -165,9 +165,30 @@ public with sharing class CqNcReport {
             m.sub = p != null ? p.compliancequest__Part_Number__c + ' · ' + p.Name : l.compliancequest__Part_Number__c;
             out.add(m);
         }
-        for (compliancequest__SQX_Part__c p : [SELECT Id, Name, compliancequest__Part_Number__c FROM compliancequest__SQX_Part__c
+        // parts whose number starts with the term come first, and within that, parts that have lots (Lou, 25 Nov)
+        List<compliancequest__SQX_Part__c> found = [SELECT Id, Name, compliancequest__Part_Number__c FROM compliancequest__SQX_Part__c
                 WHERE (compliancequest__Part_Number__c LIKE :anywhere OR Name LIKE :anywhere) AND compliancequest__Active__c = true
-                WITH USER_MODE ORDER BY compliancequest__Part_Number__c LIMIT 5]) {
+                WITH USER_MODE ORDER BY compliancequest__Part_Number__c LIMIT 50];
+        Set<String> foundNums = new Set<String>();
+        for (compliancequest__SQX_Part__c p : found) { if (p.compliancequest__Part_Number__c != null) { foundNums.add(p.compliancequest__Part_Number__c); } }
+        Set<String> withLots = new Set<String>();
+        if (!foundNums.isEmpty()) {
+            for (AggregateResult a : [SELECT compliancequest__Part_Number__c pn FROM compliancequest__SQX_Lot_Info__c
+                    WHERE compliancequest__Part_Number__c IN :foundNums WITH USER_MODE GROUP BY compliancequest__Part_Number__c]) {
+                withLots.add((String) a.get('pn'));
+            }
+        }
+        List<compliancequest__SQX_Part__c> ranked = new List<compliancequest__SQX_Part__c>();
+        String up = t.toUpperCase();
+        for (Integer pass = 0; pass < 4; pass++) {
+            for (compliancequest__SQX_Part__c p : found) {
+                String num = p.compliancequest__Part_Number__c == null ? '' : p.compliancequest__Part_Number__c;
+                Integer rank = (num.toUpperCase().startsWith(up) ? 0 : 2) + (withLots.contains(num) ? 0 : 1);
+                if (rank == pass) { ranked.add(p); }
+            }
+        }
+        for (Integer i = 0; i < ranked.size() && i < 5; i++) {
+            compliancequest__SQX_Part__c p = ranked[i];
             Mention m = new Mention();
             m.kind = 'part'; m.label = String.isNotBlank(p.compliancequest__Part_Number__c) ? p.compliancequest__Part_Number__c : p.Name;
             m.sub = p.Name; m.partId = p.Id; m.partNumber = p.compliancequest__Part_Number__c; m.partName = p.Name;

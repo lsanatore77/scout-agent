@@ -54,6 +54,19 @@ private class CqNcReportTest {
     }
 
     @IsTest
+    static void partsStartingWithTheTermComeFirst() {
+        compliancequest__SQX_Part__c part = makePart();
+        compliancequest__SQX_Part__c other = new compliancequest__SQX_Part__c(Name = 'Spare RPT holder', cqext__Title__c = 'Spare RPT holder',
+            compliancequest__Part_Number__c = 'AA-RPT-9', compliancequest__Part_Family__c = part.compliancequest__Part_Family__c,
+            compliancequest__Part_Type__c = 'Finished Product', compliancequest__Active__c = true, cqext__Part_Definition__c = 'Individual');
+        insert other;
+        List<CqNcReport.Mention> r = CqNcReport.mentions('RPT');
+        System.assertEquals(2, r.size());
+        System.assertEquals('RPT-1000', r[0].label, 'starts with RPT, so first, though AA-RPT-9 sorts earlier');
+        System.assertEquals('AA-RPT-9', r[1].label);
+    }
+
+    @IsTest
     static void anOpenNcOnTheSameLotIsAPossibleDuplicate() {
         compliancequest__SQX_Part__c part = makePart();
         Id existing = openNcOnLot(part, 'RL26-0915');

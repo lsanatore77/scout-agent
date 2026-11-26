@@ -83,6 +83,8 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   part) and five active parts (number or name contains it), just under the box; arrows, Enter or Tab, Esc; click works.
   Picking writes "lot L26-0915" or the part number into the text and records the real record; on Next a pick still in
   the text wins over what CQ.AI read (a lot brings its part). Plain typing works as before. CqNcReport.mentions.
+  Parts are ranked: number or name starting with the term first, then parts that have lots. Spellcheck is off on the
+  description box (lot and part numbers were underlined). Open: list position (under the box today) is ours to change.
 - **New NCs go straight to Triage (Lou, 25 Nov; built).** Every new NC, wherever it is created, skips Submit: an
   after-insert trigger (CqNcAutoTriage) sets Record Stage Triage, Submitted By the creator, and the owner the queue
   (the Department's Queue Id, else CQ's Default Queue Name setting, else the CQ Nonconformance Default Queue).
