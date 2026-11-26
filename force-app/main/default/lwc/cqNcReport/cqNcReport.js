@@ -4,6 +4,8 @@ import { getEnclosingUtilityId, onUtilityClick, minimize } from 'lightning/platf
 import CqNcReportModal from 'c/cqNcReportModal';
 
 const TAB = 'Report_a_Nonconformance';
+// Shared by every copy on the page (the tab and the utility bar): only one popup at a time.
+let popupOpen = false;
 
 /**
  * Opens Report a Nonconformance (c-cq-nc-report-modal). Three places, chosen with Lou 25 Nov 2026:
@@ -22,8 +24,19 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
     lastKey;
 
     // Resolves to the utility's id when this copy sits in the utility bar, else null. The utility bar copy also sees the
-    // page reference, so only the tab's own copy may open the popup on arrival (else it opened twice).
-    utilityCheck = Promise.resolve(null);
+    // page reference, so only the tab's own copy may open the popup on arrival (else it opened twice). Made on first use:
+    // the page reference can arrive before connectedCallback runs.
+    utilityPromise;
+    get utilityCheck() {
+        if (!this.utilityPromise) {
+            let p = null;
+            try {
+                if (typeof getEnclosingUtilityId === 'function') { p = getEnclosingUtilityId(); }
+            } catch (e) { p = null; }
+            this.utilityPromise = p && typeof p.then === 'function' ? p.then((id) => id || null).catch(() => null) : Promise.resolve(null);
+        }
+        return this.utilityPromise;
+    }
 
     @wire(CurrentPageReference)
     pageRef(ref) {
@@ -46,10 +59,6 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
         // The utility bar API is missing when the utility is popped out into its own window (and off the utility bar),
         // so check it is there before calling it; the panel's own button still opens the popup.
         try {
-            if (typeof getEnclosingUtilityId !== 'function') { return; }
-            const p = getEnclosingUtilityId();
-            if (!p || typeof p.then !== 'function') { return; }
-            this.utilityCheck = p.then((id) => id || null).catch(() => null);
             this.utilityCheck.then((id) => {
                 if (!id || typeof onUtilityClick !== 'function') { return; }
                 this.utilityId = id;
@@ -69,13 +78,15 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
     handleOpen() { this.openModal(); }
 
     async openModal() {
-        if (this.isOpening) { return; }
+        if (this.isOpening || popupOpen) { return; }
+        popupOpen = true;
         this.isOpening = true;
         this.isOpen = true;
         let result;
         try {
             result = await CqNcReportModal.open({ size: 'small', description: 'Report a Nonconformance' });
         } finally {
+            popupOpen = false;
             this.isOpening = false;
             this.isOpen = false;
         }
