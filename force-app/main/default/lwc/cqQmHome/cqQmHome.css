@@ -1,0 +1,50 @@
+@import 'c/cqStyles';
+
+/* The Quality Management home: cards, pills, toned rows, the checklist rows, messages and the popup all come from
+   cqStyles. Only this page's own layout (the process tiles and their role lines) is here, and every size and colour is
+   a cqStyles token. */
+:host { display: block; }
+.page { display: flex; flex-direction: column; gap: var(--cq-s5); padding: var(--cq-s5); color: var(--cq-ink); font-size: var(--cq-fs-meta); }
+.head { display: flex; flex-direction: column; gap: 2px; }
+.nom { margin: 0; }
+.msgline { display: flex; align-items: center; gap: var(--cq-s4); }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 22rem); gap: var(--cq-s5); align-items: start; }
+.side { gap: var(--cq-s5); }
+
+/* the process tiles */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--cq-s5); }
+.tile { display: flex; flex-direction: column; gap: var(--cq-s3); min-height: 9rem; padding: var(--cq-s5); box-sizing: border-box;
+        border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); background: var(--cq-bg); }
+.tile.soon { background: var(--cq-surface); }
+.tile.soon .gray { opacity: .55; }
+.thead { display: flex; align-items: center; gap: var(--cq-s3); }
+.thead .cq-pill { margin-left: auto; }
+.tname { font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-ink); }
+.tlink { padding: 0; border: 0; background: none; font-family: inherit; text-align: left; cursor: pointer; }
+.tlink:hover { color: var(--cq-link); text-decoration: underline; }
+
+/* one line per role, each opening its view of the Triage Inbox */
+.roles { display: flex; flex-direction: column; margin-top: auto; border-top: 1px solid var(--cq-line); }
+.rline { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) auto; align-items: center; gap: var(--cq-s3);
+         padding: var(--cq-s3) 2px; border: 0; border-bottom: 1px solid var(--cq-line); background: none;
+         font: inherit; color: var(--cq-ink); text-align: left; cursor: pointer; }
+.rline:last-child { border-bottom: 0; }
+.rline:hover, .rline:focus-visible { background: var(--cq-link-soft); }
+.rname { margin: 0; }
+.rstats { display: flex; flex-wrap: wrap; gap: var(--cq-s1) var(--cq-s4); color: var(--cq-muted); }
+.sn { font-weight: 700; color: var(--cq-ink); font-variant-numeric: tabular-nums; }
+.sn.warn { color: var(--cq-warn-fg); }
+.arrow { color: var(--cq-link); font-weight: 700; }
+
+/* approvals and Needs You inside their cards */
+.cq-card { display: flex; flex-direction: column; gap: var(--cq-s3); background: var(--cq-bg); }
+.list { margin-top: var(--cq-s1); }
+.atop { display: flex; align-items: baseline; justify-content: space-between; gap: var(--cq-s3); flex-wrap: wrap; }
+.aacts { display: flex; align-items: center; gap: var(--cq-s3); margin-top: var(--cq-s2); }
+.needs { display: flex; flex-direction: column; }
+.why { display: block; font-size: var(--cq-fs-micro); font-weight: 700; }
+
+@media (max-width: 1100px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .tiles { grid-template-columns: 1fr; } }

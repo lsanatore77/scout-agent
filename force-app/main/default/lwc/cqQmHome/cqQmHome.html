@@ -1,0 +1,129 @@
+<template>
+    <div class="page">
+        <div class="head">
+            <h1 class="cq-step-title nom">Quality Management</h1>
+            <span class="cq-sub">{roleLine}</span>
+        </div>
+
+        <template if:true={loading}>
+            <div class="cq-spinwrap"><div class="cq-spin"><lightning-spinner size="small" alternative-text="Loading"></lightning-spinner></div><span class="cq-sub">Loading&hellip;</span></div>
+        </template>
+        <template if:true={error}><div class="cq-msg crit" role="alert">{error}</div></template>
+        <template if:true={msg}>
+            <div class={msgCls} role="status"><span class="cq-grow">{msg.text}</span><button class="cq-link" onclick={handleMsgClose} aria-label="Dismiss">&times;</button></div>
+        </template>
+
+        <template if:false={loading}>
+            <div class="layout">
+                <!-- the processes -->
+                <div class="tiles">
+                    <section class="tile" aria-labelledby="t-nc">
+                        <div class="thead">
+                            <lightning-icon icon-name="standard:incident" size="small" alternative-text=""></lightning-icon>
+                            <button id="t-nc" class="tname tlink" onclick={handleNc}>Nonconformance</button>
+                        </div>
+                        <div class="roles">
+                            <template for:each={ncLines} for:item="l">
+                                <button key={l.key} class="rline" data-view={l.view} onclick={handleLine} aria-label={l.aria}>
+                                    <span class="cq-grouplabel rname">{l.role}</span>
+                                    <span class="rstats">
+                                        <template for:each={l.statList} for:item="s">
+                                            <span key={s.key} class="rs"><span class={s.cls}>{s.n}</span> {s.label}</span>
+                                        </template>
+                                    </span>
+                                    <span class="arrow" aria-hidden="true">&rarr;</span>
+                                </button>
+                            </template>
+                        </div>
+                    </section>
+                    <template for:each={soon} for:item="p">
+                        <section key={p.key} class="tile soon" aria-label={p.name}>
+                            <div class="thead">
+                                <lightning-icon icon-name={p.icon} size="small" alternative-text="" class="gray"></lightning-icon>
+                                <span class="tname">{p.name}</span>
+                                <span class="cq-pill soft neu">Coming Soon</span>
+                            </div>
+                            <span class="cq-sub">{p.desc}</span>
+                        </section>
+                    </template>
+                </div>
+
+                <!-- what needs the person -->
+                <div class="cq-col side">
+                    <section class="cq-card" aria-labelledby="ap">
+                        <div class="cq-sechead"><h2 id="ap" class="cq-card-title nom">Waiting for Your Approval</h2><span class="cq-pill soft neu">{approvalCount}</span></div>
+                        <template if:true={apError}><div class="cq-msg crit">{apError}</div></template>
+                        <template if:true={hasApprovals}>
+                            <div class="cq-checks list">
+                                <template for:each={approvalRows} for:item="a">
+                                    <div key={a.stepId} class="cq-check appr">
+                                        <div class="cq-check-body">
+                                            <div class="atop">
+                                                <a href={a.url} data-id={a.recordId} onclick={handleRecord}>{a.recordName}</a>
+                                                <span class="cq-sub">{a.asked}</span>
+                                            </div>
+                                            <span class="cq-strong">{a.what}</span>
+                                            <span class="cq-sub block">{a.sub}</span>
+                                            <div class="aacts">
+                                                <a href={a.url} class="cq-link" data-id={a.recordId} onclick={handleRecord}>Review</a>
+                                                <span class="cq-grow"></span>
+                                                <template if:true={a.canSign}>
+                                                    <button class="cq-btn-outline cq-btn-sm" data-id={a.stepId} onclick={handleReject}>Reject</button>
+                                                    <button class="cq-btn-primary cq-btn-sm" data-id={a.stepId} onclick={handleApprove}>Approve</button>
+                                                </template>
+                                                <template if:false={a.canSign}><span class="cq-sub">Approve on the record</span></template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:false={hasApprovals}><p class="cq-note">Nothing is waiting for your approval.</p></template>
+                    </section>
+
+                    <section class="cq-card" aria-labelledby="ny">
+                        <div class="cq-sechead"><h2 id="ny" class="cq-card-title nom">Needs You</h2><span class="cq-grow"></span><span class="cq-sub">Across all processes</span></div>
+                        <template if:true={hasNeeds}>
+                            <div class="needs">
+                                <template for:each={needs} for:item="n">
+                                    <div key={n.id} class="cq-tonerow" data-tone={n.tone}>
+                                        <span class={n.whyCls}>{n.why}</span>
+                                        <a href={n.url} data-id={n.id} onclick={handleRecord}>{n.name}</a>
+                                        <span class="cq-sub block">{n.title}</span>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                        <template if:false={hasNeeds}><p class="cq-note">Nothing needs you right now.</p></template>
+                    </section>
+                </div>
+            </div>
+        </template>
+
+        <!-- Approve or Reject: the signature seat in a popup -->
+        <template if:true={showSign}>
+            <div class="cq-modal-back" onkeydown={handleModalKey}>
+                <section class="cq-modal" role="dialog" aria-modal="true" aria-labelledby="st">
+                    <header class="cq-modal-head">
+                        <h2 id="st" class="cq-modal-title">{signTitle}</h2>
+                        <span class="cq-sub block">{signItem.what}</span>
+                        <button class="cq-modal-x" onclick={handleSignClose} aria-label="Close">&times;</button>
+                    </header>
+                    <div class="cq-modal-body">
+                        <div class="cq-fromcard">
+                            <span class="cq-strong">{signItem.recordName}<template if:true={signItem.recordTitle}>: {signItem.recordTitle}</template></span>
+                            <span class="cq-sub">{signItem.objectLabel} &middot; {signItem.approvalName} &middot; Requested by {signItem.requestedBy}</span>
+                        </div>
+                        <c-cq-sign-seat record-id={signItem.recordId} policy-key={signItem.objectName} actions={signActions}
+                            seat={signSeat} person={myName} sub={signSub} status="Your Signature" tone="you" mine
+                            meaning={signMeaning} comment-hint={signHint} ref={signItem.stepId} submit={signSubmit}>
+                        </c-cq-sign-seat>
+                    </div>
+                    <footer class="cq-modal-foot">
+                        <button class="cq-btn-outline" onclick={handleSignClose}>Cancel</button>
+                    </footer>
+                </section>
+            </div>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,161 @@
+<template>
+    <div class="page">
+        <section class="cq-box">
+            <header class="cq-hl">
+                <div class="cq-hl-top">
+                    <div class="cq-hl-who">
+                        <span class="cq-hl-icon"><lightning-icon icon-name="standard:queue" size="medium" alternative-text=""></lightning-icon></span>
+                        <div class="cq-hl-name">
+                            <span class="cq-hl-obj">Triage Inbox</span>
+                            <div class="cq-pick vpick" onkeydown={handleMenuKey}>
+                                <button class="vbtn" aria-haspopup="listbox" aria-expanded={menuExpanded} onclick={handleMenu}>
+                                    <span class="cq-hl-title">{viewName}</span>
+                                    <lightning-icon icon-name="utility:down" size="x-small" alternative-text="Choose a list view"></lightning-icon>
+                                </button>
+                                <template if:true={menuOpen}>
+                                    <div class="list vlist" role="listbox" aria-label="List views">
+                                        <span class="cq-pick-head">List Views</span>
+                                        <template for:each={views} for:item="v">
+                                            <div key={v.key} class={v.cls} role="option" aria-selected={v.selected} tabindex="0" data-key={v.key} onclick={handleView}>
+                                                <span class="tick" aria-hidden="true">{v.tick}</span>
+                                                <span class="cq-pick-n">{v.label}</span>
+                                                <span class="cq-sub vn">{v.n}</span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+                            <span class="cq-sub">{subLine}</span>
+                        </div>
+                    </div>
+                    <div class="cq-hl-actions">
+                        <button class="cq-btn-outline" onclick={refresh}>Refresh</button>
+                    </div>
+                </div>
+            </header>
+            <template if:true={menuOpen}><div class="veil" onclick={handleMenuClose}></div></template>
+
+            <div class="body">
+                <template if:true={loading}>
+                    <div class="cq-spinwrap"><div class="cq-spin"><lightning-spinner size="small" alternative-text="Loading"></lightning-spinner></div><span class="cq-sub">Loading the inbox&hellip;</span></div>
+                </template>
+                <template if:true={error}><div class="cq-msg crit" role="alert">{error}</div></template>
+
+                <template if:true={msg}>
+                    <div class={msgCls} role="status">
+                        <span class="cq-grow">{msg.text}</span>
+                        <template if:true={msg.id}><button class="cq-link" onclick={handleMsgOpen}>Open</button></template>
+                        <button class="cq-link" onclick={handleMsgClose} aria-label="Dismiss">&times;</button>
+                    </div>
+                </template>
+
+                <template if:false={loading}>
+                    <!-- Waiting for Triage -->
+                    <template if:true={isWaiting}>
+                        <template if:true={showNoQueue}><div class="cq-infobox">You are not in a triage queue. NCs are triaged by the members of a triage queue.</div></template>
+                        <template if:true={showCantOwn}><div class="cq-infobox">You can see your queue, but taking an NC needs CQ's <strong>Can Own NC</strong> permission. Ask your administrator.</div></template>
+                        <template if:true={hasWaiting}>
+                            <div class="cq-tblwrap">
+                                <table class="cq-tbl compact">
+                                    <colgroup><col class="c-nc"><col><col class="c-part"><col class="c-type"><col class="c-when"><col class="c-flags"><col class="c-act"></colgroup>
+                                    <thead><tr><th scope="col">NC</th><th scope="col">Title</th><th scope="col">Part</th><th scope="col">Type</th><th scope="col">Waiting</th><th scope="col">Flags</th><th scope="col"><span class="cq-sr">Actions</span></th></tr></thead>
+                                    <tbody>
+                                        <template for:each={waitingRows} for:item="r">
+                                            <tr key={r.id}>
+                                                <td><a href={r.url} data-id={r.id} onclick={handleOpen}>{r.name}</a></td>
+                                                <td class="ttl">{r.title}</td>
+                                                <td>{r.part}</td>
+                                                <td>{r.type}</td>
+                                                <td><span class={r.waitCls}>{r.waiting}</span></td>
+                                                <td><div class="flags"><template for:each={r.flagList} for:item="f"><span key={f.key} class="cq-pill soft warn">{f.text}</span></template></div></td>
+                                                <td><div class="acts"><button class="cq-btn-primary cq-btn-sm" data-id={r.id} onclick={handleTake} disabled={r.cantTake}>{r.takeLabel}</button></div></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </template>
+                        <template if:false={hasWaiting}>
+                            <template if:false={showNoQueue}><div class="cq-infobox">Nothing is waiting for triage.</div></template>
+                        </template>
+                    </template>
+
+                    <!-- My NCs -->
+                    <template if:true={isMine}>
+                        <template if:true={hasMine}>
+                            <div class="cq-tblwrap">
+                                <table class="cq-tbl compact">
+                                    <colgroup><col class="c-nc"><col><col class="c-part"><col class="c-type"><col class="c-when"><col class="c-flags"><col class="c-act"></colgroup>
+                                    <thead><tr><th scope="col">NC</th><th scope="col">Title</th><th scope="col">Part</th><th scope="col">Type</th><th scope="col">Status</th><th scope="col">Flags</th><th scope="col"><span class="cq-sr">Actions</span></th></tr></thead>
+                                    <template for:each={mineGroups} for:item="g">
+                                        <tbody key={g.key}>
+                                            <tr class="grp"><td colspan="7"><span class="cq-grouplabel">{g.label}</span></td></tr>
+                                            <template for:each={g.rows} for:item="r">
+                                                <tr key={r.id}>
+                                                    <td><a href={r.url} data-id={r.id} onclick={handleOpen}>{r.name}</a></td>
+                                                    <td class="ttl">{r.title}</td>
+                                                    <td>{r.part}</td>
+                                                    <td>{r.type}</td>
+                                                    <td><span class={r.statusCls}>{r.status}</span></td>
+                                                    <td><div class="flags"><template for:each={r.flagList} for:item="f"><span key={f.key} class="cq-pill soft warn">{f.text}</span></template></div></td>
+                                                    <td><div class="acts">
+                                                        <button class="cq-link" data-id={r.id} onclick={handleReassign}>Reassign</button>
+                                                        <button class={r.btnCls} data-id={r.id} onclick={handleOpen}>{r.primary}</button>
+                                                    </div></td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </template>
+                                </table>
+                            </div>
+                        </template>
+                        <template if:false={hasMine}><div class="cq-infobox">You don't own any open NCs.</div></template>
+                    </template>
+                </template>
+            </div>
+        </section>
+
+        <!-- Reassign -->
+        <template if:true={showReassign}>
+            <div class="cq-modal-back" onkeydown={handleModalKey}>
+                <section class="cq-modal" role="dialog" aria-modal="true" aria-labelledby="rt">
+                    <header class="cq-modal-head">
+                        <h2 id="rt" class="cq-modal-title">{reassignTitle}</h2>
+                        <span class="cq-sub block">{reassignRow.title}</span>
+                        <button class="cq-modal-x" onclick={handleReassignClose} aria-label="Close">&times;</button>
+                    </header>
+                    <div class="cq-modal-body">
+                        <template if:true={peopleLoading}><div class="cq-spinwrap"><div class="cq-spin"><lightning-spinner size="small" alternative-text="Loading"></lightning-spinner></div></div></template>
+                        <template if:false={peopleLoading}>
+                            <template if:true={hasPeople}>
+                                <fieldset class="people">
+                                    <legend class="cq-label">New Owner</legend>
+                                    <template for:each={peopleRows} for:item="p">
+                                        <label key={p.id} class={p.cls}>
+                                            <input type="radio" name="newowner" value={p.id} checked={p.checked} onchange={handlePick} />
+                                            <span class="cq-grow cq-strong">{p.name}</span>
+                                            <span class="cq-sub">{p.load}</span>
+                                        </label>
+                                    </template>
+                                </fieldset>
+                                <span class="cq-hint">Members of your triage queue who can own NCs. Open = NCs they own now.</span>
+                                <label class="cq-field"><span class="cq-label">{noteLabel}</span>
+                                    <textarea rows="3" value={note} oninput={handleNote}></textarea>
+                                    <span class="cq-hint">Optional. Goes on the NC's feed with the reassignment.</span>
+                                </label>
+                            </template>
+                            <template if:false={hasPeople}>
+                                <template if:false={modalError}><div class="cq-infobox">No one else in your triage queue can own NCs.</div></template>
+                            </template>
+                        </template>
+                        <template if:true={modalError}><div class="cq-msg crit" role="alert">{modalError}</div></template>
+                    </div>
+                    <footer class="cq-modal-foot">
+                        <button class="cq-btn-outline" onclick={handleReassignClose} disabled={saving}>Cancel</button>
+                        <button class="cq-btn-primary" onclick={handleReassignSave} disabled={cantReassign}>{reassignLabel}</button>
+                    </footer>
+                </section>
+            </div>
+        </template>
+    </div>
+</template>

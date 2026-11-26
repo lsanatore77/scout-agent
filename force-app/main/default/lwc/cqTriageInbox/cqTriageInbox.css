@@ -1,0 +1,52 @@
+@import 'c/cqStyles';
+
+/* The Triage Inbox: the workspace header (cq-box, cq-hl), the search-list look for the list view picker (cq-pick),
+   the shared table (cq-tbl compact), pills, messages, info boxes and the popup all come from cqStyles.
+   Only this page's own layout is here, and every size and colour is a cqStyles token. */
+:host { display: block; }
+.page { padding: var(--cq-s4); color: var(--cq-ink); font-size: var(--cq-fs-meta); }
+.body { display: flex; flex-direction: column; gap: var(--cq-s4); padding: var(--cq-s5); }
+
+/* the list view picker: the view name is the title; the list is the shared search list */
+.vpick { display: inline-block; }
+.vbtn { display: inline-flex; align-items: center; gap: var(--cq-s2); padding: 0; border: 0; background: none; font: inherit; color: var(--cq-hl-ink); cursor: pointer; }
+.vbtn:hover .cq-hl-title { text-decoration: underline; }
+.vlist { right: auto; width: 18rem; z-index: 30; }
+.vrow { flex-direction: row; align-items: center; gap: var(--cq-s3); }
+.vrow.on { background: var(--cq-link-soft); }
+.vrow .cq-pick-n { flex: 1 1 auto; }
+.tick { width: 1rem; color: var(--cq-link); font-weight: 700; }
+.vn { font-variant-numeric: tabular-nums; }
+.veil { position: fixed; inset: 0; z-index: 20; }
+
+/* the message at the top: what happened, Open, and dismiss */
+.msgline { display: flex; align-items: center; gap: var(--cq-s4); }
+
+/* both views use the same columns, so they line up */
+.c-nc { width: 7.5rem; }
+.c-part { width: 7.5rem; }
+.c-type { width: 6rem; }
+.c-when { width: 13rem; }
+.c-flags { width: 15rem; }
+.c-act { width: 13rem; }
+.cq-tbl { table-layout: fixed; }
+.cq-tbl td { overflow-wrap: anywhere; }
+.ttl { font-weight: 600; }
+.flags { display: flex; flex-wrap: wrap; gap: var(--cq-s1); }
+.acts { display: flex; align-items: center; justify-content: flex-end; gap: var(--cq-s4); }
+tr.grp > td { background: var(--cq-surface); padding-top: var(--cq-s2); padding-bottom: var(--cq-s2); }
+tr.grp .cq-grouplabel { margin: 0; }
+.cq-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* reassign: the people as one ruled list of choices */
+.people { margin: 0; padding: 0; border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); display: flex; flex-direction: column; }
+.people legend { padding: 0 0 var(--cq-s2); }
+.person { display: flex; align-items: center; gap: var(--cq-s3); padding: var(--cq-s3) var(--cq-s4); border-top: 1px solid var(--cq-line); cursor: pointer; }
+.person:first-of-type { border-top: 0; }
+.person.on { background: var(--cq-link-soft); }
+.person input { margin: 0; accent-color: var(--cq-link); }
+
+@media (max-width: 760px) {
+    .cq-tbl { table-layout: auto; }
+    .c-nc, .c-part, .c-type, .c-when, .c-flags, .c-act { width: auto; }
+}

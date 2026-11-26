@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomApplication xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <content>Home_Page_Default3</content>
+        <formFactor>Large</formFactor>
+        <skipRecordTypeSelect>false</skipRecordTypeSelect>
+        <type>Flexipage</type>
+        <pageOrSobjectType>standard-home</pageOrSobjectType>
+    </actionOverrides>
+    <brand>
+        <headerColor>#0070D2</headerColor>
+        <logo>C_Logo11</logo>
+        <logoVersion>1</logoVersion>
+        <shouldOverrideOrgTheme>false</shouldOverrideOrgTheme>
+    </brand>
+    <defaultLandingTab>Quality_Home</defaultLandingTab>
+    <description>ComplianceQuest, Inc. - Quality Management Solutions</description>
+    <formFactors>Small</formFactors>
+    <formFactors>Large</formFactors>
+    <isNavAutoTempTabsDisabled>false</isNavAutoTempTabsDisabled>
+    <isNavPersonalizationDisabled>false</isNavPersonalizationDisabled>
+    <isNavTabPersistenceDisabled>false</isNavTabPersistenceDisabled>
+    <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
+    <label>Quality Management</label>
+    <navType>Standard</navType>
+    <tabs>Quality_Home</tabs>
+    <tabs>Triage_Inbox</tabs>
+    <tabs>standard-home</tabs>
+    <tabs>compliancequest__SQX_Controlled_Document__c</tabs>
+    <tabs>compliancequest__SQX_Nonconformance__c</tabs>
+    <tabs>compliancequest__SQX_CAPA__c</tabs>
+    <tabs>compliancequest__SQX_Audit_Program__c</tabs>
+    <tabs>compliancequest__SQX_Audit__c</tabs>
+    <tabs>compliancequest__SQX_Complaint__c</tabs>
+    <tabs>compliancequest__SQX_Training_Session__c</tabs>
+    <tabs>standard-report</tabs>
+    <uiType>Lightning</uiType>
+    <utilityBar>Quality_Management_UtilityBar</utilityBar>
+</CustomApplication>

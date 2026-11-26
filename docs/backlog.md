@@ -143,10 +143,17 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 - FA-0001 Notifications: 5 acknowledged without the submit flow ("0 submitted to Recovery").
 - Data cleanup: CoC documents, and the 11-account roster.
 - Salesforce bell notifications.
-- **Quality Management home (Lou, 25 Nov; mockup "Triage Inbox Mockup", board Home; not built).** Comes before the
-  Triage Inbox. One card per process the person can access (unbuilt ones "Coming Soon" for now); the card shows a line
-  per role the person has (e.g. Triage: waiting, yours; Investigation: to investigate, overdue), each line opening that
-  role's page; the title opens the main page. "Needs You" on the right lists the records (not workflow tasks) that most
-  need the person, across every process. Roles come from queue membership, Can Own NC, and later the investigation and
-  disposition roles. Inbox views: tabs or a list-view picker (Waiting for Triage / My NCs), both mocked; Take
-  Ownership one NC at a time.
+- **Quality Management home and Triage Inbox (Lou, 25 Nov; mockup "Triage Inbox Mockup"; built).** Quality Home tab
+  (cqQmHome, CqQmHome) is the Quality Management app's landing tab: one card per process (unbuilt ones "Coming Soon"),
+  the Nonconformance card with a line per role (Triage: waiting, yours; My NCs: past triage, overdue; else Reported by
+  You), each opening its view of the Triage Inbox. Waiting for Your Approval (CqApprovals): open CQ approval steps
+  assigned or delegated to the person, any object; Approve and Reject open the signature seat (c-cq-sign-seat) in a
+  popup and sign first through CqEsign, then act on the step as the FA committee does; only objects with a signature log
+  (CqApprovals.SIGNABLE, kept in step with CqEsigBridge) can be signed there, others say "Approve on the record". Needs
+  You: records, not workflow tasks (overdue, due within 7 days, triage waits of 3+ days). Triage Inbox tab
+  (cqTriageInbox, CqTriageInbox), list view style: Waiting for Triage (queues you are a direct member of; admins see all
+  NC queues) with flags (possible duplicate on the lot, repeat on the part in 90 days) and Take Ownership one at a time
+  (Can Own NC required, stays on the page, says who took it first); My NCs by stage with the nearest due date, Reassign
+  (owner only, to queue members who can own NCs, note to the feed) and Continue Triage / Open. Open: members through
+  public groups or roles are not followed; investigation and disposition roles and My Investigations; owner-only
+  editing.

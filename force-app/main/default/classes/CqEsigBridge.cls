@@ -6,7 +6,7 @@
 public with sharing class CqEsigBridge implements CqEsigGateway {
     public static final String PASSWORD = 'Password (CQ)';
 
-    /** The class that keeps each signable object's signatures (CqSignable). A new signable object is added here. */
+    /** The class that keeps each signable object's signatures (CqSignable). A new signable object is added here, and to CqApprovals.SIGNABLE. */
     private static final Map<String, String> SIGNABLE = new Map<String, String>{
         'Field_Action_Review__c' => 'CqFarSignable',
         'Field_Action__c' => 'CqFaSignable',
