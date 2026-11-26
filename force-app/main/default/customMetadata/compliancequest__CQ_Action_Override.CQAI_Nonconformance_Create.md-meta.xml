@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>CQ.AI Nonconformance Create</label>
+    <protected>false</protected>
+    <values>
+        <field>compliancequest__Action__c</field>
+        <value xsi:type="xsd:string">create</value>
+    </values>
+    <values>
+        <field>compliancequest__Object_Api_Name__c</field>
+        <value xsi:type="xsd:string">compliancequest__SQX_Nonconformance__c</value>
+    </values>
+    <values>
+        <field>compliancequest__Order__c</field>
+        <value xsi:type="xsd:double">0</value>
+    </values>
+    <values>
+        <field>compliancequest__Override_Component_Name__c</field>
+        <value xsi:type="xsd:string">cqNcNewOverride</value>
+    </values>
+    <values>
+        <field>compliancequest__Override_Component_Namespace__c</field>
+        <value xsi:type="xsd:string">c</value>
+    </values>
+    <values>
+        <field>compliancequest__IsDeactivated__c</field>
+        <value xsi:type="xsd:boolean">false</value>
+    </values>
+</CustomMetadata>

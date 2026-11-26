@@ -99,9 +99,11 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   them upgrade to Enterprise. Our tier ships with CQ's standard create paths replaced or hidden.
   New button (built 25 Nov): Aura wrapper cqNcNewOverride (standard button overrides take Aura) holds LWC
   cqNcNewRouter, which opens the Report a Nonconformance tab, or CQ's wizard (SQX_Nonconformance_Wizard) for users
-  with the custom permission CQAI_CQ_Standard_NC_Screens (Enterprise tier; not assigned to anyone). The override is
-  set in Setup (Object Manager > Nonconformance > Buttons, Links, and Actions > New > Edit > Lightning Experience
-  Override > cqNcNewOverride); CQ's own override was compliancequest:SQX_Action_Override. Still to do: remove the
+  with the custom permission CQAI_CQ_Standard_NC_Screens (Enterprise tier; not assigned to anyone). The object's New
+  override stays CQ's compliancequest:SQX_Action_Override, which reads CQ's CQ Action Override custom metadata; our
+  record CQAI_Nonconformance_Create (create, Order 0, c:cqNcNewOverride) sits beside CQ's CQUI_Nonconformance_Create
+  (cqext:cquiNonconformanceCreate). Untested which record CQ picks when two match: if CQ's still opens, deactivate
+  CQ's record (IsDeactivated) or switch the object override in Setup to c:cqNcNewOverride. Still to do: remove the
   "Report NC" and Import list buttons for our tier.
 - **NC ownership and access (Lou, 25 Nov; decided, not built).** The rule: only the owner can edit; everyone else is
   view only. Today the triage workspace has no such check: it shows to anyone who can open an NC in Draft or Triage and
