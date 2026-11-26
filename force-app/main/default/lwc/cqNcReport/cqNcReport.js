@@ -3,6 +3,8 @@ import { NavigationMixin, CurrentPageReference } from 'lightning/navigation';
 import { getEnclosingUtilityId, onUtilityClick, minimize } from 'lightning/platformUtilityBarApi';
 import CqNcReportModal from 'c/cqNcReportModal';
 
+const TAB = 'Report_a_Nonconformance';
+
 /**
  * Opens Report a Nonconformance (c-cq-nc-report-modal). Three places, chosen with Lou 25 Nov 2026:
  *  - the utility bar (Quality Management, Field Actions): clicking the utility opens the popup straight away;
@@ -18,10 +20,17 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
     isOpening = false;
     isOpen = false;   // the popup is up: the tab behind it shows nothing
 
+    // Resolves to the utility's id when this copy sits in the utility bar, else null. The utility bar copy also sees the
+    // page reference, so only the tab's own copy may open the popup on arrival (else it opened twice).
+    utilityCheck = Promise.resolve(null);
+
     @wire(CurrentPageReference)
     pageRef(ref) {
-        this.onTab = !!ref && ref.type === 'standard__navItemPage';
-        if (this.onTab && !this.opened) { this.opened = true; this.openModal(); }
+        const here = !!ref && ref.type === 'standard__navItemPage' && ref.attributes && ref.attributes.apiName === TAB;
+        this.utilityCheck.then((id) => {
+            this.onTab = here && !id;
+            if (this.onTab && !this.opened) { this.opened = true; this.openModal(); }
+        });
     }
 
     connectedCallback() {
@@ -31,14 +40,15 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
             if (typeof getEnclosingUtilityId !== 'function') { return; }
             const p = getEnclosingUtilityId();
             if (!p || typeof p.then !== 'function') { return; }
-            p.then((id) => {
+            this.utilityCheck = p.then((id) => id || null).catch(() => null);
+            this.utilityCheck.then((id) => {
                 if (!id || typeof onUtilityClick !== 'function') { return; }
                 this.utilityId = id;
                 onUtilityClick({ utilityId: id, eventHandler: () => {
                     if (typeof minimize === 'function') { minimize({ utilityId: id }).catch(() => {}); }
                     this.openModal();
                 } }).catch(() => {});
-            }).catch(() => {});
+            });
         } catch (e) {
             // not in a utility bar
         }
