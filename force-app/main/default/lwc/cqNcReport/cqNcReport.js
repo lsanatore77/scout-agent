@@ -16,6 +16,7 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
     onTab = false;
     opened = false;
     isOpening = false;
+    isOpen = false;   // the popup is up: the tab behind it shows nothing
 
     @wire(CurrentPageReference)
     pageRef(ref) {
@@ -43,6 +44,7 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
         }
     }
 
+    get showBar() { return !this.isOpen; }
     get hint() { return this.onTab ? 'The Report a Nonconformance popup is closed.' : ''; }
 
     handleOpen() { this.openModal(); }
@@ -50,11 +52,13 @@ export default class CqNcReport extends NavigationMixin(LightningElement) {
     async openModal() {
         if (this.isOpening) { return; }
         this.isOpening = true;
+        this.isOpen = true;
         let result;
         try {
             result = await CqNcReportModal.open({ size: 'small', description: 'Report a Nonconformance' });
         } finally {
             this.isOpening = false;
+            this.isOpen = false;
         }
         if (result && result.recordId) {
             this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: result.recordId, actionName: 'view' } });

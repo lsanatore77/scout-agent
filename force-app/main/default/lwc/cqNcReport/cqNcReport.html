@@ -1,6 +1,8 @@
 <template>
-    <div class="wrap">
-        <button class="cq-btn-primary" onclick={handleOpen}>{buttonLabel}</button>
-        <template if:true={hint}><span class="cq-sub">{hint}</span></template>
-    </div>
+    <template if:true={showBar}>
+        <div class="wrap">
+            <button class="cq-btn-primary" onclick={handleOpen}>{buttonLabel}</button>
+            <template if:true={hint}><span class="cq-sub">{hint}</span></template>
+        </div>
+    </template>
 </template>
