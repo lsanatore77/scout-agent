@@ -45,6 +45,10 @@
 .atop { display: flex; align-items: baseline; justify-content: space-between; gap: var(--cq-s3); flex-wrap: wrap; }
 /* Review, Reject and Approve sit on one text baseline, so the buttons line up with the Review link */
 .aacts { display: flex; align-items: baseline; gap: var(--cq-s3); margin-top: var(--cq-s4); }
+/* the two small buttons: text centred in the pill, and the same height (the outline one has a border, so the filled one gets
+   a border in its own colour) */
+.aacts .cq-btn-sm { display: inline-flex; align-items: center; justify-content: center; padding-bottom: 0; line-height: 1; }
+.aacts .cq-btn-primary { border: 1px solid var(--cq-link); }
 .needs { display: flex; flex-direction: column; }
 .why { display: block; font-size: var(--cq-fs-micro); font-weight: 700; }
 
