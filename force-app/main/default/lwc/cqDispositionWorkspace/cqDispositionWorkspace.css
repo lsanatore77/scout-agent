@@ -57,3 +57,7 @@
 .signhead { display: flex; align-items: center; gap: 10px; }
 .nom { margin: 0; }
 .snote { margin: 0; color: var(--cq-muted); line-height: 1.5; }
+/* Glance cards match (Lou, 27 Nov): Where This Stands' title is 15px like The Problem's, and The Problem's text is set like
+   Where This Stands' text (13px, muted). Page-local while cqStyles is on hold: backlog. */
+.cq-cols.wide .cq-ai-head { font-size: var(--cq-fs-body); }
+.cq-cols.wide .cq-prob { font-size: var(--cq-fs-meta); line-height: 1.45; color: var(--cq-muted); }

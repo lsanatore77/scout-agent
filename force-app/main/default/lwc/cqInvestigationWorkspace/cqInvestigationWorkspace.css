@@ -113,3 +113,7 @@ button.wc-num:focus-visible { outline: 2px solid var(--cq-link); outline-offset:
 .mname { font-weight: 600; }
 .mname.off { font-weight: 400; color: var(--cq-muted); }
 .mwhy { grid-column: 2; font-size: var(--cq-fs-micro); color: var(--cq-muted); }
+/* Glance cards match (Lou, 27 Nov): Where This Stands' title is 15px like The Problem's, and The Problem's text is set like
+   Where This Stands' text (13px, muted). Page-local while cqStyles is on hold: backlog. */
+.cq-cols.wide .cq-ai-head { font-size: var(--cq-fs-body); }
+.cq-cols.wide .cq-prob { font-size: var(--cq-fs-meta); line-height: 1.45; color: var(--cq-muted); }
