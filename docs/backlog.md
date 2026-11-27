@@ -161,3 +161,11 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   0.1875rem bottom lift to 1px, so the text sits low in the pill, and the filled button is 1px shorter than the outline
   one (no border). Quality Home's approval card overrides both locally (cqQmHome.css, `.aacts`); fix `cq-btn-sm` in
   cqStyles and remove the override.
+- **NC record page in Disposition / Investigate: one workspace at a time (Lou, 27 Nov; mockup "Disposition /
+  Investigation Switch Mockup"; not built).** Today an admin sees every workspace on the page. Plan: a tab switch under
+  the NC header (Disposition | Investigation, the selected tab filled light blue, no due dates on the tabs). Someone with
+  one role sees only that workspace and no second tab; someone with both (or an admin with both permissions) sees both
+  tabs and one workspace at a time, never stacked. The Investigation workspace (cqInvestigationWorkspace) is not on the
+  NC record page yet: the switch is how it gets there. Home page lines open their own side. Open: the role source (new
+  custom permissions, or CQ's roles), what an admin without them sees, and which side opens first (due soonest, or last
+  used).
