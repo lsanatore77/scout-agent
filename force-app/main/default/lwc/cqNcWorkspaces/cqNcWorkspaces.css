@@ -4,7 +4,7 @@
 :host { display: block; }
 .wrap { display: flex; flex-direction: column; gap: 0; }
 /* The tab strip is joined to the top of the workspace card below it (Lou, 27 Nov): white, bordered, no bottom edge. */
-.parts { display: flex; gap: var(--cq-s1); padding: var(--cq-s3) var(--cq-s5) 0; background: var(--cq-bg);
+.parts { display: flex; justify-content: flex-end; gap: var(--cq-s1); padding: var(--cq-s3) var(--cq-s5) 0; background: var(--cq-bg);
          border: 1px solid var(--cq-line); border-bottom: 0; border-radius: var(--cq-r-card) var(--cq-r-card) 0 0; }
 .part { padding: var(--cq-s3) var(--cq-s5); border: 0; border-radius: var(--cq-r-card) var(--cq-r-card) 0 0; background: none;
         font: inherit; font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-muted); cursor: pointer; }
