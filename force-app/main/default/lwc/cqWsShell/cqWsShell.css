@@ -20,9 +20,9 @@
 .cq-hl-v.tone-pos { color: var(--cq-hl-pos); font-weight: 700; }
 .cq-hl-v.tone-warn { color: var(--cq-hl-warn); font-weight: 700; }
 .cq-hl-v.tone-crit { color: var(--cq-hl-crit); font-weight: 700; }
-/* Change Workspace: a small link under the header buttons that opens a menu of the page's workspaces (Lou, 27 Nov) */
-.hlside { display: flex; flex-direction: column; align-items: flex-end; gap: var(--cq-s2); }
-.wsmenu { position: relative; }
+/* Change Workspace: a small link at the bottom right of the header that opens a menu of the page's workspaces (Lou, 27 Nov) */
+.hlbottom { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--cq-s4); flex-wrap: wrap; }
+.wsmenu { position: relative; margin-left: auto; }
 .wslink { padding: 0; border: 0; background: none; font: inherit; font-size: var(--cq-fs-micro); color: var(--cq-hl-link); cursor: pointer; }
 .wslink:hover { text-decoration: underline; }
 .wslink:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; }

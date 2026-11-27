@@ -70,6 +70,8 @@ export default class CqWsShell extends LightningElement {
         if (ask.choices && ask.pick) { this.wsChoices = ask.choices; this.wsCurrent = ask.current; this.wsPick = ask.pick; }
     }
     get hasWorkspaces() { return (this.wsChoices || []).length > 1; }
+    /** The header's bottom row: the key fields on the left, Change Workspace on the right. */
+    get hasBottom() { return this.hasFields || this.hasWorkspaces; }
     get wsExpanded() { return String(this.wsOpen); }
     get wsRows() {
         return this.wsChoices.map((w) => {
