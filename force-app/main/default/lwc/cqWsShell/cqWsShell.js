@@ -76,7 +76,7 @@ export default class CqWsShell extends LightningElement {
     get wsRows() {
         return this.wsChoices.map((w) => {
             const on = w.key === this.wsCurrent;
-            return { ...w, checked: String(on), tick: on ? '\u2713' : '', cls: 'wsitem' + (on ? ' on' : '') };
+            return { ...w, checked: String(on), tick: on ? '✓' : '', cls: 'wsitem' + (on ? ' on' : '') };
         });
     }
     toggleWs() { this.wsOpen = !this.wsOpen; }
@@ -117,6 +117,11 @@ export default class CqWsShell extends LightningElement {
         }));
     }
 
+    /** Back and Next are arrows side by side at the bottom right (Lou, 27 Nov). A Next that names an action (Submit to
+     *  Committee, Complete Triage) shows as a button at the right instead, and the forward arrow is greyed. */
+    get nextIsAction() { const l = this.nextLabel || 'Next'; return l !== 'Next' && l !== 'Saving…'; }
+    get nextArrowOff() { return this.nextDisabled || this.nextIsAction; }
+    get nextTitle() { return this.nextIsAction ? 'Next' : this.nextLabel || 'Next'; }
     get nextCls() { return this.nextOutline ? 'cq-btn-outline' : 'cq-btn-primary'; }
 
     fire(name, detail) { this.dispatchEvent(new CustomEvent(name, { detail })); }

@@ -15,6 +15,7 @@
             </template>
             <template if:true={hasHyps}>
                 <div class="side">
+                    <div class="leftcol">
                     <section class="hlist" aria-label="Hypotheses">
                         <div class="hlhead">Hypotheses</div>
                         <template for:each={hypRows} for:item="h">
@@ -25,6 +26,22 @@
                             </div>
                         </template>
                     </section>
+                    <!-- CQ.AI's suggested hypotheses sit under the list they would join (Lou, 27 Nov) -->
+                    <template if:true={hasNewHyps}>
+                        <section class="sugcard" aria-label="CQ.AI suggests a hypothesis">
+                            <div class="sughead"><span class="star">&#10022;</span>CQ.AI Suggests</div>
+                            <template for:each={newHyps} for:item="n">
+                                <div key={n.key} class="sugrow">
+                                    <span>{n.text}</span>
+                                    <span class="sugacts">
+                                        <button class="cq-link" data-key={n.key} onclick={handleNewHyp}>+ Add as Hypothesis</button>
+                                        <button class="plainbtn quiet" data-key={n.key} onclick={handleNewHypHide}>Not Relevant</button>
+                                    </span>
+                                </div>
+                            </template>
+                        </section>
+                    </template>
+                    </div>
                     <template if:true={hasSel}>
                         <section class="selcard" aria-label="Testing the selected hypothesis">
                             <div class="selhead">
@@ -99,17 +116,6 @@
                         </section>
                     </template>
                 </div>
-            </template>
-
-            <template if:true={hasNewHyps}>
-                <template for:each={newHyps} for:item="n">
-                    <div key={n.key} class="newhyp">
-                        <span class="sugword"><span class="star">&#10022;</span>CQ.AI Suggests a Hypothesis:</span>
-                        <span class="cq-grow">{n.text}</span>
-                        <button class="cq-btn-outline" data-key={n.key} onclick={handleNewHyp}>Add as Hypothesis</button>
-                        <button class="smalllink plainbtn" data-key={n.key} onclick={handleNewHypHide}>Not Relevant</button>
-                    </div>
-                </template>
             </template>
         </template>
 

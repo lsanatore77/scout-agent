@@ -183,3 +183,8 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 - One "+ Add Evidence" button. Link a CQ Record folded into the test popup: a Check Records test can attach the CQ record it checked (Record_Id__c on the same Evidence row). Old CQ Record rows still show. 5 Why: "+ Add Evidence" per why.
 - What Stands Out removed from all five tabs. Root Causes keeps the "still Open" warning in its save note; an infobox shows when there is no root cause yet.
 - Later: optimize the Add Evidence popup (suggested records, search by title).
+
+## Footer arrows and suggestions card (27 Nov, built)
+- cqWsShell: Back and Next are arrow icons side by side at the bottom right of every workspace footer, after the blocker and the step's own buttons. A Next that names an action (Submit to Committee, Complete Triage) shows as its button and greys the forward arrow. Page-local CSS (.navarrows, .arrow) while cqStyles is on hold: move into cqStyles later.
+- Find the Cause: CQ.AI's suggested hypotheses moved into a card under the Hypotheses list (+ Add as Hypothesis link, Not Relevant). Rule Out / Mark Confirmed kept as buttons.
+- Still open: the footer standard (one blue button, saves in the footer, tab-aware Next), Decide as a menu.

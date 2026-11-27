@@ -34,3 +34,12 @@
 .wsitem:hover, .wsitem:focus-visible { background: var(--cq-surface); outline: none; }
 .wsitem.on { color: var(--cq-link); font-weight: 700; }
 .wstick { display: inline-block; width: 1em; }
+/* Back and Next: arrow icons side by side at the bottom right, after the blocker and the step's own buttons (Lou, 27 Nov).
+   Page-local while cqStyles is on hold: backlog. */
+.navarrows { display: inline-flex; gap: var(--cq-s1); }
+.arrow { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
+         background: none; color: var(--cq-link); cursor: pointer; }
+.arrow:hover { background: var(--cq-link-soft); }
+.arrow:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; }
+.arrow:disabled { color: var(--cq-line-field); background: none; cursor: default; }
+.arrow svg { width: 22px; height: 22px; }
