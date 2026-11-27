@@ -867,8 +867,38 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             cause, causeNote, causeIsNone: !i.causeHead, invHref: i.investigationId ? this.href(i.investigationId) : null,
             fix, fixHref: i.capaId ? this.href(i.capaId) : null, capaTitle: i.capaTitle, fixNote, effective: this.isEffective(i),
             matchText: (i.colour || 'Grey') + ' · ' + (i.score || 0), matchN: i.score || 0, matchCls: 'cq-pill soft ' + (MATCH_TONE[(i.colour || 'Grey').toLowerCase()] || 'neu'), why: i.why,
+            matchBtnCls: 'mbtn cq-pill soft ' + (MATCH_TONE[(i.colour || 'Grey').toLowerCase()] || 'neu'),
             added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null, canAdd: !i.hypothesis
         };
+    }
+    /** The Match pill's hover card: which of the three rules the record meets, and why (Lou, 27 Nov). */
+    matchCard(i) {
+        const st = (i.status || '').toLowerCase();
+        const open = st === 'open' || st === 'draft' || st === 'in progress';
+        const rule = (key, name, met, why) => ({ key, name, why, mark: met ? '✓' : '–', markCls: 'mmark' + (met ? ' on' : ''), nameCls: 'mname' + (met ? '' : ' off') });
+        const rules = [
+            rule('p', 'Part', i.partMet, i.partMet ? (i.why || 'Same part').split(' · ')[0] : 'No link to this part'),
+            rule('s', 'Problem', i.symptomMet, i.symptomMet ? (i.type === 'Inspection' ? 'A failed inspection' : 'A similar problem') : 'Not a similar problem'),
+            rule('c', 'Open or recent', i.currentMet, i.currentMet ? (open ? 'Still open' : 'Made in the last 30 days') : (i.status || 'Closed') + (i.day ? ', ' + this.mdIso(i.day) : ''))
+        ];
+        if (i.lotMet) { rules.push(rule('l', 'Same lot', true, 'On this NC\'s lot')); }
+        const met = [i.partMet, i.symptomMet, i.currentMet].filter((x) => x).length;
+        const colour = i.colour || 'Grey';
+        return { head: colour + ': meets ' + met + ' of 3 rules', headCls: 'mhead ' + (MATCH_TONE[colour.toLowerCase()] || 'neu'), rules };
+    }
+    histTip;               // the record whose Match card is showing: { key, style }
+    handleMatchTip(event) {
+        const el = event.currentTarget;
+        const r = el.getBoundingClientRect();
+        const below = r.bottom + 190 < window.innerHeight;
+        const left = Math.max(8, r.right - 288);
+        this.histTip = { key: el.dataset.key, style: 'left: ' + left + 'px; top: ' + (below ? r.bottom + 6 : r.top - 6) + 'px;' + (below ? '' : ' transform: translateY(-100%);') };
+    }
+    handleMatchTipOff() { this.histTip = undefined; }
+    get matchTip() {
+        if (!this.histTip) { return null; }
+        const i = this.findHist(this.histTip.key);
+        return i ? { ...this.matchCard(i), style: this.histTip.style } : null;
     }
     get histAll() { return this.hist ? sortRows(this.hist.items.map((i) => this.histRow(i)), this.sorts.hist) : []; }
     get histPageCount() { return Math.max(1, Math.ceil(this.histAll.length / WC_PAGE)); }
@@ -879,7 +909,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get cantPrevHist() { return this.histPageNow <= 1; }
     get cantNextHist() { return this.histPageNow >= this.histPageCount; }
     get histPageItems() { return this.pageItems(this.histPageCount, this.histPageNow); }
-    handleHistPage(event) { const p = Number(event.currentTarget.dataset.p); if (p) { this.histPage = p; } }
+    handleHistPage(event) { const p = Number(event.currentTarget.dataset.p); if (p) { this.histPage = p; this.histTip = undefined; } }
     handleHistPrev() { if (!this.cantPrevHist) { this.histPage = this.histPageNow - 1; } }
     handleHistNext() { if (!this.cantNextHist) { this.histPage = this.histPageNow + 1; } }
     get otherRows() { return this.hist ? sortRows(this.hist.others.map((i) => this.histRow(i)), this.sorts.oth) : []; }

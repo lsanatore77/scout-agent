@@ -99,3 +99,16 @@ button.wc-num:focus-visible { outline: 2px solid var(--cq-link); outline-offset:
 .wc-one { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-lead { font-weight: 700; color: var(--cq-ink); }
 .wc-list .cq-pager { margin-top: 0; }
+/* Check History: the Match pill shows its rules on hover or focus (Lou, 27 Nov). The card is fixed to the window so the table's scroll box does not clip it. */
+.mbtn { border: 0; font-family: inherit; cursor: default; }
+.mbtn:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; }
+.mcard { position: fixed; z-index: 40; width: 18rem; box-sizing: border-box; padding: var(--cq-s4); border-radius: var(--cq-r-card); background: var(--cq-bg);
+         border: 1px solid var(--cq-line); box-shadow: 0 4px 14px rgba(27, 31, 39, .14); display: flex; flex-direction: column; gap: var(--cq-s3); pointer-events: none; }
+.mhead { font-weight: 700; }
+.mhead.crit { color: var(--cq-crit-fg); } .mhead.warn { color: var(--cq-warn-fg); } .mhead.neu { color: var(--cq-muted); }
+.mrule { display: grid; grid-template-columns: 1rem 1fr; gap: 0 var(--cq-s3); }
+.mmark { font-weight: 700; color: var(--cq-muted); }
+.mmark.on { color: var(--cq-pos-fg); }
+.mname { font-weight: 600; }
+.mname.off { font-weight: 400; color: var(--cq-muted); }
+.mwhy { grid-column: 2; font-size: var(--cq-fs-micro); color: var(--cq-muted); }

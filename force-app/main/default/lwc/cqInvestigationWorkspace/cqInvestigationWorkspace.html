@@ -248,7 +248,8 @@
                                                         <template if:true={r.fix}><a class="cq-link" href={r.fixHref} target="_blank">{r.fix}</a> {r.capaTitle}</template>
                                                         <div class="cq-note sm0">{r.fixNote}</div>
                                                     </td>
-                                                    <td><span class={r.matchCls} title={r.why}>{r.matchText}</span></td>
+                                                    <td class="cq-nowrap"><button class={r.matchBtnCls} data-key={r.key} aria-describedby="match-card"
+                                                        onmouseenter={handleMatchTip} onmouseleave={handleMatchTipOff} onfocus={handleMatchTip} onblur={handleMatchTipOff}>{r.matchText}</button></td>
                                                     <td class="cq-nowrap">
                                                         <div class="actcol">
                                                             <template if:true={r.added}><span class="added">{r.added}</span></template>
@@ -272,6 +273,14 @@
                                         </nav>
                                     </div>
                                 </template>
+                            </template>
+                            <template if:true={matchTip}>
+                                <div id="match-card" class="mcard" style={matchTip.style} role="tooltip">
+                                    <div class={matchTip.headCls}>{matchTip.head}</div>
+                                    <template for:each={matchTip.rules} for:item="u">
+                                        <div key={u.key} class="mrule"><span class={u.markCls} aria-hidden="true">{u.mark}</span><span class={u.nameCls}>{u.name}</span><span class="mwhy">{u.why}</span></div>
+                                    </template>
+                                </div>
                             </template>
                             <template if:false={hasHistRows}><p class="cq-note">Nothing in CQ matches this problem on this part.</p></template>
                             <template if:true={histNotice}><div class="cq-msg pos okbox">{histNotice}</div></template>

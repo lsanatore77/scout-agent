@@ -22,6 +22,8 @@ public with sharing class CqInvestigationHistory {
         @AuraEnabled public Id efrId; @AuraEnabled public String efrName; @AuraEnabled public String efrResolution; @AuraEnabled public Date efrDate;
         @AuraEnabled public String colour; @AuraEnabled public Integer score; @AuraEnabled public String why;
         @AuraEnabled public Boolean problemMatch = false; @AuraEnabled public Integer hypothesis; @AuraEnabled public String category;
+        // the three match rules it meets, and whether it is on this NC's lot (the Match pill's hover card)
+        @AuraEnabled public Boolean partMet = false; @AuraEnabled public Boolean symptomMet = false; @AuraEnabled public Boolean currentMet = false; @AuraEnabled public Boolean lotMet = false;
     }
     public class Dismissed {
         @AuraEnabled public Id id; @AuraEnabled public String recordId; @AuraEnabled public String name; @AuraEnabled public String reason;
@@ -103,6 +105,7 @@ public with sharing class CqInvestigationHistory {
             it.day = r.createdDate == null ? null : r.createdDate.date();
             String crit = r.criteriaMet == null ? '' : r.criteriaMet;
             it.problemMatch = crit.contains('Symptom') || crit.contains('Lot');
+            it.partMet = crit.contains('Product'); it.symptomMet = crit.contains('Symptom'); it.currentMet = crit.contains('Current'); it.lotMet = crit.contains('Lot');
             it.why = why(r, crit);
             byId.put(r.id, it);
             if (r.recordType == PhrQmsRelevance.TYPE_NC) { ncIds.add(r.id); }
