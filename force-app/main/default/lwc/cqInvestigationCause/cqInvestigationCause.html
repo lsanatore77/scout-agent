@@ -31,7 +31,7 @@
                                     </td>
                                     <td><span class={h.statusCls}>{h.status}</span></td>
                                     <td class="cq-nowrap">{h.tests}</td>
-                                    <td class="cq-nowrap"><template if:true={h.canPlan}><button class="cq-btn-outline" data-id={h.id} onclick={handlePlan}>Plan This Test</button></template></td>
+                                    <td class="cq-nowrap"><template if:true={h.canPlan}><button class="cq-link" data-id={h.id} onclick={handlePlan}>Plan This Test</button></template></td>
                                 </tr>
                             </template>
                         </tbody>
