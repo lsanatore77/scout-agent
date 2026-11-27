@@ -162,10 +162,10 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   one (no border). Quality Home's approval card overrides both locally (cqQmHome.css, `.aacts`); fix `cq-btn-sm` in
   cqStyles and remove the override.
 - **NC record page in Disposition / Investigate: one workspace at a time (Lou, 27 Nov; mockup "Disposition /
-  Investigation Switch Mockup"; not built).** Today an admin sees every workspace on the page. Plan: a tab switch under
-  the NC header (Disposition | Investigation, the selected tab filled light blue, no due dates on the tabs). Someone with
-  one role sees only that workspace and no second tab; someone with both (or an admin with both permissions) sees both
-  tabs and one workspace at a time, never stacked. The Investigation workspace (cqInvestigationWorkspace) is not on the
-  NC record page yet: the switch is how it gets there. Home page lines open their own side. Open: the role source (new
-  custom permissions, or CQ's roles), what an admin without them sees, and which side opens first (due soonest, or last
-  used).
+  Investigation Switch Mockup"; built: cqNcWorkspaces).** A tab switch (the selected tab filled light blue, no due dates):
+  custom permissions CQAI_Can_Investigate and CQAI_Can_Disposition, each in its own permission set (CQ.AI Can
+  Investigate / CQ.AI Can Disposition, with its workspace's Apex); administrators (Modify All Data) always see both.
+  Investigation opens first; one role shows just its tab; neither shows a note. Each workspace loads on first open and is
+  kept. Page state c__part = investigation or disposition opens a side. To finish: on CQEA_NC_Record_Page1, replace the
+  Disposition workspace (header, Stage = Disposition_Investigate) with CQ.AI NC Workspaces (Lou in App Builder), and
+  assign the permission sets. Later: the home page's Investigation and Disposition lines open their side.

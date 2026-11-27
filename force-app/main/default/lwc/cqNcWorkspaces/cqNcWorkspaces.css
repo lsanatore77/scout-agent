@@ -1,0 +1,12 @@
+@import 'c/cqStyles';
+
+/* The Investigation / Disposition switch: the selected tab is filled (Lou, 27 Nov), every size and colour a cqStyles token. */
+:host { display: block; }
+.wrap { display: flex; flex-direction: column; gap: var(--cq-s3); }
+.parts { display: flex; gap: var(--cq-s1); border-bottom: 1px solid var(--cq-line); }
+.part { padding: var(--cq-s3) var(--cq-s5); border: 0; border-radius: var(--cq-r-card) var(--cq-r-card) 0 0; background: none;
+        font: inherit; font-size: var(--cq-fs-body); font-weight: 700; color: var(--cq-muted); cursor: pointer; }
+.part:hover { background: var(--cq-surface); }
+.part.on, .part.on:hover { background: var(--cq-link-soft); color: var(--cq-link); }
+.part:focus-visible { outline: 2px solid var(--cq-link); outline-offset: -2px; }
+.hidden { display: none; }

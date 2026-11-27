@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses>
+        <apexClass>CqInvestigationChanges</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>CqInvestigationHistory</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>CqInvestigationSummary</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <classAccesses>
+        <apexClass>CqInvestigationWorkspace</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <customPermissions>
+        <enabled>true</enabled>
+        <name>CQAI_Can_Investigate</name>
+    </customPermissions>
+    <description>Shows the Investigation workspace on an NC in Disposition / Investigate (custom permission Can Investigate), with access to its Apex.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>CQ.AI Can Investigate</label>
+</PermissionSet>
