@@ -632,6 +632,10 @@ export default class CqInvestigationCause extends LightningElement {
     get noRoots() { return !this.roots.length; }
     count(n, one, many) { const w = ['No', 'One', 'Two', 'Three', 'Four', 'Five'][n] || String(n); return w + ' ' + (n === 1 ? one : many); }
     get savedCount() { return this.roots.filter((r) => r.saved).length; }
+    // Save Root Causes sits in the tab's bar, beside + Add Root Cause (it moved out of the workspace footer, Lou 27 Nov)
+    get cantSaveRoots() { return this.saving || !!this.rootBlocker || !this.rootsDirty; }
+    get saveRootsLabel() { return this.saving ? 'Saving…' : 'Save Root Causes'; }
+    handleSaveRoots() { this.saveRoots(); }
     @api async saveRoots() {
         if (this.rootBlocker || this.saving) { return; }
         const rows = this.roots.map((r) => ({ key: r.key, id: r.id || null, hypId: r.hypId || null, whyId: r.whyId || null, text: (r.text || '').trim(), role: r.role,

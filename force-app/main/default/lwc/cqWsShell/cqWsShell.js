@@ -117,8 +117,12 @@ export default class CqWsShell extends LightningElement {
         }));
     }
 
-    /** Back and Next are arrows side by side at the bottom right (Lou, 27 Nov). A Next that names an action (Submit to
-     *  Committee, Complete Triage) shows as a button at the right instead, and the forward arrow is greyed. */
+    /** Back and Next are arrows side by side at the bottom right; the blocker and the step's own buttons sit on a row just
+     *  above them (Lou, 27 Nov). A Next that names an action (Submit to Committee, Complete Triage) shows as a button on
+     *  that row instead, and the forward arrow is greyed. */
+    hasFootSlot = false;
+    handleFootChange(event) { this.hasFootSlot = event.target.assignedElements().length > 0; }
+    get footActsCls() { return 'footacts' + (this.blocker || this.hasFootSlot || this.nextIsAction ? '' : ' none'); }
     get nextIsAction() { const l = this.nextLabel || 'Next'; return l !== 'Next' && l !== 'Saving…'; }
     get nextArrowOff() { return this.nextDisabled || this.nextIsAction; }
     get nextTitle() { return this.nextIsAction ? 'Next' : this.nextLabel || 'Next'; }

@@ -34,8 +34,11 @@
 .wsitem:hover, .wsitem:focus-visible { background: var(--cq-surface); outline: none; }
 .wsitem.on { color: var(--cq-link); font-weight: 700; }
 .wstick { display: inline-block; width: 1em; }
-/* Back and Next: arrow icons side by side at the bottom right, after the blocker and the step's own buttons (Lou, 27 Nov).
-   Page-local while cqStyles is on hold: backlog. */
+/* Back and Next: arrow icons side by side at the bottom right; the blocker and the step's own buttons on a row just above
+   them (Lou, 27 Nov). Page-local while cqStyles is on hold: backlog. */
+.cq-ws-foot.stack { flex-direction: column; align-items: flex-end; gap: var(--cq-s2); }
+.footacts { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--cq-s3); }
+.footacts.none { display: none; }
 .navarrows { display: inline-flex; gap: var(--cq-s1); }
 .arrow { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
          background: none; color: var(--cq-link); cursor: pointer; }

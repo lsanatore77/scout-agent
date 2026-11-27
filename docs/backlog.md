@@ -188,3 +188,5 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 - cqWsShell: Back and Next are arrow icons side by side at the bottom right of every workspace footer, after the blocker and the step's own buttons. A Next that names an action (Submit to Committee, Complete Triage) shows as its button and greys the forward arrow. Page-local CSS (.navarrows, .arrow) while cqStyles is on hold: move into cqStyles later.
 - Find the Cause: CQ.AI's suggested hypotheses moved into a card under the Hypotheses list (+ Add as Hypothesis link, Not Relevant). Rule Out / Mark Confirmed kept as buttons.
 - Still open: the footer standard (one blue button, saves in the footer, tab-aware Next), Decide as a menu.
+- 27 Nov, later: the footer is two rows at the right: the blocker and the step's own buttons (Save Actions, Save Root Causes, Complete Investigation, a named Next) on top, the Back / Next arrows underneath. The row hides when it has nothing in it.
+- Tidy next time cqInvestigationCause.js is deployed: cantSaveRoots / saveRootsLabel / handleSaveRoots are unused (Save Root Causes stayed in the workspace footer); remove them and their comment.
