@@ -76,6 +76,11 @@
 .wc-num.lot { background: var(--cq-link); }
 .wc-num.off { background: var(--cq-neu-bg); color: var(--cq-muted); }
 .wc-num.sm { width: 20px; height: 20px; }
+/* a deviation: its number in amber, in the table and at the start of its bar on the chart */
+.wc-num.dev { background: var(--cq-warn-solid); }
+.wc-num.xs { flex: none; width: 16px; height: 16px; font-size: 10px; }
+.wc-band { display: flex; align-items: center; gap: var(--cq-s2); padding-left: 1px; }
+.wc-bandtext { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 button.wc-num { position: absolute; z-index: 2; margin-left: -12px; padding: 0; border: 0; box-shadow: 0 0 0 2px var(--cq-bg); font-family: inherit; cursor: pointer; }
 button.wc-num:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; }
 .wc-kind { position: absolute; padding: 1px 6px; border-radius: 999px; background: var(--cq-accent-soft); color: var(--cq-accent); font-size: var(--cq-fs-micro); font-weight: 600; white-space: nowrap; pointer-events: none; }

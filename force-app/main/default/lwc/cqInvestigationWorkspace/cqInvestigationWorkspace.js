@@ -592,8 +592,8 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
                 const a = pct(i.day < v.windowStart ? v.windowStart : i.day);
                 const b = i.untilDay && i.untilDay < v.startDate ? pct(i.untilDay) : 100;
                 const r = byKey.get(i.key);
-                const label = (r ? r.n + ' · ' : '') + i.name + ' · in effect ' + this.md(i.day) + (i.untilDay ? ' to ' + this.md(i.untilDay) : '');
-                return { key: i.key, label, style: 'top: ' + (axis + 30 + k * 22) + 'px; left: ' + a + '%; width: ' + Math.max(b - a, 2) + '%;' };
+                const label = i.name + ' · in effect ' + this.md(i.day) + (i.untilDay ? ' to ' + this.md(i.untilDay) : '');
+                return { key: i.key, n: r ? r.n : '', label, style: 'top: ' + (axis + 30 + k * 22) + 'px; left: ' + a + '%; width: ' + Math.max(b - a, 2) + '%;' };
             }),
             tip
         };
@@ -611,7 +611,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get changeRows() {
         const p = this.wcPageNow;
         return this.changeAll.slice((p - 1) * WC_PAGE, p * WC_PAGE)
-            .map((r) => ({ ...r, numCls: 'wc-num sm' + (r.onChart ? (r.kind === 'lot' ? ' lot' : '') : ' off') }));
+            .map((r) => ({ ...r, numCls: 'wc-num sm' + (!r.onChart ? ' off' : r.inEffect ? ' dev' : r.kind === 'lot' ? ' lot' : '') }));
     }
     get wcPaged() { return this.changeList.length > WC_PAGE; }
     get cantPrevWc() { return this.wcPageNow <= 1; }
@@ -645,7 +645,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             else { rel = before + (before === 1 ? ' day before' : ' days before'); }
             return {
                 key: i.key, name: i.name, href: i.recordId && !i.byHand ? this.href(i.recordId) : null, byHand: i.byHand, kind: i.kind,
-                onChart: !!(i.inEffect || (i.onTimeline && i.day)),
+                onChart: !!(i.inEffect || (i.onTimeline && i.day)), inEffect: !!i.inEffect,
                 hasHref: !!(i.recordId && !i.byHand), category: i.category, whatChanged: i.whatChanged, foundIn: i.foundIn,
                 whenText: i.inEffect ? 'Since ' + this.md(i.day) : this.md(i.day), rel, rating: i.rating, ratingN: RATING_RANK[i.rating] || 5, day: i.day, ratingCls: RATING_CLS[i.rating] || 'cq-pill soft neu',
                 added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null,

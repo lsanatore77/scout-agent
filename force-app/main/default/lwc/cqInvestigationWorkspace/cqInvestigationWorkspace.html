@@ -84,7 +84,7 @@
                                         </template>
                                         <span class="wc-start" style={timeline.start}></span>
                                         <template for:each={timeline.bands} for:item="b">
-                                            <div key={b.key} class="wc-band" style={b.style} title={b.label}>{b.label}</div>
+                                            <div key={b.key} class="wc-band" style={b.style} title={b.label}><span class="wc-num xs dev">{b.n}</span><span class="wc-bandtext">{b.label}</span></div>
                                         </template>
                                         <template for:each={timeline.marks} for:item="m">
                                             <span key={m.kStem} class={m.stemCls} style={m.stem}></span>
