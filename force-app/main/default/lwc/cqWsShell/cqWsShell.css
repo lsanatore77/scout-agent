@@ -36,9 +36,11 @@
 .wstick { display: inline-block; width: 1em; }
 /* Back and Next: arrow icons side by side at the bottom right; the blocker and the step's own buttons on a row just above
    them (Lou, 27 Nov). Page-local while cqStyles is on hold: backlog. */
-.cq-ws-foot.stack { flex-direction: column; align-items: flex-end; gap: var(--cq-s2); }
+.cq-ws-foot.stack { flex-direction: column; align-items: flex-end; gap: var(--cq-s3); }
 .footacts { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--cq-s3); }
-.footacts.none { display: none; }
+.footacts.none, .footacts.none + .footsep { display: none; }
+/* a line between the two rows, across the whole card (through .cq-ws-main's 20px padding) */
+.footsep { align-self: stretch; margin: 0 -20px; border-top: 1px solid var(--cq-line); }
 .navarrows { display: inline-flex; gap: var(--cq-s1); }
 .arrow { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%;
          background: none; color: var(--cq-link); cursor: pointer; }
