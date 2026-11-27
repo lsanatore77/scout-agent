@@ -54,69 +54,102 @@
                         <template if:true={wcReady}>
                             <div class="cq-ai-card">
                                 <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                                <div class="cq-ai-says">{standOut}</div>
+                                <div class="cq-ai-says"><span class="wc-lead">{standOutLead}</span>{standOutRest}</div>
                             </div>
-                            <div class="lookback">
-                                <span class="cq-strong">Look Back</span>
-                                <template for:each={lookBackOpts} for:item="o">
-                                    <button key={o.d} class={o.cls} data-d={o.d} aria-pressed={o.pressed} onclick={handleLookBack}>{o.label}</button>
-                                </template>
-                                <span class="cq-muted">before the start date, {startText} ({startFromText})</span>
-                            </div>
-                            <div class="card">
-                                <div class="cq-card-title">Changes Around the Start Date</div>
-                                <div class="tl" style={timeline.height}>
-                                    <template for:each={timeline.bands} for:item="b">
-                                        <div key={b.key} class="tl-band" style={b.style}>{b.label}</div>
-                                    </template>
-                                    <span class="tl-shade" style={timeline.shade}></span>
-                                    <span class="tl-axis" style={timeline.axis}></span>
-                                    <template for:each={timeline.ticks} for:item="t">
-                                        <span key={t.key} class="tl-tick" style={t.style}>{t.label}</span>
-                                    </template>
-                                    <template for:each={timeline.events} for:item="e">
-                                        <span key={e.kLine} class={e.lineCls} style={e.line}></span>
-                                    </template>
-                                    <template for:each={timeline.events} for:item="e">
-                                        <span key={e.kDot} class={e.dotCls} style={e.dot}></span>
-                                    </template>
-                                    <template for:each={timeline.events} for:item="e">
-                                        <div key={e.key} class={e.boxCls} style={e.box}><div class="tl-head">{e.head}</div><div class="tl-text">{e.text}</div></div>
-                                    </template>
-                                </div>
-                                <div class="tl-legend">
-                                    <span><span class="lg change">&#9679;</span> Change on the part or its documents</span>
-                                    <span><span class="lg lot">&#9679;</span> Lot</span>
-                                    <template if:true={hasBands}><span><span class="lg band">&#9632;</span> In effect across the period</span></template>
-                                    <span class="lg-shade">Shaded: the 14 days before the start</span>
-                                </div>
-                            </div>
-                            <template if:true={hasChanges}>
-                                <div class="cq-tblwrap">
-                                    <table class="cq-tbl">
-                                        <thead><tr><template for:each={chgHeads} for:item="h"><th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-t="chg" data-key={h.key} onclick={handleSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th></template></tr></thead>
-                                        <tbody>
-                                            <template for:each={changeRows} for:item="r">
-                                                <tr key={r.key}>
-                                                    <td>
-                                                        <template if:true={r.hasHref}><a class="cq-link" href={r.href} target="_blank">{r.name}</a></template>
-                                                        <template if:true={r.byHand}><span class="cq-pill soft neu">Added by You</span><div class="cq-note">{r.category}</div></template>
-                                                    </td>
-                                                    <td>{r.whatChanged}</td>
-                                                    <td class="cq-nowrap"><div class="cq-strong">{r.whenText}</div><div class="cq-note sm0">{r.rel}</div></td>
-                                                    <td class="cq-muted">{r.foundIn}</td>
-                                                    <td><span class={r.ratingCls}>{r.rating}</span></td>
-                                                    <td class="cq-nowrap">
-                                                        <template if:true={r.added}><span class="added">{r.added}</span></template>
-                                                        <template if:true={r.canAdd}><button class="cq-btn-outline" data-key={r.key} onclick={handleHypOpen}>Add as Hypothesis</button></template>
-                                                    </td>
-                                                </tr>
+                            <div class="wc-side">
+                                <div class="card wc-chart">
+                                    <div class="wc-chead">
+                                        <div class="cq-card-title">Changes Around the Start Date</div>
+                                        <div class="wc-lb" onkeydown={handleLbKey}>
+                                            <button class="cq-link" aria-haspopup="menu" aria-expanded={lbExpanded} onclick={toggleLookBack}>Look back {wcDays} days &#9662;</button>
+                                            <template if:true={lbOpen}>
+                                                <div class="wc-veil" onclick={closeLookBack}></div>
+                                                <div class="wc-lbmenu" role="menu" aria-label="Look back">
+                                                    <template for:each={lookBackOpts} for:item="o">
+                                                        <button key={o.d} class={o.cls} role="menuitemradio" aria-checked={o.checked} data-d={o.d} onclick={handleLookBack}><span class="wc-tick" aria-hidden="true">{o.tick}</span>{o.label}</button>
+                                                    </template>
+                                                </div>
                                             </template>
-                                        </tbody>
-                                    </table>
+                                        </div>
+                                    </div>
+                                    <div class="cq-note sm0">Before {startText}, {startFromText}</div>
+                                    <div class="wc-tl" style={timeline.height}>
+                                        <span class="wc-shade" style={timeline.shade}></span>
+                                        <span class="wc-axis" style={timeline.axis}></span>
+                                        <template for:each={timeline.ticks} for:item="t">
+                                            <span key={t.key} class={t.cls} style={t.style}>{t.label}</span>
+                                        </template>
+                                        <template for:each={timeline.others} for:item="o">
+                                            <span key={o.key} class={o.cls} style={o.style}></span>
+                                        </template>
+                                        <span class="wc-start" style={timeline.start}></span>
+                                        <template for:each={timeline.bands} for:item="b">
+                                            <div key={b.key} class="wc-band" style={b.style} title={b.label}>{b.label}</div>
+                                        </template>
+                                        <template for:each={timeline.marks} for:item="m">
+                                            <span key={m.kStem} class={m.stemCls} style={m.stem}></span>
+                                        </template>
+                                        <template for:each={timeline.marks} for:item="m">
+                                            <span key={m.kKind} class={m.kindCls} style={m.kindStyle} aria-hidden="true">{m.kind}</span>
+                                        </template>
+                                        <template for:each={timeline.marks} for:item="m">
+                                            <button key={m.key} class={m.cls} style={m.style} data-key={m.key} aria-label={m.aria}
+                                                onmouseenter={handleTip} onmouseleave={handleTipOff} onfocus={handleTip} onblur={handleTipOff}>{m.n}</button>
+                                        </template>
+                                        <template if:true={timeline.tip}>
+                                            <div class={timeline.tip.cls} style={timeline.tip.style} role="tooltip">
+                                                <div class="wc-tiphead">{timeline.tip.head}</div>
+                                                <div>{timeline.tip.text}</div>
+                                                <div class="wc-tipwhen">{timeline.tip.rel}</div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                    <div class="tl-legend">
+                                        <span><span class="lg change">&#9679;</span> Change on this page</span>
+                                        <span><span class="lg lot">&#9679;</span> Lot</span>
+                                        <span><span class="lg other">&#9679;</span> On another page</span>
+                                        <template if:true={hasBands}><span><span class="lg band">&#9632;</span> In effect across the period</span></template>
+                                    </div>
                                 </div>
-                            </template>
-                            <template if:false={hasChanges}><p class="cq-note">CQ holds no changes on this part in the window. Try a longer Look Back, or add what you found by hand.</p></template>
+                                <div class="card wc-list">
+                                    <template if:true={hasChanges}>
+                                        <div class="cq-tblwrap">
+                                            <table class="cq-tbl wc-tbl">
+                                                <thead><tr><template for:each={chgHeads} for:item="h"><th key={h.key} scope="col" class={h.thCls} aria-sort={h.aria}><template if:true={h.sortable}><button class="cq-sortbtn" data-t="chg" data-key={h.key} onclick={handleSort} title={h.title}>{h.label}<span class={h.arrowCls} aria-hidden="true"></span></button></template><template if:true={h.plain}>{h.label}</template></th></template></tr></thead>
+                                                <tbody>
+                                                    <template for:each={changeRows} for:item="r">
+                                                        <tr key={r.key}>
+                                                            <td class="wc-ncol"><span class={r.numCls}>{r.n}</span></td>
+                                                            <td class="cq-nowrap">
+                                                                <template if:true={r.hasHref}><a class="cq-link" href={r.href} target="_blank">{r.name}</a></template>
+                                                                <template if:true={r.byHand}><span class="cq-pill soft neu">Added by You</span></template>
+                                                            </td>
+                                                            <td class="wc-what"><div class="wc-one" title={r.whatChanged}>{r.whatChanged}</div></td>
+                                                            <td><span class={r.ratingCls}>{r.rating}</span></td>
+                                                            <td class="cq-nowrap">
+                                                                <template if:true={r.added}><span class="added">{r.added}</span></template>
+                                                                <template if:true={r.canAdd}><button class="cq-btn-outline" data-key={r.key} onclick={handleHypOpen}>Add as Hypothesis</button></template>
+                                                            </td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <template if:true={wcPaged}>
+                                            <div class="cq-pager">
+                                                <nav class="cq-pages" aria-label="Change pages">
+                                                    <button class="pg" onclick={handleWcPrev} disabled={cantPrevWc} aria-label="Previous page">&laquo;</button>
+                                                    <template for:each={wcPageItems} for:item="p">
+                                                        <button key={p.key} class={p.cls} data-p={p.p} onclick={handleWcPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
+                                                    </template>
+                                                    <button class="pg" onclick={handleWcNext} disabled={cantNextWc} aria-label="Next page">&raquo;</button>
+                                                </nav>
+                                            </div>
+                                        </template>
+                                    </template>
+                                    <template if:false={hasChanges}><p class="cq-note">CQ holds no changes on this part in the window. Try a longer Look back, or add what you found by hand.</p></template>
+                                </div>
+                            </div>
 
                             <template if:false={changeForm}>
                                 <div class="notincq">

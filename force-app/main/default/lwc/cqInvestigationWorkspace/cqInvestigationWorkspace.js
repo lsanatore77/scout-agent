@@ -27,16 +27,18 @@ const ASK = {
 const POLL_MS = 2000;
 const LOOK_BACK = [14, 30, 60, 90];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const LANE_H = 58;       // height of one row of timeline labels
-const LABEL_W = 24;      // width of a timeline label, as a percent of the track
+const LANE_H = 34;       // height of one row of numbered markers on the What Changed chart
+const MARK_GAP = 22;     // markers closer than this (percent of the chart's width) go on the next row up, so their labels do not touch
+const WC_PAGE = 5;       // changes per page in the What Changed table, numbered on the chart beside it (Lou, 27 Nov)
+const KIND_LABEL = { change: 'Change Order', document: 'Document', revision: 'Part Revision', deviation: 'Deviation', lot: 'Lot', calibration: 'Calibration', manual: 'Added by You' };
 const RATING_CLS = { 'Could Explain It': 'cq-pill soft warn', 'Worth a Look': 'cq-pill soft ai', 'The Affected Lot': 'cq-pill soft neu', Unlikely: 'cq-pill soft neu' };
 const MATCH_TONE = { red: 'crit', yellow: 'warn' };
 const RATING_RANK = { 'Could Explain It': 1, 'Worth a Look': 2, 'The Affected Lot': 3, Unlikely: 4 };   // most likely first when sorted up
 // the tables' columns (c/cqSort): each heading sorts its table; the action column does not
 const COLS = {
     known: [{ key: 'source', label: 'Source' }, { key: 'says', label: 'What It Says' }, { key: 'chip', label: 'Status' }],
-    chg: [{ key: 'name', label: 'Change' }, { key: 'whatChanged', label: 'What Changed' }, { key: 'day', label: 'When' },
-        { key: 'foundIn', label: 'Found In' }, { key: 'ratingN', label: 'CQ.AI Says' }, { key: 'act', label: '', sortable: false }],
+    chg: [{ key: 'n', label: '', sortable: false, cls: 'wc-ncol' }, { key: 'name', label: 'Change' }, { key: 'whatChanged', label: 'What Changed' },
+        { key: 'ratingN', label: 'CQ.AI Says' }, { key: 'act', label: '', sortable: false }],
     hist: [{ key: 'name', label: 'Record' }, { key: 'what', label: 'What Happened' }, { key: 'cause', label: 'Root Cause' },
         { key: 'fix', label: 'How It Was Fixed' }, { key: 'matchN', label: 'Match' }, { key: 'act', label: '', sortable: false }],
     oth: [{ key: 'name', label: 'Record' }, { key: 'what', label: 'What Happened' }, { key: 'matchN', label: 'Match' }, { key: 'act', label: '', sortable: false }],
@@ -226,6 +228,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handleSort(event) {
         const d = event.currentTarget.dataset;
         this.sorts = { ...this.sorts, [d.t]: nextSort(this.sorts[d.t], d.key) };
+        if (d.t === 'chg') { this.wcPage = 1; this.wcTip = null; }
     }
     get knownRows() { return sortRows(this.knownList, this.sorts.known); }
     get knownList() {
@@ -450,10 +453,15 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     changeForm;            // { whatChanged, changeDate, category, whereFound, reference }
     wcSaving = false;
     wcNotice;
+    wcPage = 1;            // the What Changed table's page
+    wcTip;                 // the key of the chart marker being hovered or focused (its bubble shows)
+    lbOpen = false;        // the Look back menu
 
     async loadChanges() {
         this.wcLoading = true;
         this.wcError = undefined;
+        this.wcPage = 1;
+        this.wcTip = null;
         try {
             this.wc = await getChanges({ recordId: this.recordId, days: this.wcDays });
         } catch (e) {
@@ -463,11 +471,18 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         }
     }
     get wcReady() { return !!this.wc && !this.wcLoading; }
+    // Look back: a link on the chart that opens a menu of periods
     get lookBackOpts() {
-        return LOOK_BACK.map((d) => ({ d, label: d + ' Days', pressed: String(d === this.wcDays), cls: 'cq-chip' }));
+        return LOOK_BACK.map((d) => ({ d, label: d + ' days', checked: String(d === this.wcDays), tick: d === this.wcDays ? '✓' : '',
+            cls: 'wc-lbitem' + (d === this.wcDays ? ' on' : '') }));
     }
+    get lbExpanded() { return String(this.lbOpen); }
+    toggleLookBack() { this.lbOpen = !this.lbOpen; }
+    closeLookBack() { this.lbOpen = false; }
+    handleLbKey(event) { if (event.key === 'Escape' && this.lbOpen) { event.stopPropagation(); this.lbOpen = false; } }
     handleLookBack(event) {
         const d = Number(event.currentTarget.dataset.d);
+        this.lbOpen = false;
         if (d === this.wcDays) { return; }
         this.wcDays = d;
         this.hypForm = undefined;
@@ -502,9 +517,19 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         if (cal) { lines.push(cal.name.replace(' Calibration', '') + ': ' + cal.whatChanged.charAt(0).toLowerCase() + cal.whatChanged.slice(1) + '.'); }
         return lines.join(' ');
     }
+    /** What Stands Out's opening (to the first colon, else the first sentence) in bold, the rest after it. */
+    get standOutLead() {
+        const s = this.standOut || '';
+        const c = s.indexOf(': ');
+        const dot = s.indexOf('. ');
+        if (c > -1 && (dot < 0 || c < dot)) { return s.slice(0, c + 1); }
+        return dot > -1 ? s.slice(0, dot + 1) : s;
+    }
+    get standOutRest() { return (this.standOut || '').slice(this.standOutLead.length); }
     joinAnd(a) { return a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0]; }
 
-    // the timeline: dots and labels for dated changes, a band for each deviation in effect, the start marker
+    // the chart: each change on the table's page as a numbered marker (rows up when they crowd), the others as faint dots,
+    // a band for each deviation in effect, the start marker; hovering or focusing a number shows its bubble
     get timeline() {
         const v = this.wc;
         if (!v) { return null; }
@@ -512,64 +537,101 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         const to = this.dn(v.startDate) + 2;
         const span = to - from;
         const pct = (iso) => Math.max(0, Math.min(100, ((this.dn(iso) - from) / span) * 100));
+        const all = this.changeAll;
+        const byKey = new Map(all.map((r) => [r.key, r]));
+        const onPage = new Set(this.changeRows.map((r) => r.key));
+        const points = v.items.filter((i) => i.onTimeline && !i.inEffect && i.day);
+        const lanes = [];
+        const marks = points.filter((i) => onPage.has(i.key)).map((i) => ({ i, x: pct(i.day) })).sort((a, b) => a.x - b.x).map((m) => {
+            let lane = 0;
+            while (lane < 3 && lanes[lane] !== undefined && m.x - lanes[lane] < MARK_GAP) { lane++; }
+            lanes[lane] = m.x;
+            return { ...m, lane };
+        });
+        const nLanes = Math.max(1, lanes.length);
+        const axis = 30 + nLanes * LANE_H;
+        const bandsIn = v.items.filter((i) => i.inEffect);
+        const startX = pct(v.startDate);
         const step = v.days <= 14 ? 3 : v.days <= 30 ? 7 : v.days <= 60 ? 14 : 21;
         const ticks = [];
         for (let d = 0; d <= span - 2; d += step) {
+            const x = (d / span) * 100;
+            if (startX - x < 14) { continue; }
             const dt = new Date((from + d) * 86400000);
-            ticks.push({ key: 't' + d, label: MONTHS[dt.getUTCMonth()] + ' ' + dt.getUTCDate(), x: (d / span) * 100 });
+            ticks.push({ key: 't' + d, label: MONTHS[dt.getUTCMonth()] + ' ' + dt.getUTCDate(), cls: 'wc-tickl' + (d === 0 ? ' first' : ''), x });
         }
-        const events = v.items.filter((i) => i.onTimeline && !i.inEffect).map((i) => ({
-            key: i.key, x: pct(i.day), head: this.md(i.day) + ' · ' + i.name.replace(/^Lot /, ''),
-            text: i.kind === 'lot' ? 'The affected lot is built' : this.shortText(i.whatChanged), kind: i.kind === 'lot' ? 'lot' : 'change' }));
-        events.push({ key: 'start', x: pct(v.startDate), head: this.md(v.startDate) + ' · Problem Starts', text: 'Start (' + v.startFrom + ')', kind: 'start' });
-        events.sort((a, b) => a.x - b.x);
-        // lay labels into lanes: up 1, down 1, up 2, down 2 ... the first lane where it does not overlap
-        const lanes = {};
-        const order = ['u1', 'd1', 'u2', 'd2', 'u3', 'd3'];
-        events.forEach((e) => {
-            e.right = e.x > 55;
-            const lo = e.right ? e.x - LABEL_W : e.x;
-            const hi = e.right ? e.x : e.x + LABEL_W;
-            e.lane = order.find((l) => !(lanes[l] || []).some((r) => lo < r[1] && hi > r[0])) || 'u3';
-            (lanes[e.lane] = lanes[e.lane] || []).push([lo - 1, hi + 1]);
-        });
-        const ups = Math.max(1, ...events.filter((e) => e.lane[0] === 'u').map((e) => Number(e.lane[1])));
-        const downs = Math.max(0, ...events.filter((e) => e.lane[0] === 'd').map((e) => Number(e.lane[1])));
-        const bandsIn = v.items.filter((i) => i.inEffect);
-        const bandTop = ups * LANE_H + 6;
-        const axis = bandTop + bandsIn.length * 22 + 28;
-        const bands = bandsIn.map((i, k) => {
-            const a = pct(i.day < v.windowStart ? v.windowStart : i.day);
-            const b = i.untilDay && i.untilDay < v.startDate ? pct(i.untilDay) : 100;
-            return { key: i.key, style: 'top: ' + (bandTop + k * 22) + 'px; left: ' + a + '%; width: ' + Math.max(b - a, 2) + '%;',
-                label: i.name + ' · in effect ' + this.md(i.day) + (i.untilDay ? ' to ' + this.md(i.untilDay) : '') };
-        });
+        ticks.push({ key: 'tstart', label: this.md(v.startDate) + ' · Start', cls: 'wc-tickl start', x: startX });
         const closeA = pct(this.isoAdd(v.startDate, -14) < v.windowStart ? v.windowStart : this.isoAdd(v.startDate, -14));
+        let tip = null;
+        const shown = marks.map((m) => {
+            const r = byKey.get(m.i.key) || {};
+            const lot = m.i.kind === 'lot';
+            const top = axis - 40 - m.lane * LANE_H;
+            if (this.wcTip === m.i.key) {
+                const shift = m.x > 72 ? 'calc(-100% + 12px)' : m.x < 20 ? '-12px' : '-50%';
+                tip = { cls: 'wc-tip' + (lot ? ' lot' : ''), head: m.i.name + ' · ' + this.md(m.i.day), text: m.i.whatChanged, rel: r.rel,
+                    style: 'left: ' + m.x + '%; top: ' + (top - 6) + 'px; transform: translate(' + shift + ', -100%);' };
+            }
+            return { key: m.i.key, kStem: 's:' + m.i.key, kKind: 'k:' + m.i.key, n: r.n,
+                aria: r.n + ': ' + m.i.name + ', ' + this.md(m.i.day) + '. ' + (m.i.whatChanged || ''),
+                cls: 'wc-num' + (lot ? ' lot' : ''), style: 'left: ' + m.x + '%; top: ' + top + 'px;',
+                stemCls: 'wc-stem' + (lot ? ' lot' : ''), stem: 'left: ' + m.x + '%; top: ' + (top + 24) + 'px; height: ' + (axis - top - 24) + 'px;',
+                kind: KIND_LABEL[m.i.kind] || m.i.foundIn, kindCls: 'wc-kind' + (lot ? ' lot' : ''),
+                kindStyle: 'left: ' + m.x + '%; top: ' + (top + 4) + 'px; transform: ' + (m.x > 75 ? 'translateX(calc(-100% - 16px))' : 'translateX(16px)') + ';' };
+        });
         return {
-            height: 'height: ' + (axis + 16 + downs * LANE_H) + 'px;',
+            height: 'height: ' + (axis + 30 + bandsIn.length * 22 + (bandsIn.length ? 4 : 0)) + 'px;',
             axis: 'top: ' + axis + 'px;',
-            shade: 'top: ' + (axis - 13) + 'px; left: ' + closeA + '%; width: ' + (pct(v.startDate) - closeA) + '%;',
-            ticks: ticks.map((t) => ({ ...t, style: 'top: ' + (axis - 18) + 'px; left: ' + t.x + '%;' + (t.x === 0 ? '' : ' transform: translateX(-50%);') })),
-            bands,
-            events: events.map((e) => {
-                const up = e.lane[0] === 'u';
-                const n = Number(e.lane[1]);
-                const top = up ? (ups - n) * LANE_H : axis + 16 + (n - 1) * LANE_H;
-                const lineTop = up ? top + 44 : axis + 6;
-                const lineH = up ? axis - lineTop : top - axis - 6;
-                return { key: e.key, kLine: 'l:' + e.key, kDot: 'd:' + e.key, head: e.head, text: e.text,
-                    dot: 'top: ' + (axis - 7) + 'px; left: ' + e.x + '%;', dotCls: 'tl-dot ' + e.kind,
-                    line: 'top: ' + lineTop + 'px; height: ' + Math.max(lineH, 0) + 'px; left: ' + e.x + '%;', lineCls: 'tl-line ' + e.kind,
-                    box: 'top: ' + top + 'px; ' + (e.right ? 'right: ' + (100 - e.x) + '%; margin-right: -10px; text-align: right;' : 'left: ' + e.x + '%; margin-left: -10px;'),
-                    boxCls: 'tl-box ' + e.kind };
-            })
+            shade: 'top: ' + (axis - 10) + 'px; left: ' + closeA + '%; width: ' + (startX - closeA) + '%;',
+            start: 'top: ' + (axis - 7) + 'px; left: ' + startX + '%;',
+            ticks: ticks.map((t) => ({ ...t, style: 'top: ' + (axis + 10) + 'px; left: ' + t.x + '%;' })),
+            others: points.filter((i) => !onPage.has(i.key)).map((i) => ({ key: 'o:' + i.key, cls: 'wc-dot' + (i.kind === 'lot' ? ' lot' : ''),
+                style: 'top: ' + (axis - 3) + 'px; left: ' + pct(i.day) + '%;' })),
+            marks: shown,
+            bands: bandsIn.map((i, k) => {
+                const a = pct(i.day < v.windowStart ? v.windowStart : i.day);
+                const b = i.untilDay && i.untilDay < v.startDate ? pct(i.untilDay) : 100;
+                const r = byKey.get(i.key);
+                const label = (r ? r.n + ' · ' : '') + i.name + ' · in effect ' + this.md(i.day) + (i.untilDay ? ' to ' + this.md(i.untilDay) : '');
+                return { key: i.key, label, style: 'top: ' + (axis + 30 + k * 22) + 'px; left: ' + a + '%; width: ' + Math.max(b - a, 2) + '%;' };
+            }),
+            tip
         };
     }
+    handleTip(event) { this.wcTip = event.currentTarget.dataset.key; }
+    handleTipOff() { this.wcTip = null; }
     isoAdd(iso, days) { const d = new Date((this.dn(iso) + days) * 86400000); return d.toISOString().slice(0, 10); }
     shortText(t) { if (!t) { return ''; } const s = t.split(': ').pop(); return s.length > 60 ? s.slice(0, 57) + '…' : s; }
     get hasBands() { return this.timeline && this.timeline.bands.length > 0; }
 
-    get changeRows() { return sortRows(this.changeList, this.sorts.chg); }
+    /** Every change in the table's order, numbered; the same number marks it on the chart. */
+    get changeAll() { return sortRows(this.changeList, this.sorts.chg).map((r, i) => ({ ...r, n: i + 1 })); }
+    get wcPageCount() { return Math.max(1, Math.ceil(this.changeList.length / WC_PAGE)); }
+    get wcPageNow() { return Math.min(this.wcPage, this.wcPageCount); }
+    get changeRows() {
+        const p = this.wcPageNow;
+        return this.changeAll.slice((p - 1) * WC_PAGE, p * WC_PAGE)
+            .map((r) => ({ ...r, numCls: 'wc-num sm' + (r.onChart ? (r.kind === 'lot' ? ' lot' : '') : ' off') }));
+    }
+    get wcPaged() { return this.changeList.length > WC_PAGE; }
+    get cantPrevWc() { return this.wcPageNow <= 1; }
+    get cantNextWc() { return this.wcPageNow >= this.wcPageCount; }
+    /** Page numbers: all of them up to 7, else the first, the last and the two beside the current one, with dots between. */
+    get wcPageItems() {
+        const n = this.wcPageCount;
+        const now = this.wcPageNow;
+        const want = n <= 7 ? Array.from({ length: n }, (x, i) => i + 1)
+            : [...new Set([1, now - 1, now, now + 1, n])].filter((p) => p >= 1 && p <= n).sort((a, b) => a - b);
+        const out = [];
+        want.forEach((p, i) => {
+            if (i && p - want[i - 1] > 1) { out.push({ key: 'g' + p, p: 0, text: '…', cls: 'pg gap', off: true, label: 'More pages' }); }
+            out.push({ key: 'p' + p, p, text: String(p), cls: 'pg' + (p === now ? ' on' : ''), off: p === now, current: p === now ? 'page' : null, label: 'Page ' + p });
+        });
+        return out;
+    }
+    handleWcPage(event) { const p = Number(event.currentTarget.dataset.p); if (p) { this.wcPage = p; this.wcTip = null; } }
+    handleWcPrev() { if (!this.cantPrevWc) { this.wcPage = this.wcPageNow - 1; this.wcTip = null; } }
+    handleWcNext() { if (!this.cantNextWc) { this.wcPage = this.wcPageNow + 1; this.wcTip = null; } }
     get changeList() {
         if (!this.wc) { return []; }
         const start = this.dn(this.wc.startDate);
@@ -582,7 +644,8 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             else if (before === 0) { rel = 'The start date'; }
             else { rel = before + (before === 1 ? ' day before' : ' days before'); }
             return {
-                key: i.key, name: i.name, href: i.recordId && !i.byHand ? this.href(i.recordId) : null, byHand: i.byHand,
+                key: i.key, name: i.name, href: i.recordId && !i.byHand ? this.href(i.recordId) : null, byHand: i.byHand, kind: i.kind,
+                onChart: !!(i.inEffect || (i.onTimeline && i.day)),
                 hasHref: !!(i.recordId && !i.byHand), category: i.category, whatChanged: i.whatChanged, foundIn: i.foundIn,
                 whenText: i.inEffect ? 'Since ' + this.md(i.day) : this.md(i.day), rel, rating: i.rating, ratingN: RATING_RANK[i.rating] || 5, day: i.day, ratingCls: RATING_CLS[i.rating] || 'cq-pill soft neu',
                 added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null,

@@ -169,3 +169,11 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   kept. Page state c__part = investigation or disposition opens a side. To finish: on CQEA_NC_Record_Page1, replace the
   Disposition workspace (header, Stage = Disposition_Investigate) with CQ.AI NC Workspaces (Lou in App Builder), and
   assign the permission sets. Later: the home page's Investigation and Disposition lines open their side.
+  Update 27 Nov: the tabs became a small Change Workspace link at the bottom right of the workspace header (cqWsShell asks
+  the page with the cqworkspacehost event; only cqNcWorkspaces answers). The App Builder swap is done.
+- Investigation, What Changed (built 27 Nov, mockup "What Changed Side-by-Side Mockup"): the chart and the table side by
+  side; Look back is a link on the chart with a menu (14/30/60/90 days); the table shows 5 changes a page (cqStyles
+  cq-pager), one line each with an ellipsis, numbered; each number marks the change on the chart with a label for the kind
+  of record and a bubble on hover or focus; other pages' changes are faint dots. Page-local styles (wc-*) to fold into
+  cqStyles with the design-system work. Next: go through the other Investigation steps, then e-signature on Complete
+  Investigation.
