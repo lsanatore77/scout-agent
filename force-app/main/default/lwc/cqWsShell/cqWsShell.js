@@ -55,7 +55,36 @@ export default class CqWsShell extends LightningElement {
     hasSide = false;
     @wire(getLook)
     wiredLook({ data }) { if (data) { this.look = data; this.paintTheme(); } }
-    connectedCallback() { this.paintTheme(); }
+    connectedCallback() { this.paintTheme(); this.askHost(); }
+
+    /* Change Workspace: when this workspace sits in a page that switches between workspaces (cqNcWorkspaces), the page
+       answers this event with the choices, the one this workspace is, and how to switch. Nowhere else answers it, so
+       every other workspace shows no link. The workspaces themselves pass nothing. */
+    wsChoices = [];
+    wsCurrent;
+    wsPick;
+    wsOpen = false;
+    askHost() {
+        const ask = {};
+        this.dispatchEvent(new CustomEvent('cqworkspacehost', { bubbles: true, composed: true, detail: ask }));
+        if (ask.choices && ask.pick) { this.wsChoices = ask.choices; this.wsCurrent = ask.current; this.wsPick = ask.pick; }
+    }
+    get hasWorkspaces() { return (this.wsChoices || []).length > 1; }
+    get wsExpanded() { return String(this.wsOpen); }
+    get wsRows() {
+        return this.wsChoices.map((w) => {
+            const on = w.key === this.wsCurrent;
+            return { ...w, checked: String(on), tick: on ? '\u2713' : '', cls: 'wsitem' + (on ? ' on' : '') };
+        });
+    }
+    toggleWs() { this.wsOpen = !this.wsOpen; }
+    closeWs() { this.wsOpen = false; }
+    pickWs(event) {
+        const key = event.currentTarget.dataset.key;
+        this.wsOpen = false;
+        if (key !== this.wsCurrent && this.wsPick) { this.wsPick(key); }
+    }
+    handleWsKey(event) { if (event.key === 'Escape' && this.wsOpen) { event.stopPropagation(); this.wsOpen = false; } }
     get themeName() { const t = this.theme !== undefined && this.theme !== null ? this.theme : this.look.theme; return t && t !== 'none' ? String(t).toLowerCase() : ''; }
     /** The theme is a class on the host (:host(.cq-theme-<name>) in cqStyles), so it reaches the slotted steps and their components. */
     paintTheme() {

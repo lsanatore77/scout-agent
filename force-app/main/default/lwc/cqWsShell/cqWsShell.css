@@ -20,3 +20,17 @@
 .cq-hl-v.tone-pos { color: var(--cq-hl-pos); font-weight: 700; }
 .cq-hl-v.tone-warn { color: var(--cq-hl-warn); font-weight: 700; }
 .cq-hl-v.tone-crit { color: var(--cq-hl-crit); font-weight: 700; }
+/* Change Workspace: a small link under the header buttons that opens a menu of the page's workspaces (Lou, 27 Nov) */
+.hlside { display: flex; flex-direction: column; align-items: flex-end; gap: var(--cq-s2); }
+.wsmenu { position: relative; }
+.wslink { padding: 0; border: 0; background: none; font: inherit; font-size: var(--cq-fs-micro); color: var(--cq-hl-link); cursor: pointer; }
+.wslink:hover { text-decoration: underline; }
+.wslink:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; }
+.wsveil { position: fixed; inset: 0; z-index: 30; }
+.wslist { position: absolute; top: calc(100% + var(--cq-s1)); right: 0; z-index: 31; display: flex; flex-direction: column; min-width: 13rem;
+          padding: var(--cq-s1) 0; background: var(--cq-bg); border: 1px solid var(--cq-line); border-radius: var(--cq-r-card); box-shadow: 0 2px 8px rgba(27, 31, 39, .12); }
+.wsitem { display: flex; align-items: center; gap: var(--cq-s2); padding: var(--cq-s2) var(--cq-s4); border: 0; background: none;
+          font: inherit; font-size: var(--cq-fs-meta); color: var(--cq-ink); text-align: left; white-space: nowrap; cursor: pointer; }
+.wsitem:hover, .wsitem:focus-visible { background: var(--cq-surface); outline: none; }
+.wsitem.on { color: var(--cq-link); font-weight: 700; }
+.wstick { display: inline-block; width: 1em; }

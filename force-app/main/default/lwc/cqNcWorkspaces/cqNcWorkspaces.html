@@ -1,19 +1,12 @@
 <template>
     <div class="wrap">
-        <template if:true={hasTabs}>
-            <div class="parts" role="tablist" aria-label="Part of the nonconformance" onkeydown={handleTabKey}>
-                <template for:each={tabs} for:item="t">
-                    <button key={t.key} id={t.id} class={t.cls} role="tab" aria-selected={t.selected} data-key={t.key} onclick={handleTab}>{t.label}</button>
-                </template>
-            </div>
-        </template>
         <template if:true={loadInv}>
-            <div class={invCls} role="tabpanel" aria-label="Investigation">
+            <div class={invCls}>
                 <c-cq-investigation-workspace record-id={recordId}></c-cq-investigation-workspace>
             </div>
         </template>
         <template if:true={loadDisp}>
-            <div class={dispCls} role="tabpanel" aria-label="Disposition">
+            <div class={dispCls}>
                 <c-cq-disposition-workspace record-id={recordId}></c-cq-disposition-workspace>
             </div>
         </template>

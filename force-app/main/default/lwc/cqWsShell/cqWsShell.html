@@ -9,11 +9,28 @@
                         <span class="cq-hl-title">{recordName}</span>
                     </div>
                 </div>
+                <div class="hlside">
                 <div class="cq-hl-actions">
                     <slot name="actions"></slot>
                     <template if:true={auditTrail}><c-cq-audit-trail record-id={recordId}></c-cq-audit-trail></template>
                     <template if:true={agentName}><c-ask-cq-popover record-id={recordId} agent-name={agentName} placeholder={askPlaceholder} step={askStep} suggestions={askSuggestions} pin-label={pinLabel} onaskcqaction={handleAskAction} onaskcqpin={handleAskPin}></c-ask-cq-popover></template>
                     <template if:true={showEdit}><button class="cq-btn-outline" onclick={handleEdit}>Edit</button></template>
+                </div>
+                <template if:true={hasWorkspaces}>
+                    <div class="wsmenu" onkeydown={handleWsKey}>
+                        <button class="wslink" aria-haspopup="menu" aria-expanded={wsExpanded} onclick={toggleWs}>Change Workspace</button>
+                        <template if:true={wsOpen}>
+                            <div class="wsveil" onclick={closeWs}></div>
+                            <div class="wslist" role="menu" aria-label="Change Workspace">
+                                <template for:each={wsRows} for:item="w">
+                                    <button key={w.key} class={w.cls} role="menuitemradio" aria-checked={w.checked} data-key={w.key} onclick={pickWs}>
+                                        <span class="wstick" aria-hidden="true">{w.tick}</span>{w.label}
+                                    </button>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
                 </div>
             </div>
             <template if:true={hasFields}>
