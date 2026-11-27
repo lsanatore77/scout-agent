@@ -24,22 +24,19 @@
                         <tbody>
                             <template for:each={hypRows} for:item="h">
                                 <tr key={h.id} class={h.rowCls}>
-                                    <td class="wide"><div class="cq-strong">{h.title}</div><div class="cq-note sm0">{h.sub}</div></td>
+                                    <td class="wide"><button class="cq-link hyplink" data-id={h.id} onclick={handleSelect}>{h.title}</button></td>
                                     <td>{h.category}</td>
                                     <td class="wide">
                                         <c-cq-ai-why variant="label" text={h.suggest} question={h.askWhy}></c-cq-ai-why>
-                                        <div class="cq-note sm0">{h.suggestWhy}</div>
-                                        <template if:true={h.canPlan}><button class="cq-btn-outline top6" data-id={h.id} onclick={handlePlan}>Plan This Test</button></template>
                                     </td>
                                     <td><span class={h.statusCls}>{h.status}</span></td>
                                     <td class="cq-nowrap">{h.tests}</td>
-                                    <td><button class={h.btnCls} data-id={h.id} onclick={handleSelect}>{h.btn}</button></td>
+                                    <td class="cq-nowrap"><template if:true={h.canPlan}><button class="cq-btn-outline" data-id={h.id} onclick={handlePlan}>Plan This Test</button></template></td>
                                 </tr>
                             </template>
                         </tbody>
                     </table>
                 </div>
-                <p class="cq-note">Every hypothesis starts Open; you decide Confirmed or Ruled Out. CQ.AI&rsquo;s suggestion comes from the evidence, and clicking &#10022; shows the facts behind it.</p>
             </template>
 
             <template if:true={hasNewHyps}>

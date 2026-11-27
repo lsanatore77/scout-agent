@@ -16,6 +16,8 @@
 .tab.on { color: var(--cq-link); border-bottom-color: var(--cq-link); }
 .star { margin-right: 4px; }
 .selrow td { background: var(--cq-link-soft); }
+/* the hypothesis title selects it (the Select button went, Lou 27 Nov) */
+.hyplink { white-space: normal; text-align: left; font-size: inherit; }
 .top6 { margin-top: 6px; }
 .plainbtn { border: none; background: none; padding: 0; font: inherit; font-size: var(--cq-fs-meta); font-weight: 600; color: var(--cq-link); cursor: pointer; }
 .newhyp { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px; margin-top: 14px; border-radius: 10px; background: var(--cq-accent-soft); border: 1px solid var(--cq-accent-line); line-height: 1.45; }
