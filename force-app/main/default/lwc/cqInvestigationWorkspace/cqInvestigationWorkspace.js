@@ -229,6 +229,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         const d = event.currentTarget.dataset;
         this.sorts = { ...this.sorts, [d.t]: nextSort(this.sorts[d.t], d.key) };
         if (d.t === 'chg') { this.wcPage = 1; this.wcTip = null; }
+        if (d.t === 'hist') { this.histPage = 1; }
     }
     get knownRows() { return sortRows(this.knownList, this.sorts.known); }
     get knownList() {
@@ -616,10 +617,9 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get wcPaged() { return this.changeList.length > WC_PAGE; }
     get cantPrevWc() { return this.wcPageNow <= 1; }
     get cantNextWc() { return this.wcPageNow >= this.wcPageCount; }
-    /** Page numbers: all of them up to 7, else the first, the last and the two beside the current one, with dots between. */
-    get wcPageItems() {
-        const n = this.wcPageCount;
-        const now = this.wcPageNow;
+    get wcPageItems() { return this.pageItems(this.wcPageCount, this.wcPageNow); }
+    /** Page numbers for a cqStyles pager: all of them up to 7, else the first, the last and the two beside the current one, with dots between. */
+    pageItems(n, now) {
         const want = n <= 7 ? Array.from({ length: n }, (x, i) => i + 1)
             : [...new Set([1, now - 1, now, now + 1, n])].filter((p) => p >= 1 && p <= n).sort((a, b) => a - b);
         const out = [];
@@ -792,9 +792,10 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     histNotice;
     histShowOthers = false;
     histBusy = false;
+    histPage = 1;          // the Check History table shows 5 records a page (Lou, 27 Nov)
 
     async loadHistory(quiet) {
-        if (!quiet) { this.histLoading = true; }
+        if (!quiet) { this.histLoading = true; this.histPage = 1; }
         this.histError = undefined;
         try {
             this.hist = await getHistory({ recordId: this.recordId });
@@ -869,8 +870,18 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             added: i.hypothesis ? '✓ Added as H' + i.hypothesis : null, canAdd: !i.hypothesis
         };
     }
-    get histRows() { return this.hist ? sortRows(this.hist.items.map((i) => this.histRow(i)), this.sorts.hist) : []; }
-    get hasHistRows() { return this.histRows.length > 0; }
+    get histAll() { return this.hist ? sortRows(this.hist.items.map((i) => this.histRow(i)), this.sorts.hist) : []; }
+    get histPageCount() { return Math.max(1, Math.ceil(this.histAll.length / WC_PAGE)); }
+    get histPageNow() { return Math.min(this.histPage, this.histPageCount); }
+    get histRows() { const p = this.histPageNow; return this.histAll.slice((p - 1) * WC_PAGE, p * WC_PAGE); }
+    get hasHistRows() { return this.histAll.length > 0; }
+    get histPaged() { return this.histAll.length > WC_PAGE; }
+    get cantPrevHist() { return this.histPageNow <= 1; }
+    get cantNextHist() { return this.histPageNow >= this.histPageCount; }
+    get histPageItems() { return this.pageItems(this.histPageCount, this.histPageNow); }
+    handleHistPage(event) { const p = Number(event.currentTarget.dataset.p); if (p) { this.histPage = p; } }
+    handleHistPrev() { if (!this.cantPrevHist) { this.histPage = this.histPageNow - 1; } }
+    handleHistNext() { if (!this.cantNextHist) { this.histPage = this.histPageNow + 1; } }
     get otherRows() { return this.hist ? sortRows(this.hist.others.map((i) => this.histRow(i)), this.sorts.oth) : []; }
     get otherCount() { return this.hist ? this.hist.others.length : 0; }
     get hasOthers() { return this.otherCount > 0; }

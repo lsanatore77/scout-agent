@@ -237,7 +237,7 @@
                                         <tbody>
                                             <template for:each={histRows} for:item="r">
                                                 <tr key={r.key}>
-                                                    <td><a class="cq-link" href={r.href} target="_blank">{r.name}</a><div class="cq-note sm0">{r.sub}</div></td>
+                                                    <td class="cq-nowrap"><a class="cq-link" href={r.href} target="_blank" title={r.sub}>{r.name}</a></td>
                                                     <td>{r.what}</td>
                                                     <td>
                                                         <template if:false={r.causeIsNone}><span class="cq-strong">{r.cause}</span></template>
@@ -248,7 +248,7 @@
                                                         <template if:true={r.fix}><a class="cq-link" href={r.fixHref} target="_blank">{r.fix}</a> {r.capaTitle}</template>
                                                         <div class="cq-note sm0">{r.fixNote}</div>
                                                     </td>
-                                                    <td><span class={r.matchCls}>{r.matchText}</span><div class="cq-note sm0">{r.why}</div></td>
+                                                    <td><span class={r.matchCls} title={r.why}>{r.matchText}</span></td>
                                                     <td class="cq-nowrap">
                                                         <div class="actcol">
                                                             <template if:true={r.added}><span class="added">{r.added}</span></template>
@@ -261,6 +261,17 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <template if:true={histPaged}>
+                                    <div class="cq-pager">
+                                        <nav class="cq-pages" aria-label="History pages">
+                                            <button class="pg" onclick={handleHistPrev} disabled={cantPrevHist} aria-label="Previous page">&laquo;</button>
+                                            <template for:each={histPageItems} for:item="p">
+                                                <button key={p.key} class={p.cls} data-p={p.p} onclick={handleHistPage} disabled={p.off} aria-current={p.current} aria-label={p.label}>{p.text}</button>
+                                            </template>
+                                            <button class="pg" onclick={handleHistNext} disabled={cantNextHist} aria-label="Next page">&raquo;</button>
+                                        </nav>
+                                    </div>
+                                </template>
                             </template>
                             <template if:false={hasHistRows}><p class="cq-note">Nothing in CQ matches this problem on this part.</p></template>
                             <template if:true={histNotice}><div class="cq-msg pos okbox">{histNotice}</div></template>
