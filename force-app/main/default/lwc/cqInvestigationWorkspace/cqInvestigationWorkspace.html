@@ -362,13 +362,14 @@
                     <!-- 6 Conclusion -->
                     <template if:true={showConclusion}>
                         <h3 class="cq-step-title">Conclusion</h3>
-                        <div class="cq-field"><span class="cq-label">Conclusion<span class="cq-req">*</span></span>
-                            <div class="cq-chips">
+                        <label class="cq-field concl"><span class="cq-label">Conclusion<span class="cq-req">*</span></span>
+                            <select onchange={handleConclusion}>
+                                <option value="" selected={noConclusion}>Choose a conclusion</option>
                                 <template for:each={conclusionOpts} for:item="c">
-                                    <button key={c.label} class={c.cls} data-c={c.label} aria-pressed={c.pressed} onclick={handleConclusion}>{c.label}</button>
+                                    <option key={c.label} value={c.label} selected={c.selected}>{c.label}</option>
                                 </template>
-                            </div>
-                        </div>
+                            </select>
+                        </label>
                         <template if:true={recurWarn}><div class="cq-msg warn">{recurWarn}</div></template>
                         <template if:true={noCauseWarn}><div class="cq-msg warn">Confirmed usually means the root cause is known, but no root cause is recorded on this investigation yet.</div></template>
                         <label class="cq-field cq-mt16"><span class="cq-label">Investigation Summary<span class="cq-req">*</span></span>

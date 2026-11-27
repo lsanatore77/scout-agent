@@ -382,9 +382,11 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
 
     // ---- step 6: Conclusion
     get conclusionOpts() {
-        return (this.v.conclusions || []).map((c) => ({ label: c, pressed: String(this.conclusion === c), cls: 'cq-chip' }));
+        return (this.v.conclusions || []).map((c) => ({ label: c, selected: this.conclusion === c }));
     }
-    handleConclusion(event) { this.conclusion = event.currentTarget.dataset.c; this.error = undefined; }
+    get noConclusion() { return !this.conclusion; }
+    /** Conclusion is a drop-down (Lou, 27 Nov). */
+    handleConclusion(event) { this.conclusion = event.target.value || undefined; this.error = undefined; }
     handleSummary(event) { this.summary = event.target.value; this.sumConfirm = false; this.error = undefined; }
     // CQ.AI Suggested Summary: the prompt template writes Problem, Containment, Hypotheses, Root Cause and Actions
     // from the investigation; the actions on screen are sent too, so unsaved ones are included

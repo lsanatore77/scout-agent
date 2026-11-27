@@ -39,6 +39,7 @@
 .cq-card-title { margin-bottom: 6px; }
 .cq-pcard .cq-card-title, .card .cq-card-title { margin-bottom: 0; }
 .cq-field input.date { width: 170px; }
+.cq-field.concl select { max-width: 20rem; }
 .cq-field textarea.summary { min-height: 200px; line-height: 1.5; }
 .cq-field textarea.hypta, .cq-field textarea.plandesc { min-height: 72px; }
 .cq-msg.warn { margin: 8px 0 14px; }
