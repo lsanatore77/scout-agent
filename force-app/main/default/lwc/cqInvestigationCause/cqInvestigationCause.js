@@ -173,6 +173,7 @@ export default class CqInvestigationCause extends LightningElement {
                 category: h.category || '—', suggest: h.suggest, suggestWhy: h.suggestWhy, sugCls: SUGGEST_CLS[h.suggest] || 'sug',
                 askWhy: 'Why does CQ.AI suggest ' + this.hname(h) + ' is ' + (h.suggest || '').toLowerCase() + '? Give the facts.',
                 canPlan: h.suggest === 'Needs Evidence' && h.status === 'Open' && !h.testsPlanned,
+                needsEvidence: h.suggest === 'Needs Evidence',
                 status: h.status, statusCls: STATUS_CLS[h.status] || 'cq-pill soft neu', tests: tests || '—',
                 btn: sel ? 'Selected' : 'View', btnCls: 'cq-btn-outline' + (sel ? ' selbtn' : ''), rowCls: sel ? 'selrow' : ''
             };
@@ -259,6 +260,11 @@ export default class CqInvestigationCause extends LightningElement {
     handleLink(event) {
         const whyId = event.currentTarget.dataset.why;
         this.openForm({ kind: 'CQ Record', hypId: whyId ? null : this.selId, whyId: whyId || null, supports: 'For' });
+    }
+    /** + Add Evidence in the table: selects the hypothesis and opens Add Test on it (Lou, 27 Nov). */
+    handleAddEvidence(event) {
+        this.selId = event.currentTarget.dataset.id;
+        this.openForm({ kind: 'Test', hypId: this.selId, whyId: null, status: 'Done' });
     }
     handlePlan(event) {
         const h = this.hyp(event.currentTarget.dataset.id);

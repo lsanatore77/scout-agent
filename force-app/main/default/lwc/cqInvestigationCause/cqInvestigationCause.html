@@ -20,14 +20,15 @@
                 </div>
                 <div class="cq-tblwrap cq-mt16">
                     <table class="cq-tbl">
-                        <thead><tr><th>Hypothesis</th><th>Category</th><th><span class="star">&#10022;</span>CQ.AI Suggests</th><th>Status</th><th>Tests</th><th></th></tr></thead>
+                        <thead><tr><th>Hypothesis</th><th>Category</th><th>Evidence</th><th>Status</th><th>Tests</th><th></th></tr></thead>
                         <tbody>
                             <template for:each={hypRows} for:item="h">
                                 <tr key={h.id} class={h.rowCls}>
                                     <td class="wide"><button class="cq-link hyplink" data-id={h.id} onclick={handleSelect}>{h.title}</button></td>
                                     <td>{h.category}</td>
                                     <td class="wide">
-                                        <c-cq-ai-why variant="label" text={h.suggest} question={h.askWhy}></c-cq-ai-why>
+                                        <template if:true={h.needsEvidence}><button class="cq-link" data-id={h.id} onclick={handleAddEvidence}>+ Add Evidence</button></template>
+                                        <template if:false={h.needsEvidence}><c-cq-ai-why variant="label" text={h.suggest} question={h.askWhy}></c-cq-ai-why></template>
                                     </td>
                                     <td><span class={h.statusCls}>{h.status}</span></td>
                                     <td class="cq-nowrap">{h.tests}</td>
