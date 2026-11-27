@@ -14,29 +14,90 @@
                 <div class="cq-infobox">No hypotheses yet. Add them from What Changed or Check History with Add as Hypothesis.</div>
             </template>
             <template if:true={hasHyps}>
-                <div class="cq-ai-card">
-                    <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                    <div class="cq-ai-says">{hypStandsOut}</div>
-                </div>
-                <div class="cq-tblwrap cq-mt16">
-                    <table class="cq-tbl">
-                        <thead><tr><th>Hypothesis</th><th>Category</th><th>Evidence</th><th>Status</th><th>Tests</th><th></th></tr></thead>
-                        <tbody>
-                            <template for:each={hypRows} for:item="h">
-                                <tr key={h.id} class={h.rowCls}>
-                                    <td class="wide"><button class="cq-link hyplink" data-id={h.id} onclick={handleSelect}>{h.title}</button></td>
-                                    <td>{h.category}</td>
-                                    <td class="wide">
-                                        <template if:true={h.needsEvidence}><button class="cq-link" data-id={h.id} onclick={handleAddEvidence}>+ Add Evidence</button></template>
-                                        <template if:false={h.needsEvidence}><c-cq-ai-why variant="label" text={h.suggest} question={h.askWhy}></c-cq-ai-why></template>
-                                    </td>
-                                    <td><span class={h.statusCls}>{h.status}</span></td>
-                                    <td class="cq-nowrap">{h.tests}</td>
-                                    <td class="cq-nowrap"><template if:true={h.canPlan}><button class="cq-link" data-id={h.id} onclick={handlePlan}>Plan This Test</button></template></td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
+                <div class="side">
+                    <section class="hlist" aria-label="Hypotheses">
+                        <div class="hlhead">Hypotheses</div>
+                        <template for:each={hypRows} for:item="h">
+                            <div key={h.id} class={h.rowCls} data-id={h.id} onclick={handleSelect}>
+                                <span class="hnum">{h.num}</span>
+                                <button class="cq-link hyplink" data-id={h.id} aria-pressed={h.pressed} onclick={handleSelect}>{h.title}</button>
+                                <span class="hmeta"><span>{h.category}</span><c-cq-ai-why variant="label" text={h.suggest} question={h.askWhy}></c-cq-ai-why><span class={h.statusCls}>{h.status}</span></span>
+                            </div>
+                        </template>
+                    </section>
+                    <template if:true={hasSel}>
+                        <section class="selcard" aria-label="Testing the selected hypothesis">
+                            <div class="selhead">
+                                <div class="cq-grow">
+                                    <div class="kicker">{selHead}</div>
+                                    <div class="seltitle">{sel.title}</div>
+                                </div>
+                                <span class={selStatusCls}>{sel.status}</span>
+                            </div>
+
+                            <div class="sec">
+                                <div class="sechead">
+                                    <span class="stepno">1</span><span class="stitle cq-grow">Evidence</span>
+                                    <template if:true={selCanPlan}><button class="cq-link" onclick={handlePlan}>Plan This Test</button></template>
+                                    <button class="cq-btn-outline" onclick={handleAddTest}>+ Add Evidence</button>
+                                </div>
+                                <template if:true={hasEvidence}>
+                                    <div class="cq-tblwrap">
+                                        <table class="cq-tbl compact">
+                                            <thead><tr><th>Kind</th><th>What It Shows</th><th>Source</th><th>Supports It?</th><th></th></tr></thead>
+                                            <tbody>
+                                                <template for:each={evidenceRows} for:item="e">
+                                                    <tr key={e.key}>
+                                                        <td class="cq-nowrap"><span class={e.tagCls}>{e.tag}</span></td>
+                                                        <td class="wide">{e.text}</td>
+                                                        <td class="src">{e.origin}<template if:true={e.hasRecord}> &middot; <a class="cq-link" href={e.recordHref} target="_blank">{e.recordName}</a></template><template if:true={e.files}> &middot; {e.files}</template></td>
+                                                        <td class="cq-nowrap"><span class={e.supCls}>{e.sup}</span></td>
+                                                        <td class="cq-nowrap">
+                                                            <template if:true={e.canEdit}>
+                                                                <span class="evact">
+                                                                    <template if:true={e.isPlanned}><button class="cq-link" data-id={e.id} onclick={handleRecordResult}>Record Result</button></template>
+                                                                    <button class="cq-link" data-id={e.id} onclick={handleRemoveEvidence}>Remove</button>
+                                                                </span>
+                                                            </template>
+                                                        </td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </template>
+                                <template if:true={noEvidence}><div class="evempty">No evidence yet. Add a test you ran, plan one, or check a CQ record.</div></template>
+                                <p class="cq-note sm0 indent">To keep an Ask CQ.AI answer here, ask it in Ask CQ.AI above and click Add to Evidence under the answer.</p>
+                            </div>
+
+                            <div class="sec">
+                                <div class="sechead"><span class="stepno">2</span><span class="stitle">Could This Be the Root Cause?</span></div>
+                                <div class="checks">
+                                    <template for:each={checks} for:item="c">
+                                        <div key={c.key} class={c.cls}><span class="cm">{c.mark}</span><span>{c.text}<template if:true={c.isBack}><button class="smalllink plainbtn gap" onclick={handleGoWhy}>Open 5 Why</button></template></span></div>
+                                    </template>
+                                </div>
+                            </div>
+
+                            <div class="sec">
+                                <label class="cq-field"><span class="sechead"><span class="stepno">3</span><span class="stitle">How Do You Know?<span class="cq-req">*</span></span></span>
+                                    <textarea class="hk" rows="2" value={howKnowText} data-val={howKnowText} oninput={handleHowKnow} placeholder="For example, pin measured 0.12 mm under nominal; only BF-02 units leak"></textarea>
+                                </label>
+                                <div class="cq-splitline">
+                                    <span class="cq-note sm0"><template if:true={howKnowPrefilled}>Prefilled from the evidence. </template>It becomes the CQ root cause&rsquo;s Justification.</span>
+                                    <template if:true={howKnowDirty}><button class="cq-btn-outline" onclick={handleSaveHowKnow} disabled={saving}>Save</button></template>
+                                </div>
+                            </div>
+
+                            <div class="decide">
+                                <span class="stepno">4</span><span class="stitle">Decide</span>
+                                <span class="cq-grow cq-note sm0">{decideNote}</span>
+                                <template for:each={decideBtns} for:item="b">
+                                    <button key={b.s} class={b.cls} data-s={b.s} onclick={handleStatus} disabled={b.off}>{b.label}</button>
+                                </template>
+                            </div>
+                        </section>
+                    </template>
                 </div>
             </template>
 
@@ -49,59 +110,6 @@
                         <button class="smalllink plainbtn" data-key={n.key} onclick={handleNewHypHide}>Not Relevant</button>
                     </div>
                 </template>
-            </template>
-
-            <template if:true={hasSel}>
-                <div class="selcard">
-                    <div class="selhead">
-                        <div class="cq-grow">
-                            <div class="cq-note sm0 cq-strong">{selHead}</div>
-                            <div class="seltitle">{sel.title}</div>
-                        </div>
-                        <div class="cq-opts tight">
-                            <template for:each={statusOpts} for:item="s">
-                                <button key={s.label} class={s.cls} aria-pressed={s.pressed} data-s={s.label} onclick={handleStatus} disabled={saving}>{s.label}</button>
-                            </template>
-                        </div>
-                    </div>
-                    <div class="cq-card-title">Could This Be the Root Cause?</div>
-                    <div class="checks">
-                        <template for:each={checks} for:item="c">
-                            <div key={c.key} class={c.cls}><span class="cm">{c.mark}</span><span>{c.text}<template if:true={c.isBack}><button class="smalllink plainbtn gap" onclick={handleGoWhy}>Open 5 Why</button></template></span></div>
-                        </template>
-                    </div>
-                    <div class="evhead">
-                        <span class="cq-card-title nomb">Evidence</span>
-                        <span class="cq-grow"></span>
-                        <button class="cq-btn-outline" onclick={handleAddTest}>+ Add Test</button>
-                        <button class="cq-btn-outline" onclick={handleLink}>+ Link a CQ Record</button>
-                    </div>
-                    <div class="evlist">
-                        <template for:each={evidenceRows} for:item="e">
-                            <div key={e.key} class="ev">
-                                <span class={e.tagCls}>{e.tag}</span>
-                                <div class="evtext">
-                                    <div>{e.text}<template if:true={e.against}> <span class="negword">Goes against it</span></template><template if:true={e.inconclusive}> <span class="cq-muted">(inconclusive)</span></template></div>
-                                    <div class="cq-note sm0">{e.origin}<template if:true={e.hasRecord}> &middot; <a class="cq-link" href={e.recordHref} target="_blank">{e.recordName}</a></template><template if:true={e.files}> &middot; {e.files}</template></div>
-                                </div>
-                                <template if:true={e.canEdit}>
-                                    <div class="evact">
-                                        <template if:true={e.isPlanned}><button class="smalllink plainbtn" data-id={e.id} onclick={handleRecordResult}>Record Result</button></template>
-                                        <button class="smalllink plainbtn" data-id={e.id} onclick={handleRemoveEvidence}>Remove</button>
-                                    </div>
-                                </template>
-                            </div>
-                        </template>
-                    </div>
-                    <p class="cq-note sm0">To keep an Ask CQ.AI answer here, ask it in Ask CQ.AI above and click Add to Evidence under the answer.</p>
-                    <label class="cq-field cq-mt16"><span class="cq-label">How Do You Know?<span class="cq-req">*</span></span>
-                        <textarea class="hk" rows="2" value={howKnowText} data-val={howKnowText} oninput={handleHowKnow} placeholder="For example, pin measured 0.12 mm under nominal; only BF-02 units leak"></textarea>
-                    </label>
-                    <div class="cq-splitline">
-                        <span class="cq-note sm0"><template if:true={howKnowPrefilled}>Prefilled from the evidence. </template>It becomes the CQ root cause&rsquo;s Justification.</span>
-                        <template if:true={howKnowDirty}><button class="cq-btn-outline" onclick={handleSaveHowKnow} disabled={saving}>Save</button></template>
-                    </div>
-                </div>
             </template>
         </template>
 
@@ -126,10 +134,6 @@
                         </template>
                     </tbody>
                 </table>
-            </div>
-            <div class="cq-ai-card cq-mt16">
-                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                <div class="cq-ai-says">{isStandsOut}</div>
             </div>
             <div class="bar cq-mt16">
                 <span class="cq-grow cq-note sm0">Saved to CQ&rsquo;s 5W2H on {v.investigationName}, Is and Is Not in each field.</span>
@@ -165,8 +169,7 @@
                                 <div class="whyacts">
                                     <button class={w.rootCls} aria-pressed={w.rootPressed} data-i={w.idx} onclick={handleWhyRoot}>Root Cause</button>
                                     <template if:true={w.canEvidence}>
-                                        <button class="smalllink plainbtn" data-why={w.id} onclick={handleAddTest}>+ Test</button>
-                                        <button class="smalllink plainbtn" data-why={w.id} onclick={handleLink}>+ CQ Record</button>
+                                        <button class="smalllink plainbtn" data-why={w.id} onclick={handleAddTest}>+ Add Evidence</button>
                                     </template>
                                     <template if:true={w.canRemove}><button class="smalllink plainbtn" data-i={w.idx} onclick={handleWhyRemove}>Remove</button></template>
                                 </div>
@@ -174,10 +177,6 @@
                         </div>
                     </template>
                     <div><button class="cq-btn-outline" onclick={handleWhyAdd}>+ Add Why</button></div>
-                </div>
-                <div class="cq-ai-card cq-mt16">
-                    <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                    <div class="cq-ai-says">{whyStandsOut}</div>
                 </div>
                 <div class="bar cq-mt16">
                     <span class="cq-grow cq-note sm0">Saved in CQ&rsquo;s own 5 Why on the investigation<template if:true={whyToolHref}> (<a class="cq-link" href={whyToolHref} target="_blank">{whyToolName}</a>)</template>, a 5 Why tool with its Why records. Evidence can be added to a why once it is saved.</span>
@@ -218,20 +217,13 @@
                 </div>
                 <div class="fishhead">{fishHead}<div class="cq-note sm0">{fishHeadSub}</div></div>
             </div>
-            <div class="cq-ai-card cq-mt16">
-                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                <div class="cq-ai-says">{fishStandsOut}</div>
-            </div>
         </template>
 
         <!-- Root Causes -->
         <template if:true={onRoots}>
-            <div class="cq-ai-card">
-                <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> What Stands Out</div>
-                <div class="cq-ai-says">{rootStandsOut}</div>
-            </div>
+            <template if:true={noRoots}><div class="cq-infobox">No root cause yet. Confirm a hypothesis, and mark the why you can fix as Root Cause in 5 Why.</div></template>
             <template if:true={hasRoots}>
-                <div class="cq-tblwrap cq-mt16">
+                <div class="cq-tblwrap">
                     <table class="cq-tbl">
                         <thead><tr><th>Root Cause</th><th>Role</th><th>Category</th><th>CQ Cause Code</th><th>Evidence</th><th>Verified</th><th></th></tr></thead>
                         <tbody>
@@ -271,7 +263,7 @@
                 <p class="cq-note">Rows come from confirmed hypotheses and the whys marked Root Cause in their 5 Why; root causes already in CQ show here too. There can be more than one Primary. Evidence starts from the evidence on the why, or How Do You Know?</p>
             </template>
             <div class="bar cq-mt16">
-                <span class="cq-grow cq-note sm0"><strong>On Save Root Causes:</strong> each row is saved as a CQ root cause on {v.investigationName} with its role, category, cause code, the evidence as justification, and Verified. Ruled-out hypotheses stay on the investigation with their evidence.</span>
+                <span class="cq-grow cq-note sm0"><template if:true={rootOpenNote}><span class="warnword">{rootOpenNote}</span> </template><strong>On Save Root Causes:</strong> each row is saved as a CQ root cause on {v.investigationName} with its role, category, cause code, the evidence as justification, and Verified. Ruled-out hypotheses stay on the investigation with their evidence.</span>
                 <button class="cq-btn-outline" onclick={handleRootAdd}>+ Add Root Cause</button>
             </div>
         </template>
@@ -365,9 +357,9 @@
                                 </template>
                             </div>
                         </template>
-                        <template if:true={formIsLink}>
+                        <template if:true={formShowsRecord}>
                             <template if:false={form.recordId}>
-                                <label class="cq-field"><span class="cq-label">CQ Record<span class="cq-req">*</span></span>
+                                <label class="cq-field"><span class="cq-label">{formRecordLabel}<template if:true={formRecordReq}><span class="cq-req">*</span></template></span>
                                     <input type="search" data-first="1" value={form.search} oninput={handleSearch} placeholder="Type a number, such as CAL-000006 or NC-000172">
                                 </label>
                                 <template if:true={hasFound}>
@@ -382,6 +374,8 @@
                             <template if:true={form.recordId}>
                                 <div class="picked"><a class="cq-link" href={pickedHref} target="_blank">{form.recordName}</a> <span class="cq-muted">{form.recordType}</span> <button class="smalllink plainbtn" onclick={handleClearRecord}>Change</button></div>
                             </template>
+                        </template>
+                        <template if:true={formIsLink}>
                             <label class="cq-field"><span class="cq-label">What It Shows</span>
                                 <input type="text" data-k="result" value={form.result} oninput={handleFormField} placeholder="For example, BF-02 maintenance plan has no pin check">
                             </label>

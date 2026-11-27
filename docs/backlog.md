@@ -177,3 +177,9 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
   of record and a bubble on hover or focus; other pages' changes are faint dots. Page-local styles (wc-*) to fold into
   cqStyles with the design-system work. Next: go through the other Investigation steps, then e-signature on Complete
   Investigation.
+
+## Find the Cause: side by side (27 Nov, built)
+- Hypotheses tab is a list (left) beside the one being tested (right, "Testing H1 · Category"), in four steps: 1 Evidence (cqStyles table: Kind, What It Shows, Source, Supports It?), 2 Could This Be the Root Cause?, 3 How Do You Know?, 4 Decide (Rule Out / Mark Confirmed / Reopen, off until How Do You Know is filled).
+- One "+ Add Evidence" button. Link a CQ Record folded into the test popup: a Check Records test can attach the CQ record it checked (Record_Id__c on the same Evidence row). Old CQ Record rows still show. 5 Why: "+ Add Evidence" per why.
+- What Stands Out removed from all five tabs. Root Causes keeps the "still Open" warning in its save note; an infobox shows when there is no root cause yet.
+- Later: optimize the Add Evidence popup (suggested records, search by title).

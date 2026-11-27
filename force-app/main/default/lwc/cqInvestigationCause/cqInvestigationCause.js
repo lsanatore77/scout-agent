@@ -19,7 +19,7 @@ const TEST_TYPES = ['Measure or Inspect', 'Compare', 'Reproduce', 'Remove the Ca
 const SUPPORTS = [{ v: 'For', label: 'Supports It' }, { v: 'Against', label: 'Goes Against It' }, { v: 'Inconclusive', label: 'Inconclusive' }];
 const TEST_FOR = { Machine: 'Measure or Inspect', Method: 'Compare', Materials: 'Check Records', Measurement: 'Measure or Inspect', People: 'Check Records', 'Environment (Nature)': 'Check Records' };
 const STATUS_CLS = { Confirmed: 'cq-pill soft pos', 'Ruled Out': 'cq-pill soft neu', Open: 'cq-pill soft warn' };
-const SUGGEST_CLS = { Likely: 'sug likely', Unlikely: 'sug unlikely', 'Needs Evidence': 'sug needs' };
+const SUP_LABEL = { For: 'Yes', Against: 'Goes Against It', Inconclusive: 'Inconclusive' };
 const TAG_CLS = { 'From CQ': 'tag', 'Test Done': 'tag ok', 'Test Planned': 'tag warn', 'From Ask CQ.AI': 'tag ai', 'CQ Record': 'tag' };
 
 /**
@@ -146,36 +146,15 @@ export default class CqInvestigationCause extends LightningElement {
     get noHyps() { return !this.hasHyps; }
 
     // ================================================================ Hypotheses
-    get hypStandsOut() {
-        const hs = this.v.hyps;
-        const out = [];
-        hs.filter((h) => h.status === 'Confirmed').forEach((h) => { out.push(this.hname(h) + ' is Confirmed.'); });
-        hs.filter((h) => h.status === 'Open' && h.suggest === 'Likely').forEach((h) => { out.push(this.hname(h) + ' looks likely: ' + this.lower(h.suggestWhy)); });
-        hs.filter((h) => h.cameBack && h.status !== 'Ruled Out' && !h.whys.some((w) => w.isRoot)).forEach((h) => {
-            out.push(this.hname(h) + ' happened before and came back after a fix, so ask why in 5 Why.');
-        });
-        hs.filter((h) => h.status === 'Open' && h.suggest === 'Unlikely').forEach((h) => { out.push('Evidence goes against ' + this.hname(h) + '.'); });
-        const needs = hs.filter((h) => h.status === 'Open' && h.suggest === 'Needs Evidence');
-        if (needs.length) {
-            out.push(needs.map((h) => this.hname(h)).join(', ') + (needs.length === 1 ? ' has' : ' have') + ' no deciding evidence yet'
-                + (needs.some((h) => h.testsPlanned) ? '; a test is planned.' : '.'));
-        }
-        return out.length ? out.slice(0, 4).join(' ') : 'No hypothesis has evidence yet. Add a test or link a CQ record to one.';
-    }
-    lower(s) { return s ? s.charAt(0).toLowerCase() + s.slice(1) : ''; }
-
+    // side by side (Lou, 27 Nov): the list on the left, the one being tested on the right
     get hypRows() {
         return this.v.hyps.map((h) => {
             const sel = h.id === this.selId;
-            const tests = [h.testsDone ? h.testsDone + ' done' : null, h.testsPlanned ? h.testsPlanned + ' planned' : null].filter((x) => x).join(' · ');
             return {
-                id: h.id, title: h.title, sub: this.hname(h) + ' · ' + (h.origin || '').toLowerCase().replace('added by you', 'added by you'),
-                category: h.category || '—', suggest: h.suggest, suggestWhy: h.suggestWhy, sugCls: SUGGEST_CLS[h.suggest] || 'sug',
+                id: h.id, num: this.hname(h), title: h.title, category: h.category || '—', suggest: h.suggest,
                 askWhy: 'Why does CQ.AI suggest ' + this.hname(h) + ' is ' + (h.suggest || '').toLowerCase() + '? Give the facts.',
-                canPlan: h.suggest === 'Needs Evidence' && h.status === 'Open' && !h.testsPlanned,
-                needsEvidence: h.suggest === 'Needs Evidence',
-                status: h.status, statusCls: STATUS_CLS[h.status] || 'cq-pill soft neu', tests: tests || '—',
-                btn: sel ? 'Selected' : 'View', btnCls: 'cq-btn-outline' + (sel ? ' selbtn' : ''), rowCls: sel ? 'selrow' : ''
+                status: h.status, statusCls: STATUS_CLS[h.status] || 'cq-pill soft neu',
+                rowCls: 'hrow' + (sel ? ' on' : ''), pressed: String(sel)
             };
         });
     }
@@ -192,10 +171,24 @@ export default class CqInvestigationCause extends LightningElement {
     // the selected hypothesis
     get sel() { return this.selId ? this.hyp(this.selId) : undefined; }
     get hasSel() { return !!this.sel; }
-    get selHead() { const h = this.sel; return this.hname(h) + (h.category ? ' · ' + h.category : ''); }
-    get statusOpts() {
+    get selHead() { const h = this.sel; return 'Testing ' + this.hname(h) + (h.category ? ' · ' + h.category : ''); }
+    get selStatusCls() { return STATUS_CLS[this.sel.status] || 'cq-pill soft neu'; }
+    get selCanPlan() { const h = this.sel; return h.suggest === 'Needs Evidence' && h.status === 'Open' && !h.testsPlanned; }
+    get hasEvidence() { return this.evidenceRows.length > 0; }
+    get noEvidence() { return !this.hasEvidence; }
+    // step 4, Decide: the two moves away from the status it has now
+    get decideBtns() {
         const s = this.sel.status;
-        return ['Open', 'Confirmed', 'Ruled Out'].map((x) => ({ label: x, pressed: String(s === x), cls: 'cq-chip' }));
+        const all = [{ s: 'Open', label: 'Reopen', cls: 'cq-btn-outline' }, { s: 'Ruled Out', label: 'Rule Out', cls: 'cq-btn-outline' },
+            { s: 'Confirmed', label: 'Mark Confirmed', cls: 'cq-btn-primary' }];
+        const needText = !this.howKnowText.trim();
+        return all.filter((b) => b.s !== s).map((b) => ({ ...b, off: this.saving || (b.s !== 'Open' && needText) }));
+    }
+    get decideNote() {
+        const s = this.sel.status;
+        if (s === 'Confirmed') { return 'Confirmed. It goes to Root Causes.'; }
+        if (s === 'Ruled Out') { return 'Ruled out. It stays on the investigation with its evidence.'; }
+        return this.statusBlocker || 'It stays Open until you confirm it or rule it out.';
     }
     get checks() {
         return this.sel.checks.map((c) => ({ ...c, cls: 'chk ' + (c.ok ? 'ok' : 'todo'), mark: c.ok ? '✓' : '○', isBack: c.key === 'back' && !c.ok }));
@@ -206,7 +199,9 @@ export default class CqInvestigationCause extends LightningElement {
             key: e.key, id: e.id, tag: e.tag, tagCls: TAG_CLS[e.tag] || 'tag', text: e.text, origin: e.origin,
             hasRecord: !!e.recordId, recordHref: e.recordId ? this.href(e.recordId) : null, recordName: e.recordName,
             against: e.supports === 'Against', inconclusive: e.supports === 'Inconclusive', files: e.files ? e.files + (e.files === 1 ? ' file' : ' files') : null,
-            canEdit: !e.auto && !!e.id, isPlanned: e.status === 'Planned'
+            canEdit: !e.auto && !!e.id, isPlanned: e.status === 'Planned',
+            sup: e.status === 'Planned' ? 'Not run yet' : SUP_LABEL[e.supports] || '—',
+            supCls: 'sup ' + (e.status === 'Planned' ? 'none' : e.supports === 'For' ? 'for' : e.supports === 'Against' ? 'against' : 'none')
         }));
     }
     get howKnowText() {
@@ -257,17 +252,8 @@ export default class CqInvestigationCause extends LightningElement {
         const whyId = event.currentTarget.dataset.why;
         this.openForm({ kind: 'Test', hypId: whyId ? null : this.selId, whyId: whyId || null, status: 'Done' });
     }
-    handleLink(event) {
-        const whyId = event.currentTarget.dataset.why;
-        this.openForm({ kind: 'CQ Record', hypId: whyId ? null : this.selId, whyId: whyId || null, supports: 'For' });
-    }
-    /** + Add Evidence in the table: selects the hypothesis and opens Add Test on it (Lou, 27 Nov). */
-    handleAddEvidence(event) {
-        this.selId = event.currentTarget.dataset.id;
-        this.openForm({ kind: 'Test', hypId: this.selId, whyId: null, status: 'Done' });
-    }
-    handlePlan(event) {
-        const h = this.hyp(event.currentTarget.dataset.id);
+    handlePlan() {
+        const h = this.sel;
         this.selId = h.id;
         this.openForm({ kind: 'Test', hypId: h.id, status: 'Planned', testType: TEST_FOR[h.category] || null, detail: h.testHint || '' });
     }
@@ -279,7 +265,8 @@ export default class CqInvestigationCause extends LightningElement {
         if (!hit) { return; }
         const e = hit.e;
         this.openForm({ id, kind: 'Test', hypId: hit.hypId || null, whyId: hit.whyId || null, status: 'Done', testType: e.testType,
-            detail: e.status === 'Planned' ? (e.text || '').replace(/^[^:]+:\s*/, '') : '', result: e.result || '', supports: e.supports, ownerId: e.ownerId, due: e.due || '', editing: true });
+            detail: e.status === 'Planned' ? (e.text || '').replace(/^[^:]+:\s*/, '') : '', result: e.result || '', supports: e.supports, ownerId: e.ownerId, due: e.due || '', editing: true,
+            recordId: e.recordId || null, recordName: e.recordName || null });
     }
     /** An Ask CQ.AI answer to keep: the workspace passes it on from the Ask CQ.AI popover. */
     @api pin(answer) {
@@ -300,7 +287,7 @@ export default class CqInvestigationCause extends LightningElement {
         const f = this.form;
         if (f.kind === 'CQ Record') { return 'Link a CQ Record'; }
         if (f.kind === 'Ask CQ.AI') { return 'Add to Evidence'; }
-        return f.editing ? 'Record the Result' : f.status === 'Planned' ? 'Plan a Test' : 'Add Test';
+        return f.editing ? 'Record the Result' : f.status === 'Planned' ? 'Plan a Test' : 'Add Evidence';
     }
     get formFor() {
         const f = this.form;
@@ -313,6 +300,10 @@ export default class CqInvestigationCause extends LightningElement {
     get formIsTest() { return this.form.kind === 'Test'; }
     get formIsLink() { return this.form.kind === 'CQ Record'; }
     get formIsPin() { return this.form.kind === 'Ask CQ.AI'; }
+    // a Check Records test can attach the CQ record it checked (Link a CQ Record folded in here, Lou 27 Nov)
+    get formShowsRecord() { return this.formIsLink || (this.formIsTest && this.form.testType === 'Check Records'); }
+    get formRecordLabel() { return this.formIsLink ? 'CQ Record' : 'CQ Record Checked'; }
+    get formRecordReq() { return this.formIsLink; }
     get formDone() { return this.form.status === 'Done'; }
     get formPlanned() { return this.form.status === 'Planned'; }
     get formShowsSupports() { return !this.formIsTest || this.formDone; }
@@ -370,14 +361,15 @@ export default class CqInvestigationCause extends LightningElement {
         return null;
     }
     get cantSaveForm() { return this.saving || !!this.formBlocker; }
-    get formSaveLabel() { return this.form.kind === 'Test' ? (this.form.status === 'Planned' ? 'Plan Test' : 'Add Test') : this.form.kind === 'CQ Record' ? 'Link Record' : 'Add to Evidence'; }
+    get formSaveLabel() { return this.form.kind === 'Test' ? (this.form.status === 'Planned' ? 'Plan Test' : 'Add Evidence') : this.form.kind === 'CQ Record' ? 'Link Record' : 'Add to Evidence'; }
     async handleFormSave() {
         if (this.cantSaveForm) { return; }
         const f = this.form;
         const p = { id: f.id || null, hypId: f.hypId || null, whyId: f.whyId || null, kind: f.kind, supports: f.supports || null };
         if (f.kind === 'Test') {
             Object.assign(p, { testType: f.testType, status: f.status, detail: f.detail.trim(), result: f.status === 'Done' ? f.result.trim() : null,
-                supports: f.status === 'Done' ? f.supports : null, ownerId: f.ownerId || null, due: f.status === 'Planned' && f.due ? f.due : null });
+                supports: f.status === 'Done' ? f.supports : null, ownerId: f.ownerId || null, due: f.status === 'Planned' && f.due ? f.due : null,
+                recordId: f.testType === 'Check Records' ? f.recordId || null : null, recordName: f.testType === 'Check Records' ? f.recordName || null : null });
         } else if (f.kind === 'CQ Record') {
             Object.assign(p, { recordId: f.recordId, recordName: f.recordName, result: (f.result || '').trim() || null });
         } else {
@@ -443,18 +435,6 @@ export default class CqInvestigationCause extends LightningElement {
         const rows = this.isRows.map((r) => ({ key: r.key, isText: r.isText || null, isNotText: r.isNotText || null }));
         const ok = await this.run(() => saveIsNot({ recordId: this.recordId, payload: JSON.stringify(rows) }), 'Saved to CQ’s 5W2H on ' + this.v.investigationName + '.');
         if (ok) { this.isRows = this.v.rows.map((r) => ({ ...r })); this.isDirty = false; }
-    }
-    get isStandsOut() {
-        const out = [];
-        const marked = this.isRows.filter((r) => (r.isText || r.isNotText)).length;
-        this.isHyps.forEach((h) => {
-            const fits = Object.keys(h.fits).filter((k) => h.fits[k] === 'fits');
-            const fails = Object.keys(h.fits).filter((k) => h.fits[k] === 'fails').map((k) => (this.isRows.find((r) => r.key === k) || {}).label);
-            if (fails.length) { out.push(this.hname(h) + ' does not explain ' + fails.join(' and ') + ', so it is unlikely.'); }
-            else if (fits.length && fits.length >= marked) { out.push(this.hname(h) + ' fits every row.'); }
-            else if (fits.length) { out.push(this.hname(h) + ' fits ' + fits.length + ' of ' + marked + ' rows.'); }
-        });
-        return out.length ? out.join(' ') : 'Mark which hypotheses fit each row: click H1, H2 to cycle fits, does not fit, and not marked.';
     }
     get ruleOutHyp() {
         return this.isHyps.find((h) => h.status === 'Open' && Object.keys(h.fits).some((k) => h.fits[k] === 'fails'));
@@ -530,17 +510,6 @@ export default class CqInvestigationCause extends LightningElement {
         const ok = await this.run(() => saveWhys({ recordId: this.recordId, hypId: h.id, payload: JSON.stringify(rows) }), 'Saved in CQ’s 5 Why for ' + this.hname(h) + '.');
         if (ok) { this.loadWhys(); }
     }
-    get whyStandsOut() {
-        const h = this.whyHyp;
-        if (!h) { return ''; }
-        const roots = this.whys.map((w, i) => ({ w, i })).filter((x) => x.w.isRoot);
-        if (!roots.length) { return 'Keep asking why until the answer is something you can fix, then mark that why Root Cause.'; }
-        const first = roots[roots.length - 1];
-        let s = 'Why ' + (first.i + 1) + ' is marked Root Cause' + (h.status === 'Confirmed' ? ' and goes to Root Causes as Primary.' : '; it goes to Root Causes once ' + this.hname(h) + ' is Confirmed.');
-        if (roots.length > 1) { s += ' ' + roots.filter((x) => x !== first).map((x) => 'Why ' + (x.i + 1)).join(' and ') + (roots.length > 2 ? ' go' : ' goes') + ' as Contributing.'; }
-        if (h.cameBack) { s += ' The fix came back once before, so check this why explains that.'; }
-        return s;
-    }
     get whyToolHref() { return this.whyHyp && this.whyHyp.toolId ? this.href(this.whyHyp.toolId) : null; }
     get whyToolName() { return this.whyHyp ? this.whyHyp.toolName : null; }
     get problemText() { return this.v.problem || 'No description on the NC.'; }
@@ -563,14 +532,6 @@ export default class CqInvestigationCause extends LightningElement {
     get fishBottom() { const c = this.fishCats; return c.slice(Math.ceil(c.length / 2)).map((x) => this.bone(x, false)); }
     get fishHead() { return this.ncField(NC_TITLE) || 'The problem'; }
     get fishHeadSub() { const lot = this.ncField(NC_LOT); return [this.ncField(NC_NAME), lot ? 'lot ' + lot : null].filter((x) => x).join(' · '); }
-    get fishStandsOut() {
-        const cats = this.fishCats;
-        const used = cats.filter((c) => this.v.hyps.some((h) => h.category === c));
-        const empty = cats.filter((c) => !used.includes(c));
-        const join = (a) => (a.length > 1 ? a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1] : a[0]);
-        if (!used.length) { return 'No hypotheses yet. Add one on any bone.'; }
-        return 'Hypotheses sit on ' + join(used) + '.' + (empty.length ? ' ' + join(empty) + (empty.length === 1 ? ' has' : ' have') + ' none yet.' : ' Every category has at least one.');
-    }
 
     // + Add a Hypothesis on a bone: the same popup as Add as Hypothesis, with the category set
     hypNew;
@@ -663,18 +624,12 @@ export default class CqInvestigationCause extends LightningElement {
         if (!this.roots.some((r) => r.role === 'Primary')) { return 'Mark at least one root cause Primary'; }
         return null;
     }
-    get rootStandsOut() {
-        if (!this.roots.length) { return 'No root cause yet. Confirm a hypothesis, and mark the why you can fix as Root Cause in 5 Why.'; }
-        const p = this.roots.filter((r) => r.role === 'Primary').length;
-        const c = this.roots.length - p;
-        const ver = this.roots.filter((r) => r.verified).length;
-        const parts = [this.count(p, 'primary root cause', 'primary root causes') + (c ? ' and ' + this.count(c, 'contributing cause', 'contributing causes') : '') + '; '
-            + (ver === this.roots.length ? 'each is verified by evidence.' : ver + ' of ' + this.roots.length + ' verified by evidence.')];
+    // What Stands Out went from every tab (Lou, 27 Nov); the Open warning stays beside the save note
+    get rootOpenNote() {
         const open = this.v.openHyps || [];
-        if (open.length) { parts.push(open.join(', ') + (open.length === 1 ? ' is' : ' are') + ' still Open: settle ' + (open.length === 1 ? 'it' : 'them') + ' before you save.'); }
-        if (this.v.hyps.some((h) => h.cameBack && h.status === 'Confirmed')) { parts.push('This came back after an earlier fix, so the actions should remove the primary cause, not only repeat that fix.'); }
-        return parts.join(' ');
+        return open.length ? open.join(', ') + (open.length === 1 ? ' is' : ' are') + ' still Open: settle ' + (open.length === 1 ? 'it' : 'them') + ' before you save.' : null;
     }
+    get noRoots() { return !this.roots.length; }
     count(n, one, many) { const w = ['No', 'One', 'Two', 'Three', 'Four', 'Five'][n] || String(n); return w + ' ' + (n === 1 ? one : many); }
     get savedCount() { return this.roots.filter((r) => r.saved).length; }
     @api async saveRoots() {
