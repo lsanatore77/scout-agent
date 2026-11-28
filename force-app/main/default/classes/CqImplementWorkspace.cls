@@ -7,10 +7,15 @@
  * Verify follows CQ's own Verify (CQ_Quick_Action__mdt CQUI_Action_verify): Activity Code 'implementation_verify' with the
  * comment in Verified Comments. Send Back opens CQ's own Reopen. Reassign changes the action's assignee. Send Reminder
  * sends CQ's own task notification (CQ_Task_Custom_Notification) to the assignee: the bell, and the mobile app.
- * Closing the NC from Verification is a separate step.
+ * In Verification (every correction done, CQ has completed the NC) the owner closes it here: Resolution Effective or
+ * Ineffective (the only values CQ allows once the NC is Complete), the closing summary in CQ's Comments, and the owner's
+ * signature, through CQ's own Close (Activity Code 'close'). No override: while a correction is open the NC is not
+ * Complete and close() refuses. Reopen Implementation and Escalate to CAPA open CQ's own actions.
  */
 public with sharing class CqImplementWorkspace {
     public static final String VERIFY = 'implementation_verify';
+    public static final String CLOSE = 'close';
+    static final Set<String> RESOLUTIONS = new Set<String>{ 'Effective', 'Ineffective' };
     static final String NOTIFY_TYPE = 'CQ_Task_Custom_Notification';
 
     public class Row {
@@ -30,6 +35,10 @@ public with sharing class CqImplementWorkspace {
         @AuraEnabled public Boolean isOwner = false; @AuraEnabled public String rootCause;
         @AuraEnabled public List<Row> rows = new List<Row>();
         @AuraEnabled public Boolean canNotify = false;    // CQ's task notification type is in the org
+        @AuraEnabled public String status; @AuraEnabled public String resolution; @AuraEnabled public String closeComment;
+        @AuraEnabled public Date closedOn; @AuraEnabled public Id capaId; @AuraEnabled public String capaName;
+        @AuraEnabled public Boolean canClose = false;     // Complete (in Verification) and the running user owns it
+        @AuraEnabled public Boolean closed = false;
     }
     public class Result { @AuraEnabled public String message; @AuraEnabled public Boolean signed = false; }
 
@@ -42,6 +51,11 @@ public with sharing class CqImplementWorkspace {
         v.partNumber = nc.compliancequest__SQX_Part__r == null ? null : nc.compliancequest__SQX_Part__r.compliancequest__Part_Number__c;
         v.lot = nc.compliancequest__Lot_Number__c; v.owner = nc.Owner.Name;
         v.isOwner = isOwner(nc);
+        v.status = nc.compliancequest__Status__c; v.resolution = nc.compliancequest__Resolution__c; v.closeComment = nc.compliancequest__Closure_Comment__c;
+        v.closedOn = nc.compliancequest__Close_Date__c; v.capaId = nc.compliancequest__SQX_CAPA__c;
+        v.capaName = nc.compliancequest__SQX_CAPA__r == null ? null : nc.compliancequest__SQX_CAPA__r.Name;
+        v.closed = nc.compliancequest__Status__c == 'Closed';
+        v.canClose = v.isOwner && nc.compliancequest__Status__c == 'Complete';
         for (compliancequest__SQX_Nonconformance__c s : [SELECT toLabel(compliancequest__Record_Stage__c) FROM compliancequest__SQX_Nonconformance__c WHERE Id = :nc.Id WITH USER_MODE]) {
             v.stage = s.compliancequest__Record_Stage__c;
         }
@@ -142,6 +156,39 @@ public with sharing class CqImplementWorkspace {
         return res;
     }
 
+    /** The owner closes the NC once every correction is done: the resolution, the closing summary, and their signature. */
+    @AuraEnabled
+    public static Result close(Id recordId, String resolution, String summary, String comment, String password) {
+        compliancequest__SQX_Nonconformance__c nc = nc(recordId);
+        if (!isOwner(nc)) { throw new AuraHandledException('Only the NC owner can close ' + nc.Name + '.'); }
+        if (nc.compliancequest__Status__c != 'Complete') {
+            throw new AuraHandledException(nc.compliancequest__Status__c == 'Closed' ? nc.Name + ' is already closed.' : nc.Name + ' is not ready to close: every correction has to be done first.');
+        }
+        if (!RESOLUTIONS.contains(resolution)) { throw new AuraHandledException('Pick Effective or Ineffective.'); }
+        if (String.isBlank(summary)) { throw new AuraHandledException('Write the closing summary.'); }
+        Result res = new Result();
+        Savepoint sp = Database.setSavepoint();
+        CqNcSignable.signing = ('closing ' + nc.Name + ' as ' + resolution).left(1000);
+        try {
+            res.signed = CqEsign.sign(nc.Id, CLOSE, comment, password, true);
+        } catch (AuraHandledException e) {
+            Database.rollback(sp);
+            throw e;
+        }
+        try {
+            update as user new compliancequest__SQX_Nonconformance__c(Id = nc.Id, compliancequest__Activity_Code__c = CLOSE,
+                compliancequest__Resolution__c = resolution, compliancequest__Closure_Comment__c = summary.trim().left(32768));
+        } catch (DmlException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException(nc.Name + ' was not closed: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException(nc.Name + ' was not closed: ' + CqSave.DENIED);
+        }
+        res.message = nc(nc.Id).compliancequest__Status__c == 'Closed' ? nc.Name + ' closed, ' + resolution + '.' : nc.Name + ' was saved, but CQ did not close it.';
+        return res;
+    }
+
     /** The owner gives an open correction to someone else. */
     @AuraEnabled
     public static Result reassign(Id actionId, Id userId) {
@@ -205,7 +252,9 @@ public with sharing class CqImplementWorkspace {
     static compliancequest__SQX_Nonconformance__c nc(Id recordId) {
         if (recordId == null || recordId.getSObjectType() != compliancequest__SQX_Nonconformance__c.SObjectType) { throw new AuraHandledException('This page works on a CQ nonconformance.'); }
         return [SELECT Id, Name, OwnerId, Owner.Name, compliancequest__NC_Title__c, compliancequest__Record_Stage__c, compliancequest__Lot_Number__c,
-                       compliancequest__SQX_Part__r.compliancequest__Part_Number__c, compliancequest__SQX_Investigation__c
+                       compliancequest__SQX_Part__r.compliancequest__Part_Number__c, compliancequest__SQX_Investigation__c, compliancequest__Status__c,
+                       compliancequest__Resolution__c, compliancequest__Closure_Comment__c, compliancequest__Close_Date__c,
+                       compliancequest__SQX_CAPA__c, compliancequest__SQX_CAPA__r.Name
                 FROM compliancequest__SQX_Nonconformance__c WHERE Id = :recordId WITH USER_MODE];
     }
 

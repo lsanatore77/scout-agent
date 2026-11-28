@@ -76,6 +76,20 @@ private class CqImplementWorkspaceTest {
     }
 
     @IsTest
+    static void closeOnlyWhenEveryCorrectionIsDone() {
+        compliancequest__SQX_Action__c a = makeAction(UserInfo.getUserId());
+        if (a == null) { return; }
+        FakeEsig f = new FakeEsig(); CqEsign.gateway = f;
+        Id ncId = a.compliancequest__SQX_Nonconformance__c;
+        System.assert(!CqImplementWorkspace.getView(ncId).canClose, 'a correction is open');
+        Integer refused = 0;
+        try { CqImplementWorkspace.close(ncId, 'Effective', 'Held on 3 lots', null, null); } catch (AuraHandledException e) { refused++; }
+        try { CqImplementWorkspace.close(ncId, 'Void', 'Held on 3 lots', null, null); } catch (AuraHandledException e) { refused++; }
+        System.assertEquals(2, refused);
+        System.assertEquals(0, f.signed, 'nothing signed while it cannot close');
+    }
+
+    @IsTest
     static void refusesOtherRecords() {
         Integer refused = 0;
         try { CqImplementWorkspace.getView(UserInfo.getUserId()); } catch (AuraHandledException e) { refused++; }

@@ -6,9 +6,13 @@ import skipAction from '@salesforce/apex/CqImplementWorkspace.skip';
 import verifyAction from '@salesforce/apex/CqImplementWorkspace.verify';
 import reassignAction from '@salesforce/apex/CqImplementWorkspace.reassign';
 import remindAction from '@salesforce/apex/CqImplementWorkspace.sendReminder';
+import closeAction from '@salesforce/apex/CqImplementWorkspace.close';
 
 const OBJ = 'compliancequest__SQX_Action__c';
 const REOPEN = 'compliancequest__SQX_Action__c.cqext__cqui_Reopen';   // CQ's own Reopen: Send Back
+const NC_OBJ = 'compliancequest__SQX_Nonconformance__c';
+const NC_REOPEN_IMPL = 'compliancequest__SQX_Nonconformance__c.cqext__cqui_Reopenimplementation';
+const NC_ESCALATE = 'compliancequest__SQX_Nonconformance__c.cqext__cqui_Escalatecapa';
 const ASK = 'Which corrections are late?,What was done on each correction?,What happens when all corrections are done?';
 const DAY = 86400000;
 
@@ -17,6 +21,9 @@ const DAY = 86400000;
  * open (Send Reminder, Reassign) and verifies what is done when CQ asks for it. An owner who is also an assignee completes
  * their own correction in a panel under its row, with the same checks and signature as the assignee's page. One panel is
  * open at a time. Send Back opens CQ's own Reopen in a new tab.
+ * When every correction is done (CQ completes the NC: Verification) the owner closes it under the table: Effective or
+ * Ineffective, the closing summary, and the signature. Ineffective offers Reopen Implementation or Escalate to a CAPA
+ * (CQ's own actions, new tab) before closing. No override: the section only shows once CQ has completed the NC.
  */
 export default class CqImplementWorkspace extends LightningElement {
     @api recordId;
@@ -34,6 +41,9 @@ export default class CqImplementWorkspace extends LightningElement {
     files = [];
     busy = false;
     _seatActions;
+    resolution;        // Effective or Ineffective
+    closeSummary = '';
+    _closeActions = [{ action: 'close', label: 'Close the Nonconformance', doing: 'Closing', signing: 'closing the nonconformance' }];
 
     connectedCallback() {
         this.completedOn = this.todayIso();
@@ -137,6 +147,8 @@ export default class CqImplementWorkspace extends LightningElement {
             if (waiting) { parts.push(waiting + ' to verify'); }
             return parts.join(' and ') + '. When every correction is done' + (waiting ? ' and verified' : '') + ', CQ completes ' + v.ncName + ' and it moves to Verification, where you close it.';
         }
+        if (v.closed) { return v.ncName + ' is closed' + (v.resolution ? ', ' + v.resolution : '') + '.'; }
+        if (v.canClose) { return 'Every correction is done. Close ' + v.ncName + ' below.'; }
         return v.stageKey === 'verification' || v.stage === 'Verification'
             ? 'Every correction is done. ' + v.ncName + ' is in Verification, where the owner closes it.'
             : 'Every correction is done.';
@@ -258,4 +270,52 @@ export default class CqImplementWorkspace extends LightningElement {
         }
     }
     handleDismiss() { this.note = undefined; }
+
+    // ---- close the NC (Verification)
+    get showClose() { return this.v.canClose; }
+    get showClosed() { return this.v.closed; }
+    get resolutionOpts() {
+        return [
+            { key: 'Effective', title: 'Effective', desc: 'The corrections held. No repeat since they were done.' },
+            { key: 'Ineffective', title: 'Ineffective', desc: 'The problem came back, or the fix did not hold.' }
+        ].map((o) => ({ ...o, cls: 'rchip' + (this.resolution === o.key ? ' on' : ''), pressed: String(this.resolution === o.key) }));
+    }
+    handleResolution(event) { this.resolution = event.currentTarget.dataset.key; }
+    get isIneffective() { return this.resolution === 'Ineffective'; }
+    handleSummary(event) { this.closeSummary = event.target.value; }
+    get closeBlocker() {
+        if (!this.resolution) { return 'Pick the resolution'; }
+        if (!this.closeSummary.trim()) { return 'Write the closing summary'; }
+        return null;
+    }
+    get cantClose() { return this.busy || !!this.closeBlocker; }
+    get closeActions() { return this._closeActions; }
+    get closeFor() { return 'Signs for: ' + this.v.ncName + (this.resolution ? ', closing as ' + this.resolution : ''); }
+    get closeLabelMeaning() { return 'confirm the corrections were reviewed and the nonconformance is resolved as stated'; }
+    closeSubmit = async ({ comment, password }) => {
+        const b = this.closeBlocker;
+        if (b) { throw new Error(b + '.'); }
+        await this.run(async () => (await closeAction({ recordId: this.recordId, resolution: this.resolution, summary: this.closeSummary.trim(),
+            comment: comment || null, password: password || null })).message, 'The nonconformance was not closed.', true);
+    };
+    quick(action) {
+        const back = encodeURIComponent('/lightning/r/' + this.recordId + '/view');
+        window.open('/lightning/action/quick/' + action + '?objectApiName=' + NC_OBJ + '&context=RECORD_DETAIL&recordId=' + this.recordId + '&backgroundContext=' + back, '_blank');
+    }
+    handleReopenImpl() { this.quick(NC_REOPEN_IMPL); }
+    handleEscalate() { this.quick(NC_ESCALATE); }
+    get hasCapa() { return !!this.v.capaId; }
+    get capaHref() { return '/lightning/r/' + this.v.capaId + '/view'; }
+    get closedRows() {
+        const v = this.v; const c = this.counts;
+        const skipped = (v.rows || []).filter((r) => r.status === 'Skipped').length;
+        const rows = [
+            { key: 'res', k: 'Resolution', v: v.resolution || '—' },
+            { key: 'sum', k: 'Closing Summary', v: v.closeComment || '—' },
+            { key: 'on', k: 'Closed On', v: this.dateText(v.closedOn) },
+            { key: 'cor', k: 'Corrections', v: (c.done - skipped) + ' complete' + (skipped ? ', ' + skipped + ' skipped' : '') }
+        ];
+        if (v.capaName) { rows.push({ key: 'capa', k: 'CAPA', v: v.capaName }); }
+        return rows;
+    }
 }

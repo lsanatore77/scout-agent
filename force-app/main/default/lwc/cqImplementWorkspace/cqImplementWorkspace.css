@@ -31,3 +31,16 @@ tr.panelrow > td { background: var(--cq-surface); padding: 4px 16px 16px; }
 .reassign { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; max-width: 640px; }
 .reassign lightning-record-picker { flex: 1 1 280px; }
 .nextline { margin: 16px 0 0; }
+/* Close the Nonconformance (Verification) */
+.cq-mt16 { margin-top: 16px; }
+.closegrid { margin-top: 8px; }
+.rchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.rchip { display: flex; flex-direction: column; gap: 2px; min-width: 220px; padding: 10px 12px; border: 1px solid var(--cq-line-field); border-radius: var(--cq-r-card);
+         background: var(--cq-bg); font: inherit; text-align: left; cursor: pointer; color: var(--cq-ink); }
+.rchip.on { border: 2px solid var(--cq-link); background: var(--cq-surface); padding: 9px 11px; }
+.rchip:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; }
+.rt { font-weight: 700; }
+.rd { font-size: var(--cq-fs-micro); color: var(--cq-muted); }
+.ineff { display: flex; flex-direction: column; gap: 8px; }
+.ineff .sm { font-size: var(--cq-fs-micro); }
+.closedtbl { max-width: 900px; margin-top: 8px; }

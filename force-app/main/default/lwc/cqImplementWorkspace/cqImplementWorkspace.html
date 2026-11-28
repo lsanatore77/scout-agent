@@ -114,6 +114,54 @@
                 </table></div>
             </template>
 
+            <!-- Verification: the owner closes the NC once CQ has completed it -->
+            <template if:true={showClose}>
+                <h3 class="cq-step-title headgap cq-mt16">Close the Nonconformance</h3>
+                <p class="cq-step-intro">Did the corrections hold? Look at what was done above, then pick the resolution and sign. CQ asks for a signature to close.</p>
+                <div class="grid closegrid">
+                    <div class="main">
+                        <div class="cq-field"><span class="cq-label">Resolution<span class="cq-req">*</span></span>
+                            <div class="rchips">
+                                <template for:each={resolutionOpts} for:item="o">
+                                    <button key={o.key} class={o.cls} data-key={o.key} onclick={handleResolution} aria-pressed={o.pressed}>
+                                        <span class="rt">{o.title}</span><span class="rd">{o.desc}</span>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+                        <template if:true={isIneffective}>
+                            <div class="cq-msg warn ineff">
+                                <strong>The fix did not hold. Closing now records that, but leaves the problem open.</strong>
+                                <span>Usually you do one of these instead:</span>
+                                <div class="links">
+                                    <button class="cq-btn-outline cq-btn-sm" onclick={handleReopenImpl}>Reopen Implementation &#8599;</button>
+                                    <template if:false={hasCapa}><button class="cq-btn-outline cq-btn-sm" onclick={handleEscalate}>Escalate to a CAPA &#8599;</button></template>
+                                    <template if:true={hasCapa}><a class="cq-link" href={capaHref} target="_blank">Already escalated: {v.capaName}</a></template>
+                                </div>
+                                <span class="sm">Reopen sends the NC back to Implement to add or redo corrections. Escalate opens CQ's Escalate to CAPA, where the cause gets fixed. Or close it as Ineffective, for example when a CAPA already covers it.</span>
+                            </div>
+                        </template>
+                        <label class="cq-field"><span class="cq-label">Closing Summary<span class="cq-req">*</span></span>
+                            <textarea rows="4" value={closeSummary} oninput={handleSummary} placeholder="For example, lot L26-0915 re-tested: 2 scrapped, 16 released. No repeat on the 3 lots built since."></textarea>
+                            <span class="cq-hint">Saved on the NC as CQ's closing comments.</span>
+                        </label>
+                        <template if:true={closeBlocker}><span class="cq-blocker">{closeBlocker}</span></template>
+                    </div>
+                    <aside class="signsec">
+                        <c-cq-sign-seat record-id={recordId} policy-key="compliancequest__SQX_Nonconformance__c" actions={closeActions}
+                            seat="Closed By" person="You" sub={closeFor} status="Your Signature" tone="you" mine
+                            meaning={closeLabelMeaning} comment-hint="Optional" submit={closeSubmit} disabled={cantClose}>
+                        </c-cq-sign-seat>
+                    </aside>
+                </div>
+            </template>
+            <template if:true={showClosed}>
+                <div class="cq-donehead cq-mt16"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">{v.ncName} Closed</h3></div>
+                <div class="cq-tblwrap cq-sum closedtbl"><table class="cq-tbl">
+                    <tbody><template for:each={closedRows} for:item="r"><tr key={r.key}><td class="k">{r.k}</td><td class="v">{r.v}</td></tr></template></tbody>
+                </table></div>
+            </template>
+
             <p class="cq-note nextline"><strong>Next:</strong> {nextLine}</p>
         </c-cq-ws-shell>
     </template>
