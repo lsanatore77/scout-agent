@@ -4,6 +4,8 @@
 /* one seat: who signs and where it stands; the signer's own seat is highlighted with its signature box */
 .seat { padding: 12px 14px; border-top: 1px solid var(--cq-line); }
 .seat.yours { background: var(--cq-link-soft); box-shadow: inset 3px 0 0 var(--cq-link); }
+/* inside a pop-up, under the screen's own form: a line above, no panel of its own */
+.seat.popup { padding: 14px 0 0; margin-top: 4px; }
 .stop { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
 .stop .cq-pill { flex: none; white-space: nowrap; }
 .fname { font-size: var(--cq-fs-meta); font-weight: 700; }

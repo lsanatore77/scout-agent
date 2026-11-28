@@ -18,6 +18,8 @@ The shared seat component `c-cq-sign-seat`:
 
 Admin links (for example "As admin") go in the seat's slot.
 
+`popup` puts the seat inside a pop-up under the screen's own form (row actions such as completing a containment or a correction): no highlight panel, a line above it. Everything else is the same. The rule (Lou, 27 Nov): one signature on the page at a time; row actions sign in a pop-up.
+
 ## How it works
 
 | Part | Job |

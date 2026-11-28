@@ -49,3 +49,15 @@ tr.panelrow > td { background: var(--cq-surface); padding: 4px 16px 16px; }
 .closedtbl { max-width: 900px; margin-top: 8px; }
 /* the opens-in-a-new-tab arrow, drawn in the text colour (the ↗ character shows as a blue emoji on Windows) */
 .ext { width: 0.72em; height: 0.72em; margin-left: 4px; vertical-align: 0; flex: none; }
+/* Containment, and one pop-up for every row action (Lou 27 Nov) */
+.tcards.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 900px) { .tcards.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cq-modal.wide { max-width: 720px; }
+.cq-modal.wide .cq-modal-body { max-height: 72vh; gap: 12px; }
+.cq-modal-head .cq-sub { margin-top: 2px; }
+.blockbox { display: flex; flex-direction: column; gap: 8px; }
+.blockbox .sm { font-size: var(--cq-fs-micro); }
+.blist { display: flex; flex-direction: column; border: 1px solid var(--cq-line); border-radius: 6px; overflow: hidden; background: var(--cq-bg); color: var(--cq-ink); }
+.bl { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 8px 12px; border-top: 1px solid var(--cq-line); }
+.bl:first-child { border-top: none; }
+.grow { flex: 1; }

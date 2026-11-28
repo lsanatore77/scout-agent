@@ -90,6 +90,33 @@ private class CqImplementWorkspaceTest {
     }
 
     @IsTest
+    static void containmentsAreListedAndHoldTheClose() {
+        compliancequest__SQX_Action__c a = makeAction(UserInfo.getUserId());
+        if (a == null) { return; }
+        Id ncId = a.compliancequest__SQX_Nonconformance__c;
+        compliancequest__SQX_Containment__c c;
+        try {
+            c = new compliancequest__SQX_Containment__c(compliancequest__SQX_Nonconformance__c = ncId, compliancequest__Title__c = 'Hold the lot',
+                compliancequest__Due_Date__c = Date.today().addDays(-1), compliancequest__SQX_User__c = UserInfo.getUserId());
+            insert c;
+        } catch (Exception e) { return; }   // CQ's own rules for making a containment in this org's test context
+        FakeEsig f = new FakeEsig(); CqEsign.gateway = f;
+        CqImplementWorkspace.View v = CqImplementWorkspace.getView(ncId);
+        System.assertEquals(1, v.containments.size());
+        System.assert(v.containments[0].mine);
+        Boolean listed = false;
+        for (CqImplementWorkspace.Blocker b : v.openBeforeClose) { if (b.id == c.Id) { listed = true; } }
+        System.assertEquals(v.containments[0].open, listed, 'an open containment holds the close');
+        Integer refused = 0;
+        try { CqImplementWorkspace.completeContainment(c.Id, ' ', null, null, null); } catch (AuraHandledException e) { refused++; }
+        try { CqImplementWorkspace.completeContainment(c.Id, 'Held', String.valueOf(Date.today().addDays(2)), null, null); } catch (AuraHandledException e) { refused++; }
+        System.assertEquals(2, refused);
+        System.assertEquals(0, f.signed, 'nothing signed while the form is incomplete');
+        try { CqImplementWorkspace.completeContainment(c.Id, 'All units held in quarantine.', null, null, null); } catch (AuraHandledException e) { /* CQ's own rules */ }
+        try { CqImplementWorkspace.reassign(c.Id, null); } catch (AuraHandledException e) { refused++; }
+    }
+
+    @IsTest
     static void refusesOtherRecords() {
         Integer refused = 0;
         try { CqImplementWorkspace.getView(UserInfo.getUserId()); } catch (AuraHandledException e) { refused++; }

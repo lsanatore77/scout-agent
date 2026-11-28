@@ -11,7 +11,8 @@ public with sharing class CqEsigBridge implements CqEsigGateway {
         'Field_Action_Review__c' => 'CqFarSignable',
         'Field_Action__c' => 'CqFaSignable',
         'compliancequest__SQX_Nonconformance__c' => 'CqNcSignable',
-        'compliancequest__SQX_Action__c' => 'CqActionSignable'
+        'compliancequest__SQX_Action__c' => 'CqActionSignable',
+        'compliancequest__SQX_Containment__c' => 'CqContainmentSignable'
     };
     public static CqSignable signable(Id recordId) {
         String n = recordId == null ? null : SIGNABLE.get(String.valueOf(recordId.getSObjectType()));

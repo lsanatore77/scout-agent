@@ -5,25 +5,50 @@
             fields={headerFields} agent-name="CQAI_Quality" placeholder="Ask about these corrections…" ask-step="Implement" ask-suggestions={askSuggestions}
             error={error}>
 
-            <h3 class="cq-step-title headgap">Corrections</h3>
-            <p class="cq-step-intro">Each assignee completes their own. You follow them here, chase what is late, and verify what is done when CQ asks for it.</p>
-
             <template if:true={note}>
                 <div class="cq-msg pos notebar"><span>{note}</span><button class="cq-link plainbtn" onclick={handleDismiss}>Dismiss</button></div>
             </template>
 
-            <div class="cq-statcards tcards">
+            <div class={cardsCls}>
                 <template for:each={cards} for:item="c">
                     <div key={c.key} class="cq-statcard flat"><span class="cq-statcard-k">{c.label}</span><span class={c.numCls}>{c.n}</span></div>
                 </template>
             </div>
 
+            <!-- Containment: added in Triage, finished here -->
+            <template if:true={hasContainments}>
+                <h3 class="cq-step-title headgap">Containment</h3>
+                <p class="cq-step-intro">What was done to stop the problem spreading while it was investigated. Added in Triage; finished here.</p>
+                <div class="cq-tblwrap"><table class="cq-tbl">
+                    <thead><tr><th>Containment</th><th>Assignee</th><th>Due</th><th>Status</th><th class="acts"><span class="slds-assistive-text">Actions</span></th></tr></thead>
+                    <tbody>
+                        <template for:each={cnRows} for:item="k">
+                            <tr key={k.key}>
+                                <td><a class="cq-link cq-strong titlelink" href={k.href} target="_blank" title="Open the containment">{k.titleText}</a><span class="sub">{k.name}</span></td>
+                                <td>{k.assigneeText}</td>
+                                <td><div>{k.dueText}</div><div class={k.dueSubCls}>{k.dueSub}</div></td>
+                                <td><span class={k.statusCls}>{k.statusText}</span></td>
+                                <td class="acts">
+                                    <template if:true={k.showComplete}><button class="cq-btn-primary cq-btn-sm" data-id={k.id} onclick={handleOpenContain}>Complete</button></template>
+                                    <template if:true={k.showRemind}><button class="cq-btn-outline cq-btn-sm" data-id={k.id} onclick={handleRemind} disabled={busy}>Send Reminder</button></template>
+                                    <template if:true={k.showReassign}><button class="cq-link plainbtn" data-id={k.id} onclick={handleOpenReassign}>Reassign</button></template>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table></div>
+            </template>
+
+            <div class={corrCls}>
+                <h3 class="cq-step-title headgap">Corrections</h3>
+                <p class="cq-step-intro">Each assignee completes their own. You follow them here, chase what is late, and verify what is done when CQ asks for it.</p>
+            </div>
             <template if:true={hasRows}>
                 <div class="cq-tblwrap"><table class="cq-tbl">
                     <thead><tr><th>Correction</th><th>Assignee</th><th>Due</th><th>Status</th><th>Verification</th><th class="acts"><span class="slds-assistive-text">Actions</span></th></tr></thead>
                     <tbody>
                         <template for:each={rows} for:item="r">
-                            <tr key={r.key} class={r.rowCls}>
+                            <tr key={r.key}>
                                 <td><a class="cq-link cq-strong titlelink" href={r.href} target="_blank" title="Open the correction">{r.title}</a><span class="sub">{r.name}</span></td>
                                 <td>{r.assigneeText}</td>
                                 <td><div>{r.dueText}</div><div class={r.dueSubCls}>{r.dueSub}</div></td>
@@ -36,79 +61,6 @@
                                     <template if:true={r.showReassign}><button class="cq-link plainbtn" data-id={r.id} onclick={handleOpenReassign}>Reassign</button></template>
                                 </td>
                             </tr>
-                            <template if:true={r.open}>
-                                <tr key={r.panelKey} class="panelrow"><td colspan="6">
-                                    <!-- the owner's own correction: complete or skip -->
-                                    <template if:true={r.panelComplete}>
-                                        <div class="grid">
-                                            <div class="main">
-                                                <template if:true={r.description}><div class="cq-note sm0">{r.description}</div></template>
-                                                <template if:true={isComplete}>
-                                                    <label class="cq-field"><span class="cq-label">What Was Done<span class="cq-req">*</span></span>
-                                                        <textarea rows="3" value={whatWasDone} oninput={handleDone} placeholder="For example, fitted a new pin to nominal; first-piece check passed on 5 units."></textarea>
-                                                    </label>
-                                                    <div class="two">
-                                                        <label class="cq-field"><span class="cq-label">Completed On<span class="cq-req">*</span></span>
-                                                            <input class="date" type="date" value={completedOn} max={today} onchange={handleDate}>
-                                                        </label>
-                                                        <div class="cq-field"><span class="cq-label">Evidence</span>
-                                                            <lightning-file-upload label="Attach evidence" variant="label-hidden" record-id={r.id} accept={acceptTypes} multiple onuploadfinished={handleUploadFinished}></lightning-file-upload>
-                                                            <template if:true={hasNewFiles}><ul class="files"><template for:each={files} for:item="f"><li key={f.key}>&#128206; {f.name}</li></template></ul></template>
-                                                            <span class="cq-hint">Attached to {r.name}.</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="links"><span class="cq-muted">No longer needed?</span><button class="cq-link plainbtn" onclick={handleSkipMode}>Skip</button><button class="cq-link plainbtn" onclick={handleCancel}>Cancel</button></div>
-                                                </template>
-                                                <template if:true={isSkip}>
-                                                    <label class="cq-field"><span class="cq-label">Why It Is No Longer Needed<span class="cq-req">*</span></span>
-                                                        <textarea rows="3" value={skipReason} oninput={handleReason}></textarea>
-                                                    </label>
-                                                    <div class="links"><button class="cq-link plainbtn" onclick={handleCompleteMode}>Back to Complete</button><button class="cq-link plainbtn" onclick={handleCancel}>Cancel</button></div>
-                                                </template>
-                                                <template if:true={workBlocker}><span class="cq-blocker">{workBlocker}</span></template>
-                                            </div>
-                                            <aside class="signsec">
-                                                <c-cq-sign-seat record-id={r.id} policy-key="compliancequest__SQX_Action__c" actions={seatActions}
-                                                    seat="Completed By" person="You" sub={signFor} status="Your Signature" tone="you" mine
-                                                    meaning={workMeaning} comment-hint="Optional" submit={workSubmit} disabled={cantWork}>
-                                                </c-cq-sign-seat>
-                                            </aside>
-                                        </div>
-                                    </template>
-                                    <!-- verify a done correction -->
-                                    <template if:true={r.panelVerify}>
-                                        <div class="grid">
-                                            <div class="main">
-                                                <div class="cq-tblwrap cq-sum"><table class="cq-tbl"><tbody>
-                                                    <tr><td class="k">What Was Done</td><td class="v">{r.doneText}</td></tr>
-                                                    <tr><td class="k">Done</td><td class="v">{r.dueSub}</td></tr>
-                                                    <tr><td class="k">Evidence</td><td class="v"><template if:true={r.hasFiles}>&#128206; {r.filesText}</template><template if:false={r.hasFiles}>None attached</template></td></tr>
-                                                </tbody></table></div>
-                                                <label class="cq-field"><span class="cq-label">How You Checked It<span class="cq-req">*</span></span>
-                                                    <textarea rows="3" value={howChecked} oninput={handleChecked} placeholder="For example, checked 5 bonded units from the next run: all within tolerance."></textarea>
-                                                </label>
-                                                <div class="links"><span class="cq-muted">Not done properly?</span><button class="cq-link plainbtn" onclick={handleSendBack}>Send Back<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><button class="cq-link plainbtn" onclick={handleCancel}>Cancel</button></div>
-                                                <template if:true={verifyBlocker}><span class="cq-blocker">{verifyBlocker}</span></template>
-                                            </div>
-                                            <aside class="signsec">
-                                                <c-cq-sign-seat record-id={r.id} policy-key="compliancequest__SQX_Action__c" actions={seatActions}
-                                                    seat="Verified By" person="You" sub={signFor} status="Your Signature" tone="you" mine
-                                                    meaning={verifyMeaning} comment-hint="Optional" submit={verifySubmit} disabled={cantVerify}>
-                                                </c-cq-sign-seat>
-                                            </aside>
-                                        </div>
-                                    </template>
-                                    <!-- give an open correction to someone else -->
-                                    <template if:true={r.panelReassign}>
-                                        <div class="reassign">
-                                            <lightning-record-picker label="Give It To" object-api-name="User" filter={userFilter} onchange={handlePick} placeholder="Search people"></lightning-record-picker>
-                                            <button class="cq-btn-primary" onclick={handleReassign} disabled={cantReassign}>Reassign</button>
-                                            <button class="cq-link plainbtn" onclick={handleCancel}>Cancel</button>
-                                        </div>
-                                        <span class="cq-hint">Now with {r.assigneeText}. The due date stays the same.</span>
-                                    </template>
-                                </td></tr>
-                            </template>
                         </template>
                     </tbody>
                 </table></div>
@@ -122,6 +74,23 @@
                             <h3 class="cq-step-title headgap">Close the Nonconformance</h3>
                             <p class="cq-step-intro sm0">Did the corrections hold? Look at what was done above, then pick the resolution and sign. CQ asks for a signature to close.</p>
                         </div>
+                        <template if:true={hasBlockers}>
+                            <div class="cq-msg warn blockbox">
+                                <strong>{blockerHead}</strong>
+                                <div class="blist">
+                                    <template for:each={blockers} for:item="b">
+                                        <div key={b.key} class="bl">
+                                            <a class="cq-link cq-strong" href={b.href} target="_blank">{b.name}</a>
+                                            <span>{b.kind}</span>
+                                            <span class="cq-pill soft warn">{b.statusText}</span>
+                                            <span class="grow"></span>
+                                            <template if:true={b.canDo}><button class="cq-btn-primary cq-btn-sm" data-id={b.id} onclick={handleOpenContain}>Complete</button></template>
+                                        </div>
+                                    </template>
+                                </div>
+                                <span class="sm">You can fill in the resolution and summary now; only signing waits for the list to be empty.</span>
+                            </div>
+                        </template>
                         <div class="cq-field"><span class="cq-label">Resolution<span class="cq-req">*</span></span>
                             <div class="rchips">
                                 <template for:each={resolutionOpts} for:item="o">
@@ -166,5 +135,94 @@
 
             <p class="cq-note nextline"><strong>Next:</strong> {nextLine}</p>
         </c-cq-ws-shell>
+
+        <!-- one pop-up for every row action: its form and, when CQ's policy asks, the signature -->
+        <template if:true={showModal}>
+            <div class="cq-modal-back" onkeydown={handleModalKey}>
+                <section class="cq-modal wide" role="dialog" aria-modal="true" aria-label={modalTitle}>
+                    <header class="cq-modal-head">
+                        <h2 class="cq-modal-title">{modalTitle}</h2>
+                        <div class="cq-sub">{modalSub}</div>
+                        <button class="cq-modal-x" onclick={handleCancel} aria-label="Close" title="Close">&#10005;</button>
+                    </header>
+                    <div class="cq-modal-body">
+                        <!-- a containment: what was contained -->
+                        <template if:true={isContainModal}>
+                            <template if:true={modalItem.description}><div class="cq-note sm0">{modalItem.description}</div></template>
+                            <label class="cq-field"><span class="cq-label">What Was Contained<span class="cq-req">*</span></span>
+                                <textarea rows="4" value={whatWasDone} oninput={handleDone} placeholder="For example, all remaining units of the lot held in quarantine; shipments stopped."></textarea>
+                                <span class="cq-hint">Saved in CQ as the Containment Summary.</span>
+                            </label>
+                            <div class="two">
+                                <label class="cq-field"><span class="cq-label">Completed On<span class="cq-req">*</span></span>
+                                    <input class="date" type="date" value={completedOn} max={today} onchange={handleDate}>
+                                </label>
+                                <div class="cq-field"><span class="cq-label">Evidence</span>
+                                    <lightning-file-upload label="Attach evidence" variant="label-hidden" record-id={modalId} accept={acceptTypes} multiple onuploadfinished={handleUploadFinished}></lightning-file-upload>
+                                    <template if:true={hasNewFiles}><ul class="files"><template for:each={files} for:item="f"><li key={f.key}>&#128206; {f.name}</li></template></ul></template>
+                                    <span class="cq-hint">Attached to {modalItem.name}.</span>
+                                </div>
+                            </div>
+                        </template>
+                        <!-- a correction: what was done, or why it is no longer needed -->
+                        <template if:true={isWorkModal}>
+                            <template if:true={modalItem.description}><div class="cq-note sm0">{modalItem.description}</div></template>
+                            <template if:true={isComplete}>
+                                <label class="cq-field"><span class="cq-label">What Was Done<span class="cq-req">*</span></span>
+                                    <textarea rows="4" value={whatWasDone} oninput={handleDone} placeholder="For example, fitted a new pin to nominal; first-piece check passed on 5 units."></textarea>
+                                </label>
+                                <div class="two">
+                                    <label class="cq-field"><span class="cq-label">Completed On<span class="cq-req">*</span></span>
+                                        <input class="date" type="date" value={completedOn} max={today} onchange={handleDate}>
+                                    </label>
+                                    <div class="cq-field"><span class="cq-label">Evidence</span>
+                                        <lightning-file-upload label="Attach evidence" variant="label-hidden" record-id={modalId} accept={acceptTypes} multiple onuploadfinished={handleUploadFinished}></lightning-file-upload>
+                                        <template if:true={hasNewFiles}><ul class="files"><template for:each={files} for:item="f"><li key={f.key}>&#128206; {f.name}</li></template></ul></template>
+                                        <span class="cq-hint">Attached to {modalItem.name}.</span>
+                                    </div>
+                                </div>
+                                <div class="links"><span class="cq-muted">No longer needed?</span><button class="cq-link plainbtn" onclick={handleSkipMode}>Skip</button></div>
+                            </template>
+                            <template if:true={isSkip}>
+                                <label class="cq-field"><span class="cq-label">Why It Is No Longer Needed<span class="cq-req">*</span></span>
+                                    <textarea rows="3" value={skipReason} oninput={handleReason}></textarea>
+                                </label>
+                                <div class="links"><button class="cq-link plainbtn" onclick={handleCompleteMode}>Back to Complete</button></div>
+                            </template>
+                        </template>
+                        <!-- verify a done correction -->
+                        <template if:true={isVerifyModal}>
+                            <div class="cq-tblwrap cq-sum"><table class="cq-tbl"><tbody>
+                                <tr><td class="k">What Was Done</td><td class="v">{modalDoneText}</td></tr>
+                                <tr><td class="k">Done</td><td class="v">{modalDoneOn}</td></tr>
+                                <tr><td class="k">Evidence</td><td class="v"><template if:true={modalHasFiles}>&#128206; {modalFilesText}</template><template if:false={modalHasFiles}>None attached</template></td></tr>
+                            </tbody></table></div>
+                            <label class="cq-field"><span class="cq-label">How You Checked It<span class="cq-req">*</span></span>
+                                <textarea rows="3" value={howChecked} oninput={handleChecked} placeholder="For example, checked 5 bonded units from the next run: all within tolerance."></textarea>
+                            </label>
+                            <div class="links"><span class="cq-muted">Not done properly?</span><button class="cq-link plainbtn" onclick={handleSendBack}>Send Back<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></div>
+                        </template>
+                        <!-- give it to someone else -->
+                        <template if:true={isReassignModal}>
+                            <lightning-record-picker label="Give It To" object-api-name="User" filter={userFilter} onchange={handlePick} placeholder="Search people"></lightning-record-picker>
+                            <span class="cq-hint">Now with {modalItem.assignee}. The due date stays the same.</span>
+                            <template if:true={modalError}><span class="cq-blocker">{modalError}</span></template>
+                        </template>
+
+                        <template if:true={hasSeat}>
+                            <template if:true={modalBlocker}><span class="cq-blocker">{modalBlocker}</span></template>
+                            <c-cq-sign-seat record-id={modalId} policy-key={seatPolicyKey} actions={seatActions} popup
+                                seat={seatName} person="You" sub={signFor} status="Your Signature" tone="you" mine
+                                meaning={seatMeaning} comment-hint="Optional" submit={modalSubmit} disabled={cantSign}>
+                            </c-cq-sign-seat>
+                        </template>
+                    </div>
+                    <footer class="cq-modal-foot">
+                        <button class="cq-btn-outline" onclick={handleCancel} disabled={busy}>Cancel</button>
+                        <template if:true={isReassignModal}><button class="cq-btn-primary" onclick={handleReassign} disabled={cantReassign}>Reassign</button></template>
+                    </footer>
+                </section>
+            </div>
+        </template>
     </template>
 </template>

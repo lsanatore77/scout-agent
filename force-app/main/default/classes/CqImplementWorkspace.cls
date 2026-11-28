@@ -11,10 +11,17 @@
  * Ineffective (the only values CQ allows once the NC is Complete), the closing summary in CQ's Comments, and the owner's
  * signature, through CQ's own Close (Activity Code 'close'). No override: while a correction is open the NC is not
  * Complete and close() refuses. Reopen Implementation and Escalate to CAPA open CQ's own actions.
+ *
+ * Containments (Lou, 27 Nov): added in Triage, finished here, in Implement and Verification. The assignee completes their
+ * own with CQ's own Complete (containment_complete: Containment Summary and Completion Date), signed first when CQ's
+ * policy asks (CqContainmentSignable keeps it in the NC's activity). The owner reminds and reassigns as for corrections.
+ * CQ refuses to close an NC while a containment is open, so close() checks first and the view lists what is still open.
  */
 public with sharing class CqImplementWorkspace {
     public static final String VERIFY = 'implementation_verify';
     public static final String CLOSE = 'close';
+    public static final String CONTAIN = 'containment_complete';
+    static final Set<String> CN_DONE = new Set<String>{ 'Completed', 'Void' };
     static final Set<String> RESOLUTIONS = new Set<String>{ 'Effective', 'Ineffective' };
     static final String NOTIFY_TYPE = 'CQ_Task_Custom_Notification';
 
@@ -29,6 +36,15 @@ public with sharing class CqImplementWorkspace {
         @AuraEnabled public Boolean canVerify = false;    // the running user is the one to verify it
         @AuraEnabled public List<String> files = new List<String>();
     }
+    public class Containment {
+        @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String title; @AuraEnabled public String description;
+        @AuraEnabled public String status; @AuraEnabled public Date due; @AuraEnabled public Date completedOn; @AuraEnabled public String completedBy;
+        @AuraEnabled public String summary; @AuraEnabled public Id assigneeId; @AuraEnabled public String assignee; @AuraEnabled public Boolean mine = false;
+        @AuraEnabled public Boolean open = false;
+        @AuraEnabled public List<String> files = new List<String>();
+    }
+    /** A record CQ wants finished before the NC can close. */
+    public class Blocker { @AuraEnabled public Id id; @AuraEnabled public String name; @AuraEnabled public String kind; @AuraEnabled public String status; }
     public class View {
         @AuraEnabled public Id ncId; @AuraEnabled public String ncName; @AuraEnabled public String ncTitle; @AuraEnabled public String stage;
         @AuraEnabled public String stageKey; @AuraEnabled public String partNumber; @AuraEnabled public String lot; @AuraEnabled public String owner;
@@ -39,6 +55,8 @@ public with sharing class CqImplementWorkspace {
         @AuraEnabled public Date closedOn; @AuraEnabled public Id capaId; @AuraEnabled public String capaName;
         @AuraEnabled public Boolean canClose = false;     // Complete (in Verification) and the running user owns it
         @AuraEnabled public Boolean closed = false;
+        @AuraEnabled public List<Containment> containments = new List<Containment>();
+        @AuraEnabled public List<Blocker> openBeforeClose = new List<Blocker>();
     }
     public class Result { @AuraEnabled public String message; @AuraEnabled public Boolean signed = false; }
 
@@ -105,8 +123,87 @@ public with sharing class CqImplementWorkspace {
                 }
             }
         }
+        v.containments = containments(nc.Id, me);
+        v.openBeforeClose = blockers(v);
         v.canNotify = notifyTypeId() != null;
         return v;
+    }
+
+    static List<Containment> containments(Id ncId, Id me) {
+        List<Containment> out = new List<Containment>();
+        Map<Id, Containment> byId = new Map<Id, Containment>();
+        for (compliancequest__SQX_Containment__c c : [
+                SELECT Id, Name, compliancequest__Title__c, compliancequest__Description__c, compliancequest__Status__c, compliancequest__Due_Date__c,
+                       compliancequest__Completion_Date__c, compliancequest__Completed_By__c, compliancequest__Containment_Summary__c,
+                       compliancequest__SQX_User__c, compliancequest__SQX_User__r.Name
+                FROM compliancequest__SQX_Containment__c WHERE compliancequest__SQX_Nonconformance__c = :ncId
+                WITH USER_MODE ORDER BY compliancequest__Due_Date__c NULLS LAST, Name LIMIT 100]) {
+            Containment k = new Containment();
+            k.id = c.Id; k.name = c.Name; k.title = c.compliancequest__Title__c; k.description = c.compliancequest__Description__c;
+            k.status = c.compliancequest__Status__c; k.due = c.compliancequest__Due_Date__c; k.completedOn = c.compliancequest__Completion_Date__c;
+            k.completedBy = c.compliancequest__Completed_By__c; k.summary = c.compliancequest__Containment_Summary__c;
+            k.assigneeId = c.compliancequest__SQX_User__c; k.assignee = c.compliancequest__SQX_User__r == null ? null : c.compliancequest__SQX_User__r.Name;
+            k.mine = c.compliancequest__SQX_User__c == me;
+            k.open = !CN_DONE.contains(c.compliancequest__Status__c);
+            out.add(k); byId.put(c.Id, k);
+        }
+        if (!byId.isEmpty()) {
+            for (ContentDocumentLink l : [SELECT LinkedEntityId, ContentDocument.Title, ContentDocument.FileExtension FROM ContentDocumentLink
+                                          WHERE LinkedEntityId IN :byId.keySet() ORDER BY SystemModstamp LIMIT 100]) {
+                Containment k = byId.get(l.LinkedEntityId);
+                if (k != null && k.files.size() < 5) { k.files.add(l.ContentDocument.Title + (String.isBlank(l.ContentDocument.FileExtension) ? '' : '.' + l.ContentDocument.FileExtension)); }
+            }
+        }
+        return out;
+    }
+
+    /** What CQ wants finished before it closes the NC: open containments, and any correction still open. */
+    static List<Blocker> blockers(View v) {
+        List<Blocker> out = new List<Blocker>();
+        for (Containment k : v.containments) {
+            if (k.open) { Blocker b = new Blocker(); b.id = k.id; b.name = k.name; b.kind = 'Containment'; b.status = k.status; out.add(b); }
+        }
+        for (Row r : v.rows) {
+            if (r.status == 'Open') { Blocker b = new Blocker(); b.id = r.id; b.name = r.name; b.kind = 'Correction'; b.status = r.status; out.add(b); }
+        }
+        return out;
+    }
+
+    /** The assignee completes their containment: what was contained becomes CQ's Containment Summary. */
+    @AuraEnabled
+    public static Result completeContainment(Id containmentId, String whatWasContained, String completedOn, String comment, String password) {
+        compliancequest__SQX_Containment__c c = containment(containmentId);
+        if (c.compliancequest__SQX_User__c != UserInfo.getUserId()) {
+            throw new AuraHandledException('Only ' + (c.compliancequest__SQX_User__r == null ? 'the assignee' : c.compliancequest__SQX_User__r.Name) + ' can complete ' + c.Name + '.');
+        }
+        if (CN_DONE.contains(c.compliancequest__Status__c)) { throw new AuraHandledException(c.Name + ' is ' + c.compliancequest__Status__c + ', so it can no longer be changed here.'); }
+        if (String.isBlank(whatWasContained)) { throw new AuraHandledException('Say what was contained.'); }
+        Date d;
+        try { d = String.isBlank(completedOn) ? Date.today() : Date.valueOf(completedOn); }
+        catch (Exception e) { throw new AuraHandledException('Enter the date it was completed.'); }
+        if (d > Date.today()) { throw new AuraHandledException('The completion date cannot be in the future.'); }
+        Result res = new Result();
+        Savepoint sp = Database.setSavepoint();
+        CqContainmentSignable.signing = ('completing ' + c.Name + ', ' + c.compliancequest__Title__c).left(1000);
+        try {
+            res.signed = CqEsign.sign(c.Id, CONTAIN, comment, password, true);
+        } catch (AuraHandledException e) {
+            Database.rollback(sp);
+            throw e;
+        }
+        try {
+            update as user new compliancequest__SQX_Containment__c(Id = c.Id, compliancequest__Activity_Code__c = CONTAIN,
+                compliancequest__Containment_Summary__c = whatWasContained.trim().left(32768), compliancequest__Completion_Date__c = d);
+        } catch (DmlException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException(c.Name + ' was not completed: ' + e.getDmlMessage(0));
+        } catch (SecurityException e) {
+            Database.rollback(sp);
+            throw new AuraHandledException(c.Name + ' was not completed: ' + CqSave.DENIED);
+        }
+        String now = containment(c.Id).compliancequest__Status__c;
+        res.message = CN_DONE.contains(now) ? c.Name + ' completed.' : c.Name + ' was saved, but CQ did not complete it (it is ' + now + ').';
+        return res;
     }
 
     /** The owner's own correction, completed or skipped from the NC: the assignee's page does the work and the checks. */
@@ -164,6 +261,14 @@ public with sharing class CqImplementWorkspace {
         if (nc.compliancequest__Status__c != 'Complete') {
             throw new AuraHandledException(nc.compliancequest__Status__c == 'Closed' ? nc.Name + ' is already closed.' : nc.Name + ' is not ready to close: every correction has to be done first.');
         }
+        List<String> open = new List<String>();
+        for (compliancequest__SQX_Containment__c c : [SELECT Name, compliancequest__Status__c FROM compliancequest__SQX_Containment__c
+                                                      WHERE compliancequest__SQX_Nonconformance__c = :nc.Id WITH USER_MODE]) {
+            if (!CN_DONE.contains(c.compliancequest__Status__c)) { open.add(c.Name); }
+        }
+        if (!open.isEmpty()) {
+            throw new AuraHandledException(nc.Name + ' cannot close yet: complete ' + String.join(open, ', ') + ' first. CQ closes an NC only when its containments are done.');
+        }
         if (!RESOLUTIONS.contains(resolution)) { throw new AuraHandledException('Pick Effective or Ineffective.'); }
         if (String.isBlank(summary)) { throw new AuraHandledException('Write the closing summary.'); }
         Result res = new Result();
@@ -189,51 +294,73 @@ public with sharing class CqImplementWorkspace {
         return res;
     }
 
-    /** The owner gives an open correction to someone else. */
+    /** The owner gives an open correction or containment to someone else. */
     @AuraEnabled
     public static Result reassign(Id actionId, Id userId) {
-        compliancequest__SQX_Action__c a = ownersOpen(actionId);
+        Item a = ownersOpen(actionId);
         if (userId == null || userId.getSObjectType() != User.SObjectType) { throw new AuraHandledException('Pick the person to give it to.'); }
-        if (userId == a.compliancequest__SQX_User__c) { throw new AuraHandledException('It is already assigned to them.'); }
+        if (userId == a.assigneeId) { throw new AuraHandledException('It is already assigned to them.'); }
         List<User> u = Database.query('SELECT Id, Name FROM User WHERE Id = :userId AND IsActive = true LIMIT 1');   // dynamic, as elsewhere: IsActive does not compile here
         if (u.isEmpty()) { throw new AuraHandledException('That person is not an active user.'); }
         try {
-            update as user new compliancequest__SQX_Action__c(Id = a.Id, compliancequest__SQX_User__c = userId);
+            SObject change = a.id.getSObjectType().newSObject(a.id);
+            change.put('compliancequest__SQX_User__c', userId);   // the Assignee on both a correction and a containment
+            update as user change;
         } catch (DmlException e) {
-            throw new AuraHandledException(a.Name + ' was not reassigned: ' + e.getDmlMessage(0));
+            throw new AuraHandledException(a.name + ' was not reassigned: ' + e.getDmlMessage(0));
         } catch (SecurityException e) {
-            throw new AuraHandledException(a.Name + ' was not reassigned: ' + CqSave.DENIED);
+            throw new AuraHandledException(a.name + ' was not reassigned: ' + CqSave.DENIED);
         }
-        Result res = new Result(); res.message = a.Name + ' is now assigned to ' + u[0].Name + '.'; return res;
+        Result res = new Result(); res.message = a.name + ' is now assigned to ' + u[0].Name + '.'; return res;
     }
 
     /** The owner nudges the assignee of an open correction: CQ's task notification, in the bell and the mobile app. */
     @AuraEnabled
     public static Result sendReminder(Id actionId) {
-        compliancequest__SQX_Action__c a = ownersOpen(actionId);
-        if (a.compliancequest__SQX_User__c == null) { throw new AuraHandledException(a.Name + ' has no assignee to remind.'); }
+        Item a = ownersOpen(actionId);
+        if (a.assigneeId == null) { throw new AuraHandledException(a.name + ' has no assignee to remind.'); }
         Id typeId = notifyTypeId();
         if (typeId == null) { throw new AuraHandledException('This org has no CQ task notification type, so reminders cannot be sent.'); }
-        String due = a.compliancequest__Due_Date__c == null ? '' : a.compliancequest__Due_Date__c < Date.today()
-            ? ', overdue since ' + a.compliancequest__Due_Date__c.format() : ', due ' + a.compliancequest__Due_Date__c.format();
+        String due = a.due == null ? '' : a.due < Date.today() ? ', overdue since ' + a.due.format() : ', due ' + a.due.format();
         Messaging.CustomNotification n = new Messaging.CustomNotification();
         n.setNotificationTypeId(typeId);
-        n.setTargetId(a.Id);
-        n.setTitle(('Reminder: ' + a.Name + due).left(250));
-        n.setBody((UserInfo.getName() + ' asks you to complete ' + a.Name + ': ' + a.compliancequest__Title__c).left(750));
+        n.setTargetId(a.id);
+        n.setTitle(('Reminder: ' + a.name + due).left(250));
+        n.setBody((UserInfo.getName() + ' asks you to complete ' + a.name + ': ' + a.title).left(750));
         try {
-            n.send(new Set<String>{ String.valueOf(a.compliancequest__SQX_User__c) });
+            n.send(new Set<String>{ String.valueOf(a.assigneeId) });
         } catch (Exception e) {
             throw new AuraHandledException('The reminder was not sent: ' + e.getMessage());
         }
-        Result res = new Result(); res.message = 'Reminder sent to ' + a.compliancequest__SQX_User__r.Name + '.'; return res;
+        Result res = new Result(); res.message = 'Reminder sent to ' + a.assignee + '.'; return res;
     }
 
-    static compliancequest__SQX_Action__c ownersOpen(Id actionId) {
-        compliancequest__SQX_Action__c a = action(actionId);
-        if (!isOwner(nc(a.compliancequest__SQX_Nonconformance__c))) { throw new AuraHandledException('Only the NC owner can do this.'); }
-        if (a.compliancequest__Status__c != 'Open') { throw new AuraHandledException(a.Name + ' is ' + a.compliancequest__Status__c + ', so it can no longer be changed here.'); }
-        return a;
+    /** An open correction or containment, as the owner's reminder and reassign see it. */
+    class Item { Id id; String name; String title; Id assigneeId; String assignee; Date due; }
+    static Item ownersOpen(Id recordId) {
+        Item it = new Item();
+        Id ncId; String status; Boolean open;
+        if (recordId != null && recordId.getSObjectType() == compliancequest__SQX_Containment__c.SObjectType) {
+            compliancequest__SQX_Containment__c c = containment(recordId);
+            it.id = c.Id; it.name = c.Name; it.title = c.compliancequest__Title__c; it.assigneeId = c.compliancequest__SQX_User__c;
+            it.assignee = c.compliancequest__SQX_User__r == null ? null : c.compliancequest__SQX_User__r.Name; it.due = c.compliancequest__Due_Date__c;
+            ncId = c.compliancequest__SQX_Nonconformance__c; status = c.compliancequest__Status__c; open = !CN_DONE.contains(status);
+        } else {
+            compliancequest__SQX_Action__c a = action(recordId);
+            it.id = a.Id; it.name = a.Name; it.title = a.compliancequest__Title__c; it.assigneeId = a.compliancequest__SQX_User__c;
+            it.assignee = a.compliancequest__SQX_User__r == null ? null : a.compliancequest__SQX_User__r.Name; it.due = a.compliancequest__Due_Date__c;
+            ncId = a.compliancequest__SQX_Nonconformance__c; status = a.compliancequest__Status__c; open = status == 'Open';
+        }
+        if (!isOwner(nc(ncId))) { throw new AuraHandledException('Only the NC owner can do this.'); }
+        if (!open) { throw new AuraHandledException(it.name + ' is ' + status + ', so it can no longer be changed here.'); }
+        return it;
+    }
+
+    static compliancequest__SQX_Containment__c containment(Id recordId) {
+        if (recordId == null || recordId.getSObjectType() != compliancequest__SQX_Containment__c.SObjectType) { throw new AuraHandledException('Pick a containment.'); }
+        return [SELECT Id, Name, compliancequest__Title__c, compliancequest__Status__c, compliancequest__Due_Date__c, compliancequest__SQX_Nonconformance__c,
+                       compliancequest__SQX_User__c, compliancequest__SQX_User__r.Name
+                FROM compliancequest__SQX_Containment__c WHERE Id = :recordId WITH USER_MODE];
     }
 
     static Boolean isOwner(compliancequest__SQX_Nonconformance__c nc) {

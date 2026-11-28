@@ -17,6 +17,8 @@ import { askPolicies } from 'c/cqEsign';
  *   promise shows its message under the buttons.
  * Above the password the signer sees their own Salesforce username, read-only (Lou, 27 Nov), so it is clear whose
  * signature this is. It is shown, never sent: the server signs as the running user.
+ * popup: the seat sits inside a pop-up under the screen's own form (row actions, Lou 27 Nov): no highlight panel of its
+ *   own, a line above it instead. Everything else is the same, so the page and the pop-up sign alike.
  */
 export default class CqSignSeat extends LightningElement {
     @api recordId;
@@ -33,6 +35,7 @@ export default class CqSignSeat extends LightningElement {
     @api ref;                // passed back in submit's detail: the step, seat or record this seat is for
     @api submit;
     @api disabled = false;
+    @api popup = false;
 
     signs = {};
     loading = false;
@@ -76,7 +79,7 @@ export default class CqSignSeat extends LightningElement {
         const p = this.signOf(this.first.action).purpose;
         return 'By signing, you ' + (p ? 'confirm: ' + p : (this.meaning || 'confirm this')) + '. Type your password; it is not saved.';
     }
-    get rowCls() { return 'seat' + (this._mine ? ' yours' : ''); }
+    get rowCls() { return 'seat' + (this.popup ? ' popup' : this._mine ? ' yours' : ''); }
     get pillCls() { return 'cq-pill soft ' + (this.tone || 'neu'); }
     get busy() { return this.disabled || this.loading || !!this.acting; }
     get covering() { return !!this.acting || this.loading; }

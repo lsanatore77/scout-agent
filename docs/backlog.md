@@ -234,3 +234,10 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 ## GAP: containments are never completed in our workspaces
 - Created in Triage (CqTriageContainment, Add Containment), then nothing completes them. CQ does not gate Implement on them, only Close, so every NC with a containment hits the wall at Close.
 - Options: list containments in the Implement workspace beside the corrections with Complete for the assignee (preferred: one list of what must finish before Close), or complete them in Disposition/Investigate. The Close section lists anything still open as a backstop (mocked: CloseBlocked.dc.html).
+
+## Containment in the Implement workspace (built 27 Nov)
+- Containment table above Corrections, in Implement and Verification: assignee, due (late in red), status. The assignee's Complete opens one pop-up with What Was Contained, Completed On, Evidence and the signature (CQ's containment_complete: Containment_Summary__c, Completion_Date__c). The owner reminds and reassigns as for corrections.
+- Every row action now opens the same pop-up (containment Complete, correction Complete/Skip, Verify, Reassign); the signature sits in it (c-cq-sign-seat popup). The only signature on the page is Close.
+- Close lists what is still open (open containments, any open correction) with a Complete button for your own, and holds the signature; close() also refuses before signing while a containment is open.
+- Containment signatures: CqContainmentSignable writes the NC Record Activity (text Activity Code containment_complete; it is not in Activity Code2's values). CqEsigBridge.SIGNABLE has the Containment. Not yet checked whether CQ has a signature policy row for containment_complete in this org.
+- Still open: the Close fix (CQ's close code alone leaves the NC Complete). Waiting on Lou closing NC-000072 with CQ's button after CN-00026 is done.
