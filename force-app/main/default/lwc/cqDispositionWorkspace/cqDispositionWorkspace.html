@@ -72,6 +72,7 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <template if:true={hasPending}><p class="cq-note">{pendingGlance}</p></template>
                                 <template if:true={noLots}><p class="cq-note">This NC has no impacted parts or lots, so there is nothing to dispose.</p></template>
                             </section>
                             </div>
@@ -107,8 +108,24 @@
                         <template if:true={v.needsApproval}>
                             <div class="cq-msg warn">This NC needs disposition approval, which this workspace does not do yet. Use the Disposition tab to send it for approval.</div>
                         </template>
-                        <div class="dispgrid">
+                        <div class={dispGridCls}>
                         <div class="dispmain">
+                        <template if:true={hasPending}>
+                            <section class="lot">
+                                <div class="lothead"><span class="lotname">Lot {v.pendingLot}</span><span class="cq-muted cq-grow">{v.partName}</span></div>
+                                <p class="nom">{pendingText}</p>
+                                <template if:true={v.lotsEditable}>
+                                    <div class="cq-fields pendrow">
+                                        <label class="cq-field"><span class="cq-label">Quantity<span class="cq-req">*</span></span>
+                                            <input class="qty" type="number" min="1" step="1" value={pendingQty} onchange={handlePendingQty} oninput={handlePendingQty}>
+                                        </label>
+                                        <button class="cq-btn-primary" disabled={cantSaveLot} onclick={handleSavePending}>{saveLotLabel}</button>
+                                    </div>
+                                    <span class="cq-hint">How many units of this lot have the problem.</span>
+                                </template>
+                                <template if:true={lotError}><p class="qtymsg" role="alert">{lotError}</p></template>
+                            </section>
+                        </template>
                         <template for:each={lotForms} for:item="l">
                             <section key={l.impactedId} class="lot">
                                 <div class="lothead">
@@ -159,6 +176,7 @@
                             </section>
                         </template>
                         </div>
+                        <template if:true={showSign}>
                         <aside class="signsec">
                             <div class="signhead"><span class="cq-card-title nom">Sign the Disposition</span></div>
                             <c-cq-sign-seat record-id={recordId} policy-key="compliancequest__SQX_Nonconformance__c" actions={seatActions}
@@ -167,6 +185,7 @@
                             </c-cq-sign-seat>
                             <p class="snote">On Complete Disposition each row is saved as a CQ disposition and marked Complete by you, signed for every lot and split on the left. CQ updates each lot's disposed quantity, and when nothing is left the NC's disposition is complete. Anything left on a lot gets a new draft for later.</p>
                         </aside>
+                        </template>
                         </div>
                     </template>
 

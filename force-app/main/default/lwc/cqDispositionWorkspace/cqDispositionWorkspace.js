@@ -3,6 +3,7 @@ import { NavigationMixin } from 'lightning/navigation';
 import { notifyRecordUpdateAvailable } from 'lightning/uiRecordApi';
 import getView from '@salesforce/apex/CqDispositionWorkspace.getView';
 import completeDispositions from '@salesforce/apex/CqDispositionWorkspace.completeDispositions';
+import saveLot from '@salesforce/apex/CqTriageImpact.saveLot';
 
 // Ask CQ.AI ready questions for each step (no commas: the popover splits on them)
 const ASK = {
@@ -38,6 +39,9 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     signedNow = false;
     saving = false;
     keySeq = 0;
+    pendingQty;         // the quantity typed for the NC's own lot when it is not stored yet
+    savingLot = false;
+    lotError;
     seatActions = [{ action: 'completedisposition', label: 'Complete Disposition', doing: 'Completing', signing: 'completing the disposition' }];
 
     connectedCallback() { this.load(); }
@@ -46,6 +50,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
         try {
             this.v = await getView({ recordId: this.recordId });
             this.loadError = undefined;
+            this.pendingQty = this.v.pendingLot && this.v.defective > 0 ? this.num(this.v.defective) : null;
             this.initForms();
         } catch (e) {
             this.loadError = this.msg(e, 'Could not read this nonconformance.');
@@ -75,7 +80,16 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
 
     // ---- header
     get titleText() { return this.dash(this.v.title); }
-    get lotText() { return this.dash(this.v.lot); }
+    /** The NC's lot, and how many more lots it has: "L26-1102 +1". */
+    get lotText() {
+        const names = (this.v.lots || []).map((l) => l.lot).filter((n) => n);
+        if (this.v.pendingLot) { names.push(this.v.pendingLot); }
+        const key = (n) => String(n).trim().toUpperCase();
+        const first = this.v.lot || names[0];
+        if (!first) { return '—'; }
+        const rest = new Set(names.map(key).filter((n) => n !== key(first)));
+        return first + (rest.size ? ' +' + rest.size : '');
+    }
     get stageText() { return this.v.stage ? this.v.stage.replace(/\s*\/\s*/, ' / ') : '—'; }
     get riskText() { return this.dash(this.v.risk); }
     get dueText() { return this.dateText(this.v.dispDue); }
@@ -150,7 +164,31 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get totalLeft() { return (this.v.lots || []).reduce((a, l) => a + this.num(l.left), 0); }
     get leftText() { return this.units(this.totalLeft); }
     get lotCount() { return (this.v.lots || []).length; }
-    get noLots() { return this.lotCount === 0; }
+    get noLots() { return this.lotCount === 0 && !this.v.pendingLot; }
+    // ---- the NC's own lot without a quantity yet (NC-000049): asked for before it can be disposed
+    get hasPending() { return !!this.v.pendingLot; }
+    get pendingText() { return 'Lot ' + this.v.pendingLot + ' needs a quantity before it can be disposed.'; }
+    get pendingGlance() { return this.pendingText + ' Add it in Dispose by Lot.'; }
+    get cantSaveLot() { return this.savingLot || !(this.num(this.pendingQty) > 0); }
+    get saveLotLabel() { return this.savingLot ? 'Saving…' : 'Save Quantity'; }
+    handlePendingQty(event) { const x = event.target.value; this.pendingQty = x === '' ? null : Number(x); this.lotError = undefined; }
+    async handleSavePending() {
+        if (this.cantSaveLot) { return; }
+        this.savingLot = true;
+        this.lotError = undefined;
+        try {
+            await saveLot({ recordId: this.recordId, impactedId: null, lot: this.v.pendingLot, quantity: this.num(this.pendingQty) });
+            await this.load();
+            try { await notifyRecordUpdateAvailable([{ recordId: this.recordId }]); } catch (e) { /* refreshes later */ }
+        } catch (e) {
+            this.lotError = this.msg(e, 'The quantity was not saved.');
+        } finally {
+            this.savingLot = false;
+        }
+    }
+    /** The signature is only shown when there is something to sign for. */
+    get showSign() { return !this.v.needsApproval && this.forms.length > 0; }
+    get dispGridCls() { return this.showSign ? 'dispgrid' : 'dispgrid solo'; }
     get approvalText() { return this.v.needsApproval ? 'Required' : 'Not Required'; }
     // What's Wrong
     get photoUrl() { return this.v.photoId ? '/sfc/servlet.shepherd/version/download/' + this.v.photoId : null; }
@@ -313,6 +351,7 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     // ---- footer
     stepBlocker() {
         if (this.v.needsApproval) { return 'Needs approval: use the Disposition tab'; }
+        if (this.v.pendingLot && !this.forms.length) { return 'Lot ' + this.v.pendingLot + ' needs a quantity'; }
         if (!this.forms.length) { return 'Nothing is left to dispose'; }
         for (const f of this.forms) {
             const lot = this.v.lots.find((l) => l.impactedId === f.impactedId);

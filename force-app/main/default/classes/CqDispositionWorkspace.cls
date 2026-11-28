@@ -71,6 +71,9 @@ public with sharing class CqDispositionWorkspace {
         @AuraEnabled public Boolean reasonNeeded = true;
         public List<Past> evidence = new List<Past>();       // every past disposition weighed, newest first
         @AuraEnabled public List<Lot> lots = new List<Lot>();
+        // The NC's own lot when it is not among its lots yet (no quantity was known): Dispose by Lot asks for its quantity
+        @AuraEnabled public String pendingLot;
+        @AuraEnabled public Boolean lotsEditable = true;     // CQ refuses changes to lots from Implement on
         @AuraEnabled public List<Past> history = new List<Past>();
     }
     public class Row {
@@ -133,6 +136,12 @@ public with sharing class CqDispositionWorkspace {
             l.records.add(rec(d));
             if (l.draftId == null && d.compliancequest__Status__c == 'Draft') { l.draftId = d.Id; l.draftName = d.Name; }
         }
+        v.lotsEditable = !CqNcLots.LOCKED.contains(v.stage);
+        if (String.isNotBlank(v.lot) && v.lotsEditable) {
+            Boolean found = false;
+            for (Lot l : v.lots) { if (CqNcLots.same(l.lot, v.lot)) { found = true; } }
+            if (!found) { v.pendingLot = v.lot.trim(); }
+        }
         Decimal left = 0;
         for (Lot l : v.lots) { left += l.left; }
         v.isComplete = !v.lots.isEmpty() && left == 0;
@@ -141,8 +150,9 @@ public with sharing class CqDispositionWorkspace {
         if (v.partId != null) { pastDispositions(v, recordId); }
         suggest(v);
         if (v.lots.isEmpty()) {
-            v.suggestType = null;
-            v.suggestWhy = 'This NC has no impacted parts or lots, so there is nothing to dispose.';
+            v.suggestType = null; v.confidence = null; v.suggestFactors = new List<String>();   // nothing to weigh
+            v.suggestWhy = v.pendingLot != null ? 'Lot ' + v.pendingLot + ' needs a quantity before it can be disposed.'
+                : 'This NC has no impacted parts or lots, so there is nothing to dispose.';
         }
         return v;
     }

@@ -124,6 +124,23 @@ private class CqDispositionWorkspaceTest {
         CqDispositionWorkspace.View v = CqDispositionWorkspace.getView(ncId);
         System.assert(v.lots.isEmpty(), 'no lots');
         System.assertEquals(null, v.suggestType, 'nothing to dispose: no suggestion');
+        // the NC's own lot is not stored yet: Dispose by Lot asks for its quantity
+        System.assertEquals('DSP-LOT-1', v.pendingLot, 'the NC lot waits for a quantity');
+        System.assert(v.suggestWhy.contains('needs a quantity'), v.suggestWhy);
+        CqTriageImpact.saveLot(ncId, null, v.pendingLot, 2);
+        v = CqDispositionWorkspace.getView(ncId);
+        System.assertEquals(null, v.pendingLot, 'saved');
+        System.assertEquals(1, v.lots.size(), 'the lot is there to dispose');
+        System.assertEquals(2, v.lots[0].left, 'with its quantity');
+    }
+
+    @IsTest
+    static void nothingAtAll() {
+        Id ncId = makeNc();
+        delete [SELECT Id FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :ncId];
+        update new compliancequest__SQX_Nonconformance__c(Id = ncId, compliancequest__Lot_Number__c = null);
+        CqDispositionWorkspace.View v = CqDispositionWorkspace.getView(ncId);
+        System.assertEquals(null, v.pendingLot, 'no lot at all');
         System.assert(v.suggestWhy.contains('nothing to dispose'), v.suggestWhy);
     }
 
