@@ -25,8 +25,7 @@
 .sigpw { font-size: var(--cq-fs-meta); }
 /* the signer's username: shown, read-only, so it is clear whose signature this is */
 /* plain text, not an input: an input next to the password would make the browser offer saved logins */
-.sigro { display: flex; align-items: center; min-height: var(--cq-field-h); padding: 0 var(--cq-field-pad-x, 10px); border: 1px solid var(--cq-line-field);
-         border-radius: 4px; background: var(--cq-surface); color: var(--cq-muted); font-size: var(--cq-fs-meta); overflow-wrap: anywhere; user-select: text; }
+.sigro { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); overflow-wrap: anywhere; user-select: text; }
 .sigpw:-webkit-autofill { animation-name: cqAutofillStart; animation-duration: 1ms; }
 .sigpw:autofill { animation-name: cqAutofillStart; animation-duration: 1ms; }
 @keyframes cqAutofillStart { from { opacity: 1; } to { opacity: 1; } }
