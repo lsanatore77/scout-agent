@@ -13,11 +13,14 @@
  * With no investigation approval, CQ then completes the response and the investigation in the background
  * (a few seconds later), moves the NC to Implement and turns the action plans into actions. With approval,
  * CQ starts its approval on the response instead.
+ * Before any of that, the investigator signs on the NC when CQ's policy asks (Nonconformance, Submitting Investigation:
+ * CqEsign, logged in NC Record Activity by CqNcSignable). With no policy there is nothing to sign.
  */
 public with sharing class CqInvestigationWorkspace {
     public static final String INITIATE = 'initiate';
     public static final String COMPLETE = 'complete';
     public static final String SUBMIT = 'submitforapproval';
+    public static final String SIGN_ACTION = 'submitinvestigation';   // CQ's Nonconformance esig action, Submitting Investigation
 
     public class Cause {
         @AuraEnabled public Id id; @AuraEnabled public String category; @AuraEnabled public String code;
@@ -54,6 +57,7 @@ public with sharing class CqInvestigationWorkspace {
     }
     public class Result {
         @AuraEnabled public String responseName; @AuraEnabled public Boolean needsApproval = false;
+        @AuraEnabled public Boolean signed = false;
         @AuraEnabled public List<String> toolsCompleted = new List<String>();
     }
 
@@ -227,9 +231,11 @@ public with sharing class CqInvestigationWorkspace {
     /**
      * Complete Investigation (or Submit for Approval when the NC needs investigation approval): saves the actions,
      * conclusion and summary, then submits the investigation through a CQ response as described at the top.
+     * comment and password are the investigator's signature, used only when CQ's policy asks for one.
      */
     @AuraEnabled
-    public static Result completeInvestigation(Id recordId, String conclusion, String summary, String actionsPayload) {
+    public static Result completeInvestigation(Id recordId, String conclusion, String summary, String actionsPayload,
+                                               String comment, String password) {
         Id invId = investigationFor(recordId);
         refuseIfDone(invId);
         if (String.isBlank(conclusion)) { throw new AuraHandledException('Choose a conclusion.'); }
@@ -243,6 +249,14 @@ public with sharing class CqInvestigationWorkspace {
         Result res = new Result();
         res.needsApproval = inv.compliancequest__SQX_Nonconformance__r.compliancequest__Investigation_Approval__c == true;
         Savepoint sp = Database.setSavepoint();
+        // the investigator signs for this conclusion, its root causes and actions, before anything is saved (the password goes straight to CQ)
+        CqNcSignable.signing = signedFor(invId, conclusion, actionsPayload);
+        try {
+            res.signed = CqEsign.sign(inv.compliancequest__SQX_Nonconformance__c, SIGN_ACTION, comment, password, true);
+        } catch (AuraHandledException e) {
+            Database.rollback(sp);
+            throw e;
+        }
         try {
             if (actionsPayload != null) { saveActions(invId, actionsPayload); }
             // 1. open a Draft investigation, as CQ's Perform Investigation does
@@ -276,6 +290,29 @@ public with sharing class CqInvestigationWorkspace {
             throw new AuraHandledException('The investigation was not submitted: ' + CqSave.DENIED);
         }
         return res;
+    }
+
+    /** What the investigator's signature covers, as recorded with it: the conclusion, the root causes and the actions. */
+    @TestVisible
+    static String signedFor(Id invId, String conclusion, String actionsPayload) {
+        List<String> causes = new List<String>();
+        for (compliancequest__SQX_Root_Cause__c r : [
+                SELECT compliancequest__SQX_Root_Cause_Code__r.Name, compliancequest__Description__c
+                FROM compliancequest__SQX_Root_Cause__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE ORDER BY CreatedDate LIMIT 20]) {
+            String c = r.compliancequest__SQX_Root_Cause_Code__r != null ? r.compliancequest__SQX_Root_Cause_Code__r.Name : r.compliancequest__Description__c;
+            if (String.isNotBlank(c)) { causes.add(c.stripHtmlTags().left(80)); }
+        }
+        Integer actions = 0;
+        if (actionsPayload != null) {
+            Object raw = JSON.deserializeUntyped(actionsPayload);
+            if (raw instanceof List<Object>) { actions = ((List<Object>) raw).size(); }
+        } else {
+            actions = [SELECT COUNT() FROM compliancequest__SQX_Action_Plan__c WHERE compliancequest__SQX_Investigation__c = :invId WITH USER_MODE];
+        }
+        String s = 'conclusion ' + conclusion
+            + '; root cause' + (causes.size() == 1 ? ' ' : 's ') + (causes.isEmpty() ? 'none recorded' : String.join(causes, ', '))
+            + '; ' + actions + (actions == 1 ? ' action' : ' actions');
+        return s.left(1000);
     }
 
     static void refuseIfDone(Id invId) {

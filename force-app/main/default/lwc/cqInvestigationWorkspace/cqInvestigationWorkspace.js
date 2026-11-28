@@ -73,6 +73,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     sumConfirm = false;    // Write It Again over edited text asks first
     sumFill = false;
     saving = false;
+    _seatActions;          // the seat's action, kept so the seat is not handed a new list on every render
     result;                // what Complete Investigation did
     waiting = false;       // CQ finishes the submission a few seconds later
     keySeq = 0;
@@ -1013,21 +1014,42 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     handleBack() { if (this.step > 0) { this.go(this.step - 1); } }
     handleNext() { if (this.step < STEPS.length - 1) { this.go(this.step + 1); } }
 
-    async handleComplete() {
-        if (this.cantComplete) { return; }
+    // ---- the investigator's signature (c-cq-sign-seat): CQ's Nonconformance policy, Submitting Investigation
+    get seatActions() {
+        const label = this.v && this.v.needsApproval ? 'Submit for Approval' : 'Complete Investigation';
+        if (!this._seatActions || this._seatActions[0].label !== label) {
+            this._seatActions = [{ action: 'submitinvestigation', label, doing: this.v && this.v.needsApproval ? 'Submitting' : 'Completing',
+                signing: this.v && this.v.needsApproval ? 'submitting the investigation' : 'completing the investigation' }];
+        }
+        return this._seatActions;
+    }
+    /** What the signature covers, as the server records it with the signature. */
+    get signFor() {
+        if (!this.conclusion) { return 'Choose a conclusion'; }
+        const causes = (this.v.causes || []).map((c) => c.code || c.description).filter((c) => c);
+        const n = (this.plans || []).length;
+        return 'Signs for: Conclusion ' + this.conclusion
+            + ' · ' + (causes.length ? (causes.length === 1 ? 'Root cause ' : 'Root causes ') + causes.join(', ') : 'No root cause recorded')
+            + ' · ' + n + (n === 1 ? ' action' : ' actions');
+    }
+    get signMeaning() { return 'confirm the conclusion, summary, root causes and actions above are the result of this investigation'; }
+
+    /** The seat's one button signs and submits in one request; a refusal is thrown back so the seat shows it. */
+    seatSubmit = async ({ comment, password }) => {
+        if (this.cantComplete) { throw new Error(this.conclusionBlocker() || 'The investigation cannot be submitted yet.'); }
         this.saving = true;
         this.error = undefined;
         try {
             this.result = await completeInvestigation({ recordId: this.v.investigationId, conclusion: this.conclusion,
-                summary: this.summary.trim(), actionsPayload: this.planPayload() });
+                summary: this.summary.trim(), actionsPayload: this.planPayload(), comment: comment || null, password: password || null });
             this.plansDirty = false;
             this.waitForCq();
         } catch (e) {
-            this.error = this.msg(e, 'The investigation was not submitted.');
+            throw new Error(this.msg(e, 'The investigation was not submitted.'));
         } finally {
             this.saving = false;
         }
-    }
+    };
 
     /** CQ finishes the submission in the background, a few seconds later; check back until it has. */
     async waitForCq() {
@@ -1063,6 +1085,9 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
             { key: 'a', k: 'Actions', v: this.plans.length ? this.planMix : 'None' },
             { key: 'r', k: 'Response', v: this.dash((this.result && this.result.responseName) || v.responseName) }
         ];
+        if (this.result && this.result.signed) {
+            rows.push({ key: 'sig', k: 'Signature', v: 'Signed by you for Submitting Investigation' });
+        }
         if (this.result && this.result.toolsCompleted && this.result.toolsCompleted.length) {
             rows.push({ key: 't', k: 'Tools Completed', v: this.result.toolsCompleted.join(', ') });
         }

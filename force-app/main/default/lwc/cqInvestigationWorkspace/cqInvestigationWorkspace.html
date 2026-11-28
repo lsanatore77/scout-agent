@@ -362,6 +362,8 @@
                     <!-- 6 Conclusion -->
                     <template if:true={showConclusion}>
                         <h3 class="cq-step-title">Conclusion</h3>
+                        <div class="congrid">
+                        <div class="conmain">
                         <div class="cq-field concl"><span class="cq-label">Conclusion<span class="cq-req">*</span></span>
                             <div class="conmenu" onkeydown={handleConKey}>
                                 <button class={conBtnCls} aria-haspopup="menu" aria-expanded={conExpanded} aria-label="Conclusion" onclick={toggleCon}><span class="cq-grow">{conLabel}</span><span aria-hidden="true">&#9662;</span></button>
@@ -390,6 +392,15 @@
                         </template>
                         <template if:true={sumError}><div class="cq-msg crit errbox">{sumError}</div></template>
                         <div class="cq-infobox cq-mt16"><strong>On {completeLabel}:</strong> {onCompleteText}</div>
+                        </div>
+                        <aside class="signsec">
+                            <div class="cq-card-title nom">Sign the Investigation</div>
+                            <c-cq-sign-seat record-id={v.ncId} policy-key="compliancequest__SQX_Nonconformance__c" actions={seatActions}
+                                seat="Investigated By" person="You" sub={signFor} status="Your Signature" tone="you" mine
+                                meaning={signMeaning} comment-hint="Optional, for example reviewed with the line supervisor." submit={seatSubmit} disabled={cantComplete}>
+                            </c-cq-sign-seat>
+                        </aside>
+                        </div>
                     </template>
 
                     <!-- done -->
@@ -410,7 +421,6 @@
 
                     <template if:true={showSaveRoots}><button slot="foot" class="cq-btn-primary" onclick={handleSaveRoots} disabled={cantSaveRoots}>{saveRootsLabel}</button></template>
                     <template if:true={showActions}><button slot="foot" class="cq-btn-primary" onclick={handleSaveActions} disabled={cantSaveActions}>{saveActionsLabel}</button></template>
-                    <template if:true={showConclusion}><button slot="foot" class="cq-btn-primary" onclick={handleComplete} disabled={cantComplete}>{completeLabel}</button></template>
 
             <template if:true={planFormOpen}>
                 <div class="cq-modal-back" onkeydown={handlePlanFormKey}>

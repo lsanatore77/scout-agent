@@ -125,3 +125,9 @@ button.wc-num:focus-visible { outline: 2px solid var(--cq-link); outline-offset:
 .conbtn.empty { color: var(--cq-muted); }
 .conbtn:focus-visible { outline: none; border-color: var(--cq-link); box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.18); }
 .conlist { left: 0; right: auto; min-width: 100%; box-sizing: border-box; }
+/* Conclusion: the decision takes three quarters, the investigator's signature one quarter and stays in view (as Dispose by Lot) */
+.congrid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.conmain { min-width: 0; }
+.signsec { display: flex; flex-direction: column; gap: 8px; min-width: 0; position: sticky; top: 12px; }
+@media (max-width: 900px) { .congrid { grid-template-columns: minmax(0, 1fr); } .signsec { position: static; } }
+.nom { margin: 0; }
