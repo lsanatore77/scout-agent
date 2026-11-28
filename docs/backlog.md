@@ -225,3 +225,12 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 - Close built 27 Nov (CqImplementWorkspace.close, cqImplementWorkspace): shows when the NC is Complete and the user is the owner (or an administrator). Activity Code 'close', Resolution__c, Closure_Comment__c, signed first with CqEsign (NC policy, action close). Ineffective offers CQ's Reopen Implementation and Escalate CAPA in a new tab. Closed NCs show a read-only summary. Untested in a browser; NC-000072 is ready to try.
 - Draft It for the closing summary (on the canvas as a proposal): needs a new Prompt Builder template, as CQAI_Investigation_Summary. Not built.
 - cqStyles (on hold): .cq-step-intro has margin-top -6px, which with a heading's bottom margin leaves the intro touching the heading. The Implement workspace overrides it locally (heading 8px below, intro margin-top 0) and separates Close with a full-width line (.divided). Fold into cqStyles when the design system work resumes.
+
+## Close test on NC-000072 (27 Nov, all probes rolled back)
+- CQ refuses close while a containment is open (CQ_ERR_MSG_FOR_PREVENT_NC_CLOSURE_CHILD_EXISTS). With CN-00026 removed, the leftover Draft INV-0000000045 and DSP-PTCA-01 (Oct 11 seed data) did not block, except in one run where Activity_Comment__c was also set: unexplained.
+- BUG in CqImplementWorkspace.close(): Activity Code 'close' with Resolution saves but does not close (NC stays Complete / Verification, no Close Date). CQ's own Close button does more. Do not use our Close until it matches what CQ's Close records: Lou to close NC-000072 with CQ's button after completing CN-00026, then read what CQ wrote.
+- The leftovers cannot be deleted (CQ references); void them in CQ if they turn out to count.
+
+## GAP: containments are never completed in our workspaces
+- Created in Triage (CqTriageContainment, Add Containment), then nothing completes them. CQ does not gate Implement on them, only Close, so every NC with a containment hits the wall at Close.
+- Options: list containments in the Implement workspace beside the corrections with Complete for the assignee (preferred: one list of what must finish before Close), or complete them in Disposition/Investigate. The Close section lists anything still open as a backstop (mocked: CloseBlocked.dc.html).
