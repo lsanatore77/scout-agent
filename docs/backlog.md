@@ -204,3 +204,7 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 - The bundle was first created without its js-meta.xml resource, so App Builder did not list it. Fixed 27 Nov: added the js-meta.xml as a LightningComponentResource with Format 'xml' (not 'js'). A new LWC bundle made through Tooling needs this resource. Lou placed it on the Action record page (CQUI Implementation Record Page Desktop).
 - Procedure thumbnail fell back to the PDF icon on SOP-PTCA-060 rev G: the THUMB720BY480 rendition didn't load. Find out whether the rendition isn't generated yet or the URL is wrong.
 - Next: the NC owner's view on the NC (all corrections, reminders, reassign, verify) and the Quality Home tasks.
+
+## Procedure to Follow: how a document is found (Lou, 27 Nov: good enough for now)
+- Today: the controlled document linked on the NC, plus any document number named in the correction's title or description (Current revision only).
+- Recommended later: a controlled document picked on the correction itself, set in the Investigation's Actions step. Check whether CQ's Action or Action Plan already has a controlled document field; add one if not. Order: the correction's document, then the NC's, then a number named in the text.
