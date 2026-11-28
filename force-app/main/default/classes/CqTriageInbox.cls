@@ -120,6 +120,14 @@ public with sharing class CqTriageInbox {
                 FROM compliancequest__SQX_Nonconformance__c
                 WHERE OwnerId = :me AND compliancequest__Status__c NOT IN :MINE_DONE AND compliancequest__Record_Stage__c NOT IN :NOT_MINE_STAGES
                 ORDER BY CreatedDate ASC LIMIT 200]) {
+            // Disposition / Investigate shows as two groups (Lou, 28 Nov): the NC is listed under each part still open
+            if (n.compliancequest__Record_Stage__c == 'Disposition_Investigate') {
+                Boolean dispOpen = n.compliancequest__Completion_Date_Disposition__c == null;
+                Boolean invOpen = n.compliancequest__Completion_Date_Investigation__c == null;
+                if (dispOpen) { out.add(part(n, 'Disposition')); }
+                if (invOpen) { out.add(part(n, 'Investigation')); }
+                if (dispOpen || invOpen) { continue; }
+            }
             Row r = base(n);
             standing(r, n);
             next(r, n);
@@ -169,8 +177,26 @@ public with sharing class CqTriageInbox {
     }
     private static Boolean dueFirst(Date a, Date b) { return a != null && (b == null || a < b); }
 
+    /** One part of an NC in Disposition / Investigate: its own group, due date and button. The containment goes with the disposition. */
+    @TestVisible
+    private static Row part(compliancequest__SQX_Nonconformance__c n, String which) {
+        Row r = base(n);
+        r.stage = which; r.stageLabel = which;
+        Boolean disp = which == 'Disposition';
+        r.openPart = disp ? 'disposition' : 'investigation';
+        r.primary = disp ? 'Continue Disposition' : 'Continue Investigation';
+        List<Object[]> dues = disp
+            ? new List<Object[]>{
+                new Object[]{ 'Containment', n.compliancequest__Due_Date_Containment__c, n.compliancequest__Completion_Date_Containment__c },
+                new Object[]{ 'Disposition', n.compliancequest__Due_Date_Disposition__c, n.compliancequest__Completion_Date_Disposition__c } }
+            : new List<Object[]>{
+                new Object[]{ 'Investigation', n.compliancequest__Due_Date_Investigation__c, n.compliancequest__Completion_Date_Investigation__c } };
+        dueLine(r, dues, which + ' open, no due date');
+        return r;
+    }
+
     public static Integer stageOrder(String s) {
-        Integer i = new List<String>{ 'Triage', 'Disposition_Investigate', 'Implement', 'Verification' }.indexOf(s);
+        Integer i = new List<String>{ 'Triage', 'Disposition', 'Investigation', 'Disposition_Investigate', 'Implement', 'Verification' }.indexOf(s);
         return i < 0 ? 9 : i;
     }
     public static String stageLabel(String s) {
@@ -200,19 +226,25 @@ public with sharing class CqTriageInbox {
             return;
         }
         if (r.stage == 'Verification') { r.status = 'Waiting to be closed'; return; }
-        String what; Date due;
         List<Object[]> dues = new List<Object[]>{
             new Object[]{ 'Containment', n.compliancequest__Due_Date_Containment__c, n.compliancequest__Completion_Date_Containment__c },
             new Object[]{ 'Disposition', n.compliancequest__Due_Date_Disposition__c, n.compliancequest__Completion_Date_Disposition__c },
             new Object[]{ 'Investigation', n.compliancequest__Due_Date_Investigation__c, n.compliancequest__Completion_Date_Investigation__c }
         };
+        dueLine(r, dues, null);
+        // none of those set: the NC's own due date
+        if (r.status == null) { dueLine(r, new List<Object[]>{ new Object[]{ 'NC', n.compliancequest__Due_Date__c, null } }, stageLabel(r.stage)); }
+    }
+
+    /** The nearest open due date among these, as the row's status (overdue in amber); the fallback when none is set. */
+    private static void dueLine(Row r, List<Object[]> dues, String fallback) {
+        String what; Date due;
         for (Object[] d : dues) {
             Date dd = (Date) d[1];
             if (dd == null || d[2] != null) { continue; }
             if (due == null || dd < due) { due = dd; what = (String) d[0]; }
         }
-        if (due == null && n.compliancequest__Due_Date__c != null) { due = n.compliancequest__Due_Date__c; what = 'NC'; }
-        if (due == null) { r.status = stageLabel(r.stage); return; }
+        if (due == null) { r.status = fallback; return; }
         r.dueDays = today().daysBetween(due);
         if (r.dueDays < 0) {
             Integer late = -r.dueDays;

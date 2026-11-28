@@ -94,18 +94,19 @@ private class CqTriageInboxTest {
             compliancequest__Due_Date_Investigation__c = Date.today().addDays(3));
         CqTriageInbox.todayOverride = Date.today().addDays(6);   // three days after the due date
         List<CqTriageInbox.Row> rows = CqTriageInbox.mineRows();
-        Boolean seen = false;
-        for (CqTriageInbox.Row r : rows) {
-            if (r.id == n.Id) {
-                seen = true;
-                System.assertEquals('Investigation overdue 3 days', r.status);
-                System.assert(r.statusWarn);
-                System.assertEquals('Disposition / Investigate', r.stageLabel);
-                System.assertEquals('Continue Investigation', r.primary, 'the investigation is open and due first');
-                System.assertEquals('investigation', r.openPart);
-            }
-        }
-        System.assert(seen, 'an owned NC past triage is in My NCs');
+        // both parts open: the NC is listed under Disposition and under Investigation, each with its own due date
+        Map<String, CqTriageInbox.Row> byStage = new Map<String, CqTriageInbox.Row>();
+        for (CqTriageInbox.Row r : rows) { if (r.id == n.Id) { byStage.put(r.stage, r); } }
+        System.assertEquals(new Set<String>{ 'Disposition', 'Investigation' }, byStage.keySet());
+        CqTriageInbox.Row inv = byStage.get('Investigation');
+        System.assertEquals('Investigation overdue 3 days', inv.status);
+        System.assert(inv.statusWarn);
+        System.assertEquals('Continue Investigation', inv.primary);
+        System.assertEquals('investigation', inv.openPart);
+        CqTriageInbox.Row disp = byStage.get('Disposition');
+        System.assertEquals('Continue Disposition', disp.primary);
+        System.assertEquals('disposition', disp.openPart);
+        System.assert(!disp.statusWarn, 'the disposition has no due date set');
     }
 
     @IsTest
