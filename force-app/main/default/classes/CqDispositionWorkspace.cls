@@ -33,7 +33,7 @@ public with sharing class CqDispositionWorkspace {
         @AuraEnabled public Decimal qty; @AuraEnabled public String status; @AuraEnabled public Date completedOn;
     }
     public class Lot {
-        @AuraEnabled public Id impactedId; @AuraEnabled public Id partId; @AuraEnabled public String partName; @AuraEnabled public String lot;
+        @AuraEnabled public Id impactedId; @AuraEnabled public Id partId; @AuraEnabled public String partName; @AuraEnabled public String partNumber; @AuraEnabled public String lot;
         @AuraEnabled public Decimal impacted; @AuraEnabled public Decimal disposed; @AuraEnabled public Decimal left;
         @AuraEnabled public Id draftId; @AuraEnabled public String draftName;
         @AuraEnabled public List<Rec> records = new List<Rec>();
@@ -111,12 +111,13 @@ public with sharing class CqDispositionWorkspace {
 
         Map<Id, Lot> byImpacted = new Map<Id, Lot>();
         for (compliancequest__SQX_NC_Impacted_Product__c ip : [
-                SELECT Id, compliancequest__SQX_Impacted_Part__c, compliancequest__SQX_Impacted_Part__r.Name, compliancequest__Lot_Number__c,
+                SELECT Id, compliancequest__SQX_Impacted_Part__c, compliancequest__SQX_Impacted_Part__r.Name, compliancequest__SQX_Impacted_Part__r.compliancequest__Part_Number__c, compliancequest__Lot_Number__c,
                        compliancequest__Lot_Quantity__c, compliancequest__Total_Quantity_Disposed__c, compliancequest__Quantity_Left_To_Dispose__c
                 FROM compliancequest__SQX_NC_Impacted_Product__c WHERE compliancequest__SQX_Nonconformance__c = :recordId WITH USER_MODE ORDER BY Name]) {
             Lot l = new Lot();
             l.impactedId = ip.Id; l.partId = ip.compliancequest__SQX_Impacted_Part__c; l.lot = ip.compliancequest__Lot_Number__c;
             l.partName = ip.compliancequest__SQX_Impacted_Part__r == null ? null : ip.compliancequest__SQX_Impacted_Part__r.Name;
+            l.partNumber = ip.compliancequest__SQX_Impacted_Part__r == null ? null : ip.compliancequest__SQX_Impacted_Part__r.compliancequest__Part_Number__c;
             l.impacted = nz(ip.compliancequest__Lot_Quantity__c); l.disposed = nz(ip.compliancequest__Total_Quantity_Disposed__c);
             l.left = nz(ip.compliancequest__Quantity_Left_To_Dispose__c);
             byImpacted.put(ip.Id, l);

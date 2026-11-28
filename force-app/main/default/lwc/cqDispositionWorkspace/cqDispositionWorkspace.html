@@ -53,7 +53,10 @@
                                         <tbody>
                                             <template for:each={lotRows} for:item="l">
                                                 <tr key={l.impactedId}>
-                                                    <td>{l.partName}</td>
+                                                    <td class="cq-nowrap">
+                                                        <template if:true={l.partHref}><a class="cq-link" href={l.partHref} target="_blank" title={l.partName}>{l.partLabel}</a></template>
+                                                        <template if:false={l.partHref}><span title={l.partName}>{l.partLabel}</span></template>
+                                                    </td>
                                                     <td class="cq-strong">{l.lot}</td>
                                                     <td class="num">{l.impactedText}</td>
                                                     <td class="num">{l.disposedText}</td>

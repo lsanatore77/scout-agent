@@ -184,6 +184,8 @@ export default class CqDispositionWorkspace extends NavigationMixin(LightningEle
     get lotRows() {
         return (this.v.lots || []).map((l) => ({
             impactedId: l.impactedId, partName: l.partName || '—', lot: l.lot,
+            // the part number as a link, its full name on hover, so the row stays on one line (Lou, 27 Nov)
+            partLabel: l.partNumber || l.partName || '—', partHref: l.partId ? '/lightning/r/compliancequest__SQX_Part__c/' + l.partId + '/view' : null,
             impactedText: this.fmt(l.impacted), disposedText: this.fmt(l.disposed), leftText: this.fmt(l.left),
             leftCls: 'num strong' + (l.left > 0 ? ' amber' : ' green'),
             recs: (l.records || []).map((r) => ({ id: r.id, name: r.name, href: this.href(r.id),
