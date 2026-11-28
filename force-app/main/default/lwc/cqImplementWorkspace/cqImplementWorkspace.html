@@ -116,7 +116,7 @@
 
             <!-- Verification: the owner closes the NC once CQ has completed it -->
             <template if:true={showClose}>
-                <h3 class="cq-step-title headgap cq-mt16">Close the Nonconformance</h3>
+                <h3 class="cq-step-title headgap divided">Close the Nonconformance</h3>
                 <p class="cq-step-intro">Did the corrections hold? Look at what was done above, then pick the resolution and sign. CQ asks for a signature to close.</p>
                 <div class="grid closegrid">
                     <div class="main">
@@ -156,7 +156,7 @@
                 </div>
             </template>
             <template if:true={showClosed}>
-                <div class="cq-donehead cq-mt16"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">{v.ncName} Closed</h3></div>
+                <div class="cq-donehead divided"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">{v.ncName} Closed</h3></div>
                 <div class="cq-tblwrap cq-sum closedtbl"><table class="cq-tbl">
                     <tbody><template for:each={closedRows} for:item="r"><tr key={r.key}><td class="k">{r.k}</td><td class="v">{r.v}</td></tr></template></tbody>
                 </table></div>

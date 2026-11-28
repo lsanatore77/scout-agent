@@ -3,7 +3,11 @@
 /* Implement workspace (the NC owner's view of every correction, Lou 27 Nov). Page-local while cqStyles is on hold: backlog. */
 :host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
 .nom { margin: 0; }
-.headgap { margin: 0 0 6px; }
+/* 8px between a heading and its intro line: cqStyles pulls the intro up by 6px, which left them touching (page-local, backlog) */
+.headgap { margin: 0 0 8px; }
+.cq-step-intro { margin-top: 0; }
+/* Close the Nonconformance starts below a full-width line, so it reads as its own section */
+.divided { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--cq-line); }
 .titlelink { display: block; }
 .sm0 { margin: 0; }
 .plainbtn { padding: 0; border: none; background: none; font-family: inherit; text-align: left; cursor: pointer; }
