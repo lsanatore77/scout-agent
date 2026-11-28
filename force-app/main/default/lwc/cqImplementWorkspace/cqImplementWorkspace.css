@@ -1,0 +1,31 @@
+@import 'c/cqStyles';
+
+/* Implement workspace (the NC owner's view of every correction, Lou 27 Nov). Page-local while cqStyles is on hold: backlog. */
+:host { display: block; color: var(--cq-ink); font-size: var(--cq-fs-meta); }
+.nom { margin: 0; }
+.sm0 { margin: 0; }
+.plainbtn { padding: 0; border: none; background: none; font-family: inherit; text-align: left; cursor: pointer; }
+.notebar { display: flex; gap: 16px; align-items: center; justify-content: space-between; margin-top: 12px; }
+.tcards { margin: 16px 0; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .tcards { grid-template-columns: minmax(0, 1fr); } }
+.cq-statcard-v.ok { color: var(--cq-pos-fg); }
+.cq-statcard-v.bad { color: var(--cq-crit-fg); }
+.sub { display: block; font-size: var(--cq-fs-micro); color: var(--cq-muted); }
+.sub.crit { color: var(--cq-crit-fg); font-weight: 600; }
+.you { font-weight: 700; color: var(--cq-link); }
+td.acts { white-space: nowrap; text-align: right; }
+td.acts > * + * { margin-left: 10px; }
+tr.is-open > td { background: var(--cq-surface); border-bottom: none; }
+tr.panelrow > td { background: var(--cq-surface); padding: 4px 16px 16px; }
+/* the panel under a row: the form three quarters, the signature one quarter, as on the assignee's page */
+.grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.two { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 16px; align-items: start; }
+.signsec { min-width: 0; }
+@media (max-width: 900px) { .grid, .two { grid-template-columns: minmax(0, 1fr); } }
+.links { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.files { margin: 4px 0 0; padding: 0; list-style: none; }
+.cq-field input.date { width: 170px; }
+.reassign { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; max-width: 640px; }
+.reassign lightning-record-picker { flex: 1 1 280px; }
+.nextline { margin: 16px 0 0; }

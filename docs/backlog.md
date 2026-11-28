@@ -208,3 +208,12 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 ## Procedure to Follow: how a document is found (Lou, 27 Nov: good enough for now)
 - Today: the controlled document linked on the NC, plus any document number named in the correction's title or description (Current revision only).
 - Recommended later: a controlled document picked on the correction itself, set in the Investigation's Actions step. Check whether CQ's Action or Action Plan already has a controlled document field; add one if not. Order: the correction's document, then the NC's, then a number named in the text.
+
+## Implement workspace, the NC owner's view (built 27 Nov; cqImplementWorkspace, CqImplementWorkspace)
+- Every correction on the NC: assignee, due (late in red), status, verification. Counts: Done, Overdue, To Verify.
+- Open, not mine: Send Reminder (CQ_Task_Custom_Notification to the assignee, bell and mobile) and Reassign (changes Assignee).
+- Open, mine: Complete or Skip in a panel under the row, through CqCorrectionWorkspace (same checks and signature).
+- Done, Verification Required = Yes, not yet verified: Verify for the named verifier, or the NC owner when none is named. Code implementation_verify, comment in Verified Comments (as CQ's CQUI_Action_verify and ACT-000040 in dev). Send Back opens CQ's Reopen in a new tab.
+- An administrator (Modify All Data) stands in for the owner.
+- Not built: Extensions Waiting count (no reliable field found yet); closing the NC from Verification (next); Quality Home tasks.
+- Untested in a browser: Send Reminder, Reassign, Verify, Send Back, the owner's Complete panel. NC-000072 has only one correction, already complete.
