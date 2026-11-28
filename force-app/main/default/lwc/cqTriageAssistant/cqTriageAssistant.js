@@ -3,7 +3,10 @@ import { NavigationMixin } from 'lightning/navigation';
 import getNext from '@salesforce/apex/CqTriageNext.getNext';
 import completeTriage from '@salesforce/apex/CqTriageNext.completeTriage';
 import startTriage from '@salesforce/apex/CqTriageNext.startTriage';
-import createContainment from '@salesforce/apex/CqTriageContainment.create';
+import getImpact from '@salesforce/apex/CqTriageImpact.getImpact';
+import saveLot from '@salesforce/apex/CqTriageImpact.saveLot';
+import removeLot from '@salesforce/apex/CqTriageImpact.removeLot';
+import addContainment from '@salesforce/apex/CqTriageImpact.addContainment';
 import getRisk from '@salesforce/apex/CqTriageRisk.getRisk';
 import notSameProblem from '@salesforce/apex/CqTriageRepeat.notSame';
 import restoreRepeat from '@salesforce/apex/CqTriageRepeat.restore';
@@ -15,7 +18,8 @@ import getDraft from '@salesforce/apex/CqTriageDraft.getDraft';
 import saveDraft from '@salesforce/apex/CqTriageDraft.saveDraft';
 import userId from '@salesforce/user/Id';
 
-const STEPS = ['Containment', 'Data Check', 'Risk', 'Next Steps'];
+const STEPS = ['Impact', 'Data Check', 'Risk', 'Next Steps'];
+const GLANCE = 'Triage at a Glance';
 const SEV = ['Negligible', 'Low', 'Moderate', 'Significant', 'Catastrophic'];
 const LIK = ['Improbable', 'Remote', 'Occasional', 'Probable', 'Frequent'];
 const band = (n) => (n >= 15 ? 'High' : n >= 6 ? 'Medium' : 'Low');
@@ -28,7 +32,7 @@ const LINK_PAGE = 5;   // investigations a page on Next Steps
 // Ask CQ.AI ready questions for each triage step (no commas: the popover splits on them)
 const ASK = {
     'Triage at a Glance': 'Summarize this nonconformance,What is left on this triage?,What else is open on this part?',
-    Containment: 'Why does CQ.AI suggest this containment?,How much of this lot is on hand or shipped?,What containment is on this NC?',
+    Impact: 'Which other lots could have this problem?,How much of this lot is on hand or shipped?,What containment is on this NC?',
     'Data Check': 'What is missing before this can go on?,Is the data good enough?',
     Risk: 'How was the risk worked out?,Why is the likelihood what it is?',
     'Next Steps': 'Does this need a disposition?,Should this be investigated or logged only?,Which investigations should be linked and why?',
@@ -37,9 +41,10 @@ const ASK = {
 const LOT_ASK = 'Which relevant records share the lot?';
 
 /**
- * Triage Assistant: containment, data check, risk, investigation links. CQ.AI suggests, the triager decides.
- * As a popup it is those four steps. With inline set (Triage workspace) it sits in the page, Triage at a Glance
- * is slotted in as step 1, and work in progress is remembered on the record.
+ * Triage Assistant: impact (lots and containment), data check, risk, next steps. CQ.AI suggests, the triager decides.
+ * The same four steps as a popup or, with inline set (Triage workspace), in the page, where work in progress is
+ * remembered on the record. Triage at a Glance is not a step (Lou, 28 Nov): in the page it opens read-only in a pop-up
+ * from the link at the bottom right of the header (the slotted glance), and shows in the page once triage is done.
  */
 export default class CqTriageAssistant extends NavigationMixin(LightningElement) {
     @api recordId;
@@ -58,17 +63,16 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
     saving = false;
     error;
     warning;
-    acts = {};
-    noActionWhy = '';
-    due;
-    showAdd = false;
-    cTitle = '';
-    cDesc = '';
-    cDue;
-    cAssignee = userId;
-    adding = false;
-    addError;
-    added = [];
+    // step 1: Impact (CqTriageImpact)
+    imp;                // the lots, their containments and CQ.AI's suggested lots
+    impError;
+    lotBusy = false;
+    lotError;
+    newLot = null;      // the + Add Lot row while it is open: { lot, qty }
+    notAffected = {};   // suggested lots set aside as Not Affected (this triage only)
+    cn = null;          // the Add Containment pop-up while it is open: { lotId, lotName, title, desc, due, assignee, saving, error }
+    added = [];         // containments added in this triage: { key, name, title, due }
+    showGlance = false; // Triage at a Glance pop-up (in the page)
     data = '';
     asks = {};
     askNote = '';
@@ -98,26 +102,33 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
     matrixId;
 
     async connectedCallback() {
-        this.due = this.inDays(5);
         let draft;
         if (this.inline) {
             try { const d = await getDraft({ recordId: this.recordId }); draft = d ? JSON.parse(d) : null; } catch (e) { draft = null; }
         }
-        if (draft && draft.v === 1) {
-            ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'dispNote', 'inv', 'invDue', 'invAppr', 'invNote', 'matrixId', 'capa', 'capaReason'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
+        if (draft && (draft.v === 1 || draft.v === 2)) {
+            ['step', 'maxStep', 'seen', 'added', 'notAffected', 'data', 'asks', 'askNote', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'dispNote', 'inv', 'invDue', 'invAppr', 'invNote', 'matrixId', 'capa', 'capaReason'].forEach((k) => { if (draft[k] !== undefined) { this[k] = draft[k]; } });
             // a draft saved before steps could be opened in any order: every step up to the furthest one was seen
             if (!draft.seen) { const m = {}; for (let i = 0; i <= this.maxStep; i++) { m[i] = true; } this.seen = m; }
+            // a draft from before 28 Nov had Triage at a Glance as step 1 in the page: every step moves up one
+            if (draft.v === 1 && this.inline) {
+                const m = {};
+                Object.keys(this.seen || {}).forEach((k) => { if (Number(k) > 0) { m[Number(k) - 1] = true; } });
+                this.seen = m; this.step = Math.max(0, this.step - 1); this.maxStep = Math.max(0, this.maxStep - 1);
+            }
+            if (!Array.isArray(this.added)) { this.added = []; }
             this.resumed = this.maxStep > 0;
         }
         this.seen = { ...this.seen, [this.step]: true };
         this.booted = true;
-        if (this.step > 0) { this.ensureStarted(); }
+        if (this.maxStep > 0) { this.ensureStarted(); }
+        this.loadImpact();
         try {
             this.rk = await getRisk({ recordId: this.recordId });
         } catch (e) {
             this.rk = { count: 0, recent: [], severity: 3, severityAssumed: true, severityWhy: 'Assumed: could not read the record', likelihood: 1, likelihoodWhy: 'Could not count recent NCs', escaped: false };
         }
-        const keep = draft && draft.v === 1 && draft.sev && draft.lik;
+        const keep = draft && (draft.v === 1 || draft.v === 2) && draft.sev && draft.lik;
         this.sev = keep ? draft.sev : this.rk.severity;
         this.lik = keep ? draft.lik : this.rk.likelihood;
         try {
@@ -225,8 +236,7 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
             const el = this.template.querySelector('.modal input.date');
             if (el) { el.focus(); this.dlgFocus = false; }
         }
-        const names = this.inline ? ['Triage at a Glance', ...STEPS] : STEPS;
-        const now = this.done ? 'Triage complete' : names[this.step] || '';
+        const now = this.done ? 'Triage complete' : this.showGlance ? GLANCE : STEPS[this.step] || '';
         if (now !== this._toldStep) {
             this._toldStep = now;
             this.dispatchEvent(new CustomEvent('stepchange', { detail: { step: now } }));
@@ -240,7 +250,7 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
     }
 
     // ---- in the page (Triage workspace) or as a popup
-    get off() { return this.inline ? 1 : 0; }
+    get off() { return 0; }
     get cur() { return this.step - this.off; }
     get last() { return STEPS.length - 1 + this.off; }
     get veilCls() { return 'veil' + (this.inline ? ' inline' : ''); }
@@ -259,13 +269,13 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
     persist() {
         if (!this.inline || this.done) { return; }
         const s = {};
-        ['step', 'maxStep', 'seen', 'acts', 'noActionWhy', 'due', 'added', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'dispNote', 'inv', 'invDue', 'invAppr', 'invNote', 'matrixId', 'capa', 'capaReason'].forEach((k) => { s[k] = this[k]; });
-        saveDraft({ recordId: this.recordId, draft: JSON.stringify({ v: 1, ...s }) }).catch(() => {});
+        ['step', 'maxStep', 'seen', 'added', 'notAffected', 'data', 'asks', 'askNote', 'sev', 'lik', 'picks', 'extra', 'disp', 'dispDue', 'dispAppr', 'dispNote', 'inv', 'invDue', 'invAppr', 'invNote', 'matrixId', 'capa', 'capaReason'].forEach((k) => { s[k] = this[k]; });
+        saveDraft({ recordId: this.recordId, draft: JSON.stringify({ v: 2, ...s }) }).catch(() => {});
     }
     handleRestart() {
         this.step = 0; this.maxStep = 0; this.seen = { 0: true }; this.done = false; this.finished = false; this.resumed = false;
         this.error = undefined; this.warning = undefined;
-        this.acts = {}; this.noActionWhy = ''; this.due = this.inDays(5); this.showAdd = false; this.added = [];
+        this.added = []; this.notAffected = {}; this.newLot = null; this.cn = null; this.lotError = undefined;
         this.data = ''; this.asks = {}; this.askNote = '';
         if (this.rk) { this.sev = this.rk.severity; this.lik = this.rk.likelihood; }
         this.picks = {}; this.extra = []; this.summary = []; this.sugPage = 0; this.otherPage = 0;
@@ -282,7 +292,7 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
         return [
             { key: 'title', label: 'Title', value: this.dash(g.title) },
             g.partId ? { key: 'part', label: 'Part', value: g.partNumber, id: g.partId } : { key: 'part', label: 'Part', value: '\u2014' },
-            { key: 'lot', label: 'Lot', value: this.dash(g.lot) },
+            { key: 'lot', label: 'Lot', value: this.lotHeader },
             { key: 'type', label: 'Type', value: this.dash(g.ncType) },
             { key: 'sev', label: 'Severity', value: this.dash(g.severity) },
             { key: 'status', label: 'Status', value: this.dash(g.status) },
@@ -298,11 +308,18 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
     }
     // Ask CQ.AI: the Quality agent, told which triage step is open (in the page only)
     get agentName() { return this.inline ? 'CQAI_Quality' : null; }
-    get askStep() { return this.done ? 'Triage complete' : this.names()[this.step] || 'Triage at a Glance'; }
+    get askStep() { return this.done ? 'Triage complete' : this.showGlance ? GLANCE : STEPS[this.step] || GLANCE; }
     get askSuggestions() {
-        const base = ASK[this.askStep] || ASK['Triage at a Glance'];
-        return this.g.lot && this.askStep === 'Triage at a Glance' ? base + ',' + LOT_ASK : base;
+        const base = ASK[this.askStep] || ASK[GLANCE];
+        return this.g.lot && (this.askStep === GLANCE || this.askStep === 'Impact') ? base + ',' + LOT_ASK : base;
     }
+    /** Triage at a Glance: a link at the bottom right of the header (in the page only), opening it read-only in a pop-up. */
+    get glanceLink() { return this.inline && !this.finished ? GLANCE : null; }
+    handleGlance() { this.showGlance = true; }
+    handleGlanceClose() { this.showGlance = false; }
+    handleGlanceKey(event) { if (event.key === 'Escape') { this.showGlance = false; } }
+    get glanceCls() { return !this.isGlance ? 'glancehide' : this.finished ? 'glancein' : 'cq-modal-back'; }
+    get glanceBoxCls() { return this.finished ? '' : 'cq-modal glancebox'; }
 
     // ---- facts from the glance
     get g() { return this.glance || {}; }
@@ -315,41 +332,38 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
     get suggestedRisk() { return this.escaped ? 'High' : band(this.suggestedScore); }
     get score() { return this.sev * this.lik; }
     get risk() { return this.escaped ? 'High' : band(this.score); }
-    get contained() { const h = this.card('cont').headline; return h === 'Contained' || h === 'Containment raised'; }
 
     // ---- step rail (same pattern as the PHR workspace): a step ticks only when it has a valid answer
     get valid() {
         const v = [
-            (this.hasActs && !!this.due) || (this.noAction && !!this.noActionWhy.trim()) || this.hasAdded,
+            !!this.imp && !this.pendingLot,
             this.data === 'ok' || (this.dataAsk && (this.askList.length > 0 || !!this.askNote.trim())),
             !!this.seen[2 + this.off],
             this.done
         ];
-        return this.inline ? [this.maxStep > 0, ...v] : v;
+        return v;
     }
     get steps() {
-        const n = this.chosenActs.length + this.added.length;
         const subs = [
-            this.noAction ? 'No action' : n ? n + ' action' + (n > 1 ? 's' : '') : 'Not decided',
+            this.impactSub,
             this.data === 'ok' ? 'Good enough' : this.data === 'ask' ? 'More information requested' : 'Not checked',
             this.seen[2 + this.off] || this.done ? this.risk + ' · score ' + this.score + (this.riskChanged ? ' (changed)' : '') : 'CQ.AI suggests ' + this.suggestedRisk,
             this.nextSub
         ];
         const valid = this.valid;
-        const names = this.inline ? ['Triage at a Glance', ...STEPS] : STEPS;
-        if (this.inline) { subs.unshift(this.maxStep > 0 || this.done ? 'Reviewed' : 'Start here'); }
-        return names.map((label, i) => {
+        return STEPS.map((label, i) => {
             const stepDone = this.done || valid[i];
             const unseen = !this.done && !this.seen[i];
             return { i, n: i + 1, label, sub: unseen ? 'Not Reviewed' : subs[i], done: stepDone, notDone: !stepDone,
-                cls: 'step' + ((!this.done && i === this.step) || (this.finished && i === 0) ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done };
+                cls: 'step' + (!this.done && i === this.step ? ' active' : '') + (stepDone ? ' done' : ''), locked: this.done };
         });
     }
     /** The rail as the shared frame (c-cq-ws-shell) draws it. */
     get railSteps() { return this.steps.map((s) => ({ label: s.label, sub: s.sub, done: s.done, active: s.cls.includes('active'), locked: s.locked })); }
     get progress() { return this.steps.filter((x) => x.done).length + ' of ' + this.steps.length + ' steps complete'; }
     get live() { return this.booted && !this.done; }
-    get isGlance() { return (this.live && this.cur === -1) || (this.done && this.finished); }
+    /** The glance shows in a pop-up from the header link, and in the page once triage is done. */
+    get isGlance() { return this.showGlance || (this.done && this.finished); }
     get showSummary() { return this.done && !this.finished; }
     handleFinish() { this.finished = true; }
     get is0() { return this.live && this.cur === 0; }
@@ -358,69 +372,161 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
     get is3() { return this.live && this.cur === 3; }
     get working() { return !this.done; }
 
-    // ---- step 1: containment
-    get factLines() {
-        const g = this.g;
-        const same = this.fact('risk', 'Same lot');
-        const comp = this.fact('risk', 'Complaints');
-        const lines = [
-            { t: (g.lot ? 'Lot ' + g.lot : 'No lot recorded') + (g.lotQuantity != null ? ', ' + g.lotQuantity + ' in the lot.' : ', quantity not recorded.'), warn: !g.lot },
-            { t: this.contained ? 'Containment on this NC: ' + ((this.fact('cont', 'Containment') || {}).v || 'recorded') + '.' : 'No containment is recorded on this NC yet.', warn: !this.contained },
-            same && { t: same.v + '.', warn: same.warn },
-            comp && { t: 'Complaints: ' + comp.v + '.', warn: comp.warn },
-            { t: 'Hold status and shipments are not known (no ERP connection).', muted: true }
-        ].filter(Boolean);
-        return lines.map((l, i) => ({ key: 'f' + i, text: l.t, cls: 'fline' + (l.warn ? ' bad' : l.muted ? ' muted' : '') }));
+    // ---- step 1: Impact. The lots with the problem, how many of each, and what holds each one (CqTriageImpact).
+    async loadImpact() {
+        try { this.imp = await getImpact({ recordId: this.recordId }); this.impError = undefined; }
+        catch (e) { this.impError = this.errText(e, 'Could not read the lots.'); this.imp = this.imp || null; }
     }
-    get suggestedAct() { return this.contained ? 'No further action' : this.g.lot ? 'Hold lot ' + this.g.lot : 'Hold the affected stock'; }
-    get actions() {
-        const lot = this.g.lot;
-        const defs = [
-            ['hold', 'Hold', lot ? 'Hold lot ' + lot : 'Hold the affected stock', !this.contained],
-            ['check', 'Check', '100% inspect remaining stock of this part', false],
-            ['stop', 'Stop', 'Stop the process until the cause is known', false],
-            ['none', 'No Action', this.contained ? 'Containment is already raised' : 'It is already under control', this.contained]
-        ];
-        return defs.map(([id, label, why, cq]) => {
-            const on = !!this.acts[id];
-            return { id, label, why, cq, on, pressed: on ? 'true' : 'false', tick: on ? '✓' : '', cls: 'act' + (on ? ' on' : cq ? ' sug' : '') };
+    errText(e, fallback) { return (e && e.body && e.body.message) || (e && e.message) || fallback; }
+    get impReady() { return !!this.imp; }
+    get impLoading() { return !this.imp && !this.impError; }
+    get lotsEditable() { return !!this.imp && this.imp.editable && !this.done; }
+    /** The reported lot when it is not stored yet: it needs a quantity before triage can complete. */
+    get pendingLot() { return this.imp ? (this.imp.lots || []).find((l) => l.pending) : null; }
+    get storedLots() { return this.imp ? (this.imp.lots || []).filter((l) => !l.pending) : []; }
+    get lotRows() {
+        if (!this.imp) { return []; }
+        const all = this.imp.allLots || [];
+        return (this.imp.lots || []).map((l, i) => {
+            const key = l.id || 'pending';
+            const own = (l.containments || []).map((c) => ({ key: key + c.id, id: c.id, name: c.name, url: '/' + c.id, title: c.title }));
+            const every = all.map((c) => ({ key: key + c.id, id: c.id, name: c.name, url: '/' + c.id, title: c.title + ' (all lots)' }));
+            const cns = [...own, ...every];
+            return { ...l, key, i, sub: [l.reported ? 'Reported' : '', l.part].filter(Boolean).join(' · '),
+                qtyText: l.qty == null ? '' : String(l.qty), cns, hasCn: cns.length > 0,
+                canAddCn: !l.pending && this.lotsEditable, needQty: l.pending, qtyOff: !this.lotsEditable || this.lotBusy,
+                showRemove: l.canRemove && this.lotsEditable };
         });
     }
-    get noAction() { return !!this.acts.none; }
-    get chosenActs() { return this.actions.filter((a) => a.on && a.id !== 'none').map((a) => a.why); }
-    get hasActs() { return this.chosenActs.length > 0; }
-    handleAct(event) {
-        const id = event.currentTarget.dataset.id;
-        const on = !this.acts[id];
-        this.acts = id === 'none' ? { none: on } : { ...this.acts, none: false, [id]: on };
+    get hasLots() { return this.lotRows.length > 0; }
+    get lotHeader() {
+        const lots = this.imp ? (this.imp.lots || []).map((l) => l.lot) : [];
+        if (!lots.length) { return this.dash(this.g.lot); }
+        return lots[0] + (lots.length > 1 ? ' +' + (lots.length - 1) : '');
     }
-
-    // Add Containment: creates the CQ record straight away
-    get hasAdded() { return this.added.length > 0; }
-    get cantCreate() { return this.adding || !this.cTitle.trim() || !this.cDue; }
-    get createLabel() { return this.adding ? 'Creating…' : 'Create Containment'; }
-    handleShowAdd() { this.cDue = this.due; this.addError = undefined; this.showAdd = true; }
-    handleCancelAdd() { this.showAdd = false; }
-    handleAssignee(event) { this.cAssignee = (event.detail && event.detail.recordId) || null; }
-    async handleCreate() {
-        if (this.cantCreate) { return; }
-        this.adding = true;
-        this.addError = undefined;
+    get cnCount() {
+        if (!this.imp) { return 0; }
+        return (this.imp.allLots || []).length + (this.imp.lots || []).reduce((n, l) => n + (l.containments || []).length, 0);
+    }
+    get impactSub() {
+        if (!this.imp) { return 'Not checked'; }
+        if (this.pendingLot) { return 'Lot ' + this.pendingLot.lot + ' needs a quantity'; }
+        const n = this.storedLots.length, c = this.cnCount;
+        if (!n) { return c ? c + (c === 1 ? ' containment' : ' containments') : 'No lot'; }
+        return n + (n === 1 ? ' lot' : ' lots') + (c ? ' · ' + c + (c === 1 ? ' containment' : ' containments') : '');
+    }
+    get contained() { return this.cnCount > 0; }
+    /** Saves a quantity: the reported lot's first one (it is stored then), or a change to a stored lot's. */
+    async handleQty(event) {
+        const key = event.target.dataset.key;
+        const raw = event.target.value;
+        const l = (this.imp.lots || []).find((x) => (x.id || 'pending') === key);
+        if (!l) { return; }
+        const qty = raw === '' ? null : Number(raw);
+        if (!l.pending && qty === (l.qty == null ? null : Number(l.qty))) { return; }
+        if (qty === null || !(qty > 0)) { this.lotError = 'Lot ' + l.lot + ': enter how many units have the problem.'; return; }
+        await this.lotCall(() => saveLot({ recordId: this.recordId, impactedId: l.id || null, lot: l.lot, quantity: qty }));
+    }
+    /** The reported lot's quantity, when it is not stored yet: Save Quantity stores what is in its box. */
+    async handleSavePending() {
+        const box = this.template.querySelector('input.qty[data-key="pending"]');
+        const l = this.pendingLot;
+        if (!box || !l) { return; }
+        const qty = box.value === '' ? null : Number(box.value);
+        if (qty === null || !(qty > 0)) { this.lotError = 'Lot ' + l.lot + ': enter how many units have the problem.'; return; }
+        await this.lotCall(() => saveLot({ recordId: this.recordId, impactedId: null, lot: l.lot, quantity: qty }));
+    }
+    async lotCall(call) {
+        if (this.lotBusy) { return false; }
+        this.lotBusy = true; this.lotError = undefined;
+        this.ensureStarted();
+        let ok = false;
+        try { await call(); ok = true; await this.loadImpact(); this.dispatchEvent(new CustomEvent('changed')); }
+        catch (e) { this.lotError = this.errText(e, 'The lot was not saved.'); }
+        this.lotBusy = false;
+        return ok;
+    }
+    // + Add Lot: a row at the foot of the table, filled in from a suggested lot or typed
+    get addingLot() { return !!this.newLot; }
+    handleAddLot() { this.newLot = { lot: '', qty: '' }; this.lotError = undefined; }
+    handleAddSuggested(event) { this.newLot = { lot: event.currentTarget.dataset.lot, qty: '' }; this.lotError = undefined; }
+    handleNewLot(event) { this.newLot = { ...this.newLot, [event.target.dataset.f]: event.target.value }; }
+    handleNewLotCancel() { this.newLot = null; }
+    get cantSaveLot() { return this.lotBusy || !this.newLot || !String(this.newLot.lot).trim() || !(Number(this.newLot.qty) > 0); }
+    async handleNewLotSave() {
+        if (this.cantSaveLot) { return; }
+        const n = this.newLot;
+        const ok = await this.lotCall(() => saveLot({ recordId: this.recordId, impactedId: null, lot: String(n.lot).trim(), quantity: Number(n.qty) }));
+        if (ok) { this.newLot = null; }
+    }
+    handleNewLotKey(event) { if (event.key === 'Enter') { this.handleNewLotSave(); } else if (event.key === 'Escape') { this.newLot = null; } }
+    async handleRemoveLot(event) {
+        const id = event.currentTarget.dataset.id;
+        await this.lotCall(() => removeLot({ recordId: this.recordId, impactedId: id }));
+    }
+    // CQ.AI's suggested lots: other lots of the part worth checking; Add Lot or Not Affected
+    get suggestionRows() {
+        if (!this.imp || !this.lotsEditable) { return []; }
+        return (this.imp.suggestions || []).filter((s) => !this.notAffected[s.lot]).map((s) => ({ ...s, key: s.lot, statusText: s.status || '—' }));
+    }
+    get hasSuggestions() { return this.suggestionRows.length > 0; }
+    handleNotAffected(event) { this.notAffected = { ...this.notAffected, [event.currentTarget.dataset.lot]: true }; this.persist(); }
+    get allLotCns() { return this.imp ? (this.imp.allLots || []).map((c) => ({ ...c, key: c.id, url: '/' + c.id })) : []; }
+    get canAddAll() { return this.lotsEditable; }
+    // Add Containment: a pop-up for one lot (or all lots); created in CQ straight away, linked to the lot
+    get cnSuggestions() {
+        const lot = this.cn && this.cn.lotName;
+        const defs = [lot ? 'Hold lot ' + lot : 'Hold all lots of this part on hand', lot ? '100% inspect what is left of lot ' + lot : '100% inspect remaining stock of this part', 'Stop the process until the cause is known'];
+        return defs.map((t, i) => ({ key: 'c' + i, text: t, pressed: this.cn && this.cn.title === t ? 'true' : 'false', cls: 'cq-chip' + (i === 0 ? ' ai' : '') }));
+    }
+    openCn(lotId, lotName) {
+        this.cn = { lotId: lotId || null, lotName: lotName || null, title: '', desc: '', due: this.inDays(1), assignee: userId, saving: false, error: undefined };
+    }
+    handleAddCn(event) { this.openCn(event.currentTarget.dataset.id, event.currentTarget.dataset.lot); }
+    handleAddAllCn() { this.openCn(null, null); }
+    get cnTitle() { return this.cn && this.cn.lotName ? 'Add Containment for Lot ' + this.cn.lotName : 'Add Containment for All Lots'; }
+    get cnSub() { return (this.g.name || '') + (this.cn && this.cn.lotName ? ' · Lot ' + this.cn.lotName : ' · Every lot on this NC') + (this.imp && this.imp.partName ? ' · ' + this.imp.partName : ''); }
+    handleCnPick(event) { this.cn = { ...this.cn, title: event.currentTarget.dataset.t }; }
+    handleCnInput(event) { this.cn = { ...this.cn, [event.target.dataset.f]: event.target.value }; }
+    handleCnAssignee(event) { this.cn = { ...this.cn, assignee: (event.detail && event.detail.recordId) || null }; }
+    handleCnCancel() { if (this.cn && !this.cn.saving) { this.cn = null; } }
+    handleCnKey(event) { if (event.key === 'Escape') { this.handleCnCancel(); } }
+    get cantCn() { return !this.cn || this.cn.saving || !String(this.cn.title).trim() || !this.cn.due; }
+    get cnSaveLabel() { return this.cn && this.cn.saving ? 'Adding…' : 'Add Containment'; }
+    async handleCnSave() {
+        if (this.cantCn) { return; }
+        const c = this.cn;
+        this.cn = { ...c, saving: true, error: undefined };
+        this.ensureStarted();
         try {
-            const title = this.cTitle.trim();
-            const name = await createContainment({ recordId: this.recordId, title, description: this.cDesc, dueDate: this.cDue, assigneeId: this.cAssignee });
-            this.added = [...this.added, { key: name, name, title }];
-            this.acts = { ...this.acts, none: false };
-            this.cTitle = '';
-            this.cDesc = '';
-            this.cAssignee = userId;
-            this.showAdd = false;
+            const name = await addContainment({ recordId: this.recordId, impactedId: c.lotId, title: String(c.title).trim(), description: c.desc, dueDate: c.due, assigneeId: c.assignee });
+            this.added = [...this.added, { key: name, name, title: String(c.title).trim(), due: c.due, lot: c.lotName }];
+            this.cn = null;
             this.persist();
+            await this.loadImpact();
             this.dispatchEvent(new CustomEvent('changed'));
         } catch (e) {
-            this.addError = (e && e.body && e.body.message) || 'Could not create the containment.';
+            this.cn = { ...c, saving: false, error: this.errText(e, 'Could not add the containment.') };
         }
-        this.adding = false;
+    }
+    /** The earliest due date of the containments added here, for the NC's own Containment Due. */
+    get cnDue() {
+        const d = this.added.map((a) => a.due).filter(Boolean).sort();
+        return d.length ? d[0] : null;
+    }
+    // What We Know: from the glance and the lots
+    get factLines() {
+        const same = this.fact('risk', 'Same lot');
+        const comp = this.fact('risk', 'Complaints');
+        const lots = this.storedLots.map((l) => l.lot + ' (' + l.qty + ')');
+        const lines = [
+            { t: lots.length ? 'Lots on this NC: ' + lots.join(', ') + '.' : this.g.lot ? 'Lot ' + this.g.lot + ' is reported; its quantity is not recorded yet.' : 'No lot recorded.', warn: !lots.length },
+            { t: this.contained ? this.cnCount + (this.cnCount === 1 ? ' containment' : ' containments') + ' on this NC.' : 'No containment is recorded on this NC yet.', warn: !this.contained },
+            same && { t: same.v + '.', warn: same.warn },
+            comp && { t: 'Complaints: ' + comp.v + '.', warn: comp.warn },
+            { t: 'Hold status and shipments come from the lot records (Lot Stock and Lot Shipments) when they are kept.', muted: true }
+        ].filter(Boolean);
+        return lines.map((l, i) => ({ key: 'f' + i, text: l.t, cls: 'fline' + (l.warn ? ' bad' : l.muted ? ' muted' : '') }));
     }
 
     // ---- step 2: data check
@@ -668,13 +774,12 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
     }
 
     // ---- navigation: any step opens from the list, Back and Next always move; Complete Triage waits for every step
-    names() { return this.inline ? ['Triage at a Glance', ...STEPS] : STEPS; }
-    /** What is missing on one triage step (0 Containment .. 3 Next Steps), or ''. */
+    names() { return STEPS; }
+    /** What is missing on one triage step (0 Impact .. 3 Next Steps), or ''. */
     stepBlocker(c) {
         if (c === 0) {
-            if (!this.hasActs && !this.noAction && !this.hasAdded) { return 'Choose an action, add a containment, or No Action'; }
-            if (this.hasActs && !this.due) { return 'Set a due date'; }
-            if (this.noAction && !this.noActionWhy.trim()) { return 'Say why no action is needed'; }
+            if (!this.imp) { return this.impError ? 'The lots could not be read' : 'Reading the lots'; }
+            if (this.pendingLot) { return 'Lot ' + this.pendingLot.lot + ': enter how many units have the problem'; }
         }
         if (c === 1) {
             if (!this.data) { return 'Is the data good enough?'; }
@@ -741,8 +846,8 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
 
     buildSummary() {
         return [
-            { k: 'Containment', v: this.noAction ? 'No action: ' + this.noActionWhy.trim()
-                : [...this.chosenActs, ...this.added.map((a) => a.name + ' ' + a.title)].join('; ') },
+            { k: 'Lots', v: this.storedLots.length ? this.storedLots.map((l) => l.lot + ' (' + l.qty + ')').join(', ') : 'None' },
+            { k: 'Containment', v: this.contained ? this.lotRows.reduce((a, r) => a.concat(r.cns.filter((c) => !a.some((x) => x.id === c.id))), []).map((c) => c.name + ' ' + c.title).join('; ') : 'None' },
             { k: 'Data Check', v: this.dataAsk ? 'More information requested: ' + [...this.askList, this.askNote.trim()].filter(Boolean).join(', ') : 'Good enough' },
             { k: 'Risk', v: this.risk + ' · score ' + this.score + ' (' + this.sevLabel + ' severity x ' + this.likLabel + ' likelihood)'
                 + (this.escaped ? ' · High because of complaints on the lot' : '')
@@ -772,9 +877,9 @@ export default class CqTriageAssistant extends NavigationMixin(LightningElement)
                 risk: this.risk,
                 notes: rows.map((r) => r.k + ': ' + r.v).join('\n'),
                 severity: this.sev,
-                containment: this.hasActs || this.hasAdded,
-                containmentTitles: this.chosenActs,
-                containmentDue: this.due,
+                containment: this.contained,
+                containmentTitles: [],
+                containmentDue: this.cnDue,
                 disposition: this.dispReq,
                 dispositionDue: this.dispDue,
                 dispositionApproval: this.dispReq && this.dispAppr,

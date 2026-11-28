@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Impacted_Lot__c</fullName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <description>The NC lot (CQ Impacted Product) this containment holds. Blank: it covers every lot on the NC. Set by the Triage Impact step (CqTriageImpact).</description>
+    <label>Lot</label>
+    <referenceTo>compliancequest__SQX_NC_Impacted_Product__c</referenceTo>
+    <relationshipLabel>Containments</relationshipLabel>
+    <relationshipName>Lot_Containments</relationshipName>
+    <type>Lookup</type>
+</CustomField>

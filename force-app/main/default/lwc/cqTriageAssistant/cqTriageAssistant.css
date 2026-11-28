@@ -123,3 +123,33 @@
 .cq-ai-card.fsug.nomt, .factcard .cq-ai-card.fsug { margin-top: 0; }
 .cq-msg.warn { margin-top: 8px; }
 .addform .cq-msg.errbox { margin-top: 8px; }
+/* Impact (Lou, 28 Nov; board "Lots on an NC"): the lot table. Quantity, Containment and Remove sit together at the right;
+   the lot takes the rest. Page-local while cqStyles is on hold. */
+.cq-tbl.lots { table-layout: fixed; }
+.cq-tbl.lots .c-qty { width: 130px; }
+.cq-tbl.lots .c-cn { width: 170px; }
+.cq-tbl.lots .c-rm { width: 80px; }
+.cq-tbl td.mid { vertical-align: middle; }
+.cq-tbl td.right { text-align: right; }
+input.qty { width: 96px; box-sizing: border-box; }
+input.lotin { width: 100%; max-width: 240px; box-sizing: border-box; }
+.cns { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.newacts { display: flex; align-items: center; gap: 12px; }
+.lotacts { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 12px; }
+.lotacts .cq-sub { flex: 1 1 240px; }
+.cq-msg.crit { margin-top: 8px; }
+/* CQ.AI's suggested lots */
+.sugcard { margin-top: 16px; padding: 12px 14px; }
+.sugtop { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; }
+.sugtbl { margin-top: 8px; background: var(--cq-bg); }
+.sugtbl .c-slot { width: 130px; }
+.sugtbl .c-sst { width: 110px; }
+.sugtbl .c-sact { width: 190px; }
+.sugacts { display: inline-flex; align-items: center; gap: 8px; }
+.factcard.cq-know { margin-top: 16px; }
+/* Triage at a Glance in a pop-up */
+.cq-modal.glancebox { width: min(980px, 100%); max-width: 980px; }
+.glancebox .glancebody { padding: 16px 20px; max-height: 70vh; overflow: auto; }
+.glancein .glancebody { padding: 0; }
+.cq-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.glancehide { display: none; }

@@ -27,6 +27,11 @@
     <description>CQ.AI Quality module: event intake (Report a Problem, Quick Log) for now; triage, disposition and investigation access is added as the set is built out.</description>
     <fieldPermissions>
         <editable>true</editable>
+        <field>compliancequest__SQX_Containment__c.Impacted_Lot__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>true</editable>
         <field>Case.Where_Found__c</field>
         <readable>true</readable>
     </fieldPermissions>
