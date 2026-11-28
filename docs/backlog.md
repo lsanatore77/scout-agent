@@ -217,3 +217,8 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 - An administrator (Modify All Data) stands in for the owner.
 - Not built: Extensions Waiting count (no reliable field found yet); closing the NC from Verification (next); Quality Home tasks.
 - Untested in a browser: Send Reminder, Reassign, Verify, Send Back, the owner's Complete panel. NC-000072 has only one correction, already complete.
+
+## Verification and close (Lou, 27 Nov)
+- No override: an NC with an open correction cannot be closed. Ways out: the assignee skips it with a reason, the owner reassigns it, or the NC is voided.
+- Later, if needed: let the owner skip someone else's open correction (reason and signature required). Check first that CQ accepts a skip from a non-assignee.
+- Close mocked on the canvas (Close.dc.html): Resolution Effective or Ineffective (the only values valid once the NC is Complete), Closing Summary into Closure_Comment__c, signature, CQ's Close action ('close'). Ineffective prompts Reopen Implementation or Escalate to CAPA before closing.
