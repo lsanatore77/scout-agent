@@ -28,6 +28,8 @@
                         </template>
                     </div>
                 </template>
+                <div class="hlinks">
+                <template if:true={headerLink}><button class="wslink" onclick={handleHeaderLink}>{headerLink}</button></template>
                 <template if:true={hasWorkspaces}>
                     <div class="wsmenu" onkeydown={handleWsKey}>
                         <button class="wslink" aria-haspopup="menu" aria-expanded={wsExpanded} onclick={toggleWs}>Change Workspace</button>
@@ -44,6 +46,7 @@
                     </div>
                 </template>
                 </div>
+                </div>
             </template>
         </header>
         <div class={bodyCls}>
@@ -51,10 +54,7 @@
                 <div class="cq-rail-title">{railTitle}</div>
                 <template for:each={stepRows} for:item="s">
                     <button key={s.i} class={s.cls} data-i={s.i} onclick={handleStep} disabled={s.locked} aria-current={s.current}>
-                        <span class="mark">
-                            <template if:true={s.done}>&#10003;</template>
-                            <template if:false={s.done}>{s.n}</template>
-                        </span>
+                        <span class="mark">{s.n}</span>
                         <span class="txt"><span class="lbl">{s.label}</span><span class={s.subCls}>{s.sub}</span></span>
                     </button>
                 </template>

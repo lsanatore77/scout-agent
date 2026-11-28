@@ -50,6 +50,8 @@ export default class CqWsShell extends LightningElement {
     @api stepsAt;
     /** A cqStyles theme name: overrides CQ.AI Workspace Settings > Theme for this workspace ('none' for the standard look). */
     @api theme;
+    /** A link at the bottom right of the header, beside Change Workspace (Triage: Triage at a Glance). Clicking it fires headerlink. */
+    @api headerLink;
 
     look = { steps: 'left', theme: '' };
     hasSide = false;
@@ -71,7 +73,7 @@ export default class CqWsShell extends LightningElement {
     }
     get hasWorkspaces() { return (this.wsChoices || []).length > 1; }
     /** The header's bottom row: the key fields on the left, Change Workspace on the right. */
-    get hasBottom() { return this.hasFields || this.hasWorkspaces; }
+    get hasBottom() { return this.hasFields || this.hasWorkspaces || !!this.headerLink; }
     get wsExpanded() { return String(this.wsOpen); }
     get wsRows() {
         return this.wsChoices.map((w) => {
@@ -133,6 +135,7 @@ export default class CqWsShell extends LightningElement {
     handleBack() { this.fire('back'); }
     handleNext() { this.fire('next'); }
     handleEdit() { this.fire('edit'); }
+    handleHeaderLink() { this.fire('headerlink'); }
     handleRestart() { this.fire('restart'); }
     handleReopen() { this.fire('reopen'); }
     handleOpen(event) { this.fire('open', event.currentTarget.dataset.id); }

@@ -244,6 +244,7 @@ QMS connectors). Early version, aimed at manufacturers. Later: compare its full 
 
 ## Decided 28 Nov 2026, not built yet (board "Lots on an NC")
 - **Review Steps standard (every workspace):** numbers only, no green checkmark. Current step = filled blue number; finished = blue-outlined number with a blue digit; not reached = grey. Green is kept for outcomes (Complete, Passed), not progress. Lives in the shared shell, so it changes every workspace at once (needs the cqStyles hold lifted, or a shell-local override).
+- **Step markers deployed 28 Nov in cqWsShell.** Not yet on the Field Action workspace, which draws its own rail (still shows checkmarks): move it onto the shell or copy the markers when that page is next touched.
 - **Triage:** Triage at a Glance is no longer a step. A "Triage at a Glance" link at the bottom right of the header card opens it read-only in a pop-up. Triage only for now.
 - **Triage step 1 is Impact** (replaces Containment): lots table (Lot, Quantity, Containment = record number or + Add Containment, Remove), + Add Lot, + Containment for All Lots, CQ.AI Suggests Other Lots (shared component lot, same sterilization load, complaint on the lot, made nearby; + Add Lot / Not Affected), What We Know. No "No Action" choice.
 - **Add Containment pop-up:** CQ.AI suggestions fill the title; Title, Description, Due Date, Assignee, Lot. Created straight away, not signed.

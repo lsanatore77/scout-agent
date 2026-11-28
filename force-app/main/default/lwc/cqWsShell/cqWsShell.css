@@ -6,6 +6,11 @@
 .cq-hl { border-radius: var(--cq-r-card) var(--cq-r-card) 0 0; }
 .cq-hl-k { font-weight: 400; }
 .cq-rail .step { border-radius: var(--cq-r-card); }
+/* Step markers, every workspace (Lou, 28 Nov): numbers only, no checkmark. Current = filled blue; finished = blue outline
+   and digit; not reached = grey. Green is for outcomes, not progress. Shell-local while cqStyles is on hold: backlog. */
+.cq-rail .mark { width: 20px; height: 20px; border-radius: 50%; margin-top: 0; font-size: var(--cq-fs-micro); font-variant-numeric: tabular-nums; }
+.cq-rail .step.done .mark { background: var(--cq-bg); border-color: var(--cq-link); color: var(--cq-link); font-size: var(--cq-fs-micro); }
+.cq-rail .step.active .mark { background: var(--cq-link); border-color: var(--cq-link); color: #fff; }
 /* 'Picked up where you left off.' sits on the step title's line, at the right, so it takes no line of its own */
 .cq-ws-main { position: relative; }
 .resumed { position: absolute; top: 26px; right: 20px; margin: 0; font-size: var(--cq-fs-sm); color: var(--cq-muted); }
@@ -22,7 +27,8 @@
 .cq-hl-v.tone-crit { color: var(--cq-hl-crit); font-weight: 700; }
 /* Change Workspace: a small link at the bottom right of the header that opens a menu of the page's workspaces (Lou, 27 Nov) */
 .hlbottom { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--cq-s4); flex-wrap: wrap; }
-.wsmenu { position: relative; margin-left: auto; }
+.hlinks { display: flex; align-items: flex-end; gap: var(--cq-s4); margin-left: auto; }
+.wsmenu { position: relative; }
 .wslink { padding: 0; border: 0; background: none; font: inherit; font-size: var(--cq-fs-micro); color: var(--cq-hl-link); cursor: pointer; }
 .wslink:hover { text-decoration: underline; }
 .wslink:focus-visible { outline: 2px solid var(--cq-link); outline-offset: 2px; }
