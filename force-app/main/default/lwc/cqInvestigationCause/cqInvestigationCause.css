@@ -87,7 +87,8 @@
 .wev.pos { color: var(--cq-pos-fg); }
 .wev.neg { color: var(--cq-crit-fg); }
 .wev.plan { color: var(--cq-warn-fg); }
-.roles { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+/* Root Causes: Primary and Contributing side by side; Category wide enough to read its choice (Lou, 27 Nov) */
+.roles { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
 .cb { width: 18px; height: 18px; }
 .found { display: flex; flex-direction: column; border: 1px solid var(--cq-line); border-radius: 6px; overflow: hidden; }
 .foundrow { text-align: left; padding: 8px 10px; border: none; border-top: 1px solid var(--cq-line); background: var(--cq-bg); font: inherit; font-size: var(--cq-fs-meta); cursor: pointer; }
@@ -124,7 +125,7 @@
 .cq-field textarea.whyta:focus { border-color: var(--cq-line-field); background: var(--cq-bg); }
 .cq-field textarea.pin { min-height: 110px; }
 .cq-field textarea.newta { min-height: 72px; }
-.cq-field.sel select { max-width: 240px; }
+.cq-field.sel select { min-width: 11.5rem; max-width: 240px; }
 .cq-field.sel.code select { min-width: 200px; }
 /* small chips inside a table row; Against, when chosen, is red */
 .cq-chip.xs { min-height: 26px; padding: 0 10px 1px; font-size: var(--cq-fs-meta); }
