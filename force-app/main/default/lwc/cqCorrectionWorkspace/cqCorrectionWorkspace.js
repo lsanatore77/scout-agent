@@ -200,6 +200,7 @@ export default class CqCorrectionWorkspace extends NavigationMixin(LightningElem
                 ? await skipAction({ ...args, reason: this.skipReason.trim() })
                 : await completeAction({ ...args, whatWasDone: this.whatWasDone.trim(), completedOn: this.completedOn });
             this.result = { ...this.result, mode: this.mode };
+            if (this.result.status) { this.v = { ...this.v, status: this.result.status }; }   // the header's Status, without a reload
             try { await notifyRecordUpdateAvailable([{ recordId: this.recordId }, ...(this.v.ncId ? [{ recordId: this.v.ncId }] : [])]); } catch (e) { /* the page refreshes on its own later */ }
             this.dispatchEvent(new CustomEvent('changed'));
         } catch (e) {
