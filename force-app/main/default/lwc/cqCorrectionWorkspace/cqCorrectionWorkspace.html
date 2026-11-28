@@ -1,0 +1,102 @@
+<template>
+    <template if:true={loadError}><div class="cq-msg crit">{loadError}</div></template>
+    <template if:true={ready}>
+        <c-cq-ws-shell record-id={recordId} icon="standard:task" object-label="Correction" record-name={v.name}
+            fields={headerFields} agent-name="CQAI_Quality" placeholder="Ask about this correction…" ask-step="Correction" ask-suggestions={askSuggestions}
+            error={error} onopen={handleShellOpen}>
+
+            <div class={cardsCls}>
+                <div class="cq-pcard card">
+                    <div class="cq-card-title">What to Do</div>
+                    <div class="cq-strong">{v.title}</div>
+                    <template if:true={v.description}><div class="lh">{v.description}</div></template>
+                    <div class="cq-note sm0">{assignedLine}</div>
+                </div>
+                <div class="cq-ai-card card">
+                    <div class="cq-ai-head"><lightning-icon icon-name="utility:summary" size="x-small" class="cq-ai-icon" alternative-text="Worded from the records"></lightning-icon> Why It Matters</div>
+                    <div class="cq-ai-says">{problemText}</div>
+                    <template if:true={hasRootCauses}><div class="cq-ai-says"><strong>Root cause:</strong> {rootLine}</div></template>
+                    <template if:true={othersLine}><div class="cq-ai-says">{othersLine}</div></template>
+                    <div class="cq-note sm0">From <button class="cq-link plainbtn" data-id={v.ncId} onclick={handleOpenInCq}>{v.ncName}</button> and its investigation</div>
+                </div>
+                <template if:true={hasProcedures}>
+                    <div class="cq-pcard card">
+                        <div class="cq-card-title">Procedure to Follow</div>
+                        <template for:each={procRows} for:item="p">
+                            <div key={p.key} class="proc">
+                                <button class="thumb" data-id={p.id} onclick={handleOpenProc} aria-label={p.openLabel} title={p.openLabel}>
+                                    <template if:true={p.hasThumb}><img src={p.thumbUrl} alt="" data-id={p.id} onerror={handleThumbError}></template>
+                                    <template if:false={p.hasThumb}><lightning-icon icon-name="doctype:pdf" size="medium" alternative-text=""></lightning-icon></template>
+                                </button>
+                                <div class="procinfo">
+                                    <button class="cq-link plainbtn" data-id={p.id} onclick={handleOpenProc}>{p.docNumber}</button>
+                                    <span>{p.title}</span>
+                                    <span class="cq-note sm0">{p.revLine}</span>
+                                    <span class="cq-note sm0">{p.source}</span>
+                                    <button class="cq-link plainbtn" data-id={p.id} onclick={handleOpenInCq}>Open in CQ &#8599;</button>
+                                    <span class="cq-note sm0">{p.hint}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+
+            <template if:true={showForm}>
+                <h3 class="cq-step-title cq-mt16">{formTitle}</h3>
+                <div class="grid">
+                    <div class="main">
+                        <template if:true={isComplete}>
+                            <label class="cq-field"><span class="cq-label">What Was Done<span class="cq-req">*</span></span>
+                                <textarea rows="4" value={whatWasDone} oninput={handleDone} placeholder="For example, re-tested all 18 units: 2 burst below 18 atm and were scrapped, 16 passed and were released."></textarea>
+                            </label>
+                            <div class="two">
+                                <label class="cq-field"><span class="cq-label">Completed On<span class="cq-req">*</span></span>
+                                    <input class="date" type="date" value={completedOn} max={today} onchange={handleDate}>
+                                </label>
+                                <div class="cq-field"><span class="cq-label">Evidence</span>
+                                    <lightning-file-upload label="Attach evidence" variant="label-hidden" record-id={recordId} accept={acceptTypes} multiple onuploadfinished={handleUploadFinished}></lightning-file-upload>
+                                    <template if:true={hasFiles}>
+                                        <ul class="files"><template for:each={files} for:item="f"><li key={f.key}>&#128206; {f.name}</li></template></ul>
+                                    </template>
+                                    <span class="cq-hint">Attached to {v.name}: test records, photos, forms.</span>
+                                </div>
+                            </div>
+                            <div class="links"><span class="cq-muted">Can't finish it?</span><button class="cq-link plainbtn" onclick={handleExtend}>Request Extension &#8599;</button><button class="cq-link plainbtn" onclick={handleSkipMode}>Skip</button></div>
+                        </template>
+                        <template if:true={isSkip}>
+                            <label class="cq-field"><span class="cq-label">Why It Is No Longer Needed<span class="cq-req">*</span></span>
+                                <textarea rows="3" value={skipReason} oninput={handleReason} placeholder="For example, the lot was scrapped in full under the disposition, so there is nothing left to re-test."></textarea>
+                            </label>
+                            <div class="links"><button class="cq-link plainbtn" onclick={handleCompleteMode}>Back to Complete</button></div>
+                        </template>
+                        <template if:true={blockerText}><span class="cq-blocker">{blockerText}</span></template>
+                    </div>
+                    <aside class="signsec">
+                        <div class="cq-card-title nom">Sign Your Correction</div>
+                        <c-cq-sign-seat record-id={recordId} policy-key="compliancequest__SQX_Action__c" actions={seatActions}
+                            seat="Completed By" person="You" sub={signFor} status="Your Signature" tone="you" mine
+                            meaning={signMeaning} comment-hint={seatHint} submit={seatSubmit} disabled={cantSubmit}>
+                        </c-cq-sign-seat>
+                    </aside>
+                </div>
+            </template>
+
+            <template if:true={showReadOnly}>
+                <h3 class="cq-step-title cq-mt16">{readOnlyTitle}</h3>
+                <div class="cq-tblwrap cq-sum"><table class="cq-tbl">
+                    <tbody><template for:each={readOnlyRows} for:item="r"><tr key={r.key}><td class="k">{r.k}</td><td class="v">{r.v}</td></tr></template></tbody>
+                </table></div>
+            </template>
+
+            <template if:true={showDone}>
+                <div class="cq-donehead cq-mt16"><span class="cq-okdot">&#10003;</span><h3 class="cq-step-title nom">{doneHeading}</h3></div>
+                <div class="cq-tblwrap cq-sum"><table class="cq-tbl">
+                    <thead><tr><th>Item</th><th>Recorded</th></tr></thead>
+                    <tbody><template for:each={doneRows} for:item="r"><tr key={r.key}><td class="k">{r.k}</td><td class="v">{r.v}</td></tr></template></tbody>
+                </table></div>
+                <div class="cq-opts"><button class="cq-btn-primary" onclick={handleFinish}>Done</button></div>
+            </template>
+        </c-cq-ws-shell>
+    </template>
+</template>

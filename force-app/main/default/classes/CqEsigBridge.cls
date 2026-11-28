@@ -10,7 +10,8 @@ public with sharing class CqEsigBridge implements CqEsigGateway {
     private static final Map<String, String> SIGNABLE = new Map<String, String>{
         'Field_Action_Review__c' => 'CqFarSignable',
         'Field_Action__c' => 'CqFaSignable',
-        'compliancequest__SQX_Nonconformance__c' => 'CqNcSignable'
+        'compliancequest__SQX_Nonconformance__c' => 'CqNcSignable',
+        'compliancequest__SQX_Action__c' => 'CqActionSignable'
     };
     public static CqSignable signable(Id recordId) {
         String n = recordId == null ? null : SIGNABLE.get(String.valueOf(recordId.getSObjectType()));
