@@ -29,7 +29,9 @@
 .c-type { width: 6rem; }
 .c-when { width: 13rem; }
 .c-flags { width: 15rem; }
-.c-act { width: 13rem; }
+.c-act { width: 18rem; }
+/* My NCs: every next-step button the same width, so Reassign lines up down the list */
+.next { min-width: 11.5rem; justify-content: center; text-align: center; }
 .cq-tbl { table-layout: fixed; }
 .cq-tbl td { overflow-wrap: anywhere; }
 .ttl { font-weight: 600; }

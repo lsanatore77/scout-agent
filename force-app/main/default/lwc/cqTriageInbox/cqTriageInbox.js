@@ -111,7 +111,7 @@ export default class CqTriageInbox extends NavigationMixin(LightningElement) {
                 part: r.part || '\u2013',
                 statusCls: r.statusWarn ? 'cq-marktext warn' : '',
                 flagList: (r.flags || []).map((f, i) => ({ key: r.id + '-' + i, text: f })),
-                btnCls: r.primary === 'Continue Triage' ? 'cq-btn-primary cq-btn-sm' : 'cq-btn-outline cq-btn-sm'
+                btnCls: (r.primary === 'Continue Triage' ? 'cq-btn-primary' : 'cq-btn-outline') + ' cq-btn-sm next'
             });
         });
         return groups;
