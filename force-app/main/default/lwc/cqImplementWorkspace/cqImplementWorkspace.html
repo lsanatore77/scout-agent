@@ -5,7 +5,7 @@
             fields={headerFields} agent-name="CQAI_Quality" placeholder="Ask about these corrections…" ask-step="Implement" ask-suggestions={askSuggestions}
             error={error}>
 
-            <h3 class="cq-step-title nom">Corrections</h3>
+            <h3 class="cq-step-title headgap">Corrections</h3>
             <p class="cq-step-intro">Each assignee completes their own. You follow them here, chase what is late, and verify what is done when CQ asks for it.</p>
 
             <template if:true={note}>
@@ -24,7 +24,7 @@
                     <tbody>
                         <template for:each={rows} for:item="r">
                             <tr key={r.key} class={r.rowCls}>
-                                <td><div class="cq-strong">{r.title}</div><a class="cq-link sub" href={r.href} target="_blank">{r.name}</a></td>
+                                <td><a class="cq-link cq-strong titlelink" href={r.href} target="_blank" title="Open the correction">{r.title}</a><span class="sub">{r.name}</span></td>
                                 <td>{r.assigneeText}</td>
                                 <td><div>{r.dueText}</div><div class={r.dueSubCls}>{r.dueSub}</div></td>
                                 <td><span class={r.statusCls}>{r.statusText}</span></td>
