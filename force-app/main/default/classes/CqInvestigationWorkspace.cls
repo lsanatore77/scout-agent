@@ -4,7 +4,9 @@
  * getView() gives what the steps show: the investigation, its NC (problem, triage, disposition), root causes,
  * action plans and analysis tools, and whether it is complete or waiting for approval.
  *
- * saveActions() saves the Actions step as CQ action plans on the investigation.
+ * saveActions() saves the Actions step as CQ action plans on the investigation. On an NC the workspace adds corrections
+ * only (Lou, 27 Nov): removing the cause is a corrective or preventive action, and those go to a CAPA, where CQ checks they
+ * worked. Plans of another type made on CQ's own screens are kept and can still be edited.
  *
  * completeInvestigation() follows CQ's own path for an NC investigation:
  *   1. a Draft investigation is opened first (Activity Code 'initiate', as CQ's Perform Investigation does);
@@ -20,6 +22,7 @@ public with sharing class CqInvestigationWorkspace {
     public static final String INITIATE = 'initiate';
     public static final String COMPLETE = 'complete';
     public static final String SUBMIT = 'submitforapproval';
+    public static final String CORRECTION = 'Correction';
     public static final String SIGN_ACTION = 'submitinvestigation';   // CQ's Nonconformance esig action, Submitting Investigation
 
     public class Cause {
@@ -54,6 +57,7 @@ public with sharing class CqInvestigationWorkspace {
         @AuraEnabled public List<Plan> plans = new List<Plan>();
         @AuraEnabled public List<Tool> tools = new List<Tool>();
         @AuraEnabled public Integer openActions = 0;
+        @AuraEnabled public Id capaId; @AuraEnabled public String capaName;     // the NC's CAPA, once escalated or linked
     }
     public class Result {
         @AuraEnabled public String responseName; @AuraEnabled public Boolean needsApproval = false;
@@ -101,7 +105,8 @@ public with sharing class CqInvestigationWorkspace {
                        compliancequest__SQX_Part__r.compliancequest__Part_Number__c, compliancequest__Lot_Number__c,
                        toLabel(compliancequest__Record_Stage__c), Owner.Name, Triage_Risk__c, Triage_Path__c, compliancequest__Defective_Quantity__c,
                        compliancequest__Due_Date_Investigation__c, compliancequest__Investigation_Approval__c,
-                       compliancequest__Disposition_Required__c, compliancequest__Is_Disposition_Complete__c
+                       compliancequest__Disposition_Required__c, compliancequest__Is_Disposition_Complete__c,
+                       compliancequest__SQX_CAPA__c, compliancequest__SQX_CAPA__r.Name
                 FROM compliancequest__SQX_Nonconformance__c WHERE Id = :ncId WITH USER_MODE];
             v.ncId = nc.Id; v.ncName = nc.Name; v.title = nc.compliancequest__NC_Title__c; v.description = nc.compliancequest__Description__c;
             v.partId = nc.compliancequest__SQX_Part__c; v.lot = nc.compliancequest__Lot_Number__c;
@@ -110,6 +115,8 @@ public with sharing class CqInvestigationWorkspace {
             v.defective = nc.compliancequest__Defective_Quantity__c; v.due = nc.compliancequest__Due_Date_Investigation__c;
             v.needsApproval = nc.compliancequest__Investigation_Approval__c == true;
             v.dispositionComplete = nc.compliancequest__Is_Disposition_Complete__c == true;
+            v.capaId = nc.compliancequest__SQX_CAPA__c;
+            v.capaName = nc.compliancequest__SQX_CAPA__r == null ? null : nc.compliancequest__SQX_CAPA__r.Name;
 
             // what was done with the units, from the completed dispositions: "Scrap 4 · Rework 1"
             Map<String, Decimal> byType = new Map<String, Decimal>();
@@ -195,6 +202,9 @@ public with sharing class CqInvestigationWorkspace {
             String label = 'Action ' + n + ': ';
             if (String.isBlank(title)) { throw new AuraHandledException(label + 'enter what is to be done.'); }
             if (!types.contains(type)) { throw new AuraHandledException(label + 'choose Correction, Corrective or Preventive.'); }
+            if (String.isBlank(str(m.get('id'))) && type != CORRECTION) {
+                throw new AuraHandledException(label + 'only corrections can be added on a nonconformance. To remove the cause, escalate to a CAPA.');
+            }
             if (String.isBlank(due)) { throw new AuraHandledException(label + 'enter a due date.'); }
             compliancequest__SQX_Action_Plan__c a = new compliancequest__SQX_Action_Plan__c(
                 compliancequest__Title__c = title.left(255), compliancequest__Plan_Type__c = type,

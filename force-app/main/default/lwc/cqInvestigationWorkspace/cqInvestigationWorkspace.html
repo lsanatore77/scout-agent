@@ -332,7 +332,7 @@
                     <!-- 5 Actions -->
                     <template if:true={showActions}>
                         <h3 class="cq-step-title">Actions</h3>
-                        <p class="cq-step-intro">A correction fixes what is broken now; a corrective action removes the cause; a preventive action stops it happening elsewhere.</p>
+                        <p class="cq-step-intro">Corrections fix what is broken now: rework, re-inspect, quarantine, replace. If the cause itself needs fixing, escalate to a CAPA.</p>
                         <template if:true={hasPlans}>
                             <div class="cq-tblwrap">
                                 <table class="cq-tbl">
@@ -342,7 +342,7 @@
                                             <tr key={p.key}>
                                                 <td class="ttl"><div class="cq-strong">{p.title}</div><template if:true={p.unsaved}><div class="cq-note sm0">Not saved yet</div></template></td>
                                                 <td class="wide">{p.descText}</td>
-                                                <td class="cq-nowrap">{p.type}</td>
+                                                <template if:true={showPlanType}><td class="cq-nowrap">{p.type}</td></template>
                                                 <td class="cq-nowrap">{p.ownerText}</td>
                                                 <td class="cq-nowrap">{p.dueText}</td>
                                                 <td class="cq-nowrap"><button class="smalllink plainbtn" data-i={p.idx} onclick={handleEditPlan}>Edit</button><span class="cq-note sm0"> &middot; </span><button class="smalllink plainbtn" data-i={p.idx} onclick={handleRemovePlan}>Remove</button></td>
@@ -352,9 +352,20 @@
                                 </table>
                             </div>
                         </template>
-                        <template if:false={hasPlans}><p class="cq-note">No actions yet. Add one for each thing to be done.</p></template>
-                        <div class="cq-splitline cq-mt16"><button class="cq-btn-outline" onclick={handleAddPlan}>+ Add Action</button><span class="cq-grow"></span><button class="cq-btn-outline" onclick={handlePlanDoc} title="Build an FDA warning letter response or an 8D customer report from these actions">Create Action Plan Document</button></div>
+                        <template if:false={hasPlans}><p class="cq-note">No corrections yet. Add one for each thing to be done.</p></template>
+                        <div class="cq-splitline cq-mt16"><button class="cq-btn-outline" onclick={handleAddPlan}>+ Add Correction</button><span class="cq-grow"></span><button class="cq-btn-outline" onclick={handlePlanDoc} title="Build an FDA warning letter response or an 8D customer report from these actions">Create Action Plan Document</button></div>
                         <template if:true={planDocNote}><div class="cq-infobox cq-mt16"><strong>Action Plan Document:</strong> {planDocNote}</div></template>
+                        <div class="capabox cq-mt16">
+                            <template if:false={hasCapa}>
+                                <span class="capatitle">Does the cause need fixing too?</span>
+                                <span>{causeLine} Stopping it from coming back is a corrective action. That goes to a CAPA, which checks it worked.</span>
+                                <div><button class="cq-btn-outline" onclick={handleEscalate}>Escalate to CAPA</button></div>
+                            </template>
+                            <template if:true={hasCapa}>
+                                <span class="capatitle">Escalated to a CAPA</span>
+                                <span>The cause is being dealt with in <a class="cq-link" href={capaHref} target="_blank">{v.capaName}</a>.</span>
+                            </template>
+                        </div>
                         <div class="cq-infobox cq-mt16"><strong>What happens to these:</strong> they are saved as CQ action plans on the investigation. When the investigation is complete, the NC moves to Implement and CQ turns them into actions with their owners and due dates.</div>
                         <template if:true={notice}><div class="cq-msg pos okbox">{notice}</div></template>
                     </template>
@@ -436,13 +447,9 @@
                             <label class="cq-field"><span class="cq-label">Description</span>
                                 <textarea class="plandesc" rows="3" value={planForm.description} data-f="description" oninput={handlePlanFormInput} placeholder="What will be done, where, and how you will know it worked"></textarea>
                             </label>
-                            <div class="cq-field"><span class="cq-label">Type<span class="cq-req">*</span></span>
-                                <div class="cq-chips">
-                                    <template for:each={planFormTypes} for:item="t">
-                                        <button key={t.label} class={t.cls} data-type={t.label} aria-pressed={t.pressed} onclick={handlePlanFormType}>{t.label}</button>
-                                    </template>
-                                </div>
-                            </div>
+                            <template if:true={planFormLegacy}>
+                                <div class="cq-field"><span class="cq-label">Type</span><span>{planForm.type}</span><span class="cq-note sm0">Made on CQ's own screens. New actions on an NC are corrections; corrective and preventive actions go to a CAPA.</span></div>
+                            </template>
                             <div class="cq-fields">
                                 <div class="cq-field owner"><span class="cq-label">Owner</span>
                                     <lightning-record-picker label="Owner" variant="label-hidden" object-api-name="User" placeholder="You, if left empty" value={planForm.userId} onchange={handlePlanFormOwner}></lightning-record-picker>
@@ -451,7 +458,7 @@
                                     <input class="date" type="date" value={planForm.due} data-f="due" onchange={handlePlanFormInput}>
                                 </label>
                             </div>
-                            <div class="cq-note sm0">A correction fixes what is broken now; a corrective action removes the cause; a preventive action stops it happening elsewhere. Save Actions saves it to CQ.</div>
+                            <div class="cq-note sm0">A correction fixes what is broken now. Save Actions saves it to CQ.</div>
                         </div>
                         <footer class="cq-modal-foot">
                             <span class="cq-blocker">{planFormBlocker}</span>

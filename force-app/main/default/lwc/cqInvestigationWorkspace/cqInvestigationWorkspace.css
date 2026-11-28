@@ -131,3 +131,6 @@ button.wc-num:focus-visible { outline: 2px solid var(--cq-link); outline-offset:
 .signsec { display: flex; flex-direction: column; gap: 8px; min-width: 0; position: sticky; top: 12px; }
 @media (max-width: 900px) { .congrid { grid-template-columns: minmax(0, 1fr); } .signsec { position: static; } }
 .nom { margin: 0; }
+/* NC actions are corrections only (Lou, 27 Nov): removing the cause goes to a CAPA. Page-local while cqStyles is on hold. */
+.capabox { display: flex; flex-direction: column; gap: var(--cq-s2); padding: 14px; border: 1px solid var(--cq-accent); border-radius: var(--cq-r-card); background: var(--cq-accent-soft); }
+.capatitle { font-weight: 700; color: var(--cq-accent); }

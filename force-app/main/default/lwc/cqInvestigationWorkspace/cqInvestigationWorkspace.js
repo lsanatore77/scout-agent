@@ -46,6 +46,8 @@ const COLS = {
         { key: 'ownerText', label: 'Owner' }, { key: 'due', label: 'Due' }, { key: 'act', label: '', sortable: false }]
 };
 const POLL_TRIES = 8;
+const CORRECTION = 'Correction';
+const ESCALATE = 'compliancequest__SQX_Nonconformance__c.cqext__cqui_Escalatecapa';   // CQ's own Escalate CAPA action on the NC
 
 /**
  * CQ.AI Investigation workspace: the investigation's record header, then six steps in the page.
@@ -225,7 +227,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get chgHeads() { return heads(COLS.chg, this.sorts.chg); }
     get histHeads() { return heads(COLS.hist, this.sorts.hist); }
     get othHeads() { return heads(COLS.oth, this.sorts.oth); }
-    get planHeads() { return heads(COLS.plan, this.sorts.plan); }
+    get planHeads() { return heads(this.showPlanType ? COLS.plan : COLS.plan.filter((c) => c.key !== 'type'), this.sorts.plan); }
     handleSort(event) {
         const d = event.currentTarget.dataset;
         this.sorts = { ...this.sorts, [d.t]: nextSort(this.sorts[d.t], d.key) };
@@ -297,12 +299,12 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
     get planUserId() { return this.planForm && this.planForm.userId ? this.planForm.userId : undefined; }
     get planFormOpen() { return !!this.planForm; }
-    get planFormTitle() { return this.planForm && this.planForm.idx !== null ? 'Edit Action' : 'Add Action'; }
-    get planFormSaveLabel() { return this.planForm && this.planForm.idx !== null ? 'Save Action' : 'Add Action'; }
-    get planFormTypes() {
-        const t = this.planForm ? this.planForm.type : null;
-        return (this.v.planTypes || []).map((x) => ({ label: x, pressed: String(t === x), cls: 'cq-chip' }));
-    }
+    get planFormTitle() { return this.planForm && this.planForm.idx !== null ? (this.planFormLegacy ? 'Edit Action' : 'Edit Correction') : 'Add Correction'; }
+    get planFormSaveLabel() { return this.planForm && this.planForm.idx !== null ? 'Save' : 'Add Correction'; }
+    /** On an NC the workspace adds corrections only (Lou, 27 Nov). A corrective or preventive plan made on CQ's own screens
+     *  is kept: its type shows, and it can still be edited. */
+    get planFormLegacy() { return !!(this.planForm && this.planForm.type && this.planForm.type !== CORRECTION); }
+    get showPlanType() { return this.plans.some((p) => p.type && p.type !== CORRECTION); }
     get planFormBlocker() {
         const f = this.planForm || {};
         if (!(f.title || '').trim()) { return 'Give it a title'; }
@@ -312,7 +314,7 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     }
     get cantSavePlanForm() { return !!this.planFormBlocker; }
     handleAddPlan() {
-        this.planForm = { idx: null, title: '', description: '', type: null, due: this.todayIso(30), userId: null, userName: null };
+        this.planForm = { idx: null, title: '', description: '', type: CORRECTION, due: this.todayIso(30), userId: null, userName: null };
         this.planFocus = true;
     }
     handleEditPlan(event) {
@@ -322,7 +324,6 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         this.planFocus = true;
     }
     handlePlanFormInput(event) { this.planForm = { ...this.planForm, [event.currentTarget.dataset.f]: event.target.value }; }
-    handlePlanFormType(event) { this.planForm = { ...this.planForm, type: event.currentTarget.dataset.type }; }
     handlePlanFormOwner(event) {
         const id = event.detail ? event.detail.recordId : null;
         this.planForm = { ...this.planForm, userId: id, userName: id ? this.planForm.userName : null };
@@ -342,6 +343,20 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
         this.planForm = undefined;
         this.error = undefined;
         this.notice = undefined;
+    }
+    // Escalate to CAPA: removing the cause is a CAPA's job; this opens CQ's own Escalate CAPA action on the NC, in a new tab
+    get hasCapa() { return !!this.v.capaId; }
+    get capaHref() { return this.v.capaId ? this.href(this.v.capaId) : null; }
+    get causeLine() {
+        const c = (this.v.causes || [])[0];
+        if (!c) { return 'No root cause is recorded yet.'; }
+        return 'Root cause: ' + [c.code || c.category, c.description].filter((x) => x).join(', ').replace(/\.\s*$/, '') + '.';
+    }
+    handleEscalate() {
+        const nc = this.v.ncId;
+        if (!nc) { return; }
+        const back = encodeURIComponent('/lightning/r/' + nc + '/view');
+        window.open('/lightning/action/quick/' + ESCALATE + '?objectApiName=compliancequest__SQX_Nonconformance__c&context=RECORD_DETAIL&recordId=' + nc + '&backgroundContext=' + back, '_blank');
     }
     /** Placeholder: the Action Plan Document (an FDA warning letter response or an 8D customer report) is not built yet. */
     planDocNote;
@@ -437,9 +452,8 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
     get recurWarn() {
         const r = this.recurrence;
         if (!r) { return null; }
-        const fixes = this.plans.some((p) => p.type === 'Corrective' || p.type === 'Preventive');
-        if (fixes) { return null; }
-        return 'This problem happened before (' + r.name + ') and ' + r.capaName + ' did not hold. Plan a corrective or preventive action that deals with why, or escalate to a CAPA.';
+        if (this.v.capaId) { return null; }
+        return 'This problem happened before (' + r.name + ') and ' + r.capaName + ' did not hold. Corrections fix this NC only; escalate to a CAPA to deal with why.';
     }
     get noCauseWarn() { return this.conclusion === 'Confirmed' && !(this.v.causes || []).length; }
     get completeLabel() {

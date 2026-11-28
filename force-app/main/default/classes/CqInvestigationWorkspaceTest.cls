@@ -86,14 +86,15 @@ private class CqInvestigationWorkspaceTest {
         List<String> bad = new List<String>{
             JSON.serialize(new List<Map<String, Object>>{ new Map<String, Object>{ 'type' => 'Correction', 'due' => '2027-01-01' } }),
             JSON.serialize(new List<Map<String, Object>>{ new Map<String, Object>{ 'title' => 'x', 'type' => 'Later', 'due' => '2027-01-01' } }),
-            JSON.serialize(new List<Map<String, Object>>{ new Map<String, Object>{ 'title' => 'x', 'type' => 'Correction' } }) };
+            JSON.serialize(new List<Map<String, Object>>{ new Map<String, Object>{ 'title' => 'x', 'type' => 'Correction' } }),
+            JSON.serialize(new List<Map<String, Object>>{ new Map<String, Object>{ 'title' => 'x', 'type' => 'Corrective', 'due' => '2027-01-01' } }) };
         for (String p : bad) {
             try { CqInvestigationWorkspace.saveActions(invId, p); } catch (AuraHandledException e) { refused++; }
         }
         try { CqInvestigationWorkspace.completeInvestigation(invId, null, 'summary', null, null, null); } catch (AuraHandledException e) { refused++; }
         try { CqInvestigationWorkspace.completeInvestigation(invId, 'Confirmed', ' ', null, null, null); } catch (AuraHandledException e) { refused++; }
         try { CqInvestigationWorkspace.getView(null); } catch (AuraHandledException e) { refused++; }
-        System.assertEquals(6, refused);
+        System.assertEquals(7, refused, 'a new corrective action is refused on an NC');
     }
 
     @IsTest
