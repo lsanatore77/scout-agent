@@ -123,11 +123,14 @@ export default class CqTriageInbox extends NavigationMixin(LightningElement) {
 
     handleOpen(event) {
         event.preventDefault();
-        this.openRecord(event.currentTarget.dataset.id);
+        this.openRecord(event.currentTarget.dataset.id, event.currentTarget.dataset.part);
     }
-    openRecord(id) {
+    /** part: in Disposition / Investigate, the side the NC page opens on (c__part, read by cqNcWorkspaces). */
+    openRecord(id, part) {
         if (!id) { return; }
-        this[NavigationMixin.Navigate]({ type: 'standard__recordPage', attributes: { recordId: id, actionName: 'view' } });
+        const ref = { type: 'standard__recordPage', attributes: { recordId: id, actionName: 'view' } };
+        if (part) { ref.state = { c__part: part }; }
+        this[NavigationMixin.Navigate](ref);
     }
     handleMsgOpen() { if (this.msg) { this.openRecord(this.msg.id); } }
     handleMsgClose() { this.msg = undefined; }

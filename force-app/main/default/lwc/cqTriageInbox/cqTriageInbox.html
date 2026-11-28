@@ -101,7 +101,7 @@
                                                     <td><div class="flags"><template for:each={r.flagList} for:item="f"><span key={f.key} class="cq-pill soft warn">{f.text}</span></template></div></td>
                                                     <td><div class="acts">
                                                         <button class="cq-link" data-id={r.id} onclick={handleReassign}>Reassign</button>
-                                                        <button class={r.btnCls} data-id={r.id} onclick={handleOpen}>{r.primary}</button>
+                                                        <button class={r.btnCls} data-id={r.id} data-part={r.openPart} onclick={handleOpen}>{r.primary}</button>
                                                     </div></td>
                                                 </tr>
                                             </template>

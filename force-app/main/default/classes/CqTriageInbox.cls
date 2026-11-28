@@ -19,6 +19,8 @@ public with sharing class CqTriageInbox {
     public static final String CAN_OWN = 'CQ_Can_Own_NC_Custom_Permission';
     public static final Set<String> DONE = new Set<String>{ 'Closed', 'Void', 'Complete' };
     public static final Set<String> NOT_MINE_STAGES = new Set<String>{ 'Draft', 'Closed' };
+    /** My NCs keeps a Complete NC: CQ completes an NC when it moves to Verification, and its owner still closes it. */
+    public static final Set<String> MINE_DONE = new Set<String>{ 'Closed', 'Void' };
     public static final Integer OLD_DAYS = 7;          // waiting this long shows in amber
     public static final Integer REPEAT_DAYS = 90;      // other NCs on the same part this recently make a repeat
     public static final Integer SOON_DAYS = 7;         // a due date this close counts as due soon
@@ -43,7 +45,8 @@ public with sharing class CqTriageInbox {
         @AuraEnabled public Boolean statusWarn = false;
         @AuraEnabled public Integer dueDays;              // My NCs: days to the nearest open due date; negative = overdue
         @AuraEnabled public List<String> flags = new List<String>();
-        @AuraEnabled public String primary;               // Continue Triage or Open
+        @AuraEnabled public String primary;               // what the button says: Continue Triage, Disposition, Investigation, Implementation, Verification
+        @AuraEnabled public String openPart;              // Disposition / Investigate: which side the NC page opens on (its c__part)
     }
     public class Inbox {
         @AuraEnabled public Boolean triager = false;      // in a triage queue (or an admin) and can own NCs
@@ -115,11 +118,11 @@ public with sharing class CqTriageInbox {
                        compliancequest__Due_Date_Disposition__c, compliancequest__Completion_Date_Disposition__c,
                        compliancequest__Due_Date_Containment__c, compliancequest__Completion_Date_Containment__c
                 FROM compliancequest__SQX_Nonconformance__c
-                WHERE OwnerId = :me AND compliancequest__Status__c NOT IN :DONE AND compliancequest__Record_Stage__c NOT IN :NOT_MINE_STAGES
+                WHERE OwnerId = :me AND compliancequest__Status__c NOT IN :MINE_DONE AND compliancequest__Record_Stage__c NOT IN :NOT_MINE_STAGES
                 ORDER BY CreatedDate ASC LIMIT 200]) {
             Row r = base(n);
             standing(r, n);
-            r.primary = n.compliancequest__Record_Stage__c == 'Triage' ? 'Continue Triage' : 'Open';
+            next(r, n);
             out.add(r);
         }
         // by stage in the order an NC moves through them, then the most pressing first
@@ -143,6 +146,29 @@ public with sharing class CqTriageInbox {
             return (b.waitDays == null ? 0 : b.waitDays) - (r.waitDays == null ? 0 : r.waitDays);
         }
     }
+    /**
+     * The button names the next step (Lou, 28 Nov): Continue Triage, Continue Disposition or Continue Investigation (in
+     * Disposition / Investigate, whichever is still open; when both are, the one due first, the disposition on a tie),
+     * Continue Implementation, Continue Verification. In Disposition / Investigate it opens the NC page on that side.
+     */
+    @TestVisible
+    private static void next(Row r, compliancequest__SQX_Nonconformance__c n) {
+        String st = n.compliancequest__Record_Stage__c;
+        if (st == 'Triage') { r.primary = 'Continue Triage'; return; }
+        if (st == 'Implement') { r.primary = 'Continue Implementation'; return; }
+        if (st == 'Verification') { r.primary = 'Continue Verification'; return; }
+        if (st == 'Disposition_Investigate') {
+            Boolean dispOpen = n.compliancequest__Completion_Date_Disposition__c == null;
+            Boolean invOpen = n.compliancequest__Completion_Date_Investigation__c == null;
+            Boolean inv = invOpen && (!dispOpen || dueFirst(n.compliancequest__Due_Date_Investigation__c, n.compliancequest__Due_Date_Disposition__c));
+            r.openPart = inv ? 'investigation' : 'disposition';
+            r.primary = inv ? 'Continue Investigation' : 'Continue Disposition';
+            return;
+        }
+        r.primary = 'Open';
+    }
+    private static Boolean dueFirst(Date a, Date b) { return a != null && (b == null || a < b); }
+
     public static Integer stageOrder(String s) {
         Integer i = new List<String>{ 'Triage', 'Disposition_Investigate', 'Implement', 'Verification' }.indexOf(s);
         return i < 0 ? 9 : i;
@@ -173,6 +199,7 @@ public with sharing class CqTriageInbox {
             r.statusWarn = r.old;
             return;
         }
+        if (r.stage == 'Verification') { r.status = 'Waiting to be closed'; return; }
         String what; Date due;
         List<Object[]> dues = new List<Object[]>{
             new Object[]{ 'Containment', n.compliancequest__Due_Date_Containment__c, n.compliancequest__Completion_Date_Containment__c },

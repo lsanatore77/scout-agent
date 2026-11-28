@@ -101,10 +101,38 @@ private class CqTriageInboxTest {
                 System.assertEquals('Investigation overdue 3 days', r.status);
                 System.assert(r.statusWarn);
                 System.assertEquals('Disposition / Investigate', r.stageLabel);
-                System.assertEquals('Open', r.primary);
+                System.assertEquals('Continue Investigation', r.primary, 'the investigation is open and due first');
+                System.assertEquals('investigation', r.openPart);
             }
         }
         System.assert(seen, 'an owned NC past triage is in My NCs');
+    }
+
+    @IsTest
+    static void theButtonNamesTheNextStep() {
+        Map<String, String> want = new Map<String, String>{ 'Triage' => 'Continue Triage', 'Implement' => 'Continue Implementation',
+            'Verification' => 'Continue Verification', 'Closed' => 'Open' };
+        for (String st : want.keySet()) {
+            CqTriageInbox.Row r = new CqTriageInbox.Row();
+            CqTriageInbox.next(r, new compliancequest__SQX_Nonconformance__c(compliancequest__Record_Stage__c = st));
+            System.assertEquals(want.get(st), r.primary, st);
+            System.assertEquals(null, r.openPart, st);
+        }
+        // Disposition / Investigate: whichever is still open
+        CqTriageInbox.Row r = new CqTriageInbox.Row();
+        CqTriageInbox.next(r, new compliancequest__SQX_Nonconformance__c(compliancequest__Record_Stage__c = 'Disposition_Investigate',
+            compliancequest__Completion_Date_Investigation__c = Date.today()));
+        System.assertEquals('Continue Disposition', r.primary);
+        System.assertEquals('disposition', r.openPart);
+        r = new CqTriageInbox.Row();
+        CqTriageInbox.next(r, new compliancequest__SQX_Nonconformance__c(compliancequest__Record_Stage__c = 'Disposition_Investigate',
+            compliancequest__Completion_Date_Disposition__c = Date.today()));
+        System.assertEquals('Continue Investigation', r.primary);
+        // both open: the one due first, the disposition on a tie
+        r = new CqTriageInbox.Row();
+        CqTriageInbox.next(r, new compliancequest__SQX_Nonconformance__c(compliancequest__Record_Stage__c = 'Disposition_Investigate',
+            compliancequest__Due_Date_Disposition__c = Date.today().addDays(5), compliancequest__Due_Date_Investigation__c = Date.today().addDays(5)));
+        System.assertEquals('Continue Disposition', r.primary);
     }
 
     @IsTest
