@@ -33,7 +33,7 @@
                                     <span>{p.title}</span>
                                     <span class="cq-note sm0">{p.revLine}</span>
                                     <span class="cq-note sm0">{p.source}</span>
-                                    <button class="cq-link plainbtn" data-id={p.id} onclick={handleOpenInCq}>Open in CQ &#8599;</button>
+                                    <button class="cq-link plainbtn" data-id={p.id} onclick={handleOpenInCq}>Open in CQ<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
                                     <span class="cq-note sm0">{p.hint}</span>
                                 </div>
                             </div>
@@ -62,7 +62,7 @@
                                     <span class="cq-hint">Attached to {v.name}: test records, photos, forms.</span>
                                 </div>
                             </div>
-                            <div class="links"><span class="cq-muted">Can't finish it?</span><button class="cq-link plainbtn" onclick={handleExtend}>Request Extension &#8599;</button><button class="cq-link plainbtn" onclick={handleSkipMode}>Skip</button></div>
+                            <div class="links"><span class="cq-muted">Can't finish it?</span><button class="cq-link plainbtn" onclick={handleExtend}>Request Extension<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><button class="cq-link plainbtn" onclick={handleSkipMode}>Skip</button></div>
                         </template>
                         <template if:true={isSkip}>
                             <label class="cq-field"><span class="cq-label">Why It Is No Longer Needed<span class="cq-req">*</span></span>

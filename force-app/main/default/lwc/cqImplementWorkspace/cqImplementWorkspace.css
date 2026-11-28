@@ -44,3 +44,5 @@ tr.panelrow > td { background: var(--cq-surface); padding: 4px 16px 16px; }
 .ineff { display: flex; flex-direction: column; gap: 8px; }
 .ineff .sm { font-size: var(--cq-fs-micro); }
 .closedtbl { max-width: 900px; margin-top: 8px; }
+/* the opens-in-a-new-tab arrow, drawn in the text colour (the ↗ character shows as a blue emoji on Windows) */
+.ext { width: 0.72em; height: 0.72em; margin-left: 4px; vertical-align: 0; flex: none; }

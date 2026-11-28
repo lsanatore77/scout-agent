@@ -27,3 +27,5 @@
 .links { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
 .files { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
 .cq-field input.date { width: 170px; }
+/* the opens-in-a-new-tab arrow, drawn in the text colour (the ↗ character shows as a blue emoji on Windows) */
+.ext { width: 0.72em; height: 0.72em; margin-left: 4px; vertical-align: 0; flex: none; }

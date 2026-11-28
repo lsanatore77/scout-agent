@@ -87,7 +87,7 @@
                                                 <label class="cq-field"><span class="cq-label">How You Checked It<span class="cq-req">*</span></span>
                                                     <textarea rows="3" value={howChecked} oninput={handleChecked} placeholder="For example, checked 5 bonded units from the next run: all within tolerance."></textarea>
                                                 </label>
-                                                <div class="links"><span class="cq-muted">Not done properly?</span><button class="cq-link plainbtn" onclick={handleSendBack}>Send Back &#8599;</button><button class="cq-link plainbtn" onclick={handleCancel}>Cancel</button></div>
+                                                <div class="links"><span class="cq-muted">Not done properly?</span><button class="cq-link plainbtn" onclick={handleSendBack}>Send Back<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button><button class="cq-link plainbtn" onclick={handleCancel}>Cancel</button></div>
                                                 <template if:true={verifyBlocker}><span class="cq-blocker">{verifyBlocker}</span></template>
                                             </div>
                                             <aside class="signsec">
@@ -134,8 +134,8 @@
                                 <strong>The fix did not hold. Closing now records that, but leaves the problem open.</strong>
                                 <span>Usually you do one of these instead:</span>
                                 <div class="links">
-                                    <button class="cq-btn-outline cq-btn-sm" onclick={handleReopenImpl}>Reopen Implementation &#8599;</button>
-                                    <template if:false={hasCapa}><button class="cq-btn-outline cq-btn-sm" onclick={handleEscalate}>Escalate to a CAPA &#8599;</button></template>
+                                    <button class="cq-btn-outline cq-btn-sm" onclick={handleReopenImpl}>Reopen Implementation<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                                    <template if:false={hasCapa}><button class="cq-btn-outline cq-btn-sm" onclick={handleEscalate}>Escalate to a CAPA<svg class="ext" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5h5v5M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></button></template>
                                     <template if:true={hasCapa}><a class="cq-link" href={capaHref} target="_blank">Already escalated: {v.capaName}</a></template>
                                 </div>
                                 <span class="sm">Reopen sends the NC back to Implement to add or redo corrections. Escalate opens CQ's Escalate to CAPA, where the cause gets fixed. Or close it as Ineffective, for example when a CAPA already covers it.</span>
