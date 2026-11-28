@@ -16,6 +16,9 @@
                 </label>
                 <template if:true={needSign}>
                     <p class="signmean">{signMeaning}</p>
+                    <div class="cq-field"><span class="cq-label">Username</span>
+                        <span class="sigro">{username}</span>
+                    </div>
                     <label class="cq-field"><span class="cq-label">Password<span class="cq-req">*</span></span>
                         <input type={pwType} class="sigpw" name="cq-esig-confirm" autocomplete={pwAuto} style={pwStyle} spellcheck="false" autocapitalize="off" autocorrect="off" disabled={busy}
                             data-lpignore="true" data-1p-ignore="true" data-bwignore="true" data-form-type="other"

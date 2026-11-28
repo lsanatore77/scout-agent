@@ -1,4 +1,7 @@
-import { LightningElement, api } from 'lwc';
+import { LightningElement, api, wire } from 'lwc';
+import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
+import USER_ID from '@salesforce/user/Id';
+import USERNAME from '@salesforce/schema/User.Username';
 import { askPolicies } from 'c/cqEsign';
 
 /**
@@ -12,6 +15,8 @@ import { askPolicies } from 'c/cqEsign';
  *   { action: 'approve', label: 'Approve', doing: 'Approving', signing: 'approving' }.
  * submit: a function the screen passes ((detail) => Promise), detail = { ref, action, comment, password }; a rejected
  *   promise shows its message under the buttons.
+ * Above the password the signer sees their own Salesforce username, read-only (Lou, 27 Nov), so it is clear whose
+ * signature this is. It is shown, never sent: the server signs as the running user.
  */
 export default class CqSignSeat extends LightningElement {
     @api recordId;
@@ -38,6 +43,9 @@ export default class CqSignSeat extends LightningElement {
     pwWarn = '';
     _pw = '';
     _asked = false;
+
+    @wire(getRecord, { recordId: USER_ID, fields: [USERNAME] }) me;
+    get username() { return (this.me && this.me.data && getFieldValue(this.me.data, USERNAME)) || ''; }
 
     _mine = false;
     @api
