@@ -382,10 +382,22 @@ export default class CqInvestigationWorkspace extends NavigationMixin(LightningE
 
     // ---- step 6: Conclusion
     get conclusionOpts() {
-        return (this.v.conclusions || []).map((c) => ({ label: c, selected: this.conclusion === c }));
+        return (this.v.conclusions || []).map((c) => {
+            const on = this.conclusion === c;
+            return { label: c, selected: on, checked: String(on), tick: on ? '✓' : '', cls: 'wc-lbitem' + (on ? ' on' : '') };
+        });
     }
     get noConclusion() { return !this.conclusion; }
-    /** Conclusion is a drop-down (Lou, 27 Nov). */
+    /** Conclusion is a drop-down (Lou, 27 Nov), drawn as a menu like Look back: the browser's own drop-down stayed open
+     *  when you clicked away. Escape or a click outside closes it. */
+    conOpen = false;
+    get conLabel() { return this.conclusion || 'Choose a conclusion'; }
+    get conBtnCls() { return 'conbtn' + (this.conclusion ? '' : ' empty'); }
+    get conExpanded() { return String(this.conOpen); }
+    toggleCon() { this.conOpen = !this.conOpen; }
+    closeCon() { this.conOpen = false; }
+    handleConKey(event) { if (event.key === 'Escape' && this.conOpen) { event.stopPropagation(); this.conOpen = false; } }
+    handleConPick(event) { this.conclusion = event.currentTarget.dataset.v; this.conOpen = false; this.error = undefined; }
     handleConclusion(event) { this.conclusion = event.target.value || undefined; this.error = undefined; }
     handleSummary(event) { this.summary = event.target.value; this.sumConfirm = false; this.error = undefined; }
     // CQ.AI Suggested Summary: the prompt template writes Problem, Containment, Hypotheses, Root Cause and Actions

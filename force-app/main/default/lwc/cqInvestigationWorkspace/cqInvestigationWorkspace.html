@@ -362,14 +362,19 @@
                     <!-- 6 Conclusion -->
                     <template if:true={showConclusion}>
                         <h3 class="cq-step-title">Conclusion</h3>
-                        <label class="cq-field concl"><span class="cq-label">Conclusion<span class="cq-req">*</span></span>
-                            <select onchange={handleConclusion}>
-                                <option value="" selected={noConclusion}>Choose a conclusion</option>
-                                <template for:each={conclusionOpts} for:item="c">
-                                    <option key={c.label} value={c.label} selected={c.selected}>{c.label}</option>
+                        <div class="cq-field concl"><span class="cq-label">Conclusion<span class="cq-req">*</span></span>
+                            <div class="conmenu" onkeydown={handleConKey}>
+                                <button class={conBtnCls} aria-haspopup="menu" aria-expanded={conExpanded} aria-label="Conclusion" onclick={toggleCon}><span class="cq-grow">{conLabel}</span><span aria-hidden="true">&#9662;</span></button>
+                                <template if:true={conOpen}>
+                                    <div class="wc-veil" onclick={closeCon}></div>
+                                    <div class="wc-lbmenu conlist" role="menu" aria-label="Conclusion">
+                                        <template for:each={conclusionOpts} for:item="c">
+                                            <button key={c.label} class={c.cls} role="menuitemradio" aria-checked={c.checked} data-v={c.label} onclick={handleConPick}><span class="wc-tick" aria-hidden="true">{c.tick}</span>{c.label}</button>
+                                        </template>
+                                    </div>
                                 </template>
-                            </select>
-                        </label>
+                            </div>
+                        </div>
                         <template if:true={recurWarn}><div class="cq-msg warn">{recurWarn}</div></template>
                         <template if:true={noCauseWarn}><div class="cq-msg warn">Confirmed usually means the root cause is known, but no root cause is recorded on this investigation yet.</div></template>
                         <label class="cq-field cq-mt16"><span class="cq-label">Investigation Summary<span class="cq-req">*</span></span>

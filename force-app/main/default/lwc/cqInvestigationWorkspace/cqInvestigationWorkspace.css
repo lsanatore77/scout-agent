@@ -117,3 +117,11 @@ button.wc-num:focus-visible { outline: 2px solid var(--cq-link); outline-offset:
    Where This Stands' text (13px, muted). Page-local while cqStyles is on hold: backlog. */
 .cq-cols.wide .cq-ai-head { font-size: var(--cq-fs-body); }
 .cq-cols.wide .cq-prob { font-size: var(--cq-fs-meta); line-height: 1.45; color: var(--cq-muted); }
+/* Conclusion: a menu drawn like the field it replaced (the browser's drop-down stayed open on click-away, Lou 27 Nov) */
+.conmenu { position: relative; max-width: 20rem; }
+.conbtn { display: flex; align-items: center; gap: var(--cq-s2); box-sizing: border-box; width: 100%; min-height: var(--cq-field-h);
+          padding: var(--cq-field-pad-y) var(--cq-field-pad-x); border: 1px solid var(--cq-line-field); border-radius: var(--cq-r-field);
+          background: var(--cq-bg); color: var(--cq-ink); font: inherit; font-size: var(--cq-fs-input); line-height: 1.3; text-align: left; cursor: pointer; }
+.conbtn.empty { color: var(--cq-muted); }
+.conbtn:focus-visible { outline: none; border-color: var(--cq-link); box-shadow: 0 0 0 3px rgba(11, 92, 173, 0.18); }
+.conlist { left: 0; right: auto; min-width: 100%; box-sizing: border-box; }
