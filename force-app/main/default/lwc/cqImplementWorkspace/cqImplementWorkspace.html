@@ -116,10 +116,12 @@
 
             <!-- Verification: the owner closes the NC once CQ has completed it -->
             <template if:true={showClose}>
-                <h3 class="cq-step-title headgap divided">Close the Nonconformance</h3>
-                <p class="cq-step-intro">Did the corrections hold? Look at what was done above, then pick the resolution and sign. CQ asks for a signature to close.</p>
-                <div class="grid closegrid">
+                <div class="grid closegrid divided">
                     <div class="main">
+                        <div>
+                            <h3 class="cq-step-title headgap">Close the Nonconformance</h3>
+                            <p class="cq-step-intro sm0">Did the corrections hold? Look at what was done above, then pick the resolution and sign. CQ asks for a signature to close.</p>
+                        </div>
                         <div class="cq-field"><span class="cq-label">Resolution<span class="cq-req">*</span></span>
                             <div class="rchips">
                                 <template for:each={resolutionOpts} for:item="o">
