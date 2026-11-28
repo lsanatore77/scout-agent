@@ -10,6 +10,7 @@ The shared seat component `c-cq-sign-seat`:
 - **The meaning** of the signature, written out ("By signing, I confirm…").
 - The **purpose of signature** from the CQ policy.
 - A **comment** box, required when the CQ policy says so.
+- The signer's **username**, read-only, above the password (Lou, 27 Nov), so it is clear whose signature it is. Plain text, not an input, so the browser does not offer saved logins. Shown only; the server signs as the running user.
 - A **password** box that must be typed: saved or pasted passwords are cleared and the signer is asked to type it.
 - One button that signs and acts (for example "Sign and Close"), with a spinner while it runs.
 - Other states: someone else's seat (read only), already signed (who, when, comment), and **unknown policy** (the action is blocked until CQ answers).
